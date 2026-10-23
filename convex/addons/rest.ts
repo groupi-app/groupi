@@ -1,3 +1,9 @@
+import {
+  addonConfig,
+  addonData,
+  participantData,
+  template as addonTemplate,
+} from './contracts';
 import { setAddonDataForPerson, deleteAddonDataForPerson } from './data';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
@@ -6,6 +12,7 @@ import { dispatchSingleAddonLifecycle } from './lifecycle';
 import {
   validatedConfiguration,
   publicConfiguration,
+  publicTemplate,
   requireConfigurationRole,
 } from './configuration';
 import {
@@ -18,14 +25,14 @@ const configValidator = v.object({
   id: v.id('eventAddonConfigs'),
   addonType: v.string(),
   enabled: v.boolean(),
-  config: v.any(),
+  config: addonConfig,
   createdAt: v.number(),
   updatedAt: v.number(),
 });
 const dataFields = {
   id: v.id('addonData'),
   key: v.string(),
-  data: v.any(),
+  data: addonData,
   createdBy: v.union(v.id('persons'), v.null()),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -36,7 +43,7 @@ const templateValidator = v.object({
   name: v.string(),
   description: v.string(),
   version: v.number(),
-  template: v.any(),
+  template: addonTemplate,
 });
 const successValidator = v.object({ success: v.boolean() });
 const cursorValidator = v.union(v.string(), v.null());
@@ -75,7 +82,7 @@ export const enableAddon = internalMutation({
     eventId: v.string(),
     personId: v.string(),
     addonType: v.string(),
-    config: v.any(),
+    config: addonConfig,
   },
   returns: successValidator,
   handler: async (ctx, { eventId, personId, addonType, config }) => {
@@ -161,7 +168,7 @@ export const updateAddonConfig = internalMutation({
     eventId: v.string(),
     personId: v.string(),
     addonType: v.string(),
-    config: v.any(),
+    config: addonConfig,
   },
   returns: configValidator,
   handler: async (ctx, { eventId, personId, addonType, config }) => {
@@ -254,7 +261,7 @@ export const setAddonData = internalMutation({
     eventId: v.string(),
     addonType: v.string(),
     key: v.string(),
-    data: v.any(),
+    data: participantData,
     personId: v.string(),
   },
   returns: v.object({ ...dataFields, created: v.boolean() }),
@@ -313,11 +320,7 @@ export const listPublishedTemplates = internalQuery({
       name: t.name,
       description: t.description,
       version: t.version,
-      template: (
-        publicConfiguration(`custom:${t._id}`, {
-          template: t.template,
-        }) as Record<string, unknown>
-      ).template,
+      template: publicTemplate(t.template),
     }));
   },
 });
@@ -374,11 +377,7 @@ export const listPublishedTemplatesPage = internalQuery({
         name: t.name,
         description: t.description,
         version: t.version,
-        template: (
-          publicConfiguration(`custom:${t._id}`, {
-            template: t.template,
-          }) as Record<string, unknown>
-        ).template,
+        template: publicTemplate(t.template),
       })),
       nextCursor: page.isDone ? null : page.continueCursor,
     };
@@ -391,7 +390,7 @@ export const participate = internalMutation({
     personId: v.string(),
     addonType: v.string(),
     action: v.string(),
-    data: v.any(),
+    data: v.union(participantData, v.null()),
     fieldId: v.optional(v.string()),
   },
   returns: v.union(

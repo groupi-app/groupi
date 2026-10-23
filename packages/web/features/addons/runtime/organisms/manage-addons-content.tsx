@@ -1,5 +1,7 @@
 'use client';
 
+import type { AddonConfiguration } from '../../model/types';
+
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -30,7 +32,7 @@ export function ManageAddonsContent({ eventId }: { eventId: string }) {
   const allAddons = getEventAddonDefinitions(addonConfigs);
 
   const handleSave = useCallback(
-    async (addonType: string, config: Record<string, unknown>) => {
+    async (addonType: string, config: AddonConfiguration) => {
       setIsSaving(true);
       try {
         const existing = addonConfigs?.find(

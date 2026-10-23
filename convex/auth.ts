@@ -2,10 +2,15 @@ import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
-import { query, QueryCtx, MutationCtx } from './_generated/server';
+import {
+  query,
+  internalMutation,
+  QueryCtx,
+  MutationCtx,
+} from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
 import authConfig from './auth.config';
-import { ConvexError } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import {
   DEFAULT_EVENT_PERMISSIONS,
   type EventPermissionKey,
@@ -67,9 +72,21 @@ import { resolvePasskeyConfig } from './lib/passkeyConfig';
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
 
-// Placeholder for auth functions - will be wired up by Convex at runtime
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const authFunctionsPlaceholder = {} as any;
+const authUserDocument = v.object({
+  _id: v.string(),
+  _creationTime: v.number(),
+  ...authSchema.tables.user.validator.fields,
+});
+async function initializePersonForUser(ctx: MutationCtx, userId: string) {
+  const existing = await ctx.db
+    .query('persons')
+    .withIndex('by_user_id', q => q.eq('userId', userId))
+    .first();
+  if (existing) return;
+  const now = Date.now();
+  const personId = await ctx.db.insert('persons', { userId, updatedAt: now });
+  await ctx.db.insert('personSettings', { personId, updatedAt: now });
+}
 
 // Create the Better Auth client from the Convex component
 // Using local install with custom schema to support admin plugin fields
@@ -77,37 +94,15 @@ const authFunctionsPlaceholder = {} as any;
 export const authComponent = createClient<DataModel, typeof authSchema>(
   components.betterAuth,
   {
-    authFunctions: authFunctionsPlaceholder,
+    authFunctions: {},
     local: {
       schema: authSchema,
     },
     triggers: {
       user: {
         // Automatically create a person record when a new user signs up
-        onCreate: async (ctx, user) => {
-          // Check if person already exists (shouldn't, but be safe)
-          const existingPerson = await ctx.db
-            .query('persons')
-            .withIndex('by_user_id', q => q.eq('userId', user._id.toString()))
-            .first();
-
-          if (!existingPerson) {
-            // Create person record
-            const now = Date.now();
-            const personId = await ctx.db.insert('persons', {
-              userId: user._id.toString(),
-              updatedAt: now,
-            });
-
-            // Create default settings for the person
-            await ctx.db.insert('personSettings', {
-              personId,
-              updatedAt: now,
-            });
-
-            console.log(`Created person record for new user: ${user.email}`);
-          }
-        },
+        onCreate: async (ctx, user) =>
+          initializePersonForUser(ctx, user._id.toString()),
       },
     },
   }
@@ -115,7 +110,30 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
 
 // Export trigger functions - required for triggers to work
 // These become internal.auth.onCreate, internal.auth.onUpdate, internal.auth.onDelete
-export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
+// The configured lifecycle is exclusively the Better Auth user model. Avoid
+// exporting the upstream generic dispatcher (whose arguments use v.any()).
+export const onCreate = internalMutation({
+  args: { model: v.literal('user'), doc: authUserDocument },
+  returns: v.null(),
+  handler: async (ctx, { doc }) => {
+    await initializePersonForUser(ctx, doc._id);
+    return null;
+  },
+});
+export const onUpdate = internalMutation({
+  args: {
+    model: v.literal('user'),
+    oldDoc: authUserDocument,
+    newDoc: authUserDocument,
+  },
+  returns: v.null(),
+  handler: async () => null,
+});
+export const onDelete = internalMutation({
+  args: { model: v.literal('user'), doc: authUserDocument },
+  returns: v.null(),
+  handler: async () => null,
+});
 
 // Type for the user returned by Better Auth component
 export type AuthUser = Awaited<ReturnType<typeof authComponent.getAuthUser>>;

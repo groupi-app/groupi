@@ -5,6 +5,7 @@ import { User } from '@/convex/types';
 import { Dialog } from '@/components/ui/dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ContextMenuItem } from '@/components/ui/context-menu';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
@@ -14,6 +15,7 @@ import { DeletePostDialog } from './delete-post-dialog';
 import { ReportDialog } from './report-dialog';
 import { Icons } from '@/components/icons';
 import MemberIcon from '@/components/member-icon';
+import { IntegrationAuthor } from '@/components/molecules/integration-author';
 import { PostCardContent } from './post-card-content';
 import RepliesIcons from './replies-icons';
 import { useActionMenu } from '@/hooks/use-action-menu';
@@ -28,6 +30,7 @@ import {
 // Post data with related information
 type PostData = Doc<'posts'> & {
   author: Doc<'persons'> & {
+    kind?: 'user' | 'integration';
     user: User;
   };
   event: Doc<'events'> & {
@@ -307,7 +310,12 @@ export function PostCard({
   const cardContent = (
     <div className='rounded-card border border-border w-full relative shadow-raised hover:shadow-floating z-lifted group transition-shadow duration-fast'>
       <div className='absolute top-4 left-3'>
-        {member ? (
+        {author.kind === 'integration' ? (
+          <IntegrationAuthor
+            name={author.user.name || 'Integration'}
+            showName={false}
+          />
+        ) : member ? (
           <MemberIcon
             itemKey={member._id}
             member={member}
@@ -347,6 +355,11 @@ export function PostCard({
               </div>
               <span className='text-sm text-muted-foreground'>
                 {author.user.name || author.user.email}
+                {author.kind === 'integration' ? (
+                  <Badge variant='secondary' className='ml-2'>
+                    Integration
+                  </Badge>
+                ) : null}
               </span>
             </div>
             <PostCardContent content={content} />

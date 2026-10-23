@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import {
   deleteEventApplications,
@@ -91,20 +92,23 @@ export const createAuthUser = internalMutation({
     const now = Date.now();
 
     // Create user in Better Auth component via adapter
-    const result = await ctx.runMutation(components.betterAuth.adapter.create, {
-      input: {
-        model: 'user',
-        data: {
-          email,
-          name,
-          emailVerified: true, // Migrated users are already verified
-          username: username.toLowerCase(),
-          displayUsername: username,
-          createdAt: now,
-          updatedAt: now,
+    const result: AuthDoc<'user'> = await ctx.runMutation(
+      components.betterAuth.adapter.create,
+      {
+        input: {
+          model: 'user',
+          data: {
+            email,
+            name,
+            emailVerified: true, // Migrated users are already verified
+            username: username.toLowerCase(),
+            displayUsername: username,
+            createdAt: now,
+            updatedAt: now,
+          },
         },
-      },
-    });
+      }
+    );
 
     return result;
   },
@@ -817,7 +821,7 @@ export const migrateNotificationMethods = internalMutation({
         value: v.string(),
         customTemplate: v.optional(v.string()),
         webhookFormat: v.optional(webhookFormatValidator),
-        webhookHeaders: v.optional(v.any()),
+        webhookHeaders: v.optional(v.record(v.string(), v.string())),
       })
     ),
   },

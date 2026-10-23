@@ -17,6 +17,7 @@ export const ReplyDetailSchema = z
     author: z
       .object({
         id: z.string(),
+        kind: z.enum(['user', 'integration']).optional(),
         user: UserSummarySchema,
       })
       .nullable(),

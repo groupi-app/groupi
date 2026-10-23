@@ -1,0 +1,27 @@
+[
+  {
+    "method": "POST",
+    "path": "/uploads",
+    "name": "upload",
+    "source": "convex/api/v2/routes/uploads.ts",
+    "body": "binary: 1 byte through 10 MiB",
+    "query": { "purpose": "attachment (default), avatar, or cover" },
+    "headers": {
+      "Content-Type": "MIME type",
+      "X-Filename": "filename (default upload)"
+    },
+    "response": {
+      "status": 201,
+      "fields": ["storageId", "filename", "mimeType", "size"]
+    },
+    "replay": false
+  },
+  {
+    "method": "DELETE",
+    "path": "/uploads/{storageId}",
+    "name": "discardUpload",
+    "source": "convex/api/v2/routes/uploads.ts",
+    "response": { "status": 204, "body": null },
+    "replay": false
+  }
+]

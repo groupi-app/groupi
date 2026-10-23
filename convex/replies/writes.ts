@@ -82,7 +82,7 @@ export async function createReplyForPerson(
   await notifyThreadParticipants(ctx, {
     postId,
     eventId: post.eventId,
-    postAuthorId: post.authorId,
+    postAuthorId: ctx.db.normalizeId('persons', post.authorId) ?? undefined,
     replyAuthorId: person._id,
   });
 

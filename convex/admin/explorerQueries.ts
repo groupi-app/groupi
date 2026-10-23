@@ -477,7 +477,17 @@ export const getPostWithRelations = query({
       ctx.db.get(post.eventId),
     ]);
 
-    const authorUser = author ? await getUserInfo(ctx, author.userId) : null;
+    const authorUser = author
+      ? 'userId' in author
+        ? await getUserInfo(ctx, author.userId)
+        : {
+            name: author.name,
+            email: null,
+            image: null,
+            username: null,
+            role: null,
+          }
+      : null;
 
     // Get reply count
     const replies = await ctx.db
@@ -542,7 +552,15 @@ export const getPostReplies = query({
       page.map(async reply => {
         const author = await ctx.db.get(reply.authorId);
         const authorUser = author
-          ? await getUserInfo(ctx, author.userId)
+          ? 'userId' in author
+            ? await getUserInfo(ctx, author.userId)
+            : {
+                name: author.name,
+                email: null,
+                image: null,
+                username: null,
+                role: null,
+              }
           : null;
 
         return {
@@ -598,7 +616,15 @@ export const getEventPosts = query({
       page.map(async post => {
         const author = await ctx.db.get(post.authorId);
         const authorUser = author
-          ? await getUserInfo(ctx, author.userId)
+          ? 'userId' in author
+            ? await getUserInfo(ctx, author.userId)
+            : {
+                name: author.name,
+                email: null,
+                image: null,
+                username: null,
+                role: null,
+              }
           : null;
 
         const replyCount = await ctx.db

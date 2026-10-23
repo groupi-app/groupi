@@ -1,14 +1,13 @@
+import type { FunctionArgs } from 'convex/server';
 import { useQuery, useMutation } from 'convex/react';
 import { useCallback } from 'react';
 import { toast } from '@groupi/shared/platform';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 
-export type BuiltInAddonType =
-  | 'reminders'
-  | 'questionnaire'
-  | 'bring-list'
-  | 'discord';
+export type BuiltInAddonType = FunctionArgs<
+  typeof api.addons.mutations.replaceBuiltInAddonConfigs
+>['addons'][number]['addonType'];
 
 // --- Queries ---
 
@@ -93,11 +92,12 @@ export function useEnableAddon() {
   const mutation = useMutation(api.addons.mutations.enableAddon);
 
   return useCallback(
-    async (params: {
-      eventId: string;
-      addonType: string;
-      config: Record<string, unknown>;
-    }) => {
+    async (
+      params: Omit<
+        FunctionArgs<typeof api.addons.mutations.enableAddon>,
+        'eventId'
+      > & { eventId: string }
+    ) => {
       try {
         const result = await mutation({
           ...params,
@@ -141,11 +141,12 @@ export function useUpdateAddonConfig() {
   const mutation = useMutation(api.addons.mutations.updateAddonConfig);
 
   return useCallback(
-    async (params: {
-      eventId: string;
-      addonType: string;
-      config: Record<string, unknown>;
-    }) => {
+    async (
+      params: Omit<
+        FunctionArgs<typeof api.addons.mutations.updateAddonConfig>,
+        'eventId'
+      > & { eventId: string }
+    ) => {
       try {
         const result = await mutation({
           ...params,
@@ -166,13 +167,12 @@ export function useReplaceBuiltInAddonConfigs() {
   const mutation = useMutation(api.addons.mutations.replaceBuiltInAddonConfigs);
 
   return useCallback(
-    async (params: {
-      eventId: string;
-      addons: Array<{
-        addonType: BuiltInAddonType;
-        config: Record<string, unknown>;
-      }>;
-    }) => {
+    async (
+      params: Omit<
+        FunctionArgs<typeof api.addons.mutations.replaceBuiltInAddonConfigs>,
+        'eventId'
+      > & { eventId: string }
+    ) => {
       return await mutation({
         ...params,
         eventId: params.eventId as Id<'events'>,
@@ -186,12 +186,12 @@ export function useSetAddonData() {
   const mutation = useMutation(api.addons.mutations.setAddonData);
 
   return useCallback(
-    async (params: {
-      eventId: string;
-      addonType: string;
-      key: string;
-      data: unknown;
-    }) => {
+    async (
+      params: Omit<
+        FunctionArgs<typeof api.addons.mutations.setAddonData>,
+        'eventId'
+      > & { eventId: string }
+    ) => {
       try {
         return await mutation({
           ...params,

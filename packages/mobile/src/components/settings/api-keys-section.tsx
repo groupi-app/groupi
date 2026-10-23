@@ -170,7 +170,7 @@ export function ApiKeysSection() {
               size={18}
               color={mutedColor ?? '#6b7280'}
             />
-            <CardTitle>API Keys</CardTitle>
+            <CardTitle>Legacy API Keys</CardTitle>
           </View>
           <Text variant='muted' className='text-sm'>
             Manage API keys for programmatic access to your account

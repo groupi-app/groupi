@@ -1,3 +1,5 @@
+import type { Infer } from 'convex/values';
+import { addonConfig, participantData } from './contracts';
 import { setAddonDataForPerson, deleteAddonDataForPerson } from './data';
 import { mutation, type MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
@@ -84,7 +86,7 @@ export const enableAddon = mutation({
   args: {
     eventId: v.id('events'),
     addonType: v.string(),
-    config: v.any(),
+    config: addonConfig,
   },
   returns: successValidator,
   handler: async (ctx, { eventId, addonType, config }) => {
@@ -112,7 +114,7 @@ export async function enableAddonConfiguration(
   ctx: MutationCtx,
   eventId: Id<'events'>,
   addonType: string,
-  config: unknown
+  config: Infer<typeof addonConfig>
 ) {
   const now = Date.now();
 
@@ -207,7 +209,7 @@ export const updateAddonConfig = mutation({
   args: {
     eventId: v.id('events'),
     addonType: v.string(),
-    config: v.any(),
+    config: addonConfig,
   },
   returns: successValidator,
   handler: async (ctx, { eventId, addonType, config }) => {
@@ -270,7 +272,7 @@ export const replaceBuiltInAddonConfigs = mutation({
     addons: v.array(
       v.object({
         addonType: builtInAddonTypeValidator,
-        config: v.any(),
+        config: addonConfig,
       })
     ),
   },
@@ -283,7 +285,10 @@ export const replaceBuiltInAddonConfigs = mutation({
   handler: async (ctx, { eventId, addons }) => {
     const { person } = await requireEventRole(ctx, eventId, 'MODERATOR');
 
-    const desiredConfigs = new Map<BuiltInAddonType, unknown>();
+    const desiredConfigs = new Map<
+      BuiltInAddonType,
+      Infer<typeof addonConfig>
+    >();
 
     // Validate the full request before applying any lifecycle effects or writes.
     for (const addon of addons) {
@@ -476,7 +481,7 @@ export const setAddonData = mutation({
     eventId: v.id('events'),
     addonType: v.string(),
     key: v.string(),
-    data: v.any(),
+    data: participantData,
   },
   returns: v.object({ id: v.id('addonData'), created: v.boolean() }),
   handler: async (ctx, args) => {

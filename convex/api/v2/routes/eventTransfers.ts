@@ -67,6 +67,7 @@ export function createEventTransferRoutes() {
       request: {
         params: EventIdParamSchema,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z.object({ recipientId: z.string() }).strict(),
@@ -98,6 +99,7 @@ export function createEventTransferRoutes() {
         request: {
           params: EventIdParamSchema,
           body: {
+            required: true,
             content: {
               'application/json': {
                 schema: z.object({ transferId: z.string() }).strict(),

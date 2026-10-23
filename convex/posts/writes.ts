@@ -202,9 +202,10 @@ export async function updatePostForPerson(
   const updatedPost = await ctx.db.get(postId);
 
   // If someone other than the author edited, notify the author
-  if (!isAuthor && post.authorId) {
+  const humanAuthorId = ctx.db.normalizeId('persons', post.authorId);
+  if (!isAuthor && humanAuthorId) {
     await notifyPerson(ctx, {
-      personId: post.authorId,
+      personId: humanAuthorId,
       type: 'EVENT_EDITED', // Reusing EVENT_EDITED for post edits by moderators
       authorId: person._id,
       eventId: post.eventId,

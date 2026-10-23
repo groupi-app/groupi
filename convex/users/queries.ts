@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import {
@@ -119,10 +120,13 @@ export const getUserByUsername = query({
   handler: async (ctx, { username }) => {
     const searchUsername = username.toLowerCase();
 
-    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: 'user',
-      where: [{ field: 'username', operator: 'eq', value: searchUsername }],
-    });
+    const user: AuthDoc<'user'> | null = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: 'user',
+        where: [{ field: 'username', operator: 'eq', value: searchUsername }],
+      }
+    );
 
     if (!user) {
       return null;

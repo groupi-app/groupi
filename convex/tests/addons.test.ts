@@ -52,7 +52,7 @@ describe('Add-on Framework', () => {
         asUser.mutation(api.addons.mutations.enableAddon, {
           eventId,
           addonType: 'nonexistent',
-          config: {},
+          config: { reminderOffset: '1_DAY' },
         })
       ).rejects.toThrow('Unknown add-on type');
     });

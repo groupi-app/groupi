@@ -1,0 +1,6448 @@
+# REST v1 API reference
+
+v1 · Current · Source: convex/api/v1/index.ts
+
+Source availability does not establish hosted deployment or registry publication.
+
+## GET /api/v1/events
+Canonical passage: /v1/reference/api#get-events
+
+List events Get all events the authenticated user is a member of Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of events",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/EventListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events
+Canonical passage: /v1/reference/api#post-events
+
+Create event Create a new event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreateEventRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Event created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/EventCreateResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}
+Canonical passage: /v1/reference/api#get-events-eventId
+
+Get event Get details of a specific event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Event details",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/EventResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/events/{eventId}
+Canonical passage: /v1/reference/api#patch-events-eventId
+
+Update event Update an event (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateEventRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Event updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EventDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "eventId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "eventId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/events/{eventId}
+Canonical passage: /v1/reference/api#delete-events-eventId
+
+Delete event Delete an event (requires ORGANIZER role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Event deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - must be organizer",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/posts
+Canonical passage: /v1/reference/api#get-events-eventId-posts
+
+List posts Get all posts for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of posts",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PostListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/posts
+Canonical passage: /v1/reference/api#post-events-eventId-posts
+
+Create post Create a new post in an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreatePostRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Post created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PostCreateResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/posts/{postId}
+Canonical passage: /v1/reference/api#get-posts-postId
+
+Get post Get details of a specific post with replies Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Post details",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PostResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member of the event",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/posts/{postId}
+Canonical passage: /v1/reference/api#patch-posts-postId
+
+Update post Update a post (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdatePostRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Post updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PostDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "postId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "postId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not author or moderator",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/posts/{postId}
+Canonical passage: /v1/reference/api#delete-posts-postId
+
+Delete post Delete a post (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Post deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not author or moderator",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/posts/{postId}/replies
+Canonical passage: /v1/reference/api#get-posts-postId-replies
+
+List replies Get all replies for a post Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of replies",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ReplyListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member of the event",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/posts/{postId}/replies
+Canonical passage: /v1/reference/api#post-posts-postId-replies
+
+Create reply Create a new reply to a post Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreateReplyRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Reply created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ReplyCreateResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member of the event",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/replies/{replyId}
+Canonical passage: /v1/reference/api#patch-replies-replyId
+
+Update reply Update a reply (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Reply ID"
+      },
+      "required": true,
+      "description": "Reply ID",
+      "name": "replyId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateReplyRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Reply updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReplyDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "replyId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "replyId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not author or moderator",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Reply not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/replies/{replyId}
+Canonical passage: /v1/reference/api#delete-replies-replyId
+
+Delete reply Delete a reply (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Reply ID"
+      },
+      "required": true,
+      "description": "Reply ID",
+      "name": "replyId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Reply deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not author or moderator",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Reply not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/members
+Canonical passage: /v1/reference/api#get-events-eventId-members
+
+List members Get all members of an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of members",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MemberListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/events/{eventId}/members/{memberId}
+Canonical passage: /v1/reference/api#patch-events-eventId-members-memberId
+
+Update member role Update a member's role (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "memberId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateMemberRoleRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Member role updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MemberUpdateResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Member not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/events/{eventId}/members/{memberId}
+Canonical passage: /v1/reference/api#delete-events-eventId-members-memberId
+
+Remove member Remove a member from an event (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "memberId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Member removed",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RemoveMemberResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Member not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/leave
+Canonical passage: /v1/reference/api#post-events-eventId-leave
+
+Leave event Leave an event (remove yourself from membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Left event successfully",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/LeaveEventResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - cannot leave as last organizer",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/events/{eventId}/rsvp
+Canonical passage: /v1/reference/api#patch-events-eventId-rsvp
+
+Update RSVP Update your RSVP status for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateRsvpRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "RSVP updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RsvpUpdateResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/availability
+Canonical passage: /v1/reference/api#get-events-eventId-availability
+
+Get availability grid Get the availability voting grid for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Availability grid",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AvailabilityGridResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/availability
+Canonical passage: /v1/reference/api#post-events-eventId-availability
+
+Submit availability Submit or update availability for potential dates Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/SubmitAvailabilityRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Availability submitted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SubmitAvailabilityResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/potential-dates
+Canonical passage: /v1/reference/api#get-events-eventId-potential-dates
+
+Get potential dates Get the list of potential date options for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of potential dates",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PotentialDatesResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/friends
+Canonical passage: /v1/reference/api#get-friends
+
+List friends Get list of all friends for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of friends",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/friends/requests/incoming
+Canonical passage: /v1/reference/api#get-friends-requests-incoming
+
+List incoming requests Get list of pending friend requests received Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of incoming friend requests",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendRequestListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/friends/requests/outgoing
+Canonical passage: /v1/reference/api#get-friends-requests-outgoing
+
+List outgoing requests Get list of pending friend requests sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of outgoing friend requests",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendRequestListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/friends/search
+Canonical passage: /v1/reference/api#get-friends-search
+
+Search users Search for users by name or username to send friend requests Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 2,
+        "example": "john",
+        "description": "Search query (min 2 characters)"
+      },
+      "required": true,
+      "description": "Search query (min 2 characters)",
+      "name": "q",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Search results",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UserSearchResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/friends/status/{targetPersonId}
+Canonical passage: /v1/reference/api#get-friends-status-targetPersonId
+
+Get friendship status Get the friendship status with another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "targetPersonId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Friendship status",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendshipStatusResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/friends/requests
+Canonical passage: /v1/reference/api#post-friends-requests
+
+Send friend request Send a friend request to another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/SendFriendRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Friend request sent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendRequestResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/friends/requests/{friendshipId}/accept
+Canonical passage: /v1/reference/api#post-friends-requests-friendshipId-accept
+
+Accept friend request Accept a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Friendship ID"
+      },
+      "required": true,
+      "description": "Friendship ID",
+      "name": "friendshipId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Friend request accepted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendActionResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Friend request not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/friends/requests/{friendshipId}/decline
+Canonical passage: /v1/reference/api#post-friends-requests-friendshipId-decline
+
+Decline friend request Decline a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Friendship ID"
+      },
+      "required": true,
+      "description": "Friendship ID",
+      "name": "friendshipId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Friend request declined",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendActionResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Friend request not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/friends/requests/{friendshipId}
+Canonical passage: /v1/reference/api#delete-friends-requests-friendshipId
+
+Cancel friend request Cancel a pending friend request you sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Friendship ID"
+      },
+      "required": true,
+      "description": "Friendship ID",
+      "name": "friendshipId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Friend request cancelled",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendActionResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Friend request not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/friends/{friendshipId}
+Canonical passage: /v1/reference/api#delete-friends-friendshipId
+
+Remove friend Remove a friend from your friends list Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Friendship ID"
+      },
+      "required": true,
+      "description": "Friendship ID",
+      "name": "friendshipId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Friend removed",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FriendActionResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Friendship not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/addon-templates
+Canonical passage: /v1/reference/api#get-addon-templates
+
+List existing published templates owned by this identity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "enum": [
+          "cursor"
+        ]
+      },
+      "required": false,
+      "name": "pagination",
+      "in": "query"
+    },
+    {
+      "schema": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "required": false,
+      "name": "limit",
+      "in": "query"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1
+      },
+      "required": false,
+      "name": "cursor",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Available custom templates",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "addonType": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "template": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            },
+                            "description": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            },
+                            "iconName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "settings": {
+                              "type": "object",
+                              "properties": {
+                                "requiresCompletion": {
+                                  "type": "boolean"
+                                },
+                                "supportsOptOut": {
+                                  "type": "boolean"
+                                },
+                                "optOutLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardLinkLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardSubtitle": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardOnly": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "sections": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "layout": {
+                                    "type": "string",
+                                    "enum": [
+                                      "form",
+                                      "interactive"
+                                    ]
+                                  },
+                                  "fields": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "number",
+                                            "select",
+                                            "multiselect",
+                                            "yesno",
+                                            "list_item",
+                                            "vote",
+                                            "toggle",
+                                            "action_button",
+                                            "static_text",
+                                            "dynamic_summary",
+                                            "divider",
+                                            "info_callout"
+                                          ]
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "configurable": {
+                                          "type": "boolean"
+                                        },
+                                        "variant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "short",
+                                            "long"
+                                          ]
+                                        },
+                                        "placeholder": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "maxLength": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "exclusiveMinimum": true
+                                        },
+                                        "min": {
+                                          "type": "number"
+                                        },
+                                        "max": {
+                                          "type": "number"
+                                        },
+                                        "options": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 10000
+                                          },
+                                          "maxItems": 100
+                                        },
+                                        "minSelections": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "maxSelections": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "items": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "id": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              },
+                                              "name": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "quantity": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "exclusiveMinimum": true
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "quantity"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 100
+                                        },
+                                        "allowMultiple": {
+                                          "type": "boolean"
+                                        },
+                                        "showResults": {
+                                          "type": "boolean"
+                                        },
+                                        "content": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "textFormat": {
+                                          "type": "string",
+                                          "enum": [
+                                            "p",
+                                            "h1",
+                                            "h2",
+                                            "h3"
+                                          ]
+                                        },
+                                        "summaryType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "response_count",
+                                            "vote_leader",
+                                            "signup_progress",
+                                            "custom_text"
+                                          ]
+                                        },
+                                        "summaryLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "dividerLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "calloutVariant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "info",
+                                            "warning",
+                                            "success"
+                                          ]
+                                        },
+                                        "calloutMessage": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "buttonLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "buttonVariant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "default",
+                                            "secondary",
+                                            "outline",
+                                            "destructive"
+                                          ]
+                                        },
+                                        "defaultEnabled": {
+                                          "type": "boolean"
+                                        },
+                                        "actions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "notify_members",
+                                                  "notify_organizers",
+                                                  "notify_submitter",
+                                                  "create_post",
+                                                  "update_event_description",
+                                                  "set_addon_data",
+                                                  "send_webhook"
+                                                ]
+                                              },
+                                              "webhookUrl": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "webhookHeaders": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "message": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "title": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "key": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "data": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                      "anyOf": [
+                                                        {
+                                                          "type": "string"
+                                                        },
+                                                        {
+                                                          "type": "number"
+                                                        },
+                                                        {
+                                                          "type": "boolean"
+                                                        },
+                                                        {
+                                                          "nullable": true
+                                                        },
+                                                        {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "string"
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ]
+                                              },
+                                              "recipientToggleField": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 50
+                                        },
+                                        "visibilityConditions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "field": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 10000
+                                              },
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "equals",
+                                                  "not_equals",
+                                                  "contains",
+                                                  "not_contains",
+                                                  "greater_than",
+                                                  "less_than",
+                                                  "greater_or_equal",
+                                                  "less_or_equal",
+                                                  "is_empty",
+                                                  "is_not_empty",
+                                                  "in_list",
+                                                  "not_in_list"
+                                                ]
+                                              },
+                                              "value": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "nullable": true
+                                                  },
+                                                  {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "field",
+                                              "operator"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 50
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "required"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 100
+                                  },
+                                  "configurable": {
+                                    "type": "boolean"
+                                  },
+                                  "allowedFieldTypes": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "text",
+                                        "number",
+                                        "select",
+                                        "multiselect",
+                                        "yesno",
+                                        "list_item",
+                                        "vote",
+                                        "toggle",
+                                        "action_button",
+                                        "static_text",
+                                        "dynamic_summary",
+                                        "divider",
+                                        "info_callout"
+                                      ]
+                                    }
+                                  },
+                                  "visibilityConditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "field": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "operator": {
+                                          "type": "string",
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "not_contains",
+                                            "greater_than",
+                                            "less_than",
+                                            "greater_or_equal",
+                                            "less_or_equal",
+                                            "is_empty",
+                                            "is_not_empty",
+                                            "in_list",
+                                            "not_in_list"
+                                          ]
+                                        },
+                                        "value": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "field",
+                                        "operator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 50
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "title",
+                                  "fields"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "minItems": 1,
+                              "maxItems": 50
+                            },
+                            "submitButtonLabel": {
+                              "type": "string",
+                              "maxLength": 10000
+                            },
+                            "onSubmitActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "notify_members",
+                                      "notify_organizers",
+                                      "notify_submitter",
+                                      "create_post",
+                                      "update_event_description",
+                                      "set_addon_data",
+                                      "send_webhook"
+                                    ]
+                                  },
+                                  "webhookUrl": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "webhookHeaders": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "key": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "data": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "recipientToggleField": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "maxItems": 50
+                            },
+                            "automations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 10000
+                                  },
+                                  "enabled": {
+                                    "type": "boolean"
+                                  },
+                                  "trigger": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "form_submitted",
+                                          "list_item_claimed",
+                                          "list_item_full",
+                                          "vote_cast",
+                                          "vote_threshold",
+                                          "toggle_changed",
+                                          "all_responses_in",
+                                          "member_joined",
+                                          "member_left",
+                                          "date_chosen",
+                                          "addon_enabled"
+                                        ]
+                                      },
+                                      "fieldId": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "threshold": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "exclusiveMinimum": true
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "field": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "operator": {
+                                          "type": "string",
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "not_contains",
+                                            "greater_than",
+                                            "less_than",
+                                            "greater_or_equal",
+                                            "less_or_equal",
+                                            "is_empty",
+                                            "is_not_empty",
+                                            "in_list",
+                                            "not_in_list"
+                                          ]
+                                        },
+                                        "value": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "field",
+                                        "operator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 50
+                                  },
+                                  "actions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "notify_members",
+                                            "notify_organizers",
+                                            "notify_submitter",
+                                            "create_post",
+                                            "update_event_description",
+                                            "set_addon_data",
+                                            "send_webhook"
+                                          ]
+                                        },
+                                        "webhookUrl": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "webhookHeaders": {
+                                          "type": "object",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "key": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "data": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "nullable": true
+                                                  },
+                                                  {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        "recipientToggleField": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "enabled",
+                                  "trigger",
+                                  "conditions",
+                                  "actions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "maxItems": 50
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "description",
+                            "iconName",
+                            "sections"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "addonType",
+                        "name",
+                        "description",
+                        "version",
+                        "template"
+                      ]
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "addonType": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "template": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 60
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "iconName": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "requiresCompletion": {
+                                      "type": "boolean"
+                                    },
+                                    "supportsOptOut": {
+                                      "type": "boolean"
+                                    },
+                                    "optOutLabel": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardLinkLabel": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardSubtitle": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardOnly": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "sections": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "description": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "layout": {
+                                        "type": "string",
+                                        "enum": [
+                                          "form",
+                                          "interactive"
+                                        ]
+                                      },
+                                      "fields": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 100
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "text",
+                                                "number",
+                                                "select",
+                                                "multiselect",
+                                                "yesno",
+                                                "list_item",
+                                                "vote",
+                                                "toggle",
+                                                "action_button",
+                                                "static_text",
+                                                "dynamic_summary",
+                                                "divider",
+                                                "info_callout"
+                                              ]
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "required": {
+                                              "type": "boolean"
+                                            },
+                                            "configurable": {
+                                              "type": "boolean"
+                                            },
+                                            "variant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "short",
+                                                "long"
+                                              ]
+                                            },
+                                            "placeholder": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "maxLength": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "exclusiveMinimum": true
+                                            },
+                                            "min": {
+                                              "type": "number"
+                                            },
+                                            "max": {
+                                              "type": "number"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 10000
+                                              },
+                                              "maxItems": 100
+                                            },
+                                            "minSelections": {
+                                              "type": "integer",
+                                              "minimum": 0
+                                            },
+                                            "maxSelections": {
+                                              "type": "integer",
+                                              "minimum": 0
+                                            },
+                                            "items": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 100
+                                                  },
+                                                  "name": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "quantity": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "exclusiveMinimum": true
+                                                  }
+                                                },
+                                                "required": [
+                                                  "id",
+                                                  "name",
+                                                  "quantity"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 100
+                                            },
+                                            "allowMultiple": {
+                                              "type": "boolean"
+                                            },
+                                            "showResults": {
+                                              "type": "boolean"
+                                            },
+                                            "content": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "textFormat": {
+                                              "type": "string",
+                                              "enum": [
+                                                "p",
+                                                "h1",
+                                                "h2",
+                                                "h3"
+                                              ]
+                                            },
+                                            "summaryType": {
+                                              "type": "string",
+                                              "enum": [
+                                                "response_count",
+                                                "vote_leader",
+                                                "signup_progress",
+                                                "custom_text"
+                                              ]
+                                            },
+                                            "summaryLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "dividerLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "calloutVariant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "info",
+                                                "warning",
+                                                "success"
+                                              ]
+                                            },
+                                            "calloutMessage": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "buttonLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "buttonVariant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "default",
+                                                "secondary",
+                                                "outline",
+                                                "destructive"
+                                              ]
+                                            },
+                                            "defaultEnabled": {
+                                              "type": "boolean"
+                                            },
+                                            "actions": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "notify_members",
+                                                      "notify_organizers",
+                                                      "notify_submitter",
+                                                      "create_post",
+                                                      "update_event_description",
+                                                      "set_addon_data",
+                                                      "send_webhook"
+                                                    ]
+                                                  },
+                                                  "webhookUrl": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "webhookHeaders": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "message": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "title": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "key": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "data": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "additionalProperties": {
+                                                          "anyOf": [
+                                                            {
+                                                              "type": "string"
+                                                            },
+                                                            {
+                                                              "type": "number"
+                                                            },
+                                                            {
+                                                              "type": "boolean"
+                                                            },
+                                                            {
+                                                              "nullable": true
+                                                            },
+                                                            {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "string"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "recipientToggleField": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 100
+                                                  }
+                                                },
+                                                "required": [
+                                                  "type"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 50
+                                            },
+                                            "visibilityConditions": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "field": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 10000
+                                                  },
+                                                  "operator": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "not_contains",
+                                                      "greater_than",
+                                                      "less_than",
+                                                      "greater_or_equal",
+                                                      "less_or_equal",
+                                                      "is_empty",
+                                                      "is_not_empty",
+                                                      "in_list",
+                                                      "not_in_list"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "boolean"
+                                                      },
+                                                      {
+                                                        "nullable": true
+                                                      },
+                                                      {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "string"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "field",
+                                                  "operator"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 50
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "type",
+                                            "required"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 100
+                                      },
+                                      "configurable": {
+                                        "type": "boolean"
+                                      },
+                                      "allowedFieldTypes": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "number",
+                                            "select",
+                                            "multiselect",
+                                            "yesno",
+                                            "list_item",
+                                            "vote",
+                                            "toggle",
+                                            "action_button",
+                                            "static_text",
+                                            "dynamic_summary",
+                                            "divider",
+                                            "info_callout"
+                                          ]
+                                        }
+                                      },
+                                      "visibilityConditions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "field": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 10000
+                                            },
+                                            "operator": {
+                                              "type": "string",
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "not_contains",
+                                                "greater_than",
+                                                "less_than",
+                                                "greater_or_equal",
+                                                "less_or_equal",
+                                                "is_empty",
+                                                "is_not_empty",
+                                                "in_list",
+                                                "not_in_list"
+                                              ]
+                                            },
+                                            "value": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "field",
+                                            "operator"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "title",
+                                      "fields"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 50
+                                },
+                                "submitButtonLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "onSubmitActions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "notify_members",
+                                          "notify_organizers",
+                                          "notify_submitter",
+                                          "create_post",
+                                          "update_event_description",
+                                          "set_addon_data",
+                                          "send_webhook"
+                                        ]
+                                      },
+                                      "webhookUrl": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "webhookHeaders": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "message": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "key": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "data": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "recipientToggleField": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "maxItems": 50
+                                },
+                                "automations": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 10000
+                                      },
+                                      "enabled": {
+                                        "type": "boolean"
+                                      },
+                                      "trigger": {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "form_submitted",
+                                              "list_item_claimed",
+                                              "list_item_full",
+                                              "vote_cast",
+                                              "vote_threshold",
+                                              "toggle_changed",
+                                              "all_responses_in",
+                                              "member_joined",
+                                              "member_left",
+                                              "date_chosen",
+                                              "addon_enabled"
+                                            ]
+                                          },
+                                          "fieldId": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 100
+                                          },
+                                          "threshold": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "exclusiveMinimum": true
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "conditions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "field": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 10000
+                                            },
+                                            "operator": {
+                                              "type": "string",
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "not_contains",
+                                                "greater_than",
+                                                "less_than",
+                                                "greater_or_equal",
+                                                "less_or_equal",
+                                                "is_empty",
+                                                "is_not_empty",
+                                                "in_list",
+                                                "not_in_list"
+                                              ]
+                                            },
+                                            "value": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "field",
+                                            "operator"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 50
+                                      },
+                                      "actions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "notify_members",
+                                                "notify_organizers",
+                                                "notify_submitter",
+                                                "create_post",
+                                                "update_event_description",
+                                                "set_addon_data",
+                                                "send_webhook"
+                                              ]
+                                            },
+                                            "webhookUrl": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "webhookHeaders": {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "message": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "title": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "key": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "data": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "additionalProperties": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "boolean"
+                                                      },
+                                                      {
+                                                        "nullable": true
+                                                      },
+                                                      {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "string"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "recipientToggleField": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 100
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "minItems": 1,
+                                        "maxItems": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "name",
+                                      "enabled",
+                                      "trigger",
+                                      "conditions",
+                                      "actions"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "maxItems": 50
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "description",
+                                "iconName",
+                                "sections"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "addonType",
+                            "name",
+                            "description",
+                            "version",
+                            "template"
+                          ]
+                        }
+                      },
+                      "nextCursor": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": [
+                      "items",
+                      "nextCursor"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/addons
+Canonical passage: /v1/reference/api#get-events-eventId-addons
+
+List add-ons Get all add-on configurations for an event, including disabled add-ons Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "enum": [
+          "cursor"
+        ]
+      },
+      "required": false,
+      "name": "pagination",
+      "in": "query"
+    },
+    {
+      "schema": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "required": false,
+      "name": "limit",
+      "in": "query"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1
+      },
+      "required": false,
+      "name": "cursor",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of add-on configs",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AddonConfig"
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AddonConfig"
+                        }
+                      },
+                      "nextCursor": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": [
+                      "items",
+                      "nextCursor"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/addons/{addonType}/enable
+Canonical passage: /v1/reference/api#post-events-eventId-addons-addonType-enable
+
+Enable add-on Enable an add-on for an event with validated config. Existing custom add-ons can use {templateId} from /addon-templates; only app-supported configurable template settings are mutable. Re-enabling an enabled add-on updates config through its lifecycle. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/EnableAddonRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Add-on enabled",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddonSuccessResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request - invalid config or unknown addon type",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/addons/{addonType}/disable
+Canonical passage: /v1/reference/api#post-events-eventId-addons-addonType-disable
+
+Disable add-on Disable an add-on for an event. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Add-on disabled",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddonSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v1/events/{eventId}/addons/{addonType}/config
+Canonical passage: /v1/reference/api#patch-events-eventId-addons-addonType-config
+
+Update add-on config Replace the configuration for an enabled add-on, invoking its response-reset and notification lifecycle. Custom definition fields are protected. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateAddonConfigRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Add-on config updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddonConfigResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request - invalid config or addon not enabled",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/addons/{addonType}/data
+Canonical passage: /v1/reference/api#get-events-eventId-addons-addonType-data
+
+List add-on data Get all data entries for an add-on on an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of data entries",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddonDataListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/events/{eventId}/addons/{addonType}/data/{key}
+Canonical passage: /v1/reference/api#put-events-eventId-addons-addonType-data-key
+
+Set add-on data Create or update a data entry for an add-on. The key is used for upsert. Updating an existing entry requires being the creator or MODERATOR+. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "response:abc123",
+        "description": "Data entry key"
+      },
+      "required": true,
+      "description": "Data entry key",
+      "name": "key",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/SetAddonDataRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Data entry created or updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AddonDataResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request - addon not enabled or data too large",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member or insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/events/{eventId}/addons/{addonType}/data/{key}
+Canonical passage: /v1/reference/api#delete-events-eventId-addons-addonType-data-key
+
+Delete add-on data Delete a data entry for an add-on. Requires being the creator or MODERATOR+. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "questionnaire",
+        "description": "Add-on type identifier"
+      },
+      "required": true,
+      "description": "Add-on type identifier",
+      "name": "addonType",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "example": "response:abc123",
+        "description": "Data entry key"
+      },
+      "required": true,
+      "description": "Data entry key",
+      "name": "key",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Data entry deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member or insufficient permissions",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/notifications
+Canonical passage: /v1/reference/api#get-notifications
+
+List notifications Get all notifications for the authenticated user. Optionally filter to unread only. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "true",
+        "description": "Filter to unread notifications only"
+      },
+      "required": false,
+      "description": "Filter to unread notifications only",
+      "name": "unread",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of notifications",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/notifications
+Canonical passage: /v1/reference/api#delete-notifications
+
+Delete all notifications Delete all notifications for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "All notifications deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/notifications/count
+Canonical passage: /v1/reference/api#get-notifications-count
+
+Get unread count Get the number of unread notifications Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "Unread notification count",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UnreadCountResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/notifications/{notificationId}/read
+Canonical passage: /v1/reference/api#post-notifications-notificationId-read
+
+Mark notification as read Mark a single notification as read Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Notification ID"
+      },
+      "required": true,
+      "description": "Notification ID",
+      "name": "notificationId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Notification marked as read",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Notification not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/notifications/{notificationId}/unread
+Canonical passage: /v1/reference/api#post-notifications-notificationId-unread
+
+Mark notification as unread Mark a single notification as unread Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Notification ID"
+      },
+      "required": true,
+      "description": "Notification ID",
+      "name": "notificationId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Notification marked as unread",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Notification not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/notifications/read-all
+Canonical passage: /v1/reference/api#post-notifications-read-all
+
+Mark all notifications as read Mark all notifications as read for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "All notifications marked as read",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/notifications/{notificationId}
+Canonical passage: /v1/reference/api#delete-notifications-notificationId
+
+Delete notification Delete a single notification Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Notification ID"
+      },
+      "required": true,
+      "description": "Notification ID",
+      "name": "notificationId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Notification deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Notification not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/muting
+Canonical passage: /v1/reference/api#get-muting
+
+List muted items Get all muted events and posts for the authenticated user. Optionally filter by type. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "enum": [
+          "events",
+          "posts"
+        ],
+        "example": "events",
+        "description": "Filter to only events or posts"
+      },
+      "required": false,
+      "description": "Filter to only events or posts",
+      "name": "type",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of muted items",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MutedListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/muting/events/{eventId}
+Canonical passage: /v1/reference/api#post-muting-events-eventId
+
+Mute event Mute an event to stop receiving notifications for it. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Event muted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MutingSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/muting/events/{eventId}
+Canonical passage: /v1/reference/api#delete-muting-events-eventId
+
+Unmute event Unmute an event to resume receiving notifications for it Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Event unmuted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MutingSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event is not muted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/muting/posts/{postId}
+Canonical passage: /v1/reference/api#post-muting-posts-postId
+
+Mute post Mute a post to stop receiving notifications for replies. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Post muted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MutingSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/muting/posts/{postId}
+Canonical passage: /v1/reference/api#delete-muting-posts-postId
+
+Unmute post Unmute a post to resume receiving notifications for replies Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Post ID"
+      },
+      "required": true,
+      "description": "Post ID",
+      "name": "postId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Post unmuted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MutingSuccessResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Post is not muted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/profile
+Canonical passage: /v1/reference/api#get-profile
+
+Get current profile Get the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "User profile",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProfileResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Profile not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/profile
+Canonical passage: /v1/reference/api#put-profile
+
+Update profile Update the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateProfileRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Updated profile",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProfileResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/profile/{username}
+Canonical passage: /v1/reference/api#get-profile-username
+
+Get profile by username Get a user's public profile by their username Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "janedoe",
+        "description": "Username to look up"
+      },
+      "required": true,
+      "description": "Username to look up",
+      "name": "username",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "description": "Required for bounded credentials; limits the profile to a current member of this granted event."
+      },
+      "required": false,
+      "description": "Required for bounded credentials; limits the profile to a current member of this granted event.",
+      "name": "eventId",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "User profile",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProfileResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "User not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/settings/privacy
+Canonical passage: /v1/reference/api#get-settings-privacy
+
+Get privacy settings Get the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "Privacy settings",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PrivacySettingsResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/settings/privacy
+Canonical passage: /v1/reference/api#put-settings-privacy
+
+Update privacy settings Update the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdatePrivacySettingsRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Updated privacy settings",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PrivacySettingsResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/settings/notifications
+Canonical passage: /v1/reference/api#get-settings-notifications
+
+Get notification settings Get the authenticated user's notification methods and type-level settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "Notification settings",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/NotificationSettingsResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/themes
+Canonical passage: /v1/reference/api#get-themes
+
+List custom themes Get all custom themes created by the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of custom themes",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CustomThemeListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/themes
+Canonical passage: /v1/reference/api#post-themes
+
+Create custom theme Create a new custom theme Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreateCustomThemeRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Theme created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CustomThemeResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/themes/preferences
+Canonical passage: /v1/reference/api#get-themes-preferences
+
+Get theme preferences Get the authenticated user's theme preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "Theme preferences",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ThemePreferencesResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/themes/preferences
+Canonical passage: /v1/reference/api#put-themes-preferences
+
+Set theme preferences Set the authenticated user's active theme and system preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/SetThemePreferenceRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Updated theme preferences",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ThemePreferencesResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/themes/{themeId}
+Canonical passage: /v1/reference/api#put-themes-themeId
+
+Update custom theme Update a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Custom theme ID"
+      },
+      "required": true,
+      "description": "Custom theme ID",
+      "name": "themeId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/UpdateCustomThemeRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Updated theme",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CustomThemeResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not the theme owner",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Theme not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/themes/{themeId}
+Canonical passage: /v1/reference/api#delete-themes-themeId
+
+Delete custom theme Delete a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Custom theme ID"
+      },
+      "required": true,
+      "description": "Custom theme ID",
+      "name": "themeId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Theme deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not the theme owner",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Theme not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/events/{eventId}/invites
+Canonical passage: /v1/reference/api#get-events-eventId-invites
+
+List event invites Get all invites for an event (requires membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "List of invites",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/InviteListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/events/{eventId}/invites
+Canonical passage: /v1/reference/api#post-events-eventId-invites
+
+Create invite Create a new invite link for an event (requires membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreateInviteRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Invite created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "token"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - not a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/invites/{inviteId}
+Canonical passage: /v1/reference/api#delete-invites-inviteId
+
+Delete invite Delete an invite link Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Invite ID"
+      },
+      "required": true,
+      "description": "Invite ID",
+      "name": "inviteId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Invite deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Invite not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/invites/{token}
+Canonical passage: /v1/reference/api#get-invites-token
+
+Get invite by token Get public invite information by token (no auth required) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "abc-123-def-456",
+        "description": "Invite token"
+      },
+      "required": true,
+      "description": "Invite token",
+      "name": "token",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Invite details",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/InvitePublicResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Invite not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/invites/{token}/accept
+Canonical passage: /v1/reference/api#post-invites-token-accept
+
+Accept invite Accept an invite and join the event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "abc-123-def-456",
+        "description": "Invite token"
+      },
+      "required": true,
+      "description": "Invite token",
+      "name": "token",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Invite accepted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AcceptInviteResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request - invite expired, max uses reached, or already a member",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Invite not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v1/reports
+Canonical passage: /v1/reference/api#post-reports
+
+Create report Report content for review by administrators Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/CreateReportRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "201": {
+      "description": "Report created",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ReportCreateResponse"
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Bad request - duplicate report",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/admin/users
+Canonical passage: /v1/reference/api#get-admin-users
+
+List all users List all users in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of users",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AdminUserListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/admin/users/{userId}
+Canonical passage: /v1/reference/api#delete-admin-users-userId
+
+Delete user Delete a user and their associated data (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "abc123...",
+        "description": "Better Auth user ID"
+      },
+      "required": true,
+      "description": "Better Auth user ID",
+      "name": "userId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "User deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "User not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Owned Group responsibilities must be resolved",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v1/admin/users/{userId}/role
+Canonical passage: /v1/reference/api#put-admin-users-userId-role
+
+Set user role Update a user's role (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "abc123...",
+        "description": "Better Auth user ID"
+      },
+      "required": true,
+      "description": "Better Auth user ID",
+      "name": "userId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/SetUserRoleRequest"
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Role updated",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "User not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/admin/events
+Canonical passage: /v1/reference/api#get-admin-events
+
+List all events List all events in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of events",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AdminEventListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## DELETE /api/v1/admin/events/{eventId}
+Canonical passage: /v1/reference/api#delete-admin-events-eventId
+
+Delete event (admin) Delete an event as admin (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Event deleted",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v1/admin/reports
+Canonical passage: /v1/reference/api#get-admin-reports
+
+List all reports List all content reports (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "responses": {
+    "200": {
+      "description": "List of reports",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AdminReportListResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Unauthorized",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Forbidden - admin required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```

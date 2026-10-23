@@ -1,3 +1,8 @@
+import { StoredAddonDataSchema } from '../../../addonTemplates/definition';
+import {
+  AddonConfigSchema as KnownAddonConfigSchema,
+  AddonDataSchema,
+} from '../../../addons/schemas';
 import { z, extendZodWithOpenApi } from '@hono/zod-openapi';
 extendZodWithOpenApi(z);
 import { TimestampSchema } from './common';
@@ -43,7 +48,7 @@ export const EventAddonDataKeyParamSchema = z.object({
 });
 
 // Freeform config object — validated by addon handler
-export const AddonConfigSchema = z.record(z.string(), z.unknown()).openapi({
+export const AddonConfigSchema = KnownAddonConfigSchema.openapi({
   description: `Freeform JSON config object. Shape depends on addon type:
 
 - **reminders**: \`{ reminderOffset: "1_HOUR" | "1_DAY" | "2_DAYS" | ... }\`
@@ -81,7 +86,7 @@ export const UpdateAddonConfigRequestSchema = z
 // Set addon data request body
 export const SetAddonDataRequestSchema = z
   .object({
-    data: z.unknown().openapi({
+    data: AddonDataSchema.openapi({
       description: 'Arbitrary data payload for this addon entry',
       example: { answer: 'No dietary restrictions' },
     }),
@@ -94,7 +99,7 @@ export const AddonConfigResponseSchema = z
     id: z.string(),
     addonType: z.string(),
     enabled: z.boolean(),
-    config: z.unknown(),
+    config: KnownAddonConfigSchema,
     createdAt: TimestampSchema,
     updatedAt: TimestampSchema,
   })
@@ -121,7 +126,7 @@ export const AddonDataEntrySchema = z
   .object({
     id: z.string(),
     key: z.string(),
-    data: z.unknown(),
+    data: StoredAddonDataSchema,
     createdBy: z.string().nullable(),
     createdAt: TimestampSchema,
     updatedAt: TimestampSchema,

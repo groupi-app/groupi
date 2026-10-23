@@ -1,5 +1,7 @@
 'use client';
 
+import type { AddonParticipantData } from '../../model/types';
+
 import { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,8 +67,8 @@ function getTemplate(
 
 function renderField(
   field: TemplateField,
-  value: unknown,
-  onChange: (value: unknown) => void
+  value: AddonParticipantData[string] | undefined,
+  onChange: (value: AddonParticipantData[string]) => void
 ) {
   switch (field.type) {
     case 'text':
@@ -95,7 +97,7 @@ function renderField(
           type='number'
           value={(value as number) ?? ''}
           onChange={e =>
-            onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+            onChange(e.target.value ? parseFloat(e.target.value) : null)
           }
           min={field.min}
           max={field.max}
@@ -578,9 +580,9 @@ export function CustomAddonManageConfig({
   };
 
   const handleSave = async () => {
-    if (!editedTemplate) return;
+    if (!editedTemplate || typeof config?.templateId !== 'string') return;
     await onSave({
-      ...(config as Record<string, unknown>),
+      templateId: config.templateId,
       template: editedTemplate,
     });
     setHasChanges(false);
@@ -745,8 +747,8 @@ function FormSection({
   template,
 }: {
   section: TemplateSection;
-  values: Record<string, unknown>;
-  onChange: (fieldId: string, value: unknown) => void;
+  values: AddonParticipantData;
+  onChange: (fieldId: string, value: AddonParticipantData[string]) => void;
   eventId: Id<'events'>;
   addonType: string;
   template: CustomAddonTemplate | null;
@@ -1205,11 +1207,11 @@ export function CustomAddonPageComponent({
     const entry = (myData ?? []).find(
       (d: { key: string }) => d.key === `response:${personId}`
     );
-    return (entry?.data as Record<string, unknown>) ?? {};
+    return entry?.data && typeof entry.data === 'object' ? entry.data : {};
   }, [myData, personId]);
 
   const [formValues, setFormValues] =
-    useState<Record<string, unknown>>(existingResponse);
+    useState<AddonParticipantData>(existingResponse);
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync when existing response loads
@@ -1226,16 +1228,19 @@ export function CustomAddonPageComponent({
     [addonData, personId]
   );
 
-  const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
-    setFormValues(prev => ({ ...prev, [fieldId]: value }));
-  }, []);
+  const handleFieldChange = useCallback(
+    (fieldId: string, value: AddonParticipantData[string]) => {
+      setFormValues(prev => ({ ...prev, [fieldId]: value }));
+    },
+    []
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!personId || !addonType || !template) return;
     setIsSaving(true);
     try {
       // Only submit values for visible fields in visible sections
-      const visibleValues: Record<string, unknown> = {};
+      const visibleValues: AddonParticipantData = {};
       for (const section of template.sections) {
         if (section.layout === 'interactive') continue;
         // Skip hidden sections entirely

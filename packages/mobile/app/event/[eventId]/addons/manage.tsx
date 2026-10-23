@@ -13,6 +13,7 @@ import { useReplaceBuiltInAddonConfigs } from '@/hooks/use-addons';
 import {
   CreateEventProvider,
   useCreateEventForm,
+  type FormState,
 } from '@/context/create-event-context';
 
 const MANAGEABLE_ADDON_TYPES = [
@@ -75,17 +76,16 @@ export default function ManageAddonsScreen() {
     );
   }
 
-  const existingConfigs = Object.fromEntries(
-    addons
-      .filter(
-        addon =>
-          addon.enabled &&
-          MANAGEABLE_ADDON_TYPES.includes(
-            addon.addonType as (typeof MANAGEABLE_ADDON_TYPES)[number]
-          )
-      )
-      .map(addon => [addon.addonType, addon.config as Record<string, unknown>])
-  ) as Record<string, Record<string, unknown>>;
+  const existingConfigs = addons
+    .filter(
+      addon =>
+        addon.enabled &&
+        MANAGEABLE_ADDON_TYPES.some(type => type === addon.addonType)
+    )
+    .reduce<FormState['addonConfigs']>((configs, addon) => {
+      configs[addon.addonType] = addon.config;
+      return configs;
+    }, {});
 
   return (
     <DetailScreenTemplate title='Manage add-ons' scrollable={false}>

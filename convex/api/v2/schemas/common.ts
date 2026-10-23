@@ -168,6 +168,7 @@ export const UserSummarySchema = z
 export const PersonSummarySchema = z
   .object({
     id: z.string(),
+    kind: z.enum(['user', 'integration']).optional(),
     userId: z.string(),
     bio: z.string().nullable(),
     pronouns: z.string().nullable(),

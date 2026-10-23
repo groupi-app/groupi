@@ -2,7 +2,10 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import type { Id } from '../../../_generated/dataModel';
 import { internal } from '../../../_generated/api';
-import { DefinitionDocumentSchema } from '../../../addonTemplates/definition';
+import {
+  DefinitionDocumentSchema,
+  TemplateSchema,
+} from '../../../addonTemplates/definition';
 import { ErrorResponseSchema } from '../schemas/common';
 type Variables = { ctx: ActionCtx; userId: string; personId: string };
 const params = z.object({ id: z.string().min(1) });
@@ -13,7 +16,7 @@ const output = z.object({
   name: z.string(),
   description: z.string(),
   iconName: z.string(),
-  template: z.unknown(),
+  template: TemplateSchema,
   version: z.number(),
   isPublished: z.boolean(),
   createdAt: z.number(),
@@ -136,7 +139,7 @@ export function createAddonDefinitionRoutes() {
       c.json(
         await c.get('ctx').runMutation(internal.addonTemplates.rest.create, {
           personId: c.get('personId') as Id<'persons'>,
-          document: c.req.valid('json'),
+          document: DefinitionDocumentSchema.parse(c.req.valid('json')),
         }),
         201
       )

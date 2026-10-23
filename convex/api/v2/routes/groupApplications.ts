@@ -68,6 +68,7 @@ export function createGroupApplicationRoutes() {
       request: {
         params,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z
@@ -165,6 +166,7 @@ export function createGroupApplicationRoutes() {
       request: {
         params,
         body: {
+          required: true,
           content: {
             'application/json': { schema: z.object({ answers }).strict() },
           },
@@ -213,6 +215,7 @@ export function createGroupApplicationRoutes() {
       request: {
         params: applicationParams,
         body: {
+          required: true,
           content: {
             'application/json': { schema: z.object({ answers }).strict() },
           },
@@ -261,6 +264,7 @@ export function createGroupApplicationRoutes() {
       request: {
         params: applicationParams,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z

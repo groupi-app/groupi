@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deletePersonApplications } from '../eventApplications/cleanup';
@@ -464,7 +465,17 @@ export const createMagicLinkToken = mutation({
  */
 export const debugVerifications = query({
   args: { fixtureKey: v.string() },
-  returns: v.array(v.any()),
+  returns: v.array(
+    v.object({
+      _id: v.string(),
+      _creationTime: v.number(),
+      identifier: v.string(),
+      value: v.string(),
+      expiresAt: v.number(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
   handler: async (ctx, { fixtureKey }) => {
     assertFixtureAccess(fixtureKey);
 
@@ -477,7 +488,7 @@ export const debugVerifications = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
     return verifications;
   },
 });
@@ -511,7 +522,7 @@ export const getLastMagicLink = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
 
     // Find verification matching the email
     const now = Date.now();

@@ -4,6 +4,11 @@ import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
 import { LinkedAccountsList } from './linked-accounts-list';
 import { PasskeySettings } from './passkey-settings';
+import {
+  BoundedKeysSettings,
+  DeveloperAppsSettings,
+  ConnectedAppsSettings,
+} from '@/features/authorization';
 import { ApiKeysSettings } from './api-keys-settings';
 import { DeleteAccountModal } from './delete-account-modal';
 import { Button } from '@/components/ui/button';
@@ -49,6 +54,12 @@ export function AccountSettingsContent({
       />
 
       <PasskeySettings />
+
+      <ConnectedAppsSettings />
+
+      <DeveloperAppsSettings />
+
+      <BoundedKeysSettings />
 
       <ApiKeysSettings />
 

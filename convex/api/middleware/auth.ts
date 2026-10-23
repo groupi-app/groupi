@@ -1,3 +1,4 @@
+import { secretHash } from '../../authorization/model';
 import { HTTPException } from 'hono/http-exception';
 import type { ActionCtx } from '../../_generated/server';
 import { internal } from '../../_generated/api';
@@ -8,8 +9,16 @@ import { internal } from '../../_generated/api';
  * Validates the API key from the x-api-key header and returns user info.
  */
 
+// Verified transport context. Secrets never cross into route variables.
+// Add new variants only with an explicit dispatcher and domain enforcement.
+export type CredentialContext = {
+  kind: 'legacy-api-key' | 'bounded';
+  credentialId: string;
+};
+
 // Type for authenticated user info
 export type AuthenticatedUser = {
+  credential: CredentialContext;
   userId: string;
   personId: string;
 };
@@ -81,6 +90,7 @@ export async function validateApiKey(
     return {
       userId: result.userId,
       personId: result.personId,
+      credential: result.credential,
     };
   } catch (error) {
     if (error instanceof HTTPException) {
@@ -185,4 +195,45 @@ export async function canModifyReply(
   const canModifyReplyFn = internal.api.auth.canModifyReply;
   const result = await ctx.runQuery(canModifyReplyFn, { replyId, personId });
   return result ?? false;
+}
+
+/** Distinguish bounded tokens before entering any legacy account adapter. */
+export async function validateRequestCredential(
+  ctx: ActionCtx,
+  request: Request
+): Promise<AuthenticatedUser> {
+  const key = getApiKey(request.headers);
+  const authorization = request.headers.get('Authorization');
+  if (key && authorization)
+    throw new HTTPException(401, {
+      message: 'Present exactly one credential.',
+    });
+  let token: string | undefined;
+  let kind: 'named-key' | 'delegated-access' | undefined;
+  if (authorization) {
+    if (!new URL(request.url).pathname.startsWith('/api/v2/'))
+      throw new HTTPException(401, {
+        message: 'Credential audience does not permit this API version.',
+      });
+    const match = /^Bearer ([^\s]+)$/i.exec(authorization);
+    if (!match || match[1].length > 8192)
+      throw new HTTPException(401, { message: 'Invalid bearer credential.' });
+    token = match[1];
+    kind = 'delegated-access';
+  } else if (key?.startsWith('grp_b_')) {
+    token = key;
+    kind = 'named-key';
+  }
+  if (token && kind) {
+    const result = await ctx.runMutation(
+      internal.api.auth.validateBoundedToken,
+      { tokenHash: await secretHash(token), kind }
+    );
+    if (!result)
+      throw new HTTPException(401, {
+        message: 'Invalid or inactive credential.',
+      });
+    return result;
+  }
+  return validateApiKey(ctx, key, request);
 }

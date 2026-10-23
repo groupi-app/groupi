@@ -98,6 +98,7 @@ export function createAvailabilityRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: SubmitAvailabilityRequestSchema,

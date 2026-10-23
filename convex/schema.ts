@@ -1,3 +1,15 @@
+import { tables as delegatedTables } from './delegatedApps/contracts';
+import {
+  principalFields,
+  grantFields,
+  credentialValidator,
+  auditFields,
+} from './authorization/contracts';
+import {
+  addonConfig,
+  addonData,
+  template as addonTemplateValidator,
+} from './addons/contracts';
 import {
   voteFields,
   mode as pollMode,
@@ -37,6 +49,20 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  ...delegatedTables,
+  authorizationPrincipals: defineTable(principalFields).index(
+    'by_ownerPersonId',
+    ['ownerPersonId']
+  ),
+  authorizationGrants: defineTable(grantFields)
+    .index('by_grantorPersonId', ['grantorPersonId'])
+    .index('by_principalId', ['principalId']),
+  authorizationCredentials: defineTable(credentialValidator)
+    .index('by_secretHash', ['secretHash'])
+    .index('by_grantId', ['grantId']),
+  authorizationAudit: defineTable(auditFields)
+    .index('by_grantId', ['grantId'])
+    .index('by_createdAt', ['createdAt']),
   groupToolPolicies: defineTable(policyFields)
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind']),
@@ -302,7 +328,8 @@ export default defineSchema({
     .index('by_creator_normalizedName', ['creatorId', 'normalizedName']),
   uploads: defineTable({
     storageId: v.id('_storage'),
-    personId: v.id('persons'),
+    personId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
+    eventId: v.optional(v.id('events')),
     mimeType: v.string(),
     size: v.number(),
     purpose: v.union(
@@ -635,7 +662,7 @@ export default defineSchema({
     editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     eventId: v.id('events'),
     updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
@@ -648,7 +675,7 @@ export default defineSchema({
     membershipId: v.optional(v.id('memberships')),
     updatedAt: v.optional(v.number()), // Unix timestamp for last edit
     // Denormalized fields
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     postId: v.id('posts'),
   })
     .index('by_post', ['postId'])
@@ -750,7 +777,7 @@ export default defineSchema({
     name: v.optional(v.string()), // "Work Email", "Personal Webhook"
     value: v.string(), // Email address, webhook URL, etc.
     // Webhook-specific configuration
-    webhookHeaders: v.optional(v.any()), // JSON object
+    webhookHeaders: v.optional(v.record(v.string(), v.string())), // JSON object
     customTemplate: v.optional(v.string()),
     webhookFormat: v.optional(
       v.union(
@@ -898,7 +925,7 @@ export default defineSchema({
     postId: v.optional(v.id('posts')),
     replyId: v.optional(v.id('replies')),
     // Uploader reference
-    uploaderId: v.id('persons'),
+    uploaderId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
@@ -950,7 +977,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(), // e.g. 'reminders'
     enabled: v.boolean(),
-    config: v.any(), // addon-specific JSON
+    config: addonConfig, // Registered add-on configuration
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -971,7 +998,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(),
     key: v.string(), // addon-defined key (e.g. 'vote:option1', 'expense:123')
-    data: v.any(), // addon-defined payload
+    data: addonData, // Answers, claims, votes, toggles and service metadata
     createdBy: v.optional(v.id('persons')),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -985,7 +1012,7 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     iconName: v.string(),
-    template: v.any(), // full CustomAddonTemplate (validated before save)
+    template: addonTemplateValidator, // Known draft structure; completeness checked before publication
     version: v.number(),
     isPublished: v.boolean(), // draft vs ready to use
     createdAt: v.number(),

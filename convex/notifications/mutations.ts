@@ -129,7 +129,7 @@ export const addNotificationMethod = mutation({
     type: v.union(v.literal('EMAIL'), v.literal('PUSH'), v.literal('WEBHOOK')),
     name: v.optional(v.string()),
     value: v.string(), // email address, webhook URL, etc.
-    webhookHeaders: v.optional(v.any()), // JSON object for webhook headers
+    webhookHeaders: v.optional(v.record(v.string(), v.string())), // JSON object for webhook headers
     customTemplate: v.optional(v.string()),
     webhookFormat: v.optional(
       v.union(
@@ -235,7 +235,7 @@ export const updateNotificationMethod = mutation({
     enabled: v.optional(v.boolean()),
     name: v.optional(v.string()),
     value: v.optional(v.string()),
-    webhookHeaders: v.optional(v.any()),
+    webhookHeaders: v.optional(v.record(v.string(), v.string())),
     customTemplate: v.optional(v.string()),
     webhookFormat: v.optional(
       v.union(
