@@ -57,7 +57,7 @@
     "version-packages": "pnpm changeset:version && pnpm generate:changelog",
     "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'",
     "check:workspace-source": "node scripts/check-workspace-source.mjs",
-    "test:contracts": "node --test scripts/check-convex-contracts.test.mjs"
+    "test:contracts": "node --test scripts/check-convex-contracts.test.mjs scripts/vercel-build.test.mjs"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",

@@ -1,3 +1,4 @@
+import { createAuthAccount } from '../../../convex/tests/auth.helpers';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServer } from 'node:https';
 import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
@@ -52,6 +53,7 @@ async function fixture(confidential = false) {
   );
   let context: Awaited<ReturnType<typeof helpers.setup>>;
   let origin: string;
+  let dropMutationResponse = false;
   const seenHeaders: Array<{
     authorization: string | undefined;
     key: string | undefined;
@@ -98,6 +100,15 @@ async function fixture(confidential = false) {
             ...(body.length ? { body: new Uint8Array(body) } : {}),
           })
         );
+        if (
+          dropMutationResponse &&
+          req.url?.startsWith('/api/v2/groups/') &&
+          req.method !== 'GET'
+        ) {
+          dropMutationResponse = false;
+          res.destroy();
+          return;
+        }
         res.writeHead(response.status, Object.fromEntries(response.headers));
         res.end(new Uint8Array(await response.arrayBuffer()));
       } catch (error) {
@@ -180,6 +191,9 @@ async function fixture(confidential = false) {
     origin,
     seenHeaders,
     driver,
+    dropNextMutationResponse() {
+      dropMutationResponse = true;
+    },
     async close() {
       server.closeAllConnections();
       await new Promise<void>(done => server.close(() => done()));
@@ -189,6 +203,399 @@ async function fixture(confidential = false) {
 }
 for (const language of ['typescript', 'python'])
   describe(language + ' delegated SDK public journey', () => {
+    it('reads selected Group context with generated SDK and denies unrelated Groups', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const groupId = await context.owner.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Reading Circle' }
+        );
+        const otherId = await context.owner.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Other' }
+        );
+        const authorization = await helpers.authorize(context, {
+          scopes: 'openid groups.context.read groups.events.read',
+          actions: ['groups.context.read', 'groups.events.read'],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions: ['groups.context.read', 'groups.events.read'],
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        expect(
+          await d.request({ operation: 'community', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: {
+            contractVersion: 'community.v1',
+            group: { id: groupId, name: 'Reading Circle' },
+            applications: [],
+          },
+        });
+        expect(
+          await d.request({ operation: 'community', groupId: otherId })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({ ok: true, result: { kind: 'none' } });
+        await context.owner.auth.mutation(
+          makeFunctionReference(
+            'groupEventAudiences/mutations:shareEventWithGroup'
+          ),
+          { groupId, eventId: context.event.eventId }
+        );
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: {
+            kind: 'event',
+            event: { id: context.event.eventId },
+            supportedRsvpChoices: ['PENDING', 'YES', 'NO', 'MAYBE'],
+            allowedRsvpTransitions: [],
+            allowedActions: ['groups.events.read'],
+          },
+        });
+        expect(
+          await d.request({ operation: 'current-event', groupId: otherId })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
+    it('joins Pending, explicitly RSVPs, and reconciles lost independent leaves with the same generated SDK intent', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const staff = await createAuthAccount(
+          context.t,
+          'sdk-participation-staff'
+        );
+        const groupId = await staff.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Participation community' }
+        );
+        await context.t.run(async ctx => {
+          await ctx.db.insert('groupMemberships', {
+            groupId,
+            personId: context.owner.personId,
+            role: 'MEMBER',
+            joinedAt: Date.now(),
+          });
+          await ctx.db.insert('memberships', {
+            eventId: context.event.eventId,
+            personId: staff.personId,
+            role: 'ORGANIZER',
+            rsvpStatus: 'YES',
+          });
+        });
+        await staff.auth.mutation(
+          makeFunctionReference(
+            'groupEventAudiences/mutations:shareEventWithGroup'
+          ),
+          { groupId, eventId: context.event.eventId }
+        );
+        await staff.auth.mutation(
+          makeFunctionReference('events/mutations:updateAdmissionPolicy'),
+          { eventId: context.event.eventId, admissionPolicy: 'DIRECT' }
+        );
+        await context.owner.auth.mutation(
+          makeFunctionReference('events/mutations:leaveEvent'),
+          { eventId: context.event.eventId }
+        );
+        const actions = [
+          'groups.context.read',
+          'groups.events.read',
+          'groups.events.join',
+          'groups.events.rsvp',
+          'groups.events.leave',
+          'groups.leave',
+        ] as const;
+        const authorization = await helpers.authorize(context, {
+          scopes: `openid ${actions.join(' ')}`,
+          actions: [...actions],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions,
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        const path = { groupId, eventId: context.event.eventId };
+        const joinIntent = {
+          operation: 'application',
+          method: 'joinCommunityEvent',
+          operationId: crypto.randomUUID(),
+          input: { path, body: {} },
+        };
+        const joined = await d.request(joinIntent);
+        expect(joined).toMatchObject({
+          ok: true,
+          result: { result: { participation: { rsvp: 'PENDING' } } },
+        });
+        expect(
+          await d.request({
+            operation: 'application',
+            method: 'setCommunityRsvp',
+            operationId: crypto.randomUUID(),
+            input: {
+              path,
+              body: {
+                expectedRevision: joined.result.result.participation.revision,
+                rsvp: 'YES',
+              },
+            },
+          })
+        ).toMatchObject({
+          ok: true,
+          result: { result: { participation: { rsvp: 'YES' } } },
+        });
+        expect(await d.request(joinIntent)).toEqual(joined);
+        const current = await d.request({
+          operation: 'current-event',
+          groupId,
+        });
+        expect(current.result.participation.rsvp).toBe('YES');
+        const community = await d.request({ operation: 'community', groupId });
+        const leaveGroup = {
+          operation: 'application',
+          method: 'leaveCommunity',
+          operationId: crypto.randomUUID(),
+          input: {
+            path: { groupId },
+            body: {
+              expectedMembershipId: community.result.membership.membershipId,
+            },
+          },
+        };
+        f.dropNextMutationResponse();
+        expect(await d.request(leaveGroup)).toMatchObject({
+          ok: false,
+          uncertain: true,
+        });
+        expect(await d.request(leaveGroup)).toMatchObject({
+          ok: true,
+          result: {
+            result: {
+              membership: null,
+              retainsIndependentEventParticipation: true,
+            },
+          },
+        });
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: { participation: { rsvp: 'YES' } },
+        });
+        const leaveEvent = {
+          operation: 'application',
+          method: 'leaveCommunityEvent',
+          operationId: crypto.randomUUID(),
+          input: {
+            path,
+            body: { expectedRevision: current.result.participation.revision },
+          },
+        };
+        f.dropNextMutationResponse();
+        expect(await d.request(leaveEvent)).toMatchObject({
+          ok: false,
+          uncertain: true,
+        });
+        const left = await d.request(leaveEvent);
+        expect(left).toMatchObject({
+          ok: true,
+          result: { result: { participation: null } },
+        });
+        expect(await d.request(leaveEvent)).toEqual(left);
+        expect(
+          await d.request({ ...joinIntent, operationId: crypto.randomUUID() })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
+    it('submits, replays, edits and withdraws selected Group applications through the generated public client', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const staff = await createAuthAccount(
+          context.t,
+          'sdk-application-staff'
+        );
+        const groupId = await staff.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Application community' }
+        );
+        await staff.auth.mutation(
+          makeFunctionReference(
+            'groupApplications/mutations:configureGroupApplications'
+          ),
+          {
+            groupId,
+            applicationsEnabled: true,
+            questions: [
+              {
+                id: 'welcome',
+                label: 'Welcome?',
+                required: true,
+                type: 'LONG_ANSWER',
+              },
+            ],
+          }
+        );
+        const actions = [
+          'groups.context.read',
+          'groups.applications.submit',
+          'groups.applications.edit',
+          'groups.applications.withdraw',
+        ] as const;
+        const authorization = await helpers.authorize(context, {
+          scopes: `openid ${actions.join(' ')}`,
+          actions: [...actions],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions,
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        const read = await d.request({ operation: 'community', groupId });
+        const intent = {
+          operation: 'application',
+          method: 'submitCommunityApplication',
+          operationId: crypto.randomUUID(),
+          input: {
+            path: { groupId },
+            body: {
+              formRevision: read.result.form.revision,
+              answers: { welcome: 'SDK answer' },
+            },
+          },
+        };
+        const first = await d.request(intent);
+        expect(first).toMatchObject({
+          ok: true,
+          result: { outcome: 'committed', result: { status: 'PENDING' } },
+        });
+        expect(await d.request(intent)).toEqual(first);
+        expect(
+          await d.request({
+            ...intent,
+            input: {
+              ...intent.input,
+              body: { ...intent.input.body, answers: { welcome: 'Different' } },
+            },
+          })
+        ).toMatchObject({
+          ok: false,
+          status: 409,
+          code: 'IDEMPOTENCY_CONFLICT',
+        });
+        const path = {
+          groupId,
+          applicationId: first.result.result.applicationId,
+        };
+        const edited = await d.request({
+          operation: 'application',
+          method: 'editCommunityApplication',
+          operationId: crypto.randomUUID(),
+          input: {
+            path,
+            body: {
+              expectedRevision: first.result.result.revision,
+              answers: { welcome: 'Edited SDK answer' },
+            },
+          },
+        });
+        expect(edited).toMatchObject({
+          ok: true,
+          result: { result: { status: 'PENDING' } },
+        });
+        expect(
+          await d.request({
+            operation: 'application',
+            method: 'withdrawCommunityApplication',
+            operationId: crypto.randomUUID(),
+            input: {
+              path,
+              body: { expectedRevision: edited.result.result.revision },
+            },
+          })
+        ).toMatchObject({
+          ok: true,
+          result: { result: { status: 'WITHDRAWN' } },
+        });
+        const history = await d.request({ operation: 'community', groupId });
+        expect(history.result.applications).toHaveLength(1);
+        expect(history.result.applications[0]).toMatchObject({
+          status: 'WITHDRAWN',
+          answers: { welcome: 'Edited SDK answer' },
+        });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
     it.each([false, true])(
       'S256 consent, narrow grant, transparent rotating renewal, expiry and disconnect (confidential=%s)',
       async confidential => {

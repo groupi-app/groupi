@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import { ConvexError, v } from 'convex/values';
 import { internalMutation } from '../_generated/server';
 import { components, internal } from '../_generated/api';
@@ -86,6 +87,11 @@ export const provision = internalMutation({
       });
       eventIds.push(eventId);
       const membershipId = await ctx.db.insert('memberships', {
+        participationRevision: await nextParticipationRevision(
+          ctx,
+          eventId,
+          personId
+        ),
         personId,
         eventId,
         role: 'ORGANIZER',

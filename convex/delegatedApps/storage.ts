@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { paginationOptsValidator } from 'convex/server';
 import { artifactModel, scope } from './contracts';
 import {
   validatePayload,
@@ -11,7 +12,7 @@ import {
   type QueryCtx,
   type MutationCtx,
 } from '../_generated/server';
-import { liveGrant, assertBounds } from '../authorization/model';
+import { liveGrant, assertBounds, secretHash } from '../authorization/model';
 
 async function binding(
   ctx: QueryCtx | MutationCtx,
@@ -97,6 +98,65 @@ export const find = internalQuery({
     return JSON.stringify(payload);
   },
 });
+// Session UIDs locate the live session without storing its opaque cookie key.
+export const findSessionByUid = internalQuery({
+  args: { uidHash: v.string(), now: v.number() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { uidHash, now }) => {
+    const row = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_sessionUidHash', q =>
+        q.eq('model', 'Session').eq('sessionUidHash', uidHash)
+      )
+      .unique();
+    if (
+      !row ||
+      row.expiresAt <= now ||
+      row.consumedAt !== undefined ||
+      (row.grantKey && !(await binding(ctx, row.grantKey, now)))
+    )
+      return null;
+    return JSON.stringify(validatePayload('Session', row.payload));
+  },
+});
+
+// Run to completion when upgrading an installation with existing issuer sessions.
+// Each page is bounded and repeating a page is harmless.
+export const backfillSessionUidHashes = internalMutation({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: v.object({
+    updated: v.number(),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_key', q => q.eq('model', 'Session'))
+      .paginate({
+        ...paginationOpts,
+        numItems: Math.min(100, Math.max(1, paginationOpts.numItems)),
+      });
+    let updated = 0;
+    for (const row of page.page) {
+      if (row.sessionUidHash !== undefined || row.expiresAt <= Date.now())
+        continue;
+      const payload = validatePayload('Session', row.payload);
+      if (!('uid' in payload) || typeof payload.uid !== 'string')
+        throw new Error('Invalid session payload');
+      await ctx.db.patch(row._id, {
+        sessionUidHash: await secretHash(payload.uid),
+      });
+      updated++;
+    }
+    return {
+      updated,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
+
 export const upsert = internalMutation({
   args: {
     model: artifactModel,
@@ -107,7 +167,13 @@ export const upsert = internalMutation({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    validatePayload(args.model, args.payload);
+    const payload = validatePayload(args.model, args.payload);
+    const sessionUidHash =
+      args.model === 'Session' &&
+      'uid' in payload &&
+      typeof payload.uid === 'string'
+        ? await secretHash(payload.uid)
+        : undefined;
     const bound = args.grantKey
       ? await binding(ctx, args.grantKey, Date.now())
       : null;
@@ -125,6 +191,7 @@ export const upsert = internalMutation({
       payload: args.payload,
       grantKey: args.grantKey,
       expiresAt: args.expiresAt,
+      sessionUidHash,
     };
     if (row) await ctx.db.patch(row._id, fields);
     else await ctx.db.insert('delegatedArtifacts', fields);
@@ -238,6 +305,7 @@ export const client = internalQuery({
 });
 export const prepareConsent = internalMutation({
   args: {
+    selectedGroupId: v.optional(v.id('groups')),
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),
@@ -264,6 +332,33 @@ export const prepareConsent = internalMutation({
         q.eq('interactionId', args.interactionId)
       )
       .unique();
+    if (
+      args.requestedScopes.some(s => s.startsWith('groups.')) &&
+      !args.selectedGroupId
+    )
+      throw new Error('Select a Group for own community access');
+    if (
+      args.selectedGroupId &&
+      args.requestedScopes.some(
+        s =>
+          s !== 'openid' &&
+          s !== 'offline_access' &&
+          ![
+            'groups.context.read',
+            'groups.events.read',
+            'groups.events.join',
+            'groups.events.rsvp',
+            'groups.events.leave',
+            'groups.leave',
+            'groups.applications.submit',
+            'groups.applications.edit',
+            'groups.applications.withdraw',
+            'groups.announcements.preferences.update',
+          ].includes(s) &&
+          !s.startsWith('identity.')
+      )
+    )
+      throw new Error('Unsupported selected Group action');
     if (!request) await ctx.db.insert('delegatedConsentRequests', args);
     return null;
   },
@@ -391,6 +486,19 @@ export const finalizeConsent = internalMutation({
       (ticket.background && !request.requestedScopes.includes('offline_access'))
     )
       throw new ConvexError('Approval scope changed');
+    if (
+      ticket.selector.kind === 'selected-group' &&
+      ticket.selector.groupId !== request.selectedGroupId
+    )
+      throw new ConvexError('Selected Group changed');
+    if (
+      request.selectedGroupId &&
+      ticket.selector.kind !== 'selected-group' &&
+      ticket.actions.some(a => !a.startsWith('identity.'))
+    )
+      throw new ConvexError(
+        'Selected Group consent cannot grant unrelated Events'
+      );
     if (ticket.decision === 'denied') {
       await ctx.db.patch(request._id, {
         decision: 'denied',

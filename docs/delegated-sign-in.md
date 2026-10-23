@@ -48,7 +48,10 @@ new authorizations, exchange, renewal and API requests. Review is not a guarante
 that an app is safe and never substitutes for each user's consent.
 
 The consent page names the instance, current account, app, purpose and every
-requested permission. `openid` grants only an opaque identifier. Display name and
+requested permission. Requested actions appear as checked, disabled checkboxes;
+Allow access approves that exact requested action set, and Deny cancels without
+approval. Event selection and separately disclosed background access remain
+optional choices, initially unselected. `openid` grants only an opaque identifier. Display name and
 email require separate `identity.display-name` and `identity.email` consent; no
 profile/email fallback is performed. The persisted subject is specific to the app,
 instance and person. Two apps sharing a callback host get different subjects;
@@ -134,6 +137,24 @@ missing snapshots must never inherit wider grant permissions. Regenerate types
 with `pnpm generate`. The five-minute `pruneExpired` cron removes expired protocol
 artifacts, requests and approval tickets in bounded batches; revocation tombstones
 are intentionally retained.
+
+### Existing issuer session UID index
+
+Before resuming delegated authorization on an installation upgraded from a
+version without the session UID index, run the internal
+`delegatedApps/storage:backfillSessionUidHashes` mutation against the explicitly
+selected existing deployment. Start with
+`{"paginationOpts":{"cursor":null,"numItems":100}}`, then pass each returned
+`continueCursor` until `isDone` is true. Each page updates at most 100 Session
+artifacts; repeat runs are safe. Complete this bounded backfill before testing
+reconnection with existing browser cookies. Do not clear cookies or recreate the
+deployment to bypass the upgrade.
+
+New Session writes populate the model-bound UID hash index automatically. The
+lookup preserves expiration and rejects consumed or revoked artifacts; it never
+scans the artifact table during a protocol request. The primary artifact lookup key remains hashed, and the new Session UID
+index stores a model-bound hash; the UID lookup adds no raw cookie-key storage. Expired artifacts require no backfill and remain subject to
+normal bounded cleanup.
 
 ## Validation evidence and remaining gates
 

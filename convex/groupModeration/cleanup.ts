@@ -14,6 +14,26 @@ export async function removeModerationForPerson(
   personId: Id<'persons'>
 ) {
   for await (const row of ctx.db
+    .query('communityExclusionAudit')
+    .withIndex('by_person', q => q.eq('personId', personId)))
+    await ctx.db.delete(row._id);
+  for await (const row of ctx.db
+    .query('communityExclusionAudit')
+    .withIndex('by_actor', q => q.eq('actorId', personId)))
+    await ctx.db.patch(row._id, { actorId: undefined });
+  for await (const row of ctx.db
+    .query('communityExclusions')
+    .withIndex('by_person', q => q.eq('personId', personId)))
+    await ctx.db.delete(row._id);
+  for await (const row of ctx.db
+    .query('communityExclusions')
+    .withIndex('by_actor', q => q.eq('actorId', personId)))
+    await ctx.db.patch(row._id, { actorId: undefined });
+  for await (const row of ctx.db
+    .query('communityExclusions')
+    .withIndex('by_reinstatedBy', q => q.eq('reinstatedBy', personId)))
+    await ctx.db.patch(row._id, { reinstatedBy: undefined });
+  for await (const row of ctx.db
     .query('groupBans')
     .withIndex('by_personId', q => q.eq('personId', personId)))
     await ctx.db.delete(row._id);

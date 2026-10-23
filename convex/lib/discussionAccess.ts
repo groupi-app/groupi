@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
@@ -7,6 +8,7 @@ export async function requireDiscussionRole(
   personId: Id<'persons'>,
   role: 'ATTENDEE' | 'MODERATOR' | 'ORGANIZER'
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const membership = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

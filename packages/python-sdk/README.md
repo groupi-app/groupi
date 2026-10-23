@@ -1,7 +1,7 @@
 # Groupi Python SDK
 
 Unpublished dependency-free Python >=3.11 REST v2 candidate. It covers 238 public
-operations: 236 generated named methods plus binary upload/discard. Runtime
+operations: 249 generated named methods plus binary upload/discard. Runtime
 TypedDict models, `.pyi` declarations and `py.typed` preserve required keys, enums,
 nullable values, composed schemas and typed pagination. All generated resource
 contracts have specific known types; external error details remain opaque.
@@ -86,3 +86,23 @@ Local observed runtime is Python 3.14.7; the declared >=3.11 matrix needs CI
 results. Source evidence is not deployed API or published-package evidence.
 Registry ownership and publication approval remain release prerequisites.
 Realtime, encrypted-event decryption and per-instance mobile push are excluded.
+
+### Selected Group participation (G5 source candidate)
+
+Request only necessary `groups.events.join`, `groups.events.rsvp`,
+`groups.events.leave` and `groups.leave` scopes with the selected Group grant.
+Read scope is separate. Join sends `{}` and creates Pending, never Yes; explicitly
+set own RSVP with the observed current-event `expectedRevision`. Event Leave also
+sends `{expectedRevision}`. Group Leave sends `{expectedMembershipId}` from own
+community context and preserves independent Event membership and RSVP.
+
+Persist a UUID operation ID and unchanged payload for each deliberate intent before
+sending. A lost response is uncertain: retry that original intent to retrieve its
+minimal committed receipt, including after successful leave removed membership.
+Replay never deletes a replacement membership or resets a later RSVP. Fresh stale
+forms fail; refresh authorized current state before a new intent. Receipts describe
+original commitment; use separately authorized reads for current state. Shared G3/G5
+receipts last 30 days with permanent mismatch tombstones. Ownership/last-Organizer
+conflicts require resolution; never display successful departure for those errors.
+See the repository's `docs/community-integration-contract.md` for exact bodies,
+result shapes, independent read/write authority and deployment gates.

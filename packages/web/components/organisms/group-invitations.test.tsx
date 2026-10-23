@@ -1,3 +1,12 @@
+vi.mock('./community-expulsion-progress', () => ({
+  CommunityExpulsionProgress: () => null,
+}));
+vi.mock('./community-expulsion-action', () => ({
+  CommunityExpulsionAction: () => null,
+}));
+vi.mock('@/features/group-announcements/event-mail', () => ({
+  EventMail: () => null,
+}));
 vi.mock('./group-announcement-composer', () => ({
   GroupAnnouncementComposer: () => null,
 }));

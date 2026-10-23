@@ -2060,6 +2060,314 @@ Update event visibility, admission and permissions Requires organizer authority.
 }
 ```
 
+## GET /api/v2/events/{eventId}/lifecycle
+Canonical passage: /v2/reference/api#get-events-eventId-lifecycle
+
+Read Organizer lifecycle and revision  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Current Organizer lifecycle",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "audienceConflicts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "groupId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "groupId",
+                    "name"
+                  ]
+                }
+              },
+              "revision": {
+                "type": "string"
+              },
+              "completed": {
+                "type": "boolean"
+              },
+              "completedAt": {
+                "type": "number",
+                "nullable": true
+              },
+              "startsAt": {
+                "type": "number",
+                "nullable": true
+              },
+              "endsAt": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "audienceConflicts",
+              "revision",
+              "completed",
+              "completedAt",
+              "startsAt",
+              "endsAt"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid input or cursor",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Insufficient event authority or eligibility",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event or membership not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/events/{eventId}/lifecycle
+Canonical passage: /v2/reference/api#post-events-eventId-lifecycle
+
+Complete, reopen or reschedule as current Organizer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "example": "k170xyz...",
+        "description": "Event ID"
+      },
+      "required": true,
+      "description": "Event ID",
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedRevision": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "reopen",
+                "reschedule"
+              ]
+            },
+            "startsAt": {
+              "type": "number",
+              "nullable": true
+            },
+            "endsAt": {
+              "type": "number",
+              "nullable": true
+            }
+          },
+          "required": [
+            "expectedRevision",
+            "action"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Minimal committed receipt; replay never repeats effects",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "string"
+                  },
+                  "completed": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "revision",
+                  "completed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "result",
+              "effects"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid input or cursor",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Insufficient event authority or eligibility",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Event or membership not found",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Stale revision or conflicting/expired operation ID",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ## GET /api/v2/events/{eventId}/applications/form
 Canonical passage: /v2/reference/api#get-events-eventId-applications-form
 
@@ -15005,6 +15313,794 @@ Owner controls poll availability and creation  Source-generated operation; schem
 }
 ```
 
+## POST /api/v2/groups/{groupId}/coordinated-expulsions
+Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions
+
+Commit coordinated community exclusion as staff  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "personId": {
+              "type": "string"
+            },
+            "policy": {
+              "type": "string",
+              "enum": [
+                "coordinated"
+              ]
+            }
+          },
+          "required": [
+            "personId",
+            "policy"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Exclusion committed; cleanup remains pending or blocked",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "exclusion": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive"
+                ]
+              },
+              "generation": {
+                "type": "number"
+              },
+              "cleanup": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "blocked",
+                  "complete"
+                ]
+              },
+              "conflicts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "code"
+                  ]
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "blocked",
+                        "complete",
+                        "preserved",
+                        "retired"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "state"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "exclusion",
+              "generation",
+              "cleanup",
+              "conflicts"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v2/groups/{groupId}/coordinated-expulsions/{personId}
+Canonical passage: /v2/reference/api#get-groups-groupId-coordinated-expulsions-personId
+
+Reconcile coordinated exclusion progress as current staff  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "personId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Current staff progress",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "exclusion": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive"
+                ]
+              },
+              "generation": {
+                "type": "number"
+              },
+              "cleanup": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "blocked",
+                  "complete"
+                ]
+              },
+              "conflicts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "code"
+                  ]
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "blocked",
+                        "complete",
+                        "preserved",
+                        "retired"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "state"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "exclusion",
+              "generation",
+              "cleanup",
+              "conflicts"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/resume
+Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-resume
+
+Resume cleanup with current independent Event authority  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "personId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "generation": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            }
+          },
+          "required": [
+            "generation"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Current committed resolution; reconcile progress before another intent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "exclusion": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive"
+                ]
+              },
+              "generation": {
+                "type": "number"
+              },
+              "cleanup": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "blocked",
+                  "complete"
+                ]
+              },
+              "conflicts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "code"
+                  ]
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "blocked",
+                        "complete",
+                        "preserved",
+                        "retired"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "state"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "exclusion",
+              "generation",
+              "cleanup",
+              "conflicts"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/reinstate
+Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-reinstate
+
+Reinstate after complete cleanup without restoring admission  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "personId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "generation": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            }
+          },
+          "required": [
+            "generation"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Current committed resolution; reconcile progress before another intent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "exclusion": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive"
+                ]
+              },
+              "generation": {
+                "type": "number"
+              },
+              "cleanup": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "blocked",
+                  "complete"
+                ]
+              },
+              "conflicts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "code"
+                  ]
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "blocked",
+                        "complete",
+                        "preserved",
+                        "retired"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "state"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "exclusion",
+              "generation",
+              "cleanup",
+              "conflicts"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ## GET /api/v2/groups
 Canonical passage: /v2/reference/api#get-groups
 
@@ -15282,6 +16378,16 @@ List your Groups  Source-generated operation; schemas and per-operation response
           }
         }
       }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
     }
   }
 }
@@ -15375,6 +16481,16 @@ Create an owner-only Group  Source-generated operation; schemas and per-operatio
     },
     "404": {
       "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
       "content": {
         "application/json": {
           "schema": {
@@ -15638,6 +16754,16 @@ Read an admitted Group  Source-generated operation; schemas and per-operation re
           }
         }
       }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
     }
   }
 }
@@ -15734,6 +16860,16 @@ Update Group identity as owner  Source-generated operation; schemas and per-oper
           }
         }
       }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
     }
   }
 }
@@ -15794,6 +16930,2200 @@ Explicitly delete a Group as owner  Source-generated operation; schemas and per-
     },
     "404": {
       "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v2/groups/{groupId}/community-context
+Canonical passage: /v2/reference/api#get-groups-groupId-community-context
+
+Read own community context  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "maxLength": 4096
+      },
+      "required": false,
+      "name": "cursor",
+      "in": "query"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Selected Group own context; private no-store",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "contractVersion": {
+                "type": "string",
+                "enum": [
+                  "community.v1"
+                ]
+              },
+              "group": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              },
+              "form": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "revision": {
+                    "type": "string"
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 1000
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "SHORT_ANSWER",
+                            "LONG_ANSWER",
+                            "MULTIPLE_CHOICE",
+                            "CHECKBOXES",
+                            "NUMBER",
+                            "DROPDOWN",
+                            "YES_NO"
+                          ]
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                          },
+                          "maxItems": 100
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "label",
+                        "required",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "revision",
+                  "questions"
+                ]
+              },
+              "membership": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "membershipId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "OWNER",
+                      "MODERATOR",
+                      "MEMBER"
+                    ]
+                  }
+                },
+                "required": [
+                  "membershipId",
+                  "role"
+                ]
+              },
+              "eligibility": {
+                "type": "object",
+                "properties": {
+                  "canApply": {
+                    "type": "boolean"
+                  },
+                  "canAccessMemberContent": {
+                    "type": "boolean"
+                  },
+                  "banned": {
+                    "type": "boolean"
+                  },
+                  "excluded": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "canApply",
+                  "canAccessMemberContent",
+                  "banned",
+                  "excluded"
+                ]
+              },
+              "applications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "WITHDRAWN",
+                        "APPROVED",
+                        "DECLINED"
+                      ]
+                    },
+                    "revision": {
+                      "type": "number"
+                    },
+                    "decisionDelivery": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "sending",
+                        "sent",
+                        "failed",
+                        "suppressed"
+                      ]
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "required": {
+                            "type": "boolean"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SHORT_ANSWER",
+                              "LONG_ANSWER",
+                              "MULTIPLE_CHOICE",
+                              "CHECKBOXES",
+                              "NUMBER",
+                              "DROPDOWN",
+                              "YES_NO"
+                            ]
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 500
+                            },
+                            "maxItems": 100
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "required",
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "answers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "submittedAt": {
+                      "type": "number"
+                    },
+                    "decisions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "PENDING",
+                              "WITHDRAWN",
+                              "APPROVED",
+                              "DECLINED"
+                            ]
+                          },
+                          "at": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "revision",
+                    "questions",
+                    "answers",
+                    "submittedAt",
+                    "decisions"
+                  ]
+                }
+              },
+              "nextCursor": {
+                "type": "string",
+                "nullable": true
+              },
+              "grantedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "announcementPreference": {
+                "type": "object",
+                "properties": {
+                  "supported": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "subscribed": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "supported",
+                  "subscribed"
+                ]
+              }
+            },
+            "required": [
+              "contractVersion",
+              "group",
+              "form",
+              "membership",
+              "eligibility",
+              "applications",
+              "nextCursor",
+              "grantedActions",
+              "allowedActions",
+              "announcementPreference"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "503": {
+      "description": "Retryable unavailable service",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v2/groups/{groupId}/current-event
+Canonical passage: /v2/reference/api#get-groups-groupId-current-event
+
+Read the single current selected Group Event  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Explicit absence, staff configuration conflict, or permitted Event logistics and own RSVP; private no-store",
+      "content": {
+        "application/json": {
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "none"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "conflict"
+                    ]
+                  },
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "STAFF_CONFIGURATION_CONFLICT"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "code"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "event"
+                    ]
+                  },
+                  "supportedRsvpChoices": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "YES",
+                        "NO",
+                        "MAYBE"
+                      ]
+                    }
+                  },
+                  "allowedRsvpTransitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "YES",
+                        "NO",
+                        "MAYBE"
+                      ]
+                    }
+                  },
+                  "event": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "timezone": {
+                        "type": "string"
+                      },
+                      "startsAt": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "endsAt": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "ongoing": {
+                        "type": "boolean"
+                      },
+                      "roster": {
+                        "type": "array",
+                        "nullable": true,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "displayName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "displayName"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "title",
+                      "location",
+                      "description",
+                      "timezone",
+                      "startsAt",
+                      "endsAt",
+                      "ongoing",
+                      "roster"
+                    ]
+                  },
+                  "participation": {
+                    "type": "object",
+                    "nullable": true,
+                    "properties": {
+                      "membershipId": {
+                        "type": "string"
+                      },
+                      "revision": {
+                        "type": "number"
+                      },
+                      "rsvp": {
+                        "type": "string",
+                        "enum": [
+                          "PENDING",
+                          "YES",
+                          "NO",
+                          "MAYBE"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "membershipId",
+                      "revision",
+                      "rsvp"
+                    ]
+                  },
+                  "allowedActions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "supportedRsvpChoices",
+                  "allowedRsvpTransitions",
+                  "event",
+                  "participation",
+                  "allowedActions"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Protected ownership, existing exclusion or idempotency conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "503": {
+      "description": "Retryable unavailable service",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/events/{eventId}/join
+Canonical passage: /v2/reference/api#post-groups-groupId-events-eventId-join
+
+joinCommunityEvent  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; independent participation is retained on Group departure",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "participation": {
+                    "type": "object",
+                    "properties": {
+                      "membershipId": {
+                        "type": "string"
+                      },
+                      "revision": {
+                        "type": "number"
+                      },
+                      "rsvp": {
+                        "type": "string",
+                        "enum": [
+                          "PENDING",
+                          "YES",
+                          "NO",
+                          "MAYBE"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "membershipId",
+                      "revision",
+                      "rsvp"
+                    ]
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "participation"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "effects",
+              "result"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Stale intent, protected role, or operation replay conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v2/groups/{groupId}/events/{eventId}/own-rsvp
+Canonical passage: /v2/reference/api#put-groups-groupId-events-eventId-own-rsvp
+
+setCommunityRsvp  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "rsvp": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "YES",
+                "NO",
+                "MAYBE"
+              ]
+            }
+          },
+          "required": [
+            "expectedRevision",
+            "rsvp"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; independent participation is retained on Group departure",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "participation": {
+                    "type": "object",
+                    "properties": {
+                      "membershipId": {
+                        "type": "string"
+                      },
+                      "revision": {
+                        "type": "number"
+                      },
+                      "rsvp": {
+                        "type": "string",
+                        "enum": [
+                          "PENDING",
+                          "YES",
+                          "NO",
+                          "MAYBE"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "membershipId",
+                      "revision",
+                      "rsvp"
+                    ]
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "participation"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "effects",
+              "result"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Stale intent, protected role, or operation replay conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/events/{eventId}/leave
+Canonical passage: /v2/reference/api#post-groups-groupId-events-eventId-leave
+
+leaveCommunityEvent  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "eventId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "expectedRevision"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; independent participation is retained on Group departure",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "participation": {
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "participation"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "effects",
+              "result"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Stale intent, protected role, or operation replay conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/community-leave
+Canonical passage: /v2/reference/api#post-groups-groupId-community-leave
+
+leaveCommunity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedMembershipId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "expectedMembershipId"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; independent participation is retained on Group departure",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "membership": {
+                    "nullable": true
+                  },
+                  "retainsIndependentEventParticipation": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "membership",
+                  "retainsIndependentEventParticipation"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "effects",
+              "result"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Stale intent, protected role, or operation replay conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/community-applications
+Canonical passage: /v2/reference/api#post-groups-groupId-community-applications
+
+submitCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "formRevision": {
+              "type": "string"
+            },
+            "answers": {
+              "type": "object",
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "maxItems": 100
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "formRevision",
+            "answers"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; email delivery is independent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "applicationId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "WITHDRAWN",
+                      "APPROVED",
+                      "DECLINED"
+                    ]
+                  },
+                  "revision": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "applicationId",
+                  "status",
+                  "revision"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "result",
+              "effects"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Revision or operation intent conflict; reconcile authorized state",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PATCH /api/v2/groups/{groupId}/community-applications/{applicationId}
+Canonical passage: /v2/reference/api#patch-groups-groupId-community-applications-applicationId
+
+editCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "applicationId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "answers": {
+              "type": "object",
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "maxItems": 100
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "expectedRevision",
+            "answers"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; email delivery is independent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "applicationId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "WITHDRAWN",
+                      "APPROVED",
+                      "DECLINED"
+                    ]
+                  },
+                  "revision": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "applicationId",
+                  "status",
+                  "revision"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "result",
+              "effects"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Revision or operation intent conflict; reconcile authorized state",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/community-applications/{applicationId}/withdraw
+Canonical passage: /v2/reference/api#post-groups-groupId-community-applications-applicationId-withdraw
+
+withdrawCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string"
+      },
+      "required": true,
+      "name": "applicationId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "expectedRevision"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed minimal receipt; email delivery is independent",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "applicationId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "WITHDRAWN",
+                      "APPROVED",
+                      "DECLINED"
+                    ]
+                  },
+                  "revision": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "applicationId",
+                  "status",
+                  "revision"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "result",
+              "effects"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Revision or operation intent conflict; reconcile authorized state",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## PUT /api/v2/groups/{groupId}/announcement-preference
+Canonical passage: /v2/reference/api#put-groups-groupId-announcement-preference
+
+Change own Group announcement subscription  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "required": true,
+      "name": "Idempotency-Key",
+      "in": "header"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "subscribed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "subscribed"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Committed own preference",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "operationId": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "committed"
+                ]
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "subscribed": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "subscribed"
+                ]
+              },
+              "effects": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  },
+                  "cleanup": {
+                    "type": "string",
+                    "enum": [
+                      "not-requested"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "cleanup"
+                ]
+              }
+            },
+            "required": [
+              "operationId",
+              "outcome",
+              "result",
+              "effects"
+            ]
+          }
+        }
+      }
+    },
+    "400": {
+      "description": "Invalid identity or pagination",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Owner authority or Group scope required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "404": {
+      "description": "Group unavailable",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "409": {
+      "description": "Operation intent conflict",
       "content": {
         "application/json": {
           "schema": {
@@ -21611,6 +24941,9 @@ Edit your pending answers against saved question definitions  Source-generated o
                   }
                 ]
               }
+            },
+            "expectedRevision": {
+              "type": "integer"
             }
           },
           "required": [
@@ -21930,6 +25263,13 @@ Approve or decline an application as current Group manager  Source-generated ope
                 "APPROVED",
                 "DECLINED"
               ]
+            },
+            "expectedRevision": {
+              "type": "integer"
+            },
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
             }
           },
           "required": [
@@ -35541,6 +38881,7 @@ List username invitations  Source-generated operation; schemas and per-operation
           "PENDING",
           "ACCEPTED",
           "DECLINED",
+          "CANCELLED",
           "all"
         ]
       },
@@ -35589,7 +38930,8 @@ List username invitations  Source-generated operation; schemas and per-operation
                       "enum": [
                         "PENDING",
                         "ACCEPTED",
-                        "DECLINED"
+                        "DECLINED",
+                        "CANCELLED"
                       ]
                     },
                     "message": {
@@ -36133,6 +39475,7 @@ List username invitations  Source-generated operation; schemas and per-operation
           "PENDING",
           "ACCEPTED",
           "DECLINED",
+          "CANCELLED",
           "all"
         ]
       },
@@ -36181,7 +39524,8 @@ List username invitations  Source-generated operation; schemas and per-operation
                       "enum": [
                         "PENDING",
                         "ACCEPTED",
-                        "DECLINED"
+                        "DECLINED",
+                        "CANCELLED"
                       ]
                     },
                     "message": {
@@ -36319,7 +39663,8 @@ Inspect username invitation  Source-generated operation; schemas and per-operati
                 "enum": [
                   "PENDING",
                   "ACCEPTED",
-                  "DECLINED"
+                  "DECLINED",
+                  "CANCELLED"
                 ]
               },
               "message": {

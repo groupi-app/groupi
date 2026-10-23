@@ -22,7 +22,14 @@ export const reviewStatus = v.union(
   v.literal('reviewed'),
   v.literal('rejected')
 );
+export const hostedAppearance = v.object({
+  brandName: v.string(),
+  accent: v.string(),
+  senderName: v.string(),
+  statusReturnUrl: v.optional(v.string()),
+});
 export const appFields = {
+  appearance: v.optional(hostedAppearance),
   ownerPersonId: v.id('persons'),
   name: v.string(),
   purpose: v.string(),
@@ -77,7 +84,9 @@ export const tables = {
     grantKey: v.optional(v.string()),
     expiresAt: v.number(),
     consumedAt: v.optional(v.number()),
+    sessionUidHash: v.optional(v.string()),
   })
+    .index('by_model_and_sessionUidHash', ['model', 'sessionUidHash'])
     .index('by_model_and_key', ['model', 'key'])
     .index('by_grantKey', ['grantKey'])
     .index('by_expiresAt', ['expiresAt']),
@@ -115,6 +124,7 @@ export const tables = {
     .index('by_interactionId_and_personId', ['interactionId', 'personId'])
     .index('by_expiresAt', ['expiresAt']),
   delegatedConsentRequests: defineTable({
+    selectedGroupId: v.optional(v.id('groups')),
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),

@@ -8,6 +8,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useIsActive } from '@/providers/visibility-provider';
+import { canViewAttendeeList } from '@/lib/event-permissions';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +41,19 @@ export function useEventHeaderData(eventId: Id<'events'>) {
  * Get event attendees page data (full member list with availability)
  */
 export function useEventAttendeesData(eventId: Id<'events'>) {
-  return useQuery(eventQueries.getEventAttendeesData, { eventId });
+  const header = useEventHeaderData(eventId);
+  const canView = canViewAttendeeList(
+    header?.userMembership?.role,
+    header?.permissions
+  );
+  const attendees = useQuery(
+    eventQueries.getEventAttendeesData,
+    canView ? { eventId } : 'skip'
+  );
+
+  // A restricted roster is settled, not loading. Never retain previously
+  // visible roster data after permission changes. The backend remains authoritative.
+  return header === undefined ? undefined : canView ? attendees : null;
 }
 
 /**

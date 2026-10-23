@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { ConvexError, v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -68,6 +69,7 @@ async function eligible(
   ownerId: Id<'persons'>,
   recipientId: Id<'persons'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, recipientId);
   const [identity, member, ban, blocked] = await Promise.all([
     livePerson(ctx, recipientId),
     ctx.db

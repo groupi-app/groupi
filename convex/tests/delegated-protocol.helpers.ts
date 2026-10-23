@@ -139,7 +139,8 @@ export async function token(
 }
 export async function beginConsent(
   context: Awaited<ReturnType<typeof setup>>,
-  scopes: string
+  scopes: string,
+  selectedGroupId?: string
 ) {
   const { t, owner, appId } = context;
   const url = authorizationUrl(
@@ -148,6 +149,7 @@ export async function beginConsent(
     context.redirectUri,
     context.issuer
   );
+  if (selectedGroupId) url.searchParams.set('group_id', selectedGroupId);
   const start = await t.fetch(url.pathname + url.search);
   expect(start.status, await start.clone().text()).toBe(303);
   const cookies = start.headers
@@ -181,7 +183,10 @@ export async function authorize(
   const { t, owner } = context;
   const { interactionId, cookies } = await beginConsent(
     context,
-    options.scopes
+    options.scopes,
+    options.selector.kind === 'selected-group'
+      ? options.selector.groupId
+      : undefined
   );
   const approval = await owner.auth.mutation(
     api.delegatedApps.mutations.approveConsent,

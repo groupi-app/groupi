@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CommunityExpulsionAction } from './community-expulsion-action';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useGroupMembers } from '@/hooks/convex/use-group-invitations';
@@ -24,7 +25,7 @@ function GroupMemberActions({
   const ban = useBanGroupPerson();
   const name = member.name || member.username || 'Unavailable member';
   return (
-    <div className='flex flex-wrap gap-2'>
+    <div className='flex w-full flex-wrap gap-2 sm:w-auto sm:max-w-sm sm:justify-end'>
       {member.canChangeRole && (
         <GroupConfirmedAction
           label={
@@ -60,6 +61,13 @@ function GroupMemberActions({
         />
       )}
       {member.canBan && (
+        <CommunityExpulsionAction
+          groupId={groupId}
+          personId={member.personId}
+          name={name}
+        />
+      )}
+      {member.canBan && (
         <GroupConfirmedAction
           label={`Ban ${name}`}
           confirmation={`Confirm ban of ${name}`}
@@ -79,7 +87,10 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
       className='flex flex-col gap-3'
       aria-labelledby='group-members-heading'
     >
-      <h2 id='group-members-heading' className='text-xl font-bold'>
+      <h2
+        id='group-members-heading'
+        className='font-heading text-xl font-semibold'
+      >
         Group members
       </h2>
       {members === undefined ? (
@@ -87,27 +98,29 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
       ) : (
         <>
           {members.page.length === 0 && <p>No members to display.</p>}
-          <ul className='flex flex-col gap-3'>
+          <ul className='divide-y divide-border'>
             {members.page.map(member => {
               const name =
                 member.name || member.username || 'Unavailable member';
               return (
                 <li
                   key={member.personId}
-                  className='flex flex-wrap items-center gap-3 rounded-card bg-card p-3'
+                  className='flex flex-wrap items-center gap-3 py-4'
                 >
                   <Avatar>
                     <AvatarImage src={member.image ?? undefined} alt='' />
                     <AvatarFallback>{name.slice(0, 1)}</AvatarFallback>
                   </Avatar>
-                  <div className='min-w-0 flex-1 break-words'>
+                  <div className='min-w-0 flex-1 basis-32 break-words'>
                     <p className='font-medium'>{name}</p>
                     {member.username && (
                       <p className='text-sm text-muted-foreground'>
                         @{member.username}
                       </p>
                     )}
-                    <p className='text-sm'>{roles[member.role]}</p>
+                    <p className='mt-1 text-sm font-medium text-muted-foreground'>
+                      {roles[member.role]}
+                    </p>
                   </div>
                   <GroupMemberActions
                     key={`${member.personId}-${member.role}`}

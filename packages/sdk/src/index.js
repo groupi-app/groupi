@@ -113,6 +113,14 @@ export class Groupi extends Transport {
   updateEventVisibilityAdmissionAndPermissions(input = {}, options = {}) {
     return this.request('PATCH', '/events/{eventId}/settings', input, options);
   }
+  /** Read Organizer lifecycle and revision */
+  readEventLifecycle(input = {}, options = {}) {
+    return this.request('GET', '/events/{eventId}/lifecycle', input, options);
+  }
+  /** Complete, reopen or reschedule as current Organizer */
+  updateEventLifecycle(input = {}, options = {}) {
+    return this.request('POST', '/events/{eventId}/lifecycle', input, options);
+  }
   /**  */
   getEventsEventIdApplicationsForm(input = {}, options = {}) {
     return this.request(
@@ -902,6 +910,42 @@ export class Groupi extends Transport {
   ownerControlsPollAvailabilityAndCreation(input = {}, options = {}) {
     return this.request('PUT', '/groups/{groupId}/poll-policy', input, options);
   }
+  /** Commit coordinated community exclusion as staff */
+  expelCommunityMember(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions',
+      input,
+      options
+    );
+  }
+  /** Reconcile coordinated exclusion progress as current staff */
+  readCommunityExpulsion(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/coordinated-expulsions/{personId}',
+      input,
+      options
+    );
+  }
+  /** Resume cleanup with current independent Event authority */
+  resumeCommunityExpulsion(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions/{personId}/resume',
+      input,
+      options
+    );
+  }
+  /** Reinstate after complete cleanup without restoring admission */
+  reinstateCommunityMember(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions/{personId}/reinstate',
+      input,
+      options
+    );
+  }
   /** List your Groups */
   listYourGroups(input = {}, options = {}) {
     return this.request('GET', '/groups', input, options);
@@ -929,6 +973,96 @@ export class Groupi extends Transport {
   /** Explicitly delete a Group as owner */
   explicitlyDeleteAGroupAsOwner(input = {}, options = {}) {
     return this.request('DELETE', '/groups/{groupId}', input, options);
+  }
+  /** Read own community context */
+  readOwnCommunityContext(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/community-context',
+      input,
+      options
+    );
+  }
+  /** Read the single current selected Group Event */
+  readCurrentCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/current-event',
+      input,
+      options
+    );
+  }
+  /** joinCommunityEvent */
+  joinCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/events/{eventId}/join',
+      input,
+      options
+    );
+  }
+  /** setCommunityRsvp */
+  setCommunityRsvp(input = {}, options = {}) {
+    return this.request(
+      'PUT',
+      '/groups/{groupId}/events/{eventId}/own-rsvp',
+      input,
+      options
+    );
+  }
+  /** leaveCommunityEvent */
+  leaveCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/events/{eventId}/leave',
+      input,
+      options
+    );
+  }
+  /** leaveCommunity */
+  leaveCommunity(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-leave',
+      input,
+      options
+    );
+  }
+  /** submitCommunityApplication */
+  submitCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-applications',
+      input,
+      options
+    );
+  }
+  /** editCommunityApplication */
+  editCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'PATCH',
+      '/groups/{groupId}/community-applications/{applicationId}',
+      input,
+      options
+    );
+  }
+  /** withdrawCommunityApplication */
+  withdrawCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-applications/{applicationId}/withdraw',
+      input,
+      options
+    );
+  }
+  /** Change own Group announcement subscription */
+  setCommunityAnnouncementPreference(input = {}, options = {}) {
+    return this.request(
+      'PUT',
+      '/groups/{groupId}/announcement-preference',
+      input,
+      options
+    );
   }
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(input = {}, options = {}) {
