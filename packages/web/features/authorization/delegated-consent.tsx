@@ -1,6 +1,6 @@
 'use client';
 import { HostedBrand } from './hosted-brand';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -19,10 +19,6 @@ import {
 
 export function DelegatedConsent({ interactionId }: { interactionId: string }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const request = useQuery(
-    api.delegatedApps.queries.getConsentRequest,
-    isAuthenticated && interactionId ? { interactionId } : 'skip'
-  );
   const account = useQuery(
     api.auth.queries.getCurrentUser,
     isAuthenticated ? {} : 'skip'
@@ -49,18 +45,61 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
         </CardContent>
       </Card>
     );
-  if (!interactionId || request === null || account === null)
+  if (!interactionId || account === null)
     return (
       <p role='alert'>
         This connection request is unavailable or expired. Return to the app to
         start again.
       </p>
     );
-  if (request === undefined || account === undefined)
+  if (account === undefined)
+    return <p role='status'>Loading connection request…</p>;
+  return (
+    <ConsentFlow
+      key={JSON.stringify([interactionId, account._id])}
+      interactionId={interactionId}
+    />
+  );
+}
+function ConsentFlow({ interactionId }: { interactionId: string }) {
+  const request = useQuery(api.delegatedApps.queries.getConsentRequest, {
+    interactionId,
+  });
+  const [pending, setPending] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  if (resumeUrl || (pending && !request))
+    return (
+      <div className='space-y-3'>
+        <p role='status'>Redirecting…</p>
+        {resumeUrl ? (
+          <p>
+            If you are not redirected,{' '}
+            <a className='text-primary underline' href={resumeUrl}>
+              Continue
+            </a>
+            .
+          </p>
+        ) : null}
+      </div>
+    );
+  if (request === null)
+    return (
+      <p role='alert'>
+        This connection request is unavailable or expired. Return to the app to
+        start again.
+      </p>
+    );
+  if (request === undefined)
     return <p role='status'>Loading connection request…</p>;
   const requestKey = JSON.stringify([
     interactionId,
-    account._id,
     request.appId,
     request.selectedGroup?.id,
     request.expiresAt,
@@ -72,14 +111,24 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
       key={requestKey}
       interactionId={interactionId}
       request={request}
+      onPending={setPending}
+      onRedirect={destination => {
+        if (!active.current) return;
+        setResumeUrl(destination);
+        window.location.assign(destination);
+      }}
     />
   );
 }
 function ConsentChoices({
   interactionId,
   request,
+  onPending,
+  onRedirect,
 }: {
   interactionId: string;
+  onPending: (pending: boolean) => void;
+  onRedirect: (destination: string) => void;
   request: NonNullable<
     FunctionReturnType<typeof api.delegatedApps.queries.getConsentRequest>
   >;
@@ -107,6 +156,7 @@ function ConsentChoices({
       return;
     }
     setPending(true);
+    onPending(true);
     setError(null);
     try {
       const result = allow
@@ -130,12 +180,13 @@ function ConsentChoices({
         throw new Error(
           'The sign-in continuation does not match this instance.'
         );
-      window.location.assign(destination.href);
+      onRedirect(destination.href);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'Could not complete consent'
       );
       setPending(false);
+      onPending(false);
     }
   }
   if (now >= request.expiresAt)
