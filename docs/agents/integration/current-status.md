@@ -1,5 +1,12 @@
 # Current Integration Status
 
+## Groups web design refinement — source evidence as of 2026-10-23
+
+- Uncommitted review batch on `codex/refine-group-pages`, based on provider feature `865859b4`: Group detail and unlisted landing identity, tool navigation, Groups chooser, member roster, and shared Event layout. Existing data hooks, permission branches, onboarding, applications, confirmations, and management operations remain intact.
+- `pnpm check` passes (seven-package lint/types, 774 source/generated contracts, repository formatting). Seven existing web behavior suites pass: 85 tests covering Groups, invitations, applications, questionnaire, moderation, shared Events, and ownership transfer. Token lint reports no violations in the changed components; its 30 existing warnings remain in three unrelated files.
+- Runtime gates remain open: no deployed frontend includes this uncommitted batch, matching frontend/backend source is unverified, and an isolated signed-in browser session has not been established. Desktop/narrow-screen rendering, dark mode, keyboard focus, and actual assistive-technology behavior still require runtime observation. No local server/build, deployment, commit, or push was performed.
+- Approved release note: `@groupi/web`, patch — “Refine Group pages with clearer identity, compact tool navigation, and responsive member and shared Event layouts.” Recorded in `.changeset/refine-group-pages.md`; no package versioning or publication was performed.
+
 ## Universal community integration — source evidence as of 2026-10-19
 
 - The source integration includes selected-Group delegated own-context and application writes, independent Event Join/RSVP/leave, Group leave, configurable hosted app appearance, decision delivery, explicit announcement opt-in, and coordinated exclusion cleanup/reinstatement. The provider baseline is `45d00c14`.
