@@ -315,3 +315,181 @@ it('grants background and all-event access only after their separate opt-ins and
     background: true,
   });
 });
+
+it.each(['Allow access', 'Deny'])(
+  'keeps redirect feedback after %s consumes the request',
+  async decision => {
+    let request: ReturnType<typeof consentRequest> | null = {
+      ...consentRequest(),
+      requestedScopes: ['openid'],
+      requestedActions: [],
+    };
+    vi.mocked(useQuery).mockImplementation((...args) =>
+      args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
+    );
+    let finish!: (result: { resumeUrl: string }) => void;
+    const mutation = vi.fn(
+      () =>
+        new Promise<{ resumeUrl: string }>(resolve => {
+          finish = resolve;
+        })
+    );
+    vi.mocked(useMutation).mockReturnValue(mutation as never);
+    const assign = vi.fn();
+    const originalWindow = window;
+    vi.stubGlobal(
+      'window',
+      new Proxy(originalWindow, {
+        get(target, key) {
+          return key === 'location' ? { assign } : Reflect.get(target, key);
+        },
+      })
+    );
+    try {
+      const user = userEvent.setup();
+      const view = render(<DelegatedConsent interactionId='i-1' />);
+      await user.click(screen.getByRole('button', { name: decision }));
+      request = null;
+      view.rerender(<DelegatedConsent interactionId='i-1' />);
+      expect(screen.getByRole('status')).toHaveTextContent('Redirecting');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: 'Continue' })
+      ).not.toBeInTheDocument();
+      const resumeUrl =
+        'https://groupi.example/api/auth/oauth2/authorize?verified=decision';
+      await act(async () => finish({ resumeUrl }));
+      expect(screen.getByRole('status')).toHaveTextContent('Redirecting');
+      expect(screen.getByRole('link', { name: 'Continue' })).toHaveAttribute(
+        'href',
+        resumeUrl
+      );
+      expect(assign).toHaveBeenCalledExactlyOnceWith(resumeUrl);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }
+);
+
+it('keeps genuine invalid requests terminal without inventing a continuation', () => {
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : null
+  );
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByRole('alert')).toHaveTextContent('unavailable or expired');
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'Continue' })
+  ).not.toBeInTheDocument();
+});
+
+it('does not offer an untrusted mutation continuation', async () => {
+  mockConsent({
+    ...consentRequest(),
+    requestedActions: [],
+    requestedScopes: ['openid'],
+  });
+  const approve = vi
+    .fn()
+    .mockResolvedValue({ resumeUrl: 'https://untrusted.example/callback' });
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'does not match this instance'
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Continue' })
+  ).not.toBeInTheDocument();
+});
+
+it('does not leave redirect feedback or a guessed fallback after a failed decision', async () => {
+  let request: ReturnType<typeof consentRequest> | null = {
+    ...consentRequest(),
+    requestedActions: [],
+    requestedScopes: ['openid'],
+  };
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
+  );
+  let fail!: (error: Error) => void;
+  const approve = vi.fn(
+    () =>
+      new Promise<never>((_resolve, reject) => {
+        fail = reject;
+      })
+  );
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  const view = render(<DelegatedConsent interactionId='i-1' />);
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  request = null;
+  view.rerender(<DelegatedConsent interactionId='i-1' />);
+  await act(async () => fail(new Error('Interaction expired')));
+  expect(screen.getByRole('alert')).toHaveTextContent('unavailable or expired');
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'Continue' })
+  ).not.toBeInTheDocument();
+});
+
+it.each(['account', 'interaction'])(
+  'ignores a late decision after the %s changes',
+  async changed => {
+    let accountId = 'account-a';
+    vi.mocked(useQuery).mockImplementation((...args) =>
+      args[0] === ('current-user' as never)
+        ? { _id: accountId }
+        : {
+            ...consentRequest(),
+            requestedActions: [],
+            requestedScopes: ['openid'],
+          }
+    );
+    let finish!: (result: { resumeUrl: string }) => void;
+    const approve = vi.fn(
+      () =>
+        new Promise<{ resumeUrl: string }>(resolve => {
+          finish = resolve;
+        })
+    );
+    vi.mocked(useMutation).mockReturnValue(approve as never);
+    const assign = vi.fn();
+    const originalWindow = window;
+    vi.stubGlobal(
+      'window',
+      new Proxy(originalWindow, {
+        get(target, key) {
+          return key === 'location' ? { assign } : Reflect.get(target, key);
+        },
+      })
+    );
+    try {
+      const user = userEvent.setup();
+      const view = render(<DelegatedConsent interactionId='i-1' />);
+      await user.click(screen.getByRole('button', { name: 'Allow access' }));
+      if (changed === 'account') accountId = 'account-b';
+      view.rerender(
+        <DelegatedConsent
+          interactionId={changed === 'interaction' ? 'i-2' : 'i-1'}
+        />
+      );
+      await act(async () =>
+        finish({
+          resumeUrl:
+            'https://groupi.example/api/auth/oauth2/authorize?verified=old',
+        })
+      );
+      expect(assign).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('link', { name: 'Continue' })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Allow access' })
+      ).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }
+);
