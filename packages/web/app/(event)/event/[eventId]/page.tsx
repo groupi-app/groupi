@@ -12,7 +12,7 @@ import { EventPageSkeleton } from '@/components/skeletons';
 export default function EventPage() {
   const { headerData, membersData, postFeedData, isLoading } = useEventData();
 
-  if (isLoading || !headerData || !membersData || !postFeedData) {
+  if (isLoading || !headerData || membersData === undefined || !postFeedData) {
     return <EventPageSkeleton />;
   }
 
@@ -24,12 +24,16 @@ export default function EventPage() {
       <div className='container pt-6 pb-24 space-y-5'>
         <EventHeader data={headerData} />
         <div className='max-w-4xl mx-auto flex flex-col gap-4'>
-          <MemberList data={membersData} permissions={permissions} />
-          <EventOwnershipTransfer
-            eventId={headerData.event._id}
-            personId={headerData.userMembership.person._id}
-            members={membersData.event.memberships}
-          />
+          {membersData && (
+            <>
+              <MemberList data={membersData} permissions={permissions} />
+              <EventOwnershipTransfer
+                eventId={headerData.event._id}
+                personId={headerData.userMembership.person._id}
+                members={membersData.event.memberships}
+              />
+            </>
+          )}
           <EventAddons data={headerData} />
           <PostFeed data={postFeedData} />
         </div>
