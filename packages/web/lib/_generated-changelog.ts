@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-09-10T20:03:31.797Z
+ * Generated: 2026-10-23T17:22:46.643Z
  */
 
 export interface ChangelogEntry {
@@ -17,6 +17,47 @@ export interface ChangelogSection {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    "version": "0.5.0",
+    "date": "",
+    "changes": [
+      {
+        "type": "added",
+        "items": [
+          "Add formal Groups across web, mobile, the developer API, and CLI, with managed",
+          "membership, applications, joining questionnaires, persistent Group tools, and",
+          "explicit announcements. Keep Group Event visibility separate from invitations,",
+          "Event membership, and RSVP. New Event attendees start Pending, and ownership",
+          "transfers require recipient acceptance. Require explicit resolution of owned",
+          "Groups and Events before account deletion.",
+          "Add private invite lists across web, mobile, the developer API, and CLI. Manage",
+          "saved selections and explicitly send ordinary event invitations from an editable",
+          "recipient draft, with inline creation and protected retries. Anonymize deleted",
+          "recipients and provide Needs attention repair without changing event membership",
+          "or RSVP.",
+          "Add an optional Support Groupi footer link for one-time contributions through a deployment-configured Stripe checkout."
+        ]
+      },
+      {
+        "type": "fixed",
+        "items": [
+          "Support validated CLI add-on participation with participant isolation and consistent app automation behavior.",
+          "Add CLI cover and avatar upload, replacement, and removal with validated owned images and safe recovery.",
+          "Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.",
+          "Add secure CLI browser login with OS credential storage and profile-isolated authentication",
+          "Improve Groups and Invite Lists layouts, selection feedback, and accessibility.",
+          "Fix add-on completion and event-specific template behavior. Align native and REST permissions, notifications, reports, and add-on automations. Unify GDL date parsing across web, mobile, and REST with explicit timezones, overnight ranges, and daylight-saving validation. Organize add-ons and backend operations into focused modules and standardize shared workspace source consumption while preserving compiled package distribution.",
+          "Add public privacy policy and support pages with contact information and footer links.",
+          "Updated dependencies [eaec01b]",
+          "Updated dependencies [eaec01b]",
+          "Updated dependencies [0b8c85c]",
+          "Updated dependencies [81de951]",
+          "Updated dependencies [9df172b]",
+          "- @groupi/shared@0.5.0"
+        ]
+      }
+    ]
+  },
   {
     "version": "0.4.0",
     "date": "",
