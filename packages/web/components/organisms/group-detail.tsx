@@ -6,15 +6,8 @@ import { EventMail } from '@/features/group-announcements/event-mail';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 
 import { useState } from 'react';
-import { ArrowLeft, ClipboardList, ListChecks, Vote } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Copy, ListChecks, Vote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/molecules/empty-state';
@@ -59,7 +52,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
     return (
       <div
         role='status'
-        className='mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6'
+        className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6'
       >
         <span className='sr-only'>Loading Group…</span>
         <Skeleton className='h-28 w-full rounded-card' />
@@ -82,7 +75,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
     );
 
   return (
-    <main className='mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8'>
+    <main className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8'>
       <Button
         className='self-start'
         variant='ghost'
@@ -91,74 +84,84 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         <ArrowLeft data-icon='inline-start' />
         Friends &amp; Groups
       </Button>
-      <div className='flex items-center gap-4 rounded-card border border-border bg-card p-5 sm:p-6'>
-        <Avatar className='size-16'>
-          <AvatarImage src={group.image} alt='' />
-          <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
-        </Avatar>
-        <div className='min-w-0 flex flex-col gap-2'>
-          <h1 className='break-words text-2xl font-bold sm:text-3xl'>
-            {group.name}
-          </h1>
-          <Badge variant='secondary' className='self-start'>
-            {group.viewerRole === 'OWNER'
-              ? 'Owner'
-              : group.viewerRole === 'MODERATOR'
-                ? 'Moderator'
-                : 'Group member'}
-          </Badge>
+      <header className='flex flex-col gap-5 border-b border-border pb-8'>
+        <div className='flex items-start gap-4 sm:gap-6'>
+          <Avatar className='size-16 shrink-0 sm:size-20'>
+            <AvatarImage src={group.image} alt='' />
+            <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
+          </Avatar>
+          <div className='flex min-w-0 flex-1 flex-col gap-2'>
+            <h1 className='break-words font-heading text-3xl font-bold tracking-tight sm:text-4xl'>
+              {group.name}
+            </h1>
+            <Badge variant='secondary' className='self-start'>
+              {group.viewerRole === 'OWNER'
+                ? 'Owner'
+                : group.viewerRole === 'MODERATOR'
+                  ? 'Moderator'
+                  : 'Group member'}
+            </Badge>
+          </div>
         </div>
-      </div>
-      {group.description && (
-        <p className='whitespace-pre-wrap break-words text-muted-foreground'>
-          {group.description}
-        </p>
-      )}
-      <div className='flex flex-col items-start gap-3 rounded-card border border-border bg-card p-4'>
-        <h2 className='font-semibold'>Unlisted Group page</h2>
-        <p className='text-sm text-muted-foreground'>
-          Share this stable link. Renaming the Group keeps the same link.
-        </p>
-        <Button
-          variant='outline'
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                `${window.location.origin}/g/${group._id}`
-              );
-              setShareMessage('Group link copied');
-            } catch {
-              setShareMessage('Copy the link below to share this Group.');
-            }
-          }}
-        >
-          Copy Group link
-        </Button>
-        {shareMessage && (
-          <p role='status' className='text-sm'>
-            {shareMessage}
+        {group.description && (
+          <p className='max-w-2xl whitespace-pre-wrap break-words leading-relaxed text-muted-foreground'>
+            {group.description}
           </p>
         )}
-        <Link
-          href={`/g/${group._id}`}
-          className='text-primary underline break-all'
-        >
-          /g/{group._id}
-        </Link>
+      </header>
+      <div className='flex flex-col gap-3 rounded-card bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6'>
+        <div className='min-w-0 space-y-1'>
+          <h2 className='font-semibold'>Unlisted Group page</h2>
+          <p className='text-sm text-muted-foreground'>
+            Share this introduction with people you want to invite.
+          </p>
+          <Link
+            href={`/g/${group._id}`}
+            className='inline-block max-w-full break-all text-sm text-primary underline underline-offset-4'
+          >
+            /g/{group._id}
+          </Link>
+        </div>
+        <div className='flex min-w-0 flex-col items-start gap-2 sm:max-w-xs'>
+          <Button
+            variant='outline'
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  `${window.location.origin}/g/${group._id}`
+                );
+                setShareMessage('Group link copied');
+              } catch {
+                setShareMessage('Copy the Group link to share this Group.');
+              }
+            }}
+          >
+            <Copy data-icon='inline-start' />
+            Copy Group link
+          </Button>
+          {shareMessage && (
+            <p role='status' className='text-sm'>
+              {shareMessage}
+            </p>
+          )}
+        </div>
       </div>
       <section
         aria-labelledby='group-tools-heading'
         className='flex flex-col gap-3'
       >
         <div>
-          <h2 id='group-tools-heading' className='text-xl font-bold'>
+          <h2
+            id='group-tools-heading'
+            className='font-heading text-xl font-semibold'
+          >
             Group tools
           </h2>
           <p className='text-sm text-muted-foreground'>
             Plan, collect responses and keep your community organized.
           </p>
         </div>
-        <div className='grid gap-3 sm:grid-cols-3'>
+        <div className='grid divide-y divide-border overflow-hidden rounded-card border border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0'>
           {[
             {
               path: 'forms',
@@ -185,32 +188,32 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
               createLabel: 'Create community list',
             },
           ].map(tool => (
-            <Card key={tool.path}>
-              <CardHeader className='p-4'>
+            <div key={tool.path} className='flex flex-col gap-4 p-5'>
+              <Link
+                href={`/groups/${groupId}/${tool.path}`}
+                aria-label={tool.openLabel}
+                className='group flex flex-1 items-start gap-3 rounded-input outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
+              >
                 <tool.icon
                   aria-hidden='true'
-                  className='mb-2 size-5 text-primary'
+                  className='mt-0.5 size-5 shrink-0 text-primary'
                 />
-                <CardTitle>{tool.title}</CardTitle>
-                <CardDescription>{tool.description}</CardDescription>
-              </CardHeader>
-              <CardContent className='flex flex-col items-start gap-2 p-4 pt-0'>
-                <Button variant='outline' size='sm' asChild>
-                  <Link
-                    href={`/groups/${groupId}/${tool.path}`}
-                    aria-label={tool.openLabel}
-                  >
-                    View {tool.title.toLowerCase()}
-                  </Link>
-                </Button>
-                <Link
-                  className='text-sm text-primary underline underline-offset-4'
-                  href={`/groups/${groupId}/${tool.path}/new`}
-                >
-                  {tool.createLabel}
-                </Link>
-              </CardContent>
-            </Card>
+                <div className='min-w-0 space-y-1'>
+                  <h3 className='font-semibold group-hover:text-primary'>
+                    {tool.title}
+                  </h3>
+                  <p className='text-sm leading-relaxed text-muted-foreground'>
+                    {tool.description}
+                  </p>
+                </div>
+              </Link>
+              <Link
+                className='self-start rounded-input text-sm font-medium text-primary underline underline-offset-4 outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
+                href={`/groups/${groupId}/${tool.path}/new`}
+              >
+                {tool.createLabel}
+              </Link>
+            </div>
           ))}
         </div>
       </section>
@@ -235,9 +238,12 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
       )}
       <section
         aria-labelledby='group-settings-heading'
-        className='flex flex-col gap-6 border-t border-border pt-6'
+        className='flex flex-col gap-6 border-t border-border pt-8'
       >
-        <h2 id='group-settings-heading' className='text-xl font-bold'>
+        <h2
+          id='group-settings-heading'
+          className='font-heading text-xl font-semibold'
+        >
           Group settings
         </h2>
         {group.canLeave ? (
@@ -264,7 +270,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           )
         )}
         <GroupOwnershipTransfer groupId={groupId} />
-        <Link href={`/announcement-preferences/${groupId}`}>
+        <Link
+          className='self-start text-sm font-medium text-primary underline underline-offset-4'
+          href={`/announcement-preferences/${groupId}`}
+        >
           Your announcement subscription
         </Link>
         {group.canManageRoles && (

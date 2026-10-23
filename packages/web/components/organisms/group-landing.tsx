@@ -33,18 +33,24 @@ export function GroupLanding({ groupId }: { groupId: Id<'groups'> }) {
     );
   const returnPath = `/g/${group.groupId}`;
   return (
-    <main className='mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-8 sm:px-6'>
-      <p className='text-sm text-muted-foreground'>Unlisted Group</p>
-      <Avatar className='size-20'>
-        <AvatarImage src={group.image ?? undefined} alt='' />
-        <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
-      </Avatar>
-      <h1 className='break-words text-3xl font-bold'>{group.name}</h1>
-      {group.description && (
-        <p className='whitespace-pre-wrap break-words text-muted-foreground'>
-          {group.description}
+    <main className='mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-16'>
+      <header className='flex min-w-0 flex-col gap-5 border-b border-border pb-8'>
+        <p className='text-sm font-medium text-muted-foreground'>
+          Unlisted Group
         </p>
-      )}
+        <Avatar className='size-20 self-start'>
+          <AvatarImage src={group.image ?? undefined} alt='' />
+          <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
+        </Avatar>
+        <h1 className='break-words font-heading text-3xl font-bold tracking-tight sm:text-4xl'>
+          {group.name}
+        </h1>
+        {group.description && (
+          <p className='whitespace-pre-wrap break-words leading-relaxed text-muted-foreground'>
+            {group.description}
+          </p>
+        )}
+      </header>
       {!isLoading &&
         (isAuthenticated ? (
           <>
@@ -52,7 +58,7 @@ export function GroupLanding({ groupId }: { groupId: Id<'groups'> }) {
             <GroupApplications groupId={group.groupId} />
           </>
         ) : (
-          <Button asChild>
+          <Button className='self-start' asChild>
             <Link href={`/sign-in?redirect=${encodeURIComponent(returnPath)}`}>
               Sign in or sign up
             </Link>

@@ -24,7 +24,7 @@ export function GroupsPanel({
   if (creating)
     return (
       <div className='flex flex-col gap-6'>
-        <h2 className='text-xl font-bold'>Create a Group</h2>
+        <h2 className='font-heading text-xl font-semibold'>Create a Group</h2>
         <p className='text-sm text-muted-foreground'>
           You will be the Group’s single owner. An owner-only Group is ready to
           use.
@@ -49,7 +49,7 @@ export function GroupsPanel({
     <div className='flex flex-col gap-6'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='flex flex-col gap-1'>
-          <h2 className='text-xl font-bold'>Your Groups</h2>
+          <h2 className='font-heading text-xl font-semibold'>Your Groups</h2>
           <p className='text-sm text-muted-foreground'>
             A home for the people you gather with.
           </p>
@@ -76,7 +76,7 @@ export function GroupsPanel({
               className='rounded-card border border-dashed border-border px-4'
             />
           )}
-          <ul className='grid gap-3'>
+          <ul className='divide-y divide-border'>
             {groups.page.map(group => (
               <li key={group._id}>
                 <Link
@@ -86,7 +86,7 @@ export function GroupsPanel({
                     onOpenGroup(group._id);
                   }}
                   aria-label={group.name}
-                  className='flex items-center gap-3 rounded-card border border-border bg-card p-4 shadow-raised transition-colors duration-fast hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
+                  className='flex items-center gap-4 rounded-input px-2 py-4 transition-colors duration-fast hover:bg-muted motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
                 >
                   <Avatar className='size-12 shrink-0'>
                     <AvatarImage src={group.image} alt='' />
@@ -97,7 +97,7 @@ export function GroupsPanel({
                       {group.name}
                     </span>
                     {group.description && (
-                      <p className='text-sm text-muted-foreground line-clamp-2'>
+                      <p className='break-words text-sm text-muted-foreground line-clamp-2'>
                         {group.description}
                       </p>
                     )}
