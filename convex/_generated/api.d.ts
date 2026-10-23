@@ -8,6 +8,11 @@
  * @module
  */
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 import type * as accountResolution_contracts from "../accountResolution/contracts.js";
 import type * as accountResolution_model from "../accountResolution/model.js";
 import type * as accountResolution_mutations from "../accountResolution/mutations.js";
@@ -28,6 +33,7 @@ import type * as addons_automations_resolve from "../addons/automations/resolve.
 import type * as addons_automations_types from "../addons/automations/types.js";
 import type * as addons_configuration from "../addons/configuration.js";
 import type * as addons_context from "../addons/context.js";
+import type * as addons_contracts from "../addons/contracts.js";
 import type * as addons_data from "../addons/data.js";
 import type * as addons_define from "../addons/define.js";
 import type * as addons_handlers_bringList from "../addons/handlers/bringList.js";
@@ -319,12 +325,14 @@ import type * as migration_claim from "../migration/claim.js";
 import type * as migration_dedupeAvailabilities from "../migration/dedupeAvailabilities.js";
 import type * as migration_index from "../migration/index.js";
 import type * as migration_mutations from "../migration/mutations.js";
+import type * as migration_strictContracts from "../migration/strictContracts.js";
 import type * as migration_uploadAndMigrate from "../migration/uploadAndMigrate.js";
 import type * as muting_model from "../muting/model.js";
 import type * as muting_mutations from "../muting/mutations.js";
 import type * as muting_queries from "../muting/queries.js";
 import type * as muting_rest from "../muting/rest.js";
 import type * as notifications_actions from "../notifications/actions.js";
+import type * as notifications_contracts from "../notifications/contracts.js";
 import type * as notifications_model from "../notifications/model.js";
 import type * as notifications_mutations from "../notifications/mutations.js";
 import type * as notifications_queries from "../notifications/queries.js";
@@ -369,12 +377,14 @@ import type * as users_mutations from "../users/mutations.js";
 import type * as users_profileRest from "../users/profileRest.js";
 import type * as users_queries from "../users/queries.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
+/**
+ * A utility for referencing Convex functions in your app's API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 declare const fullApi: ApiFromModules<{
   "accountResolution/contracts": typeof accountResolution_contracts;
   "accountResolution/model": typeof accountResolution_model;
@@ -396,6 +406,7 @@ declare const fullApi: ApiFromModules<{
   "addons/automations/types": typeof addons_automations_types;
   "addons/configuration": typeof addons_configuration;
   "addons/context": typeof addons_context;
+  "addons/contracts": typeof addons_contracts;
   "addons/data": typeof addons_data;
   "addons/define": typeof addons_define;
   "addons/handlers/bringList": typeof addons_handlers_bringList;
@@ -687,12 +698,14 @@ declare const fullApi: ApiFromModules<{
   "migration/dedupeAvailabilities": typeof migration_dedupeAvailabilities;
   "migration/index": typeof migration_index;
   "migration/mutations": typeof migration_mutations;
+  "migration/strictContracts": typeof migration_strictContracts;
   "migration/uploadAndMigrate": typeof migration_uploadAndMigrate;
   "muting/model": typeof muting_model;
   "muting/mutations": typeof muting_mutations;
   "muting/queries": typeof muting_queries;
   "muting/rest": typeof muting_rest;
   "notifications/actions": typeof notifications_actions;
+  "notifications/contracts": typeof notifications_contracts;
   "notifications/model": typeof notifications_model;
   "notifications/mutations": typeof notifications_mutations;
   "notifications/queries": typeof notifications_queries;
@@ -737,28 +750,10 @@ declare const fullApi: ApiFromModules<{
   "users/profileRest": typeof users_profileRest;
   "users/queries": typeof users_queries;
 }>;
-
-/**
- * A utility for referencing Convex functions in your app's public API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
 >;
-
-/**
- * A utility for referencing Convex functions in your app's internal API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = internal.myModule.myFunction;
- * ```
- */
 export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">
