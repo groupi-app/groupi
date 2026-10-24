@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ContextMenuItem } from '@/components/ui/context-menu';
 import { Button } from '@/components/ui/button';
+import { Card, CardAction, CardActions } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
 import { canDeletePost } from '@/lib/event-permissions';
@@ -160,8 +161,8 @@ export function PostCard({
       )}
       {canDelete && (
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setSheetOpen(false);
             setDeleteDialogOpen(true);
@@ -184,7 +185,7 @@ export function PostCard({
         }}
         className='cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-3'>
           {isMuted ? (
             <>
               <Icons.bell className='size-4' />
@@ -206,7 +207,7 @@ export function PostCard({
           }}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.flag className='size-4' />
             <span>Report Post</span>
           </div>
@@ -215,7 +216,7 @@ export function PostCard({
       {isMe && (
         <ContextMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
             </div>
@@ -224,13 +225,14 @@ export function PostCard({
       )}
       {canDelete && (
         <ContextMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setDeleteDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.delete className='size-4' />
             <span>Delete</span>
           </div>
@@ -249,7 +251,7 @@ export function PostCard({
         }}
         className='cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-3'>
           {isMuted ? (
             <>
               <Icons.bell className='size-4' />
@@ -271,7 +273,7 @@ export function PostCard({
           }}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.flag className='size-4' />
             <span>Report Post</span>
           </div>
@@ -280,7 +282,7 @@ export function PostCard({
       {isMe && (
         <DropdownMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
             </div>
@@ -289,13 +291,14 @@ export function PostCard({
       )}
       {canDelete && (
         <DropdownMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setDeleteDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.delete className='size-4' />
             <span>Delete</span>
           </div>
@@ -305,8 +308,8 @@ export function PostCard({
   );
 
   const cardContent = (
-    <div className='rounded-card border border-border w-full relative shadow-raised hover:shadow-floating z-lifted group transition-shadow duration-fast'>
-      <div className='absolute top-4 left-3'>
+    <Card treatment='interactive' className='w-full group'>
+      <CardActions className='absolute top-4 left-3'>
         {member ? (
           <MemberIcon
             itemKey={member._id}
@@ -320,61 +323,65 @@ export function PostCard({
         ) : (
           <div className='rounded-full size-10 bg-primary' />
         )}
-      </div>
-      <ActionMenuButton
-        label={`Actions for post ${title}`}
-        onClick={handleMoreClick}
-        onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
-        dropdownContent={dropdownContent}
-      >
-        <Icons.more className='size-4' />
-      </ActionMenuButton>
-      <Link
-        data-test='post-card'
-        href={`/event/${event._id}/post/${id}`}
-        className='w-full z-lifted'
-      >
-        <div className='w-full rounded-card bg-card hover:bg-accent/80 transition-colors pt-4 px-5 pb-2'>
-          <div className='flex flex-col gap-1'>
-            <div className='ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16'>
-              <div className='flex items-center gap-2'>
-                <span className='sm:text-xl font-heading text-card-foreground truncate overflow-hidden'>
-                  {title}
-                </span>
-                {isMuted && (
-                  <Icons.bellOff className='size-4 text-muted-foreground flex-shrink-0' />
-                )}
-              </div>
-              <span className='text-sm text-muted-foreground'>
-                {author.user.name || author.user.email}
-              </span>
-            </div>
-            <PostCardContent content={content} />
-            <div className='flex items-center justify-between mt-2'>
-              <div className='flex flex-col sm:flex-row sm:items-center sm:gap-4'>
-                <span className='text-muted-foreground text-sm'>
-                  Created {formatDate(createdAt)}
-                </span>
-                {editedAt &&
-                  new Date(editedAt).toISOString() !==
-                    new Date(createdAt).toISOString() && (
-                    <span className='text-muted-foreground text-sm'>
-                      Edited {formatDate(editedAt)}
-                    </span>
+      </CardActions>
+      <CardActions className='absolute top-2 right-2'>
+        <ActionMenuButton
+          label={`Actions for post ${title}`}
+          onClick={handleMoreClick}
+          onContextMenu={handleContextMenu}
+          className='size-8'
+          dropdownContent={dropdownContent}
+        >
+          <Icons.more className='size-4' />
+        </ActionMenuButton>
+      </CardActions>
+      <CardAction asChild>
+        <Link
+          data-test='post-card'
+          href={`/event/${event._id}/post/${id}`}
+          className='block w-full'
+        >
+          <div className='w-full pt-4 px-5 pb-2'>
+            <div className='flex flex-col gap-1'>
+              <div className='ml-12 mb-2 flex min-w-0 flex-col pr-12'>
+                <div className='flex items-center gap-2'>
+                  <span className='min-w-0 flex-1 sm:text-xl font-heading text-card-foreground truncate'>
+                    {title}
+                  </span>
+                  {isMuted && (
+                    <Icons.bellOff className='size-4 text-muted-foreground flex-shrink-0' />
                   )}
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <RepliesIcons replies={replies} />
-                <span className='text-sm'>
-                  {replyCount ?? replies.length} replies
+                </div>
+                <span className='text-sm text-muted-foreground'>
+                  {author.user.name || author.user.email}
                 </span>
+              </div>
+              <PostCardContent content={content} />
+              <div className='flex items-center justify-between mt-2'>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:gap-4'>
+                  <span className='text-muted-foreground text-sm'>
+                    Created {formatDate(createdAt)}
+                  </span>
+                  {editedAt &&
+                    new Date(editedAt).toISOString() !==
+                      new Date(createdAt).toISOString() && (
+                      <span className='text-muted-foreground text-sm'>
+                        Edited {formatDate(editedAt)}
+                      </span>
+                    )}
+                </div>
+                <div className='text-muted-foreground flex items-center gap-1'>
+                  <RepliesIcons replies={replies} />
+                  <span className='text-sm'>
+                    {replyCount ?? replies.length} replies
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Link>
-    </div>
+        </Link>
+      </CardAction>
+    </Card>
   );
 
   return (
@@ -407,7 +414,7 @@ export function PostCard({
 
 export function PostCardSkeleton() {
   return (
-    <div className='rounded-card border border-border w-full relative shadow-raised max-w-4xl'>
+    <Card treatment='quiet' className='w-full max-w-4xl'>
       <div className='w-full transition-all pt-4 px-5 pb-2'>
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-2 mb-1'>
@@ -430,7 +437,7 @@ export function PostCardSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

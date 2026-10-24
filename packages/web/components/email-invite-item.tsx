@@ -59,10 +59,7 @@ export function EmailInviteItem({
       {/* Status badge */}
       <div className='flex items-center gap-2 flex-shrink-0'>
         {emailStatus === 'sent' && (
-          <Badge
-            variant='outline'
-            className='bg-bg-success-subtle text-success border-border-success'
-          >
+          <Badge variant='success'>
             <Check className='size-3 mr-1' />
             Sent
           </Badge>
@@ -71,9 +68,9 @@ export function EmailInviteItem({
         {/* Remove button */}
         {onRemove && (
           <Button
-            variant='ghost'
+            variant='destructive-ghost'
             size='icon'
-            className='size-8 text-muted-foreground hover:text-destructive'
+            className='size-8'
             onClick={onRemove}
             disabled={isRemoving}
           >
@@ -132,9 +129,9 @@ export function LocalEmailInviteItem({
 
       {/* Remove button */}
       <Button
-        variant='ghost'
+        variant='destructive-ghost'
         size='icon'
-        className='size-8 text-muted-foreground hover:text-destructive flex-shrink-0'
+        className='size-8  flex-shrink-0'
         onClick={onRemove}
       >
         <X className='size-4' />

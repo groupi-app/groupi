@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Card, CardAction } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -149,7 +150,7 @@ export function ProfileViewDialog({
                   </AvatarFallback>
                 </Avatar>
                 <div className='flex flex-col gap-1 flex-1 min-w-0'>
-                  <h3 className='text-xl font-semibold truncate'>
+                  <h3 className='font-heading text-xl font-semibold truncate'>
                     {userProfile.name || 'No name'}
                   </h3>
                   <div className='flex items-center gap-1 text-muted-foreground'>
@@ -252,7 +253,7 @@ export function ProfileViewDialog({
                     {mutualFriends.map(friend => (
                       <div
                         key={friend.personId}
-                        className='flex items-center gap-3 p-3 rounded-card bg-card hover:bg-accent/50 transition-colors'
+                        className='flex items-center gap-3 p-3 rounded-card border border-border bg-card'
                       >
                         <Avatar className='size-10'>
                           <AvatarImage src={friend.image || undefined} />
@@ -296,46 +297,49 @@ export function ProfileViewDialog({
                 ) : (
                   <div className='flex flex-col gap-2 pt-4'>
                     {mutualEvents.map(event => (
-                      <Link
-                        key={event.id}
-                        href={`/event/${event.id}`}
-                        onClick={() => onOpenChange(false)}
-                      >
-                        <div className='flex items-center gap-3 border border-border shadow-raised p-3 hover:bg-accent/80 transition-all cursor-pointer rounded-card'>
-                          <h3 className='font-heading text-sm shrink-0 min-w-0 flex-1 truncate'>
-                            {event.title}
-                          </h3>
-                          {event.location && (
-                            <div className='flex items-center gap-1 shrink-0 min-w-0'>
-                              <Icons.location className='size-3 text-primary' />
-                              <span className='text-xs text-muted-foreground truncate max-w-[100px]'>
-                                {event.location}
-                              </span>
-                            </div>
-                          )}
-                          <div className='flex items-center gap-1 shrink-0'>
-                            <Icons.date className='size-3 text-primary' />
-                            {event.chosenDateTime ? (
-                              <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                                {new Date(event.chosenDateTime).toLocaleString(
-                                  [],
-                                  {
-                                    weekday: 'short',
-                                    month: 'numeric',
-                                    day: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                  }
+                      <Card key={event.id} treatment='interactive'>
+                        <CardAction asChild>
+                          <Link
+                            href={`/event/${event.id}`}
+                            onClick={() => onOpenChange(false)}
+                            className='block'
+                          >
+                            <div className='flex items-center gap-3 p-3'>
+                              <h3 className='font-heading text-sm shrink-0 min-w-0 flex-1 truncate'>
+                                {event.title}
+                              </h3>
+                              {event.location && (
+                                <div className='flex items-center gap-1 shrink-0 min-w-0'>
+                                  <Icons.location className='size-3 text-primary' />
+                                  <span className='text-xs text-muted-foreground truncate max-w-[100px]'>
+                                    {event.location}
+                                  </span>
+                                </div>
+                              )}
+                              <div className='flex items-center gap-1 shrink-0'>
+                                <Icons.date className='size-3 text-primary' />
+                                {event.chosenDateTime ? (
+                                  <span className='text-xs text-muted-foreground whitespace-nowrap'>
+                                    {new Date(
+                                      event.chosenDateTime
+                                    ).toLocaleString([], {
+                                      weekday: 'short',
+                                      month: 'numeric',
+                                      day: 'numeric',
+                                      hour: 'numeric',
+                                      minute: 'numeric',
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className='text-xs text-muted-foreground whitespace-nowrap'>
+                                    TBD
+                                  </span>
                                 )}
-                              </span>
-                            ) : (
-                              <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                                TBD
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
+                              </div>
+                            </div>
+                          </Link>
+                        </CardAction>
+                      </Card>
                     ))}
                   </div>
                 )}
@@ -447,8 +451,8 @@ function ProfileActions({
       </Button>
       {isFriends && (
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setSheetOpen(false);
             setShowRemoveDialog(true);
@@ -459,8 +463,8 @@ function ProfileActions({
         </Button>
       )}
       <Button
-        variant='ghost'
-        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+        variant='destructive-ghost'
+        className='w-full justify-start'
         onClick={() => {
           setSheetOpen(false);
           setShowBlockDialog(true);
@@ -541,10 +545,7 @@ function ProfileActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBlock}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-            >
+            <AlertDialogAction onClick={handleBlock} variant='destructive'>
               Block
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -565,7 +566,7 @@ function ProfileActions({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveFriend}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              variant='destructive'
             >
               Remove
             </AlertDialogAction>

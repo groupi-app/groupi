@@ -1,7 +1,7 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitialsFromName } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ export function ProfileSlate({
   };
 }) {
   const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
 
@@ -47,6 +48,8 @@ export function ProfileSlate({
             size='icon'
             variant='ghost'
             className='rounded-full relative'
+            aria-label='Notifications'
+            aria-expanded={open}
           >
             <Icons.bell className='size-5' />
             <NotificationCount />
@@ -59,7 +62,7 @@ export function ProfileSlate({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: reduceMotion ? 0 : 0.25 }}
             className='overflow-hidden'
           >
             <NotificationWidget maxHeight='400px' />

@@ -145,7 +145,7 @@ export function AttachmentGallery({
           onClick={() => handleImageClick(attachment)}
           className={cn(
             'relative w-full h-full rounded-md overflow-hidden bg-muted',
-            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           )}
         >
           {/* Skeleton while loading */}
@@ -191,7 +191,7 @@ export function AttachmentGallery({
               'absolute top-1 right-1 p-1.5 rounded z-lifted',
               'bg-black/70 hover:bg-destructive text-white',
               'opacity-0 group-hover/tile:opacity-100 transition-opacity',
-              'focus:outline-none focus:ring-1 focus:ring-white',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'disabled:opacity-50'
             )}
             aria-label={`Remove ${attachment.filename}`}
@@ -355,7 +355,7 @@ export function AttachmentGallery({
                     className={cn(
                       'p-1.5 rounded bg-black/70 hover:bg-destructive text-white',
                       'transition-colors',
-                      'focus:outline-none disabled:opacity-50'
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50'
                     )}
                     aria-label={`Remove ${attachment.filename}`}
                   >
@@ -386,7 +386,7 @@ export function AttachmentGallery({
                     'absolute top-1 right-1 p-1.5 rounded z-lifted',
                     'bg-black/70 hover:bg-destructive text-white',
                     'transition-colors',
-                    'focus:outline-none focus:ring-1 focus:ring-white',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     'disabled:opacity-50'
                   )}
                   aria-label={`Remove ${attachment.filename}`}
@@ -458,9 +458,9 @@ export function AttachmentGallery({
                     className={cn(
                       'ml-1 p-1.5 rounded',
                       'bg-muted border border-border',
-                      'hover:bg-destructive hover:text-destructive-foreground hover:border-destructive',
+                      'text-destructive hover:bg-bg-error-subtle hover:text-destructive hover:border-destructive',
                       'transition-colors',
-                      'focus:outline-none',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                       'disabled:opacity-50'
                     )}
                     aria-label={`Remove ${attachment.filename}`}
