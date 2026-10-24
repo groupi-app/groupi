@@ -36,17 +36,15 @@ export function TabBarFilter({
         accessibilityLabel={tab.label}
         className={cn(
           // Sticker journal aesthetic — solid active tab with white border
-          'flex-row items-center gap-1.5 rounded-badge px-4 py-2',
+          'flex-row items-center gap-1.5 min-h-11 rounded-t-input border-2 border-sticker-edge px-4 py-2',
           stretch && 'flex-1 justify-center',
-          isActive
-            ? 'border-2 border-white bg-primary shadow-raised'
-            : 'bg-muted'
+          isActive ? 'bg-primary' : 'bg-muted'
         )}
       >
         <Text
           className={cn(
             'text-sm font-medium',
-            isActive ? 'text-white' : 'text-muted-foreground'
+            isActive ? 'text-primary-foreground' : 'text-muted-foreground'
           )}
         >
           {tab.label}
@@ -61,7 +59,7 @@ export function TabBarFilter({
             <Text
               className={cn(
                 'text-xs font-bold',
-                isActive ? 'text-white' : 'text-primary-foreground'
+                isActive ? 'text-primary-foreground' : 'text-primary-foreground'
               )}
             >
               {tab.badge > 99 ? '99+' : tab.badge}
@@ -89,7 +87,7 @@ export function TabBarFilter({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className={cn('h-[52px] flex-grow-0', className)}
+      className={cn('min-h-[52px] flex-grow-0', className)}
       contentContainerClassName='min-h-[52px] flex-row items-center gap-2 px-4 py-2'
     >
       {tabButtons}

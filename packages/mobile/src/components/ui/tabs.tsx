@@ -22,7 +22,7 @@ function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        'bg-muted flex h-9 flex-row items-center justify-center rounded-lg p-[3px]',
+        'flex min-h-12 flex-row flex-wrap items-end gap-1 border-b-2 border-sticker-edge',
         Platform.select({ web: 'inline-flex w-fit', native: 'mr-auto' }),
         className
       )}
@@ -45,13 +45,12 @@ function TabsTrigger({
     >
       <TabsPrimitive.Trigger
         className={cn(
-          'flex flex-row items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 shadow-none shadow-black/5',
+          'flex flex-row items-center justify-center min-h-11 gap-1.5 rounded-t-input border-2 border-sticker-edge bg-muted px-3 py-2 shadow-none',
           Platform.select({
             web: 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring web:h-[calc(100%-1px)] inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0',
           }),
           props.disabled && 'opacity-50',
-          props.value === value &&
-            'bg-background dark:border-foreground/10 dark:bg-input/30',
+          props.value === value && 'bg-card',
           className
         )}
         {...props}
@@ -66,7 +65,11 @@ function TabsContent({
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
-      className={cn(Platform.select({ web: 'flex-1 outline-none' }), className)}
+      className={cn(
+        'bg-card rounded-b-card p-4',
+        Platform.select({ web: 'flex-1 outline-none' }),
+        className
+      )}
       {...props}
     />
   );

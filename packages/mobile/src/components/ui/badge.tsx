@@ -6,7 +6,7 @@ import { Platform, View } from 'react-native';
 
 const badgeVariants = cva(
   cn(
-    'border-border group shrink-0 flex-row items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-0.5',
+    'border-border group shrink-0 flex-row items-center justify-center gap-1 overflow-hidden rounded-full border-2 border-sticker-edge px-2 py-0.5',
     Platform.select({
       web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-fit whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3',
     })
@@ -15,20 +15,20 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: cn(
-          'bg-primary border-transparent',
+          'bg-primary border-sticker-edge',
           Platform.select({ web: '[a&]:hover:bg-primary/90' })
         ),
         secondary: cn(
-          'bg-secondary border-transparent',
+          'bg-secondary border-sticker-edge',
           Platform.select({ web: '[a&]:hover:bg-secondary/90' })
         ),
         destructive: cn(
-          'bg-destructive border-transparent',
+          'bg-destructive border-sticker-edge',
           Platform.select({ web: '[a&]:hover:bg-destructive/90' })
         ),
-        success: 'bg-bg-success-subtle border-border-success',
-        warning: 'bg-bg-warning-subtle border-transparent',
-        error: 'bg-bg-error-subtle border-border-error',
+        success: 'bg-bg-success-subtle border-sticker-edge',
+        warning: 'bg-bg-warning-subtle border-sticker-edge',
+        error: 'bg-bg-error-subtle border-sticker-edge',
         outline: Platform.select({
           web: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         }),

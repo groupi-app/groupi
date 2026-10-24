@@ -200,6 +200,8 @@ vi.mock('react-native-gesture-handler', () => ({
 
 // Mock Reanimated v4
 vi.mock('react-native-reanimated', () => ({
+  useReducedMotion: vi.fn(() => false),
+  cancelAnimation: vi.fn(),
   default: {
     View: vi.fn(({ children }: { children?: React.ReactNode }) => children),
   },

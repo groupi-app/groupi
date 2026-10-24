@@ -231,7 +231,7 @@ export default function HomeScreen() {
                 <EventScopeToggle value={eventScope} onChange={setEventScope} />
                 <Pressable
                   onPress={handleSortPress}
-                  className='h-10 w-10 items-center justify-center rounded-badge bg-muted active:scale-95'
+                  className='h-10 w-10 items-center justify-center rounded-badge bg-muted'
                   accessibilityRole='button'
                   accessibilityLabel='Sort events'
                 >
