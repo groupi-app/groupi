@@ -76,3 +76,25 @@ small; do not ask for a separate visual vote on every label and primitive.
 Validate the refinements in light/dark/custom themes, actual overlays, keyboard
 focus, 320/390 px layouts, enlarged text and reduced motion. Recheck white edges
 and the prior hover/text-color regressions explicitly before presenting the update.
+
+## Icons carry meaning
+
+The user also requested icons paired with buttons and labels whenever the content
+has a clear, familiar pictogram. Treat these as semantic recognition cues, not
+ornaments added to every string.
+
+- Keep visible text. Use familiar pairs such as Create/Plus, Save/Save, Remove/Trash,
+  Edit/Pencil, Location/MapPin, Events/Calendar, People/Users and Tools/Wrench.
+- Distinguish intent: saving a draft and bookmarking an event should not share a
+  misleading pictogram. Keep the same meaning/icon pairing across contexts.
+- Set icons explicitly through existing Button props or Label/Tab composition.
+  Never choose an icon by parsing translated or user-authored label strings.
+- Use consistent Lucide sizing and stroke weight, inherit readable text color,
+  and keep decorative glyphs hidden from assistive technology. Existing accessible
+  names, pending feedback, focus and touch targets remain unchanged.
+- Loading replaces an action icon with its progress cue. Quiet utility actions
+  can have icons without acquiring raised sticker styling. Do not invent a weak
+  symbol for an ambiguous label or remove its text at narrow widths.
+
+The current gallery demonstrates this rule; broader caller adoption remains part
+of the design-system usage migration after visual approval.
