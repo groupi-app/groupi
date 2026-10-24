@@ -132,6 +132,15 @@ function ApplicationDefaults() {
           Invitations will appear here once you send them.
         </TabsContent>
       </Tabs>
+      <section className='space-y-4'>
+        <Heading level={2}>Response actions</Heading>
+        <div className='flex flex-wrap gap-3'>
+          <Button variant='success'>Going</Button>
+          <Button variant='warning'>Maybe</Button>
+          <Button variant='info'>Awaiting response</Button>
+          <Button variant='destructive-ghost'>Leave event</Button>
+        </div>
+      </section>
     </main>
   );
 }
