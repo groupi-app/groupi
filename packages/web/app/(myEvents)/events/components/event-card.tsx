@@ -280,6 +280,7 @@ export function EventCard({
   const cardContent = (
     <div className='relative group'>
       <ActionMenuButton
+        label={`Actions for event ${title}`}
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
         className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
