@@ -8,6 +8,7 @@ export const reserve = internalMutation({
     groupId: v.id('groups'),
     guildId: v.string(),
     guildName: v.string(),
+    guildIconUrl: v.optional(v.string()),
     mode,
     roleId: v.optional(v.string()),
     landingChannelId: v.optional(v.string()),
@@ -156,6 +157,43 @@ export const disable = mutation({
       person._id,
       args.acknowledgeHandback
     );
+    return null;
+  },
+});
+
+/** Only server display metadata changes; fence asynchronous reads against handback/reconfiguration. */
+export const refreshMetadata = internalMutation({
+  args: {
+    groupId: v.id('groups'),
+    guildId: v.string(),
+    generation: v.number(),
+    guildName: v.string(),
+    guildIconUrl: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireManager(
+      ctx,
+      args.groupId,
+      (await requireAuth(ctx)).person._id
+    );
+    const current = await ctx.db
+      .query('groupDiscordConnections')
+      .withIndex('by_group', q => q.eq('groupId', args.groupId))
+      .unique();
+    if (
+      !current ||
+      current.status !== 'active' ||
+      current.guildId !== args.guildId ||
+      current.generation !== args.generation
+    )
+      throw new Error(
+        'Discord configuration changed. Refresh server details again.'
+      );
+    await ctx.db.patch(current._id, {
+      guildName: args.guildName,
+      guildIconUrl: args.guildIconUrl,
+    });
     return null;
   },
 });

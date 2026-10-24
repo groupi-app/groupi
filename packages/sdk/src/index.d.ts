@@ -4452,6 +4452,7 @@ export class Groupi {
   ): Promise<{
     mode: 'role' | 'membership';
     guildName: string;
+    guildIconUrl?: string;
     openUrl: string;
     linked: boolean;
     linkedDiscordUserId?: string;

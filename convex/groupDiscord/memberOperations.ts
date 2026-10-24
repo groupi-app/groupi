@@ -371,6 +371,7 @@ export async function getMemberStatus(
   return {
     mode: connection.mode,
     guildName: connection.guildName,
+    guildIconUrl: connection.guildIconUrl,
     openUrl: `https://discord.com/channels/${connection.guildId}${connection.landingChannelId ? `/${connection.landingChannelId}` : ''}`,
     linked: !!linkedAccount,
     linkedDiscordUserId: linkedAccount?.accountId,

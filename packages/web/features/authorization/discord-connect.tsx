@@ -6,16 +6,9 @@ import { useAction, useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
+import { DiscordIdentityCards } from '@/features/discord';
 import { ContextHelp } from '@/components/molecules/context-help';
-import {
-  ArrowRight,
-  CircleCheck,
-  Clock3,
-  CircleAlert,
-  ExternalLink,
-  MessageCircle,
-  UserRound,
-} from 'lucide-react';
+import { ArrowRight, Clock3, CircleAlert, ExternalLink } from 'lucide-react';
 
 function isUnavailableRequest(cause: unknown) {
   return (
@@ -169,11 +162,7 @@ export function DiscordConnect({ state }: { state: string }) {
     }
   }
   const connected = status?.status === 'connected';
-  const AccessIcon = connected
-    ? CircleCheck
-    : status?.status === 'blocked'
-      ? CircleAlert
-      : Clock3;
+  const AccessIcon = status?.status === 'blocked' ? CircleAlert : Clock3;
   const accessLabels = {
     not_connected: 'Not connected',
     pending: 'Connection pending',
@@ -197,7 +186,7 @@ export function DiscordConnect({ state }: { state: string }) {
           </h1>
           <p className='text-sm leading-relaxed text-muted-foreground'>
             {connected
-              ? 'Your Discord access is ready.'
+              ? 'Open the server or return to your application.'
               : 'Confirm your account to connect to this Group’s server.'}
           </p>
         </div>
@@ -236,43 +225,23 @@ export function DiscordConnect({ state }: { state: string }) {
       )}
       {status && (
         <>
-          <div className='divide-y divide-border rounded-input border border-border'>
-            <div className='flex items-start gap-3 p-4'>
-              <MessageCircle
-                className='mt-0.5 size-5 shrink-0 text-muted-foreground'
-                aria-hidden='true'
-              />
-              <div className='min-w-0 space-y-1'>
-                <p className='text-xs text-muted-foreground'>Discord server</p>
-                <h2 className='break-words font-semibold'>
-                  {status.guildName}
-                </h2>
-              </div>
-            </div>
-            <div className='flex items-start gap-3 p-4'>
-              <UserRound
-                className='mt-0.5 size-5 shrink-0 text-muted-foreground'
-                aria-hidden='true'
-              />
-              <div className='min-w-0 space-y-1'>
-                <p className='text-xs text-muted-foreground'>
-                  Your Discord account
-                </p>
-                <p className='break-all text-sm font-medium'>
-                  {status.linked ? status.linkedDiscordUserId : 'Not linked'}
-                </p>
-              </div>
-            </div>
-            <div className='flex items-center gap-3 p-4'>
+          <DiscordIdentityCards
+            guildName={status.guildName}
+            guildIconUrl={status.guildIconUrl}
+            linked={status.linked}
+            linkedDiscordUserId={status.linkedDiscordUserId}
+          />
+          {!connected && (
+            <div className='flex items-center gap-3'>
               <AccessIcon
-                className='size-5 shrink-0 text-muted-foreground'
+                className='size-4 shrink-0 text-muted-foreground'
                 aria-hidden='true'
               />
               <p role='status' className='text-sm font-medium'>
                 {accessLabel}
               </p>
             </div>
-          </div>
+          )}
           {!connected && (
             <p className='text-sm leading-relaxed'>
               {status.mode === 'membership'

@@ -1464,9 +1464,10 @@ class Object39140cd5ad6d(TypedDict):
 class Objectb93f36757224(TypedDict):
     subscribed: bool
 
-class Objectfa3352bca1da(TypedDict):
+class Object69655f599fd1(TypedDict):
     mode: Literal['role', 'membership']
     guildName: str
+    guildIconUrl: NotRequired[str]
     openUrl: str
     linked: bool
     linkedDiscordUserId: NotRequired[str]
