@@ -89,12 +89,19 @@ ornaments added to every string.
   misleading pictogram. Keep the same meaning/icon pairing across contexts.
 - Set icons explicitly through existing Button props or Label/Tab composition.
   Never choose an icon by parsing translated or user-authored label strings.
+- **No icons in headers/headings.** Keep page, section and content titles free of
+  glyph ornaments; destination arrows belong beside an action or in its content
+  area, not inside a heading. An action label is not permission to decorate every
+  nearby text element.
 - Use consistent Lucide sizing and stroke weight, inherit readable text color,
   and keep decorative glyphs hidden from assistive technology. Existing accessible
   names, pending feedback, focus and touch targets remain unchanged.
 - Loading replaces an action icon with its progress cue. Quiet utility actions
   can have icons without acquiring raised sticker styling. Do not invent a weak
   symbol for an ambiguous label or remove its text at narrow widths.
+- Generic labels such as “Event name,” “Details,” and preview/debug actions do not
+  need invented symbols. Prefer a smaller number of strong pairings over blanket
+  icon coverage. Labels such as Location and Save have familiar, useful cues.
 
 The current gallery demonstrates this rule; broader caller adoption remains part
 of the design-system usage migration after visual approval.
