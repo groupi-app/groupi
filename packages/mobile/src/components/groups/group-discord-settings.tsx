@@ -31,6 +31,11 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
         {form.connection.landingChannelId && (
           <Text>Landing channel: {form.connection.landingChannelId}.</Text>
         )}
+        {form.connection.synchronizationError && (
+          <Text accessibilityLiveRegion='polite'>
+            {form.connection.synchronizationError}
+          </Text>
+        )}
         {form.connection.status === 'blocked' && (
           <Text>
             Setup needs attention. Check that the Groupi bot is installed and

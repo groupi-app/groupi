@@ -1,3 +1,4 @@
+import { invalidateGroupDiscordEnrollment } from '../groupDiscord/eligibility';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -36,6 +37,7 @@ export async function removeMember(
   if (!member) return { removed: false };
   if (member.role !== 'MEMBER')
     fail('FORBIDDEN', 'Only ordinary members can be removed.');
+  await invalidateGroupDiscordEnrollment(ctx, groupId, personId);
   await ctx.db.delete(member._id);
   await ctx.db.patch(groupId, {
     memberCount: group.memberCount - 1,
@@ -69,6 +71,7 @@ export async function leave(
     );
   const member = await membershipFor(ctx, groupId, actorId);
   if (!member) return { left: false };
+  await invalidateGroupDiscordEnrollment(ctx, groupId, actorId);
   await ctx.db.delete(member._id);
   await ctx.db.patch(groupId, {
     memberCount: group.memberCount - 1,
@@ -97,6 +100,7 @@ export async function ban(
       q.eq('groupId', groupId).eq('personId', personId)
     )
     .unique();
+  await invalidateGroupDiscordEnrollment(ctx, groupId, personId);
   if (existing?.active) return { banned: true as const };
   const data = {
     actorId,

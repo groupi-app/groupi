@@ -16,7 +16,40 @@ export const getConnection = query({
     const { _id, _creationTime, ...data } = record;
     void _id;
     void _creationTime;
-    return data;
+    const cleanup = await Promise.all(
+      (['blocked', 'pending'] as const).map(status =>
+        ctx.db
+          .query('groupDiscordCleanup')
+          .withIndex('by_group_status', q =>
+            q.eq('groupId', String(groupId)).eq('status', status)
+          )
+          .first()
+      )
+    );
+    const obligation = cleanup.find(row => row !== null);
+    const streams =
+      record.mode === 'role'
+        ? await Promise.all(
+            [20, 22, 25].map(action =>
+              ctx.db
+                .query('groupDiscordAuditStreams')
+                .withIndex('by_guild_action', q =>
+                  q.eq('guildId', record.guildId).eq('action', action)
+                )
+                .unique()
+            )
+          )
+        : [];
+    return {
+      ...data,
+      cleanupPending: !!obligation,
+      synchronizationError:
+        obligation?.error ??
+        streams.find(stream => stream?.error)?.error ??
+        (obligation
+          ? 'Discord access cleanup is pending. Access removal has not yet been confirmed.'
+          : undefined),
+    };
   },
 });
 export const managerContext = internalQuery({

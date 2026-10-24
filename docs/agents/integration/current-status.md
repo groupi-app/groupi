@@ -1,5 +1,12 @@
 # Current Integration Status
 
+## Discord Group Role revocation — source evidence as of 2026-10-23
+
+- Source branch `codex/discord-group-407`, based on Discord integration checkpoint `429f4a70`. Group leave/removal/ban/coordinated exclusion now revoke enrolled Role authority at owning domain boundaries. Required onboarding reconfiguration checks existing enrollments in bounded pages. Returning eligibility requires explicit Connect; immutable cleanup targets survive deleted configuration.
+- One shared Role reconciler performs bounded prioritized cleanup, targeted provider observations and persisted guild/action audit ingestion with deduplication and recent-history overlap. Removed-then-restored staff access invalidates enrollment when observed. Ineligible restored managed roles are removed again; unrelated roles and handed-back access remain outside management. Pending cleanup and observation failures are visible to members and managers. Exclusion UI explicitly distinguishes Event cleanup from independent Discord cleanup retained through reinstatement.
+- Deterministic verification: 126 backend tests across 12 Discord/auth/Group lifecycle suites pass, including 56 Group Discord tests. Preview code generation and full `pnpm check` pass, including 797 source/generated contracts; 11 web and four mobile tests pass. Source tests do not establish live provider/browser/device acceptance.
+- No rollout or real guild mutation. Identity retirement (#408), warned teardown (#409), Server membership (#410), and shared recovery/notification/audit-gap hardening (#411) remain integration gates. The initial bounded audit mechanism has no atomic ordering with staff actions or complete-history guarantee; #411 extends this same reconciler. Matching deployed source, existing test bot/OAuth resources, isolated signed-in browser/device and assistive-technology acceptance remain unavailable or unverified. See [the Role lifecycle contract](../../discord-group-setup.md#role-eligibility-and-moderation-lifecycle).
+
 ## Discord Group Role enrollment — source evidence as of 2026-10-23
 
 - Source branch `codex/discord-group-406`, based on the Discord integration setup checkpoint `3da6bb1a`. Explicit eligible member Connect now separates account linking, scoped join consent and managed enrollment. Web and native Group views show the linked Discord identity, current eligibility, screening/access progress, external owner/Administrator exceptions and Open Discord. Ordinary Discord sign-in retains its existing scopes and prompt behavior.

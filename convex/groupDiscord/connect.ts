@@ -22,6 +22,10 @@ export const connect = action({
       groupId,
       discordUserId: account.accountId,
     });
+    if (row.desired !== 'granted')
+      throw new Error(
+        row.error ?? 'Discord cleanup must complete before Connect.'
+      );
     const fence = () =>
       ctx.runQuery(internal.groupDiscord.enrollment.fence, {
         enrollmentId: row._id,
@@ -55,6 +59,10 @@ export const connect = action({
           discordUserId: account.accountId,
           fresh: true,
         });
+      if (row.desired !== 'granted')
+        throw new Error(
+          row.error ?? 'Discord access is blocked. Connect again.'
+        );
       if (memberResponse.status === 404) {
         const missing = await memberResponse.json();
         if (missing.code !== 10007)

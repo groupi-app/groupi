@@ -1,0 +1,71 @@
+import { internalMutation } from '../_generated/server';
+import { v } from 'convex/values';
+import { makeFunctionReference } from 'convex/server';
+import { canAccessGroupMemberContent } from '../groups/contentAccess';
+import type { Id } from '../_generated/dataModel';
+import type { MutationCtx } from '../_generated/server';
+import { oweRoleCleanup } from './memberOperations';
+
+/** Fence provider work in the same transaction that revokes Group eligibility. */
+export async function invalidateGroupDiscordEnrollment(
+  ctx: MutationCtx,
+  groupId: Id<'groups'>,
+  personId: Id<'persons'>
+) {
+  const row = await ctx.db
+    .query('groupDiscordEnrollments')
+    .withIndex('by_group_person', q =>
+      q.eq('groupId', groupId).eq('personId', personId)
+    )
+    .unique();
+  if (!row || row.desired === 'removed') return;
+  await oweRoleCleanup(ctx, row);
+  await ctx.db.patch(row._id, {
+    desired: 'removed',
+    status: 'blocked',
+    generation: row.generation + 1,
+    error: 'Group access changed. Connect again when eligible.',
+    updatedAt: Date.now(),
+  });
+}
+
+const checkReference = makeFunctionReference<
+  'mutation',
+  {
+    groupId: Id<'groups'>;
+    cursor: string | null;
+  },
+  null
+>('groupDiscord/eligibility:checkGroupEligibility');
+
+/** Configuration mutations enqueue a bounded pass rather than fan out inline. */
+export async function scheduleGroupDiscordEligibilityCheck(
+  ctx: MutationCtx,
+  groupId: Id<'groups'>
+) {
+  await ctx.scheduler.runAfter(0, checkReference, { groupId, cursor: null });
+}
+
+export const checkGroupEligibility = internalMutation({
+  args: { groupId: v.id('groups'), cursor: v.union(v.string(), v.null()) },
+  returns: v.null(),
+  handler: async (ctx, { groupId, cursor }) => {
+    const page = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_group_person', q => q.eq('groupId', groupId))
+      .paginate({ numItems: 20, cursor });
+    for (const row of page.page) {
+      if (
+        row.desired === 'granted' &&
+        !(await canAccessGroupMemberContent(ctx, groupId, row.personId))
+      )
+        await invalidateGroupDiscordEnrollment(ctx, groupId, row.personId);
+    }
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(0, checkReference, {
+        groupId,
+        cursor: page.continueCursor,
+      });
+    return null;
+  },
+});

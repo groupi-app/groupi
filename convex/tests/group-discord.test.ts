@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { api, components } from '../_generated/api';
+import { api, components, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 const json = (value: unknown, status = 200) =>
@@ -32,6 +32,7 @@ async function setup() {
   });
   provider.mockImplementation(async (input, init) => {
     const path = String(input).replace('https://discord.com/api/v10', '');
+    if (path.includes('/audit-logs?')) return json({ audit_log_entries: [] });
     if (path === '/users/@me/guilds')
       return json([{ id: '100', name: 'Reading room', permissions: '32' }]);
     if (path === '/users/@me') return json({ id: 'bot' });
@@ -989,4 +990,138 @@ it('Role access can manage a dedicated lower role for a target with a higher unr
     await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
   ).toMatchObject({ status: 'connected' });
   expect(granted).toBe(true);
+});
+
+it.each([25, 20, 22])(
+  'durable moderation observation (%s) requires fresh Connect after removal reversed between snapshots',
+  async action => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    const base = provider.getMockImplementation()!;
+    let granted = false;
+    let audit: unknown[] = [];
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.includes('/audit-logs?'))
+        return json({
+          audit_log_entries: path.includes(`action_type=${action}`)
+            ? audit
+            : [],
+        });
+      if (path.endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (path.endsWith('/members/manager-discord'))
+        return json({
+          roles: granted ? ['created-role', 'unrelated'] : ['unrelated'],
+        });
+      if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+        granted = true;
+        return new Response(null, { status: 204 });
+      }
+      return base(input, init);
+    });
+    await owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    vi.advanceTimersByTime(2000);
+    audit = [
+      {
+        id: String(BigInt(Date.now() - 1420070400000) << 22n),
+        action_type: action,
+        user_id: 'staff',
+        target_id: 'manager-discord',
+        changes: [{ key: '$remove', new_value: [{ id: 'created-role' }] }],
+      },
+    ];
+    vi.advanceTimersByTime(300000);
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({
+      status: 'blocked',
+      eligible: true,
+      error: expect.stringContaining('Connect'),
+    });
+    expect(granted).toBe(true);
+    vi.advanceTimersByTime(2000);
+    await owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    vi.advanceTimersByTime(300000);
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'connected' });
+  }
+);
+
+it('persists a bounded audit frontier and freezes grants until the next page is observed', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  const start = BigInt(Date.now() - 1420070400000) << 22n;
+  let backlog = true;
+  let granted = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.includes('/audit-logs?')) {
+      const url = new URL(path);
+      const after = BigInt(url.searchParams.get('after')!);
+      return json({
+        audit_log_entries:
+          backlog &&
+          url.searchParams.get('action_type') === '20' &&
+          after < start + 100n
+            ? Array.from({ length: 100 }, (_, index) => ({
+                id: String(start + BigInt(index + 1)),
+                target_id: 'unenrolled',
+                user_id: 'staff',
+              }))
+            : [],
+      });
+    }
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: granted ? ['created-role'] : [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      granted = true;
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'blocked',
+    error: expect.stringContaining('catching up'),
+  });
+  expect(granted).toBe(false);
+  backlog = false;
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  expect(
+    provider.mock.calls.some(([input]) =>
+      String(input).includes(`action_type=20&after=${start + 100n}`)
+    )
+  ).toBe(true);
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ status: 'connected' });
+  expect(granted).toBe(true);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
 });

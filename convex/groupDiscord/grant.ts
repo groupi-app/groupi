@@ -26,14 +26,17 @@ export const run = internalAction({
     const memberPath = `/guilds/${row.guildId}/members/${row.discordUserId}`;
     const rolePath = `${memberPath}/roles/${row.roleId}`;
     let attempted = false;
-    async function bot(path: string, method = 'GET') {
+    async function bot(path: string, method = 'GET', reason?: string) {
       if (!token)
         throw new Error(
           'Discord bot unavailable. Contact the Groupi administrator.'
         );
       const response = await fetch(`${BASE}${path}`, {
         method,
-        headers: { Authorization: `Bot ${token}` },
+        headers: {
+          Authorization: `Bot ${token}`,
+          ...(reason ? { 'X-Audit-Log-Reason': reason } : {}),
+        },
       });
       if (response.status === 429) {
         const body = await response.json();
@@ -50,6 +53,9 @@ export const run = internalAction({
       return response;
     }
     try {
+      await ctx.runAction(internal.groupDiscord.reconcile.observeGuild, {
+        guildId: row.guildId,
+      });
       if (!(await fence()))
         throw new Error(
           'Group access or linked Discord identity changed. Connect again.'
@@ -180,12 +186,48 @@ export const run = internalAction({
             personId: row.personId,
           }
         );
-        const removed = await bot(rolePath, 'DELETE').catch(() => null);
-        if (removed?.ok)
-          await ctx.runMutation(
-            internal.groupDiscord.enrollment.completeCompensation,
-            { cleanupId }
-          );
+        if (cleanupId)
+          try {
+            const removed = await bot(
+              rolePath,
+              'DELETE',
+              `groupi-cleanup:${cleanupId}`
+            );
+            if (!removed.ok)
+              throw new Error(
+                'Discord role cleanup denied. Check bot permissions and hierarchy.'
+              );
+            const observedRemoval = await bot(memberPath);
+            const removalBody = await observedRemoval.json();
+            if (
+              !(
+                observedRemoval.ok &&
+                Array.isArray(removalBody.roles) &&
+                !removalBody.roles.includes(row.roleId)
+              ) &&
+              !(observedRemoval.status === 404 && removalBody.code === 10007)
+            )
+              throw new Error(
+                'Discord role cleanup absence has not been observed. Retry pending.'
+              );
+            await ctx.runMutation(
+              internal.groupDiscord.enrollment.completeCompensation,
+              { cleanupId }
+            );
+          } catch (cleanupError) {
+            await ctx.runMutation(
+              internal.groupDiscord.reconciliation.cleanupOutcome,
+              {
+                id: cleanupId,
+                error:
+                  cleanupError instanceof Error
+                    ? cleanupError.message
+                    : 'Discord role cleanup failed. Retry pending.',
+                delay:
+                  cleanupError instanceof Retry ? cleanupError.delay : 5000,
+              }
+            );
+          }
       }
       if (
         (error instanceof Retry || error instanceof TypeError) &&

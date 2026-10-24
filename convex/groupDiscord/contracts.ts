@@ -19,7 +19,11 @@ export const connectionFields = {
   error: v.optional(v.string()),
   updatedAt: v.number(),
 };
-export const connection = v.object(connectionFields);
+export const connection = v.object({
+  ...connectionFields,
+  synchronizationError: v.optional(v.string()),
+  cleanupPending: v.optional(v.boolean()),
+});
 export const memberStatus = v.object({
   mode,
   guildName: v.string(),
@@ -37,4 +41,6 @@ export const memberStatus = v.object({
   error: v.optional(v.string()),
   externalException: v.optional(v.string()),
   lastObservedAt: v.optional(v.number()),
+  observationError: v.optional(v.string()),
+  cleanupPending: v.optional(v.boolean()),
 });
