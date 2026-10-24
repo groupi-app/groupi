@@ -1651,6 +1651,12 @@ it.each(['disable', 'delete'] as const)(
             groupId,
             acknowledgeHandback: true,
           });
+        await t.action(internal.groupDiscord.reconcile.dispatch, {});
+        expect(
+          await owner.auth.query(api.groupDiscord.queries.getConnection, {
+            groupId,
+          })
+        ).toMatchObject({ cleanupPending: true });
         granted = true;
         return new Response(null, { status: 204 });
       }
