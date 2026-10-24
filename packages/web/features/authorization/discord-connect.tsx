@@ -7,6 +7,13 @@ import { api } from '@/convex/_generated/api';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 
+function isUnavailableRequest(cause: unknown) {
+  return (
+    cause instanceof Error &&
+    /\bConnection request unavailable or expired\./i.test(cause.message)
+  );
+}
+
 export function DiscordConnect({ state }: { state: string }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const journey = useQuery(
@@ -15,6 +22,7 @@ export function DiscordConnect({ state }: { state: string }) {
   );
   const connect = useAction(api.groupDiscord.connect.connectHosted);
   const finish = useMutation(api.groupDiscord.delegated.finish);
+  const [unavailableState, setUnavailableState] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState('');
@@ -35,9 +43,9 @@ export function DiscordConnect({ state }: { state: string }) {
     );
   // Successful consumption invalidates the live query before navigation completes.
   if (redirecting) return <p role='status'>Returning to your application…</p>;
-  if (journey === undefined)
+  if (unavailableState !== state && journey === undefined)
     return <p role='status'>Loading Discord connection…</p>;
-  if (!journey)
+  if (!journey || unavailableState === state)
     return (
       <p role='alert'>
         This connection request is unavailable or expired. Return to your
@@ -65,6 +73,10 @@ export function DiscordConnect({ state }: { state: string }) {
           'Connection requested. Review your current access status before returning.'
         );
     } catch (cause) {
+      if (isUnavailableRequest(cause)) {
+        setUnavailableState(state);
+        return;
+      }
       setError(
         cause instanceof Error ? cause.message : 'Discord connection failed.'
       );
@@ -82,6 +94,11 @@ export function DiscordConnect({ state }: { state: string }) {
       window.location.assign(result.returnUrl);
     } catch (cause) {
       setRedirecting(false);
+      if (isUnavailableRequest(cause)) {
+        setUnavailableState(state);
+        setBusy(false);
+        return;
+      }
       setError(
         cause instanceof Error
           ? cause.message

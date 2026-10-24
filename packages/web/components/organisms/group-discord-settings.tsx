@@ -1,4 +1,5 @@
 'use client';
+import { ContextHelp } from '@/components/molecules/context-help';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
   useGroupDiscordSettings,
@@ -97,11 +98,15 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
       {form.connection?.synchronizationError && (
         <p role='status'>{form.connection.synchronizationError}</p>
       )}
-      <p>
-        Connect a server you manage where the Groupi bot is installed. Setup
-        does not change channel permissions or grant staff roles. Discord role
-        possession never grants Group membership or management permissions.
-      </p>
+      <div className='flex items-center gap-2'>
+        <p className='text-sm text-muted-foreground'>
+          Connect a server you manage with the Groupi bot installed.
+        </p>
+        <ContextHelp label='About Discord permissions'>
+          Setup does not change channel permissions or grant staff roles.
+          Discord roles do not grant Group membership or management permissions.
+        </ContextHelp>
+      </div>
       <Button
         type='button'
         disabled={form.busy || form.loadingGuilds}

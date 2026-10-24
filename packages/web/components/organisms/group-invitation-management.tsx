@@ -133,8 +133,7 @@ function GroupInvitationPolicy({
         Allow manager invitations
       </Label>
       <p className='text-sm text-muted-foreground'>
-        The owner controls invitations. Sharing the unlisted Group page does not
-        invite or admit anyone.
+        Sharing a Group link does not invite or admit anyone.
       </p>
       <Button disabled={pending || enabled === invitationsEnabled}>
         Save invitation settings
