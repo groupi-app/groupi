@@ -24,7 +24,7 @@ function useTabsContext() {
 interface TabsProps extends React.ComponentProps<typeof TabsPrimitive.Root> {
   /** Unique ID for the animated highlight (required when using multiple animated tabs) */
   layoutId?: string;
-  /** Quiet selection without a moving highlight. */
+  /** Attached index tabs joined to their content sheet, without a moving highlight. */
   presentation?: 'default' | 'soft';
 }
 
@@ -77,6 +77,7 @@ export function TabsList({
   return (
     <TabsPrimitive.List
       data-slot='tabs-list'
+      data-presentation={soft ? 'soft' : undefined}
       className={cn(
         // Clean tab container with relative positioning for highlight
         'relative inline-flex h-10 items-center justify-center rounded-soft bg-muted p-1 text-muted-foreground border border-border/50 shadow-raised',
@@ -108,6 +109,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       data-slot='tabs-trigger'
+      data-presentation={soft ? 'soft' : undefined}
       value={value}
       className={cn(
         // Base styles - relative for stacking context, z-lifted to appear above highlight
@@ -144,9 +146,11 @@ export function TabsContent({
   className,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  const soft = useTabsContext()?.presentation === 'soft';
   return (
     <TabsPrimitive.Content
       data-slot='tabs-content'
+      data-presentation={soft ? 'soft' : undefined}
       className={cn(
         'mt-2 ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className

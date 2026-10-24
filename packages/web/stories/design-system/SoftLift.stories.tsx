@@ -18,6 +18,8 @@ import {
   CircleAlert,
   Clock,
   Globe,
+  Info,
+  TriangleAlert,
   MoreHorizontal,
   Plus,
   Users,
@@ -61,6 +63,7 @@ import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { ListPageTemplate } from '@/components/templates/list-page-template';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from '@/lib/utils/toast';
+import { toast as sonnerToast } from 'sonner';
 
 const meta = {
   title: 'Design system/Soft lift',
@@ -474,19 +477,13 @@ function NavigationAndStatus() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value='events'>
-          <p className='py-3 text-sm text-muted-foreground'>
-            Events shared with this Group.
-          </p>
+          <p className='text-sm'>Events shared with this Group.</p>
         </TabsContent>
         <TabsContent value='people'>
-          <p className='py-3 text-sm text-muted-foreground'>
-            The people in this Group.
-          </p>
+          <p className='text-sm'>The people in this Group.</p>
         </TabsContent>
         <TabsContent value='tools'>
-          <p className='py-3 text-sm text-muted-foreground'>
-            Tools enabled for this Group.
-          </p>
+          <p className='text-sm'>Tools enabled for this Group.</p>
         </TabsContent>
       </Tabs>
       <div className='flex flex-wrap gap-3'>
@@ -547,6 +544,41 @@ function Feedback() {
         >
           Show success feedback
         </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            toast({
+              title: 'Could not save changes',
+              description: 'Check your connection, then try saving again.',
+              variant: 'destructive',
+            })
+          }
+        >
+          Show error feedback
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            sonnerToast.warning('Check the date', {
+              description: 'Choose a start time before inviting people.',
+            })
+          }
+        >
+          Show warning feedback
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            sonnerToast.info('Invitations are ready', {
+              description: 'Share the link when you are ready.',
+            })
+          }
+        >
+          Show info feedback
+        </Button>
         <Dialog>
           <DialogTrigger asChild>
             <Button
@@ -573,7 +605,7 @@ function Feedback() {
           />
         </Dialog>
       </div>
-      <Alert>
+      <Alert presentation='soft' variant='destructive'>
         <CircleAlert aria-hidden='true' />
         <AlertTitle>Could not save your changes</AlertTitle>
         <AlertDescription>
@@ -730,83 +762,33 @@ export const LongContent: Story = {
   ),
 };
 
-function StatusAlternatives() {
+function StatusChoice() {
   return (
     <Section
-      title='Status labels: stamp or cut-out?'
-      description='Unselected proposals. Compare the same state and glyph: a printed mark versus a flat sticker label. Neither carries action depth.'
+      title='Flat cut-out status labels'
+      description='Selected. A crisp white edge connects these quiet labels to the sticker book, without action depth.'
     >
-      <div className='grid gap-8 md:grid-cols-2'>
-        <article className='flex flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            A · Ink stamp
-          </Heading>
-          <div className='flex flex-wrap gap-3'>
-            <Badge
-              variant='outline'
-              className='material-status-stamp'
-              data-study-status='success'
-            >
-              <Check aria-hidden='true' className='size-4' />
-              Completed
-            </Badge>
-            <Badge
-              variant='outline'
-              className='material-status-stamp'
-              data-study-status='warning'
-            >
-              <Clock aria-hidden='true' className='size-4' />
-              Pending
-            </Badge>
-          </div>
-          <p className='text-sm text-muted-foreground'>
-            Keeps status printed into the page. The keyline and glyph do the
-            work.
-          </p>
-        </article>
-        <article className='flex flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            B · Flat cut-out label
-          </Heading>
-          <div className='flex flex-wrap gap-3'>
-            <Badge presentation='soft' variant='success'>
-              <Check aria-hidden='true' className='size-4' />
-              Completed
-            </Badge>
-            <Badge presentation='soft' variant='warning'>
-              <Clock aria-hidden='true' className='size-4' />
-              Pending
-            </Badge>
-          </div>
-          <p className='text-sm text-muted-foreground'>
-            Connects status to the sticker vocabulary, but may compete with
-            identity labels.
-          </p>
-        </article>
+      <div className='flex flex-wrap gap-3'>
+        <Badge presentation='soft' variant='success'>
+          <Check aria-hidden='true' className='size-4' />
+          Completed
+        </Badge>
+        <Badge presentation='soft' variant='warning'>
+          <Clock aria-hidden='true' className='size-4' />
+          Pending
+        </Badge>
+        <Badge presentation='soft' variant='info'>
+          <Users aria-hidden='true' className='size-4' />
+          Open to members
+        </Badge>
       </div>
     </Section>
   );
 }
-function StudyTabs({
-  attached,
-  longLabel = false,
-}: {
-  attached: boolean;
-  longLabel?: boolean;
-}) {
+function StudyTabs({ longLabel = false }: { longLabel?: boolean }) {
   return (
-    <Tabs
-      presentation='soft'
-      defaultValue='events'
-      className={attached ? 'material-index-tabs' : 'material-ink-tabs'}
-    >
-      <TabsList
-        aria-label={
-          attached
-            ? 'Attached index destinations'
-            : 'Ink underline destinations'
-        }
-      >
+    <Tabs presentation='soft' defaultValue='events'>
+      <TabsList aria-label='Attached index destinations'>
         <TabsTrigger value='events' className='gap-2'>
           <CalendarDays aria-hidden='true' className='size-4 shrink-0' />
           Events
@@ -825,113 +807,92 @@ function StudyTabs({
           </TabsTrigger>
         )}
       </TabsList>
-      <TabsContent value='events'>
-        <p>Events shared with this Group.</p>
-      </TabsContent>
-      <TabsContent value='people'>
-        <p>The people in this Group.</p>
-      </TabsContent>
-      <TabsContent value='tools'>
-        <p>Tools enabled for this Group.</p>
-      </TabsContent>
+      <TabsContent value='events'>Events shared with this Group.</TabsContent>
+      <TabsContent value='people'>The people in this Group.</TabsContent>
+      <TabsContent value='tools'>Tools enabled for this Group.</TabsContent>
       {longLabel && (
         <TabsContent value='announcements'>
-          <p>Announcements and resources shared with this Group.</p>
+          Announcements and resources shared with this Group.
         </TabsContent>
       )}
     </Tabs>
   );
 }
-function NavigationAlternatives() {
+function NavigationChoice() {
   return (
     <Section
-      title='Destinations: attached index or ink underline?'
-      description='Unselected proposals. Both use the same real Radix tabs, content and keyboard behavior. Inspect the long destination at 320 px.'
+      title='Attached index tabs'
+      description='Selected. The current destination joins its content sheet. Focus stays visible and the same keyboard controls still work.'
     >
-      <div className='grid items-start gap-8 md:grid-cols-2'>
-        <article className='flex min-w-0 flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            A · Attached index tabs
-          </Heading>
-          <StudyTabs attached />
-          <p className='text-sm text-muted-foreground'>
-            Makes a clear relationship to the sheet. Wrapping into multiple rows
-            can weaken that relationship.
-          </p>
-        </article>
-        <article className='flex min-w-0 flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            B · Ink underline
-          </Heading>
-          <StudyTabs attached={false} />
-          <p className='text-sm text-muted-foreground'>
-            Keeps navigation light and readable. Its material identity is
-            deliberately quieter.
-          </p>
-        </article>
-      </div>
+      <StudyTabs />
       <details>
         <summary className='cursor-pointer py-3 text-sm font-semibold'>
           Try a long destination label
         </summary>
-        <div className='grid items-start gap-8 pt-4 md:grid-cols-2'>
-          <article className='flex min-w-0 flex-col gap-3'>
-            <Heading level={3} roleSize='content'>
-              A · Attached index tabs
-            </Heading>
-            <StudyTabs attached longLabel />
-          </article>
-          <article className='flex min-w-0 flex-col gap-3'>
-            <Heading level={3} roleSize='content'>
-              B · Ink underline
-            </Heading>
-            <StudyTabs attached={false} longLabel />
-          </article>
+        <div className='pt-4'>
+          <StudyTabs longLabel />
         </div>
+        <p className='pt-3 text-sm text-muted-foreground'>
+          Resize to 320 px to inspect wrapping. Long labels can put the attached
+          tabs on multiple rows.
+        </p>
       </details>
     </Section>
   );
 }
-function StudyAlert({ note }: { note: boolean }) {
-  return (
-    <Alert
-      variant='destructive'
-      className={note ? 'material-alert-note' : 'material-alert-strip'}
-    >
-      <CircleAlert aria-hidden='true' />
-      <AlertTitle>Could not save your changes</AlertTitle>
-      <AlertDescription>
-        Check your connection, then try saving again.
-      </AlertDescription>
-    </Alert>
-  );
-}
-function NoticeAlternatives() {
+const annotationExamples = [
+  {
+    variant: 'default',
+    title: 'Before you invite people',
+    description: 'Review the event details first.',
+    icon: null,
+  },
+  {
+    variant: 'info',
+    title: 'Invitations are ready',
+    description: 'Share the link when you are ready.',
+    icon: Info,
+  },
+  {
+    variant: 'success',
+    title: 'Changes saved',
+    description: 'The event details are up to date.',
+    icon: Check,
+  },
+  {
+    variant: 'warning',
+    title: 'Check the date',
+    description: 'Choose a start time before inviting people.',
+    icon: TriangleAlert,
+  },
+  {
+    variant: 'destructive',
+    title: 'Could not save your changes',
+    description: 'Check your connection, then try saving again.',
+    icon: CircleAlert,
+  },
+] as const;
+function NoticeChoice() {
   return (
     <Section
-      title='Notices: annotation or attached note?'
-      description='Unselected proposals. Identical error and recovery copy, with no lift, perforation or suggestion that the notice is clickable.'
+      title='Annotation-strip alerts'
+      description='Selected. Quiet fill, readable ink and a narrow semantic edge keep the notice beside its task. There is no raised depth or clickable appearance.'
     >
-      <div className='grid items-start gap-8 md:grid-cols-2'>
-        <article className='flex min-w-0 flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            A · Annotation strip
-          </Heading>
-          <StudyAlert note={false} />
-          <p className='text-sm text-muted-foreground'>
-            Stays close to the affected task with one narrow ink edge.
-          </p>
-        </article>
-        <article className='flex min-w-0 flex-col gap-3'>
-          <Heading level={3} roleSize='content'>
-            B · Attached note
-          </Heading>
-          <StudyAlert note />
-          <p className='text-sm text-muted-foreground'>
-            Uses one small cut-out severity mark while the explanation stays
-            quiet.
-          </p>
-        </article>
+      <div className='flex flex-col gap-4'>
+        {annotationExamples.map(example => {
+          const Icon = example.icon;
+          return (
+            <Alert
+              key={example.variant}
+              presentation='soft'
+              variant={example.variant}
+            >
+              {Icon && <Icon aria-hidden='true' className='size-5' />}
+              <AlertTitle>{example.title}</AlertTitle>
+              <AlertDescription>{example.description}</AlertDescription>
+            </Alert>
+          );
+        })}
       </div>
     </Section>
   );
@@ -939,21 +900,19 @@ function NoticeAlternatives() {
 export const MaterialStudies: Story = {
   render: () => (
     <GalleryFrame>
-      <div className='material-studies flex flex-col gap-12'>
-        <header className='flex max-w-3xl flex-col gap-3'>
-          <Heading level={1} roleSize='page'>
-            On the paper workbench
-          </Heading>
-          <p className='text-lg text-muted-foreground'>
-            Three pairs to try: stamps or cut-out labels, attached tabs or
-            underlines, annotation strips or small notes. These proposals are
-            still unselected.
-          </p>
-        </header>
-        <StatusAlternatives />
-        <NavigationAlternatives />
-        <NoticeAlternatives />
-      </div>
+      <header className='flex max-w-3xl flex-col gap-3'>
+        <Heading level={1} roleSize='page'>
+          Chosen for the sticker book
+        </Heading>
+        <p className='text-lg text-muted-foreground'>
+          Flat cut-out labels, attached index tabs, and annotation strips. These
+          choices are now in the canonical soft components; the rest of the
+          gallery is still under review.
+        </p>
+      </header>
+      <StatusChoice />
+      <NavigationChoice />
+      <NoticeChoice />
     </GalleryFrame>
   ),
 };

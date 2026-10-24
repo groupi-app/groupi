@@ -72,8 +72,13 @@ fields and ordinary information surfaces do not acquire this edge.
 The featured card and soft confirmation each show one decorative perforated
 content/action seam. This is a dashed rule, with no implied tearing interaction.
 
-MaterialStudies contains unselected alternatives, scoped to story CSS and actual
-canonical Badge, Tabs and Alert components. None chooses a production default.
-The Overview cut-out badges are one candidate, not final approval of status style.
+MaterialStudies now demonstrates the selected flat cut-out status labels, attached
+index tabs and annotation-strip alerts. Their styles live in the canonical soft
+Badge, Tabs and Alert implementations; no exploratory material CSS remains. These
+three choices do not approve the complete gallery or authorize application migration.
 Avatar samples include the existing external portrait fixture, a working initials
 fallback, an overlapping stack and unchanged PresenceIndicator status vocabulary.
+
+Interactive cards now tint their themed paper surface subtly on primary-action
+hover/focus, and slightly farther on press. Independent inner controls do not
+trigger that primary tint. Passive and featured information surfaces remain still.
