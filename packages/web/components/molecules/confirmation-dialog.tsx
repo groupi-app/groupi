@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PaperDivider } from '@/components/atoms/paper-divider';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -122,6 +123,7 @@ export function ConfirmationDialog({
         </Alert>
       )}
       <DialogClose ref={close} className='hidden' aria-hidden tabIndex={-1} />
+      {presentation === 'soft' && <PaperDivider treatment='perforated' />}
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose asChild>

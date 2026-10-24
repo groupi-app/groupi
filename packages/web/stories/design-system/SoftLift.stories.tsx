@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Heading } from '@/components/atoms/heading';
+import { PaperDivider } from '@/components/atoms/paper-divider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -139,7 +140,7 @@ function SurfaceSamples() {
       <div id='surfaces' className='grid items-start gap-6 md:grid-cols-3'>
         <Card treatment='quiet'>
           <CardHeader>
-            <Badge presentation='soft' variant='outline'>
+            <Badge presentation='soft' variant='outline' className='self-start'>
               Information
             </Badge>
             <CardTitle>Bring something to share</CardTitle>
@@ -155,7 +156,7 @@ function SurfaceSamples() {
         </Card>
         <Card treatment='featured'>
           <CardHeader>
-            <Badge presentation='soft' variant='info'>
+            <Badge presentation='soft' variant='info' className='self-start'>
               <CalendarDays aria-hidden='true' className='size-3' /> Up next
             </Badge>
             <CardTitle>Picnic in the park</CardTitle>
@@ -163,9 +164,10 @@ function SurfaceSamples() {
           </CardHeader>
           <CardContent>
             <p className='text-sm'>
-              A static frame gives this moment emphasis.
+              A cut-paper frame gives this moment emphasis.
             </p>
           </CardContent>
+          <PaperDivider treatment='perforated' className='mb-5' />
           <CardFooter>
             <Button presentation='soft' variant='outline'>
               View details
@@ -174,7 +176,7 @@ function SurfaceSamples() {
         </Card>
         <Card treatment='interactive'>
           <CardHeader>
-            <Badge presentation='soft' variant='success'>
+            <Badge presentation='soft' variant='success' className='self-start'>
               <Globe aria-hidden='true' className='size-3' /> Public event
             </Badge>
             <CardTitle>

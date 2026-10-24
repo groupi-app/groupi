@@ -14,3 +14,5 @@ export * from './sticker-icon';
 export * from './unread-indicator';
 
 export * from './heading';
+
+export * from './paper-divider';

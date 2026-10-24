@@ -90,6 +90,7 @@
      ========================================================================== */
 
   --color-soft-action-surface: var(--soft-action-surface);
+  --color-soft-sticker-color: var(--soft-sticker-color);
   --color-soft-primary-fill: var(--soft-primary-fill);
   --color-soft-primary-composited-fill: var(--soft-primary-composited-fill);
   --color-soft-primary-foreground: var(--soft-primary-foreground);
@@ -334,6 +335,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(285, 100%, 34%);
   --soft-primary-composited-fill: rgb(130 0 173);
   --soft-primary-foreground: #ffffff;
@@ -511,6 +513,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(28 17 39);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(280, 85%, 60%);
   --soft-primary-composited-fill: rgb(182 66 240);
   --soft-primary-foreground: #000000;
@@ -688,6 +691,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(285, 100%, 34%);
   --soft-primary-composited-fill: rgb(130 0 173);
   --soft-primary-foreground: #ffffff;
@@ -865,6 +869,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(28 17 39);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(280, 85%, 60%);
   --soft-primary-composited-fill: rgb(182 66 240);
   --soft-primary-foreground: #000000;
@@ -1042,6 +1047,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(15 15 15);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(280, 90%, 65%);
   --soft-primary-composited-fill: rgb(193 85 246);
   --soft-primary-foreground: #000000;
@@ -1219,6 +1225,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(200, 85%, 40%);
   --soft-primary-composited-fill: rgb(15 131 189);
   --soft-primary-foreground: #000000;
@@ -1396,6 +1403,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(14 26 37);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(200, 85%, 55%);
   --soft-primary-composited-fill: rgb(43 173 238);
   --soft-primary-foreground: #000000;
@@ -1573,6 +1581,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(348, 70%, 65%);
   --soft-primary-composited-fill: rgb(228 103 128);
   --soft-primary-foreground: #000000;
@@ -1750,6 +1759,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(33 28 44);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(348, 79%, 81%);
   --soft-primary-composited-fill: rgb(245 168 184);
   --soft-primary-foreground: #000000;
@@ -1927,6 +1937,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(15, 85%, 55%);
   --soft-primary-composited-fill: rgb(238 91 43);
   --soft-primary-foreground: #000000;
@@ -2104,6 +2115,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(38 23 18);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(15, 85%, 58%);
   --soft-primary-composited-fill: rgb(239 102 57);
   --soft-primary-foreground: #000000;
@@ -2281,6 +2293,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(255 255 255);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(150, 55%, 38%);
   --soft-primary-composited-fill: rgb(44 150 97);
   --soft-primary-foreground: #000000;
@@ -2458,6 +2471,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(20 36 28);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(150, 55%, 45%);
   --soft-primary-composited-fill: rgb(52 178 115);
   --soft-primary-foreground: #000000;
@@ -2635,6 +2649,7 @@
      ========================================================================== */
 
   --soft-action-surface: rgb(22 14 37);
+  --soft-sticker-color: hsl(0, 0%, 100%);
   --soft-primary-fill: hsl(320, 95%, 60%);
   --soft-primary-composited-fill: rgb(250 56 185);
   --soft-primary-foreground: #000000;

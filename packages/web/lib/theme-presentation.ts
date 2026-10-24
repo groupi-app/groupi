@@ -1,3 +1,4 @@
+import { components } from '@groupi/shared/design';
 import {
   resolveThemePresentation,
   type BaseTheme,
@@ -14,6 +15,7 @@ export function getThemePresentationVariables(
   const { actions, surface } = resolveThemePresentation(base, overrides);
   const variables: Record<string, string> = {
     '--soft-action-surface': surface,
+    '--soft-sticker-color': components.sticker.edgeColor,
   };
   for (const [role, treatment] of Object.entries(actions)) {
     for (const [state, value] of Object.entries(treatment)) {

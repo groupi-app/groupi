@@ -78,6 +78,8 @@ export function EmptyState({
     >
       {icon && (
         <div
+          data-slot='empty-state-icon'
+          data-presentation={presentation}
           aria-hidden={soft ? true : undefined}
           className={cn(
             // Sticker journal aesthetic - icon in sticker container
