@@ -8,9 +8,13 @@ import { cn } from '@/lib/utils';
 export const buttonVariants = cva(
   // Base styles with dramatically rounded corners (Duolingo-style)
   // Using semantic radius token and bouncy hover effect
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button text-sm font-semibold transition-all duration-fast ease-bounce focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background cursor-pointer active:scale-[0.98] hover:scale-[1.02]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button text-sm font-semibold transition-all duration-fast ease-bounce focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background cursor-pointer',
   {
     variants: {
+      presentation: {
+        legacy: 'active:scale-[0.98] hover:scale-[1.02]',
+        soft: 'soft-action',
+      },
       variant: {
         // Solid variants with sticker aesthetic (white border, shadow)
         default:
@@ -38,6 +42,7 @@ export const buttonVariants = cva(
     },
     defaultVariants: {
       variant: 'default',
+      presentation: 'legacy',
       size: 'default',
     },
   }
@@ -66,6 +71,7 @@ export interface ButtonProps
 export function Button({
   className,
   variant,
+  presentation,
   size,
   asChild = false,
   isLoading = false,
@@ -82,9 +88,25 @@ export function Button({
     return (
       <Comp
         data-slot='button'
-        className={cn(buttonVariants({ variant, size, className }))}
+        data-presentation={presentation}
+        data-variant={variant ?? 'default'}
+        className={cn(
+          buttonVariants({ variant, presentation, size, className })
+        )}
         suppressHydrationWarning
         {...props}
+        aria-busy={presentation === 'soft' && isLoading ? true : undefined}
+        aria-disabled={
+          presentation === 'soft' && (disabled || isLoading) ? true : undefined
+        }
+        onClickCapture={event => {
+          if (presentation === 'soft' && (disabled || isLoading)) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          props.onClickCapture?.(event);
+        }}
       >
         {children}
       </Comp>
@@ -94,12 +116,21 @@ export function Button({
   return (
     <Comp
       data-slot='button'
-      className={cn(buttonVariants({ variant, size, className }))}
+      data-presentation={presentation}
+      data-variant={variant ?? 'default'}
+      className={cn(buttonVariants({ variant, presentation, size, className }))}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       {...props}
     >
       {isLoading ? (
-        <Loader2 className='size-4 animate-spin' />
+        <Loader2
+          aria-hidden='true'
+          className={cn(
+            'size-4 animate-spin',
+            presentation === 'soft' && 'motion-reduce:animate-none'
+          )}
+        />
       ) : icon ? (
         icon
       ) : null}

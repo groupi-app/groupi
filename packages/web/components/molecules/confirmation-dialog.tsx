@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export interface ConfirmationDialogProps {
+  presentation?: 'soft';
   /**
    * Dialog title displayed in the header
    */
@@ -68,6 +69,7 @@ export interface ConfirmationDialogProps {
 
 export function ConfirmationDialog({
   title,
+  presentation,
   description,
   cancelText = 'Cancel',
   confirmText = 'Confirm',
@@ -104,7 +106,11 @@ export function ConfirmationDialog({
   const variant = confirmVariant ?? (isDestructive ? 'destructive' : 'default');
 
   return (
-    <DialogContent className={cn(className)} preventClose={loading}>
+    <DialogContent
+      presentation={presentation}
+      className={cn(className)}
+      preventClose={loading}
+    >
       <DialogHeader>
         {icon && <div className='flex justify-center mb-2'>{icon}</div>}
         <DialogTitle>{title}</DialogTitle>
@@ -119,11 +125,17 @@ export function ConfirmationDialog({
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost' disabled={loading} className='flex-1'>
+            <Button
+              presentation={presentation}
+              variant='ghost'
+              disabled={loading}
+              className='flex-1'
+            >
               {cancelText}
             </Button>
           </DialogClose>
           <Button
+            presentation={presentation}
             onClick={handleConfirm}
             disabled={loading}
             variant={variant}
