@@ -27,14 +27,12 @@ import { GroupDiscordRetiredStatus } from './group-discord-settings';
 import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupConfirmedAction } from './group-confirmed-action';
 import { GroupMemberRoster } from './group-member-roster';
-import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 
 export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
   const group = useGroup(groupId);
   const leave = useLeaveGroup();
   const router = useRouter();
   const [shareMessage, setShareMessage] = useState('');
-  const openFriends = useFriendsDialogStore(state => state.openDialog);
 
   useEffect(() => {
     const destinations: Record<string, string> = {
@@ -76,8 +74,8 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           message='Group unavailable'
           description='You may not have access, or it may have been deleted.'
           action={
-            <Button variant='outline' onClick={() => openFriends('groups')}>
-              Friends &amp; Groups
+            <Button variant='outline' asChild>
+              <Link href='/groups'>Your Groups</Link>
             </Button>
           }
         />
@@ -87,13 +85,11 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
 
   return (
     <main className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8'>
-      <Button
-        className='self-start'
-        variant='ghost'
-        onClick={() => openFriends('groups')}
-      >
-        <ArrowLeft data-icon='inline-start' />
-        Friends &amp; Groups
+      <Button className='self-start' variant='ghost' asChild>
+        <Link href='/groups'>
+          <ArrowLeft data-icon='inline-start' />
+          Your Groups
+        </Link>
       </Button>
       <header className='flex flex-col gap-5 border-b border-border pb-8'>
         <div className='flex items-start gap-4 sm:gap-6'>
