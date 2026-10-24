@@ -82,10 +82,11 @@ export function ActionRow({
       <div className='flex items-center justify-between'>
         <span className='text-sm font-medium'>{meta.label}</span>
         <Button
-          variant='ghost'
+          variant='destructive-ghost'
           size='sm'
           onClick={onRemove}
-          className='text-muted-foreground hover:text-error h-7 w-7 p-0'
+          aria-label='Remove action'
+          className='h-7 w-7 p-0'
           type='button'
         >
           ×

@@ -180,11 +180,11 @@ export function ConditionRow({
       )}
 
       <Button
-        variant='ghost'
+        variant='destructive-ghost'
         size='sm'
         onClick={onRemove}
         aria-label='Remove condition'
-        className='col-start-2 row-start-1 text-muted-foreground hover:text-error h-8 w-8 p-0 shrink-0'
+        className='col-start-2 row-start-1 h-8 w-8 p-0 shrink-0'
         type='button'
       >
         ×

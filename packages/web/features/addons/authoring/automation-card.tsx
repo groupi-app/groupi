@@ -123,10 +123,11 @@ export function AutomationCard({
               onCheckedChange={enabled => onChange({ enabled })}
             />
             <Button
-              variant='ghost'
+              variant='destructive-ghost'
               size='sm'
               onClick={onRemove}
-              className='text-muted-foreground hover:text-error h-7 w-7 p-0'
+              aria-label='Remove automation'
+              className='h-7 w-7 p-0'
             >
               ×
             </Button>
