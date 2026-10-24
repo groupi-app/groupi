@@ -1000,7 +1000,7 @@
 }
 
 [data-slot='button'][data-presentation='soft'] {
-  --action-fill: var(--soft-primary-fill);
+  --action-fill: var(--soft-primary-composited-fill);
   --action-foreground: var(--soft-primary-foreground);
   --action-hover: var(--soft-primary-hover);
   --action-hover-foreground: var(--soft-primary-hover-foreground);
@@ -1018,7 +1018,7 @@
   transition-timing-function: var(--ease-default);
 }
 [data-slot='button'][data-presentation='soft'][data-variant='secondary'] {
-  --action-fill: var(--soft-secondary-fill);
+  --action-fill: var(--soft-secondary-composited-fill);
   --action-foreground: var(--soft-secondary-foreground);
   --action-hover: var(--soft-secondary-hover);
   --action-hover-foreground: var(--soft-secondary-hover-foreground);
@@ -1027,7 +1027,7 @@
   --action-backing: var(--soft-secondary-backing);
 }
 [data-slot='button'][data-presentation='soft'][data-variant='destructive'] {
-  --action-fill: var(--soft-destructive-fill);
+  --action-fill: var(--soft-destructive-composited-fill);
   --action-foreground: var(--soft-destructive-foreground);
   --action-hover: var(--soft-destructive-hover);
   --action-hover-foreground: var(--soft-destructive-hover-foreground);
@@ -1040,8 +1040,8 @@
     [data-variant='secondary'],
     [data-variant='destructive']
   ) {
-  background: var(--soft-action-surface);
-  background-image: linear-gradient(var(--action-fill), var(--action-fill));
+  background-color: var(--action-fill);
+  background-image: none;
   color: var(--action-foreground);
   border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
   box-shadow:
@@ -1054,7 +1054,7 @@
       [data-variant='secondary'],
       [data-variant='destructive']
     ):not(:disabled, [aria-disabled='true']):hover {
-    background: var(--action-hover);
+    background-color: var(--action-hover);
     color: var(--action-hover-foreground);
     transform: translateY(var(--soft-action-hover-travel));
     box-shadow:
@@ -1068,7 +1068,7 @@
     [data-variant='secondary'],
     [data-variant='destructive']
   ):not(:disabled, [aria-disabled='true']):active {
-  background: var(--action-pressed);
+  background-color: var(--action-pressed);
   color: var(--action-pressed-foreground);
   transform: translateY(var(--soft-action-press-travel));
   box-shadow: 0 calc(var(--soft-action-depth) - var(--soft-action-press-travel))
@@ -1185,11 +1185,8 @@
     [data-state='indeterminate']
   ),
 [data-slot='switch'][data-presentation='soft'][data-state='checked'] {
-  background: var(--soft-action-surface);
-  background-image: linear-gradient(
-    var(--soft-primary-fill),
-    var(--soft-primary-fill)
-  );
+  background-color: var(--soft-primary-composited-fill);
+  background-image: none;
   color: var(--soft-primary-foreground);
   border-color: var(--soft-primary-foreground);
 }
@@ -1209,11 +1206,8 @@
 }
 [data-slot='progress'][data-presentation='soft']
   [data-slot='progress-indicator'] {
-  background: var(--soft-action-surface);
-  background-image: linear-gradient(
-    var(--soft-primary-fill),
-    var(--soft-primary-fill)
-  );
+  background-color: var(--soft-primary-composited-fill);
+  background-image: none;
   border: 1px solid var(--soft-primary-foreground);
   border-radius: inherit;
   transition-property: width;

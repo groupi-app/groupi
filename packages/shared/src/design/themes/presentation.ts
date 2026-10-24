@@ -116,8 +116,10 @@ const css = (color: Color) =>
 /**
  * Resolve sparse saved values and opt-in presentation without mutating inputs.
  * Foregrounds meet 4.5:1 against each fill/state over the returned opaque surface.
- * Adapters must layer that surface beneath alpha fills (surface → page → mode
- * fallback), so controls retain their pairing on page/elevated backgrounds.
+ * compositedFill resolves supported alpha fills over surface → page → mode
+ * fallback, so adapters can paint one opaque background-color on any surface.
+ * Original fill strings remain intact; foreground polarity stays stable across
+ * hover and press as their fills move toward the contrasting endpoint.
  * Supports sRGB hex, RGB/HSL (comma or space syntax), alpha, black/white/transparent.
  * Unknown syntax keeps the chosen fill; deterministic fallback states carry
  * contrastVerified=false. This is not a compliance claim for unresolved CSS or
@@ -173,17 +175,22 @@ export function resolveThemePresentation(
   function treatment(fill: string) {
     const parsed = parseColor(fill);
     const color = composite(parsed ?? fallback, surface);
-    const target = foreground(color) === '#ffffff' ? WHITE : BLACK;
+    const text = foreground(color);
+    // Move away from the chosen text, so interaction never changes its polarity.
+    const target = text === '#ffffff' ? BLACK : WHITE;
     const hover = mix(color, target, 0.06);
     const pressed = mix(color, target, 0.12);
     const subtle = mix(surface, color, 0.12);
     return {
       fill,
-      foreground: foreground(color),
+      // Supported colors are resolved over the known surface once. Keeping a
+      // single background-color in adapters avoids gradient-to-color flashes.
+      compositedFill: parsed ? css(color) : fill,
+      foreground: text,
       hover: css(hover),
-      hoverForeground: foreground(hover),
+      hoverForeground: text,
       pressed: css(pressed),
-      pressedForeground: foreground(pressed),
+      pressedForeground: text,
       backing: css(mix(color, luminance(color) < 0.08 ? WHITE : BLACK, 0.24)),
       subtle: css(subtle),
       subtleForeground: foreground(subtle),
