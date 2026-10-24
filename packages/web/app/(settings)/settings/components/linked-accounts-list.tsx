@@ -333,14 +333,6 @@ export function LinkedAccountsList({
                       <span className='font-medium'>
                         {getProviderDisplayName(account.providerId)}
                       </span>
-                      {account.providerId === 'discord' &&
-                        retirement?.selectedDiscordUserId &&
-                        retirement.selectedDiscordUserId ===
-                          account.accountId && (
-                          <span className='text-sm text-muted-foreground'>
-                            Used for Group Discord access
-                          </span>
-                        )}
                       <span className='text-sm text-muted-foreground'>
                         {account.providerId.toLowerCase() === 'discord' &&
                         account.username

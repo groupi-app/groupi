@@ -32,6 +32,19 @@ it('configures a Group server with a newly created role by default', async () =>
     </ConvexProvider>
   );
   const user = userEvent.setup();
+  expect(
+    screen.queryByText(/Setup does not change channel permissions/)
+  ).not.toBeInTheDocument();
+  const help = screen.getByRole('button', {
+    name: 'About Discord permissions',
+  });
+  help.focus();
+  await user.keyboard('{Enter}');
+  expect(
+    await screen.findByText(/Setup does not change channel permissions/)
+  ).toBeVisible();
+  await user.keyboard('{Escape}');
+  expect(help).toHaveFocus();
   await user.type(
     screen.getByRole('textbox', { name: 'Discord server ID' }),
     '123'

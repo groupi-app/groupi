@@ -1,3 +1,7 @@
+import {
+  GroupAdmissionsSettings,
+  GroupQuestionnaireManagement,
+} from '@/features/groups';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -385,7 +389,7 @@ it('lets only the owner configure the optional questionnaire and preserves quest
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupQuestionnaireManagement groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -518,7 +522,7 @@ it('allows manager private answer review but exposes no admission approval actio
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupQuestionnaireManagement groupId={groupId} />
     </AppProvider>
   );
   await userEvent.setup().click(
@@ -805,7 +809,7 @@ it('pages manager review and scopes history to the selected public profile', asy
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupQuestionnaireManagement groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -980,7 +984,7 @@ it('owner can require completion without changing admission or deleting definiti
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupQuestionnaireManagement groupId={groupId} />
     </AppProvider>
   );
   await userEvent.click(
@@ -1163,6 +1167,7 @@ it('keeps Group shared Event content gated for an owner with required onboarding
   const mounted = render(
     <AppProvider client={client}>
       <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   expect(

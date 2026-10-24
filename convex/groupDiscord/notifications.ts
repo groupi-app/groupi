@@ -49,7 +49,7 @@ export async function deliverSynchronizationAlertPage(
       {
         messageContext: {
           groupTitle: group?.name ?? 'Deleted Group',
-          notificationUrl: `${process.env.SITE_URL || 'https://groupi.gg'}/groups/${alert.groupId}`,
+          notificationUrl: `${process.env.SITE_URL || 'https://groupi.gg'}/groups/${alert.groupId}#group-discord-heading`,
         },
       }
     );

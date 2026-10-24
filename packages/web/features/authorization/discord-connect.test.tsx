@@ -112,3 +112,73 @@ it('keeps a return progress screen while consumption invalidates the live reques
     fail(new Error('Return unavailable'));
   });
 });
+
+it.each(['connect', 'return'] as const)(
+  'replaces a cached journey with restart guidance when %s rejects an expired request',
+  async operation => {
+    vi.mocked(useQuery).mockReturnValue({
+      ...journey(),
+      status: { ...journey().status, status: 'connected' },
+    });
+    const rejection = new Error(
+      `[CONVEX ${operation === 'connect' ? 'A(groupDiscord/connect:connectHosted)' : 'M(groupDiscord/delegated:finish)'}] [Request ID: example] Server Error\nUncaught Error: Connection request unavailable or expired.\n    at handler (../convex/groupDiscord/connect.ts:286:24)`
+    );
+    vi.mocked(useAction).mockReturnValue(vi.fn().mockRejectedValue(rejection));
+    vi.mocked(useMutation).mockReturnValue(
+      vi.fn().mockRejectedValue(rejection) as never
+    );
+    render(<DiscordConnect state='opaque-state' />);
+    expect(screen.getByRole('status')).toHaveTextContent('connected');
+    await userEvent.setup().click(
+      screen.getByRole('button', {
+        name:
+          operation === 'connect'
+            ? 'Confirm identity and Connect Discord'
+            : 'Return to application',
+      })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This connection request is unavailable or expired. Return to your application to start again.'
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('CONVEX');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Discord access:/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Open Discord' })
+    ).not.toBeInTheDocument();
+  }
+);
+
+it.each(['connect', 'return'] as const)(
+  'keeps the journey recoverable after an ordinary %s failure',
+  async operation => {
+    vi.mocked(useQuery).mockReturnValue(journey());
+    const rejection = new Error(
+      'Discord is temporarily unavailable. Try again.'
+    );
+    vi.mocked(useAction).mockReturnValue(vi.fn().mockRejectedValue(rejection));
+    vi.mocked(useMutation).mockReturnValue(
+      vi.fn().mockRejectedValue(rejection) as never
+    );
+    render(<DiscordConnect state='opaque-state' />);
+    await userEvent.setup().click(
+      screen.getByRole('button', {
+        name:
+          operation === 'connect'
+            ? 'Confirm identity and Connect Discord'
+            : 'Return to application',
+      })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      rejection.message
+    );
+    expect(
+      screen.getByRole('button', {
+        name: 'Confirm identity and Connect Discord',
+      })
+    ).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Return to application' })
+    ).toBeEnabled();
+  }
+);
