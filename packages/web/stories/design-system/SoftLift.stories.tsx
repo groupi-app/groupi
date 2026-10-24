@@ -357,10 +357,13 @@ function Fields() {
             />
             <p
               id='time-error'
-              className='flex items-center gap-2 text-sm text-error'
+              className='flex items-center gap-2 text-sm text-foreground'
             >
-              <CircleAlert aria-hidden='true' className='size-4' /> Enter a time
-              between 00:00 and 23:59.
+              <CircleAlert
+                aria-hidden='true'
+                className='size-4 shrink-0 text-error'
+              />{' '}
+              Enter a time between 00:00 and 23:59.
             </p>
           </div>
           <div className='flex flex-col gap-2'>
