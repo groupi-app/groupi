@@ -250,5 +250,7 @@
   "GET /groups/{groupId}/coordinated-expulsions/{personId}": "readCommunityExpulsion",
   "PUT /groups/{groupId}/announcement-preference": "setCommunityAnnouncementPreference",
   "POST /groups/{groupId}/coordinated-expulsions/{personId}/resume": "resumeCommunityExpulsion",
-  "POST /groups/{groupId}/coordinated-expulsions/{personId}/reinstate": "reinstateCommunityMember"
+  "POST /groups/{groupId}/coordinated-expulsions/{personId}/reinstate": "reinstateCommunityMember",
+  "GET /groups/{groupId}/discord": "readOwnGroupDiscordStatus",
+  "POST /groups/{groupId}/discord/connect": "beginOwnGroupDiscordConnect"
 }

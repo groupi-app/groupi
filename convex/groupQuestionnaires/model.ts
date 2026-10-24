@@ -1,5 +1,9 @@
+import { scheduleGroupDiscordEligibilityCheck } from '../groupDiscord/eligibility';
 import { isGroupExcludedForPerson } from '../groups/exclusions';
-import { scheduleRequiredChanges } from './notificationJobs';
+import {
+  scheduleRequiredChanges,
+  requiredNotificationKey,
+} from './notificationJobs';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -203,6 +207,8 @@ export async function configureJoiningQuestionnaire(
   if (existing) await ctx.db.patch(existing._id, value);
   else await ctx.db.insert('groupQuestionnaires', value);
   await scheduleRequiredChanges(ctx, groupId, personId, existing, value);
+  if (requiredNotificationKey(existing) !== requiredNotificationKey(value))
+    await scheduleGroupDiscordEligibilityCheck(ctx, groupId);
   return getJoiningQuestionnaire(ctx, groupId, personId);
 }
 export async function submitJoiningQuestionnaire(

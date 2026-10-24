@@ -2042,8 +2042,10 @@ Usage: groupi groups delete [options] <group-id>
 Explicitly retire an owned Group and its data; independent Events remain
 
 Options:
-  --yes       Confirm Group deletion
-  -h, --help  display help for command
+  --yes                           Confirm Group deletion
+  --acknowledge-discord-handback  Hand retained Discord access to staff; owed removals continue,
+                                  server and bot remain
+  -h, --help                      display help for command
 ```
 
 ## groupi groups announce

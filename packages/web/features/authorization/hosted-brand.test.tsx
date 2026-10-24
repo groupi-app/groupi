@@ -50,3 +50,11 @@ it('stops showing an expired interaction even without a backend update', async (
     vi.useRealTimers();
   }
 });
+it('recognizes only a local bound Discord journey for existing hosted sign-in branding', async () => {
+  const { hostedInteractionId } = await import('./hosted-brand');
+  expect(hostedInteractionId('/oauth/discord?state=opaque')).toBe('opaque');
+  expect(
+    hostedInteractionId('https://evil.example/oauth/discord?state=opaque')
+  ).toBeNull();
+  expect(hostedInteractionId('/oauth/discord?state=one&state=two')).toBeNull();
+});

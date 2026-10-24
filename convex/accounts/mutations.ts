@@ -1,3 +1,4 @@
+import { retireDiscordIdentity } from '../groupDiscord/identity';
 import { mutation } from '../_generated/server';
 import { components } from '../_generated/api';
 import { v, ConvexError } from 'convex/values';
@@ -87,6 +88,9 @@ export const unlinkAccount = mutation({
         'Cannot unlink last authentication method. Add another sign-in method first.'
       );
     }
+
+    if (accountToUnlink.providerId === 'discord')
+      await retireDiscordIdentity(ctx, userId, accountToUnlink.accountId);
 
     // Delete the account using the component's adapter
     await ctx.runMutation(components.betterAuth.adapter.deleteOne, {

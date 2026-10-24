@@ -1,3 +1,4 @@
+import { invalidateGroupDiscordEnrollment } from '../groupDiscord/eligibility';
 import { paginationResultValidator } from 'convex/server';
 import { resetPreferenceFor } from './announcementPreferenceModel';
 import { v, type Infer } from 'convex/values';
@@ -136,6 +137,12 @@ export async function expelForPerson(
   };
   if (existing) await ctx.db.replace(existing._id, record);
   else await ctx.db.insert('communityExclusions', record);
+  await invalidateGroupDiscordEnrollment(
+    ctx,
+    input.groupId,
+    input.personId,
+    'banned'
+  );
   const result = {
     operationId: input.operationId,
     outcome: 'committed' as const,
@@ -382,7 +389,7 @@ export async function resolveForPerson(
   )
     operationError(
       'CLEANUP_REQUIRED',
-      'Resolve all cleanup before reinstatement. Fresh admission is required.'
+      'Resolve Event and Group participation cleanup before reinstatement. Fresh admission is required.'
     );
   if (action === 'resume') {
     await resetPreferenceFor(ctx, input.groupId, input.personId);

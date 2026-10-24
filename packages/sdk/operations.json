@@ -1018,6 +1018,20 @@
   },
   {
     "paging": null,
+    "name": "readOwnGroupDiscordStatus",
+    "method": "GET",
+    "path": "/groups/{groupId}/discord",
+    "summary": "Read own selected Group Discord access and Open Discord destination"
+  },
+  {
+    "paging": null,
+    "name": "beginOwnGroupDiscordConnect",
+    "method": "POST",
+    "path": "/groups/{groupId}/discord/connect",
+    "summary": "Begin a Groupi-hosted member identity and consent journey"
+  },
+  {
+    "paging": null,
     "name": "getGroupsJoiningQuestionnaire",
     "method": "GET",
     "path": "/groups/{groupId}/joining-questionnaire",
