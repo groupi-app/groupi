@@ -13,6 +13,8 @@ type LinkedAccount = {
   providerId: string;
   accountId: string;
   username?: string;
+  displayName?: string;
+  avatarUrl?: string;
   createdAt: number;
 };
 

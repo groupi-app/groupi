@@ -3207,3 +3207,264 @@ it('an uncertain join remains owed when OAuth consent expires before retry', asy
     await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
   ).toMatchObject({ cleanupPending: true });
 });
+
+it('exposes the verified Discord server icon through manager and member status', async () => {
+  const { owner, groupId } = await setup();
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).endsWith('/users/@me/guilds')
+      ? json([
+          {
+            id: '100',
+            name: 'Reading room',
+            permissions: '32',
+            icon: 'a_1269e74af4df7417b13759eae50c83dc',
+            iconUrl: 'https://untrusted.example/icon.png',
+          },
+        ])
+      : base(input, init)
+  );
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const providerCallsAfterSetup = provider.mock.calls.length;
+  const manager = await owner.auth.query(
+    api.groupDiscord.queries.getConnection,
+    {
+      groupId,
+    }
+  );
+  const member = await owner.auth.query(api.groupDiscord.enrollment.getStatus, {
+    groupId,
+  });
+  const expected =
+    'https://cdn.discordapp.com/icons/100/a_1269e74af4df7417b13759eae50c83dc.png?size=128';
+  expect(manager).toMatchObject({ guildIconUrl: expected });
+  expect(member).toMatchObject({ guildIconUrl: expected });
+  expect(provider.mock.calls).toHaveLength(providerCallsAfterSetup);
+});
+
+it.each([null, undefined, 'https://untrusted.example/icon.png', '../icon'])(
+  'keeps iconless or malformed provider metadata optional: %s',
+  async icon => {
+    const { owner, groupId } = await setup();
+    const base = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) =>
+      String(input).endsWith('/users/@me/guilds')
+        ? json([{ id: '100', name: 'Reading room', permissions: '32', icon }])
+        : base(input, init)
+    );
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).not.toHaveProperty('guildIconUrl');
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).not.toHaveProperty('guildIconUrl');
+  }
+);
+
+it('reads legacy iconless connections without a provider request or metadata migration', async () => {
+  const { t, owner, groupId } = await setup();
+  await t.run(async ctx => {
+    await ctx.db.insert('groupDiscordConnections', {
+      groupId,
+      guildId: '100',
+      guildName: 'Legacy reading room',
+      mode: 'membership',
+      status: 'active',
+      generation: 1,
+      updatedAt: Date.now(),
+    });
+  });
+  const manager = await owner.auth.query(
+    api.groupDiscord.queries.getConnection,
+    {
+      groupId,
+    }
+  );
+  const member = await owner.auth.query(api.groupDiscord.enrollment.getStatus, {
+    groupId,
+  });
+  expect(manager).toMatchObject({ guildName: 'Legacy reading room' });
+  expect(member).toMatchObject({ guildName: 'Legacy reading room' });
+  expect(manager).not.toHaveProperty('guildIconUrl');
+  expect(member).not.toHaveProperty('guildIconUrl');
+  expect(provider).not.toHaveBeenCalled();
+});
+
+it('refreshes legacy server metadata without changing connection or enrolled access', async () => {
+  const { owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) => {
+    if (String(input).endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (String(input).endsWith('/members/manager-discord'))
+      return json({ roles: ['created-role'], pending: false });
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  const before = await owner.auth.query(
+    api.groupDiscord.queries.getConnection,
+    { groupId }
+  );
+  const enrolled = await owner.auth.query(
+    api.groupDiscord.enrollment.getStatus,
+    { groupId }
+  );
+  expect(enrolled).toMatchObject({ status: 'connected' });
+  provider.mockReset();
+  provider.mockResolvedValue(
+    json([
+      {
+        id: '100',
+        name: 'Updated reading room',
+        permissions: '32',
+        icon: '1269e74af4df7417b13759eae50c83dc',
+      },
+    ])
+  );
+  vi.stubEnv('DISCORD_BOT_TOKEN', '');
+  await owner.auth.action(api.groupDiscord.actions.refreshMetadata, {
+    groupId,
+  });
+  const metadata = {
+    guildName: 'Updated reading room',
+    guildIconUrl:
+      'https://cdn.discordapp.com/icons/100/1269e74af4df7417b13759eae50c83dc.png?size=128',
+  };
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toEqual({ ...before, ...metadata });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toEqual({ ...enrolled, ...metadata });
+  expect(provider).toHaveBeenCalledOnce();
+  expect(String(provider.mock.calls[0][0])).toBe(
+    'https://discord.com/api/v10/users/@me/guilds'
+  );
+});
+
+it('clears cached server icons when Discord removes the icon', async () => {
+  const { owner, groupId } = await setup();
+  const base = provider.getMockImplementation()!;
+  let icon: string | null = '1269e74af4df7417b13759eae50c83dc';
+  provider.mockImplementation(async (input, init) =>
+    String(input).endsWith('/users/@me/guilds')
+      ? json([{ id: '100', name: 'Reading room', permissions: '32', icon }])
+      : base(input, init)
+  );
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toHaveProperty('guildIconUrl');
+  icon = null;
+  await owner.auth.action(api.groupDiscord.actions.refreshMetadata, {
+    groupId,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).not.toHaveProperty('guildIconUrl');
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).not.toHaveProperty('guildIconUrl');
+});
+
+it('requires current Group manager authority before refreshing server metadata', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const member = await createAuthAccount(t, 'metadata-member');
+  await t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: member.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+  });
+  provider.mockClear();
+  await expect(
+    member.auth.action(api.groupDiscord.actions.refreshMetadata, { groupId })
+  ).rejects.toThrow('manager access');
+  expect(provider).not.toHaveBeenCalled();
+});
+
+it('requires current linked Discord Manage Server authority for metadata refresh', async () => {
+  const { owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const before = await owner.auth.query(
+    api.groupDiscord.queries.getConnection,
+    { groupId }
+  );
+  provider.mockResolvedValue(
+    json([
+      { id: '100', name: 'Unauthorized rename', permissions: '0', icon: null },
+    ])
+  );
+  await expect(
+    owner.auth.action(api.groupDiscord.actions.refreshMetadata, { groupId })
+  ).rejects.toThrow('Manage Server');
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toEqual(before);
+});
+
+it('fences metadata refresh against a changed connection generation', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  provider.mockImplementation(async () => {
+    await t.run(async ctx => {
+      const current = await ctx.db
+        .query('groupDiscordConnections')
+        .withIndex('by_group', q => q.eq('groupId', groupId))
+        .unique();
+      await ctx.db.patch(current!._id, { generation: 2 });
+    });
+    return json([
+      {
+        id: '100',
+        name: 'Stale server details',
+        permissions: '32',
+        icon: '1269e74af4df7417b13759eae50c83dc',
+      },
+    ]);
+  });
+  await expect(
+    owner.auth.action(api.groupDiscord.actions.refreshMetadata, { groupId })
+  ).rejects.toThrow('configuration changed');
+  const current = await owner.auth.query(
+    api.groupDiscord.queries.getConnection,
+    { groupId }
+  );
+  expect(current).toMatchObject({
+    generation: 2,
+    guildName: 'Reading room',
+    status: 'active',
+  });
+  expect(current).not.toHaveProperty('guildIconUrl');
+});

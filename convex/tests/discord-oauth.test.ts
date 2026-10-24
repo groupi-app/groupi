@@ -19,7 +19,11 @@ const fetchMock = vi.fn<typeof fetch>();
 async function seedDiscord(
   t: ReturnType<typeof createTestInstance>,
   username: string,
-  options: { expired?: boolean; noRefreshToken?: boolean } = {}
+  options: {
+    expired?: boolean;
+    noRefreshToken?: boolean;
+    accountId?: string;
+  } = {}
 ) {
   const user = await createAuthAccount(t, username);
   const now = Date.now();
@@ -29,7 +33,7 @@ async function seedDiscord(
       data: {
         userId: user.user._id,
         providerId: 'discord',
-        accountId: `${username}-discord-id`,
+        accountId: options.accountId ?? `${username}-discord-id`,
         accessToken: `${username}-access`,
         refreshToken: options.noRefreshToken
           ? undefined
@@ -93,6 +97,94 @@ describe('Discord OAuth credential renewal', () => {
     vi.unstubAllEnvs();
   });
 
+  it.each([
+    {
+      name: 'custom avatar and display name',
+      globalName: 'Avery',
+      avatar: 'a_0123456789abcdef0123456789abcdef',
+      discriminator: '0',
+      expectedName: 'Avery',
+      expectedAvatar:
+        'https://cdn.discordapp.com/avatars/139184819090227201/a_0123456789abcdef0123456789abcdef.png?size=128',
+    },
+    {
+      name: 'modern default avatar',
+      globalName: null,
+      avatar: null,
+      discriminator: '0',
+      expectedName: 'avery.discord',
+      expectedAvatar: `https://cdn.discordapp.com/embed/avatars/${Number((139184819090227201n >> 22n) % 6n)}.png`,
+    },
+    {
+      name: 'legacy default avatar',
+      globalName: null,
+      avatar: null,
+      discriminator: '1234',
+      expectedName: 'avery.discord',
+      expectedAvatar: 'https://cdn.discordapp.com/embed/avatars/4.png',
+    },
+  ])(
+    'enriches the exact linked profile with $name',
+    async ({
+      globalName,
+      avatar,
+      discriminator,
+      expectedName,
+      expectedAvatar,
+    }) => {
+      const t = createTestInstance();
+      registerBetterAuth(t);
+      const user = await seedDiscord(t, 'avery', {
+        accountId: '139184819090227201',
+      });
+      fetchMock.mockResolvedValue(
+        json({
+          id: '139184819090227201',
+          username: 'avery.discord',
+          global_name: globalName,
+          avatar,
+          discriminator,
+        })
+      );
+      const accounts = await user.auth.action(
+        api.accounts.queries.getLinkedAccountsWithUsernames,
+        {}
+      );
+      expect(accounts).toEqual([
+        {
+          id: user.account._id,
+          providerId: 'discord',
+          accountId: '139184819090227201',
+          username: 'avery.discord',
+          displayName: expectedName,
+          avatarUrl: expectedAvatar,
+          createdAt: user.account.createdAt,
+        },
+      ]);
+    }
+  );
+
+  it('never labels a linked account using a different Discord identity', async () => {
+    const t = createTestInstance();
+    registerBetterAuth(t);
+    const user = await seedDiscord(t, 'avery');
+    fetchMock.mockResolvedValue(
+      json({
+        id: 'another-discord-id',
+        username: 'another',
+        global_name: 'Someone else',
+        avatar: '0123456789abcdef0123456789abcdef',
+      })
+    );
+    const accounts = await user.auth.action(
+      api.accounts.queries.getLinkedAccountsWithUsernames,
+      {}
+    );
+    expect(accounts[0].username).toBeUndefined();
+    expect(accounts[0].displayName).toBeUndefined();
+    expect(accounts[0].avatarUrl).toBeUndefined();
+  });
+
   it('renews expired credentials, persists rotation, and retains the username on a later visit', async () => {
     const t = createTestInstance();
     registerBetterAuth(t);
@@ -119,6 +211,7 @@ describe('Discord OAuth credential renewal', () => {
         providerId: 'discord',
         accountId: 'avery-discord-id',
         username: 'avery.discord',
+        displayName: 'avery.discord',
         createdAt: user.account.createdAt,
       },
     ]);
@@ -174,7 +267,7 @@ describe('Discord OAuth credential renewal', () => {
     fetchMock.mockImplementation(async (input, init) => {
       expect(requestUrl(input)).toBe(USER_URL);
       expect(authorization(init)).toBe('Bearer avery-access');
-      return json({ username: 'avery.discord' });
+      return json({ id: 'avery-discord-id', username: 'avery.discord' });
     });
     expect(
       await user.auth.action(
@@ -261,7 +354,7 @@ describe('Discord OAuth credential renewal', () => {
     fetchMock.mockImplementation(async (input, init) => {
       expect(requestUrl(input)).toBe(USER_URL);
       expect(authorization(init)).toBe('Bearer avery-access');
-      return json({ username: 'avery.discord' });
+      return json({ id: 'avery-discord-id', username: 'avery.discord' });
     });
     const accounts = await user.auth.action(
       api.accounts.queries.getLinkedAccountsWithUsernames,

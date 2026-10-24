@@ -25301,6 +25301,10 @@
                     "guildName": {
                       "type": "string"
                     },
+                    "guildIconUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
                     "openUrl": {
                       "type": "string",
                       "format": "uri"

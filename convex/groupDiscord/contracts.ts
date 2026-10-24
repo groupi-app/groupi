@@ -4,6 +4,7 @@ export const connectionFields = {
   groupId: v.id('groups'),
   guildId: v.string(),
   guildName: v.string(),
+  guildIconUrl: v.optional(v.string()),
   mode,
   // Provider-created identity is retained even if activation is rejected.
   provisionedRoleId: v.optional(v.string()),
@@ -31,6 +32,7 @@ export const connection = v.object({
 export const memberStatus = v.object({
   mode,
   guildName: v.string(),
+  guildIconUrl: v.optional(v.string()),
   openUrl: v.string(),
   linked: v.boolean(),
   linkedDiscordUserId: v.optional(v.string()),

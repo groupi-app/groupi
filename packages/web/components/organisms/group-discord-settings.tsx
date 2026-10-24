@@ -26,6 +26,15 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
             : 'Server membership only'}
           .
         </p>
+        {form.connection.status === 'active' && (
+          <Button
+            variant='outline'
+            disabled={form.busy}
+            onClick={() => void form.refreshServerDetails()}
+          >
+            Refresh server details
+          </Button>
+        )}
         {form.connection.handedBackRoleIds?.length ? (
           <p>
             Roles created during retired setup are now managed by Discord staff:{' '}
@@ -74,6 +83,7 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
         >
           Disable Discord connection
         </Button>
+        {form.message && <p role='status'>{form.message}</p>}
         {form.error && <p role='alert'>{form.error}</p>}
       </section>
     );

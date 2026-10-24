@@ -293,3 +293,54 @@ it('shows retired cleanup on the old Group link and hides unauthorized summaries
   hidden.unmount();
   await client.close();
 });
+
+it.each([false, true])(
+  'refreshes active server details without reconfiguration (failure: %s)',
+  async failure => {
+    const client = new ConvexReactClient('https://fixture.convex.cloud', {
+      unsavedChangesWarning: false,
+    });
+    vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+      onUpdate: () => () => {},
+      journal: () => undefined,
+      localQueryResult: () => ({
+        guildId: '123',
+        guildName: 'Community',
+        mode: 'role',
+        generation: 4,
+        status: 'active',
+      }),
+    }));
+    const action = vi.spyOn(client, 'action');
+    if (failure)
+      action.mockRejectedValue(new Error('Server permission changed.'));
+    else action.mockResolvedValue({ guildName: 'Updated community' });
+    const mutation = vi.spyOn(client, 'mutation');
+    const mounted = render(
+      <ConvexProvider client={client}>
+        <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+      </ConvexProvider>
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Refresh server details' }));
+    expect(getFunctionName(action.mock.calls[0][0])).toBe(
+      'groupDiscord/actions:refreshMetadata'
+    );
+    expect(action.mock.calls[0][1]).toEqual({ groupId: 'group-one' });
+    expect(mutation).not.toHaveBeenCalled();
+    if (failure)
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Server permission changed.'
+      );
+    else
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Discord server details refreshed.'
+      );
+    expect(
+      screen.getByRole('button', { name: 'Disable Discord connection' })
+    ).toBeDisabled();
+    mounted.unmount();
+    await client.close();
+  }
+);
