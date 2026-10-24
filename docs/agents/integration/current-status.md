@@ -1,6 +1,14 @@
 # Current Integration Status
 
-This is the authoritative handoff for Invite Lists and Groups integration. The current promotion checkpoint is **2026-10-15, America/New_York**. Earlier deployment records below are historical, not live branch lookups.
+This is the authoritative integration handoff. Each dated section records its own source and verification scope; older deployment records are historical, not live branch lookups.
+
+## Design-language implementation — 2026-10-24
+
+- [Draft PR #431](https://github.com/groupi-app/groupi/pull/431) tracks specification #420 on `codex/design-language-integration`, based on main `13c02494`. Controls and localized usability corrections are integrated; the initial functional-fix patch changeset has explicit user approval.
+- Controls and usability tracks passed focused rendered-component regressions and `pnpm check`. Feedback, derived theme treatment, and the actual-component gallery remain in progress. See [execution evidence and task graph](../../design-language-execution.md).
+- A local Storybook server is explicitly authorized. The Next.js 16 compatibility prerequisite has rendered actual components in Chromium in an isolated worktree; this does not yet validate the refreshed gallery.
+- The user must review the actual gallery before application-wide migration. Migrated-screen validation then gates Groups structural review; its proposals require review before implementation. Native parity follows web validation.
+- Source-matched authenticated app runtime, backend binding, isolated test session, native build/device, and observed VoiceOver/TalkBack remain unverified for this source. No backend deployment or production data changes were made. No inherited October 15 runtime result is claimed for this branch.
 
 ## Test promotion checkpoint — 2026-10-15
 
