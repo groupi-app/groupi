@@ -9,6 +9,7 @@ import { requireAuth } from '../auth';
 import { authorizeCommunity } from '../groups/community';
 import { denied, randomSecret, secretHash } from '../authorization/model';
 import { eligibleConnection, getMemberStatus } from './memberOperations';
+import { membershipFor } from '../groups/policy';
 import { memberStatus } from './contracts';
 
 const scope = {
@@ -130,7 +131,9 @@ export const inspect = query({
       groupId: row.groupId,
       generation: row.generation,
       appName: app!.name,
-      status: await getMemberStatus(ctx, row.groupId, row.personId),
+      status: (await membershipFor(ctx, row.groupId, row.personId))
+        ? await getMemberStatus(ctx, row.groupId, row.personId)
+        : null,
     };
   },
 });

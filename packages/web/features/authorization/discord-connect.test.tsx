@@ -39,7 +39,7 @@ it('explains both modes and requires explicit identity confirmation before hoste
   vi.mocked(useQuery).mockReturnValue(journey('membership'));
   const connect = vi.fn().mockResolvedValue({});
   vi.mocked(useAction).mockReturnValue(connect);
-  vi.mocked(useMutation).mockReturnValue(vi.fn());
+  vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
   render(<DiscordConnect state='opaque-state' />);
   expect(
     screen.getByText(/Confirm your linked Discord account ID/)
@@ -75,7 +75,7 @@ it('shows cleanup and external exceptions without allowing a blocked connection'
     },
   });
   vi.mocked(useAction).mockReturnValue(vi.fn());
-  vi.mocked(useMutation).mockReturnValue(vi.fn());
+  vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
   render(<DiscordConnect state='opaque-state' />);
   expect(
     screen.getByRole('button', { name: 'Confirm identity and Connect Discord' })
@@ -97,7 +97,7 @@ it('keeps a return progress screen while consumption invalidates the live reques
         fail = reject;
       })
   );
-  vi.mocked(useMutation).mockReturnValue(finish);
+  vi.mocked(useMutation).mockReturnValue(finish as never);
   const mounted = render(<DiscordConnect state='opaque-state' />);
   await userEvent
     .setup()

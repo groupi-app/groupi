@@ -103,6 +103,12 @@ export function DiscordConnect({ state }: { state: string }) {
         Your Groupi account stays in control of Discord consent. This
         application receives your access status, never your Discord credentials.
       </p>
+      {!status && (
+        <p role='status'>
+          Current Group membership is required to connect Discord. Return to
+          your application to review your membership.
+        </p>
+      )}
       {status && (
         <>
           <h2>{status.guildName}</h2>
