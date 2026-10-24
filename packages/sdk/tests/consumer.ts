@@ -93,3 +93,12 @@ client.beginOwnGroupDiscordConnect({
 });
 // @ts-expect-error Hosted Connect requires an explicit registered return URL.
 client.beginOwnGroupDiscordConnect({ path: { groupId: 'group' }, body: {} });
+client.explicitlyDeleteAGroupAsOwner({
+  path: { groupId: 'group' },
+  query: { acknowledgeDiscordHandback: 'true' },
+});
+client.explicitlyDeleteAGroupAsOwner({
+  path: { groupId: 'group' },
+  // @ts-expect-error Handback acknowledgement uses the explicit supported query literals.
+  query: { acknowledgeDiscordHandback: 'yes' },
+});
