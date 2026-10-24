@@ -51,6 +51,7 @@ export interface DialogContentProps
   preventOverlayClose?: boolean;
   /** Keep pending operations visible until their result is known. */
   preventClose?: boolean;
+  presentation?: 'soft';
 }
 
 export function DialogContent({
@@ -58,6 +59,7 @@ export function DialogContent({
   children,
   preventOverlayClose = false,
   preventClose = false,
+  presentation,
   onEscapeKeyDown,
   onInteractOutside,
   ...props
@@ -67,6 +69,7 @@ export function DialogContent({
       {/* Keep portal ordering stable when dismissal protection changes. */}
       <DialogPrimitive.Close asChild>
         <DialogOverlay
+          data-presentation={presentation}
           onClick={event => {
             if (preventOverlayClose || preventClose) event.preventDefault();
           }}
@@ -74,6 +77,7 @@ export function DialogContent({
       </DialogPrimitive.Close>
       <DialogPrimitive.Content
         data-slot='dialog-content'
+        data-presentation={presentation}
         onEscapeKeyDown={event => {
           onEscapeKeyDown?.(event);
           if (preventClose) event.preventDefault();
@@ -85,6 +89,7 @@ export function DialogContent({
         className={cn(
           // Clean elevated modal - sticker effect reserved for accents inside
           'fixed left-[50%] top-[50%] z-modal grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 bg-background p-6 shadow-overlay rounded-modal border border-border duration-normal data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] md:w-full',
+          presentation === 'soft' && 'max-w-[calc(100%-2rem)] sm:max-w-lg',
           className
         )}
         {...props}

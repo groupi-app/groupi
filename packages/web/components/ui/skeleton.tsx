@@ -3,12 +3,18 @@ import { cn } from '@/lib/utils';
 
 function Skeleton({
   className,
+  presentation,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & { presentation?: 'soft' }) {
   return (
     <div
       data-slot='skeleton'
-      className={cn('animate-pulse rounded-soft bg-muted', className)}
+      data-presentation={presentation}
+      className={cn(
+        'animate-pulse rounded-soft bg-muted',
+        presentation === 'soft' && 'motion-reduce:animate-none',
+        className
+      )}
       {...props}
     />
   );

@@ -2,8 +2,10 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { Heading } from '@/components/atoms/heading';
 
 export interface ListPageTemplateProps {
+  presentation?: 'soft';
   /**
    * Page title displayed as H1
    */
@@ -46,6 +48,7 @@ const maxWidthClasses = {
 
 export function ListPageTemplate({
   title,
+  presentation,
   subtitle,
   controls,
   children,
@@ -66,10 +69,25 @@ export function ListPageTemplate({
         )}
       >
         <div>
-          <h1 className='text-5xl font-heading font-medium'>{title}</h1>
+          {presentation === 'soft' ? (
+            <Heading level={1} roleSize='page'>
+              {title}
+            </Heading>
+          ) : (
+            <h1 className='text-5xl font-heading font-medium'>{title}</h1>
+          )}
           {subtitle && <p className='text-muted-foreground mt-1'>{subtitle}</p>}
         </div>
-        {controls && <div className='flex items-center gap-2'>{controls}</div>}
+        {controls && (
+          <div
+            className={cn(
+              'flex items-center gap-2',
+              presentation === 'soft' && 'flex-wrap'
+            )}
+          >
+            {controls}
+          </div>
+        )}
       </div>
       {children}
     </div>

@@ -79,13 +79,17 @@ export function DropdownMenuSubContent({
 
 export function DropdownMenuContent({
   className,
+  presentation,
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content> & {
+  presentation?: 'soft';
+}) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         data-slot='dropdown-menu-content'
+        data-presentation={presentation}
         sideOffset={sideOffset}
         className={cn(
           // Rounded dropdown - uses z-[250] to appear above popovers (z-[200])

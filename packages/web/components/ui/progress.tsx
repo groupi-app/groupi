@@ -7,10 +7,13 @@ import { cn } from '@/lib/utils';
 
 export function Progress({
   className,
+  presentation,
   value,
   max = 100,
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+}: React.ComponentProps<typeof ProgressPrimitive.Root> & {
+  presentation?: 'soft';
+}) {
   const resolvedMax = Number.isFinite(max) && max > 0 ? max : 100;
   const resolvedValue =
     typeof value === 'number' && Number.isFinite(value)
@@ -22,6 +25,7 @@ export function Progress({
       value={resolvedValue}
       max={resolvedMax}
       data-slot='progress'
+      data-presentation={presentation}
       className={cn(
         'relative h-4 w-full overflow-hidden rounded-pill bg-secondary',
         className
@@ -32,7 +36,11 @@ export function Progress({
         data-slot='progress-indicator'
         className='h-full w-full flex-1 bg-primary transition-all duration-normal ease-bounce'
         style={{
-          transform: `translateX(-${100 - ((resolvedValue ?? 0) / resolvedMax) * 100}%)`,
+          ...(presentation === 'soft'
+            ? { width: `${((resolvedValue ?? 0) / resolvedMax) * 100}%` }
+            : {
+                transform: `translateX(-${100 - ((resolvedValue ?? 0) / resolvedMax) * 100}%)`,
+              }),
         }}
       />
     </ProgressPrimitive.Root>

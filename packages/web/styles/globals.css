@@ -988,3 +988,256 @@
       300% 0;
   }
 }
+
+/* Staged Soft lift component tokens. Opt-in until the actual gallery is approved. */
+:root {
+  --soft-sticker-edge: 3px;
+  --soft-action-depth: 4px;
+  --soft-action-hover-travel: 1px;
+  --soft-action-press-travel: 3px;
+  --soft-sticker-color: var(--bg-elevated);
+  --soft-diffuse-shadow: var(--shadow-raised);
+}
+
+[data-slot='button'][data-presentation='soft'] {
+  --action-fill: var(--soft-primary-fill);
+  --action-foreground: var(--soft-primary-foreground);
+  --action-hover: var(--soft-primary-hover);
+  --action-hover-foreground: var(--soft-primary-hover-foreground);
+  --action-pressed: var(--soft-primary-pressed);
+  --action-pressed-foreground: var(--soft-primary-pressed-foreground);
+  --action-backing: var(--soft-primary-backing);
+  min-height: 2.75rem;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  scale: none;
+  transition-property:
+    transform, box-shadow, background-color, color, border-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-default);
+}
+[data-slot='button'][data-presentation='soft'][data-variant='secondary'] {
+  --action-fill: var(--soft-secondary-fill);
+  --action-foreground: var(--soft-secondary-foreground);
+  --action-hover: var(--soft-secondary-hover);
+  --action-hover-foreground: var(--soft-secondary-hover-foreground);
+  --action-pressed: var(--soft-secondary-pressed);
+  --action-pressed-foreground: var(--soft-secondary-pressed-foreground);
+  --action-backing: var(--soft-secondary-backing);
+}
+[data-slot='button'][data-presentation='soft'][data-variant='destructive'] {
+  --action-fill: var(--soft-destructive-fill);
+  --action-foreground: var(--soft-destructive-foreground);
+  --action-hover: var(--soft-destructive-hover);
+  --action-hover-foreground: var(--soft-destructive-hover-foreground);
+  --action-pressed: var(--soft-destructive-pressed);
+  --action-pressed-foreground: var(--soft-destructive-pressed-foreground);
+  --action-backing: var(--soft-destructive-backing);
+}
+[data-slot='button'][data-presentation='soft']:is(
+    [data-variant='default'],
+    [data-variant='secondary'],
+    [data-variant='destructive']
+  ) {
+  background: var(--soft-action-surface);
+  background-image: linear-gradient(var(--action-fill), var(--action-fill));
+  color: var(--action-foreground);
+  border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
+  box-shadow:
+    0 var(--soft-action-depth) 0 var(--action-backing),
+    var(--soft-diffuse-shadow);
+}
+@media (hover: hover) {
+  [data-slot='button'][data-presentation='soft']:is(
+      [data-variant='default'],
+      [data-variant='secondary'],
+      [data-variant='destructive']
+    ):not(:disabled, [aria-disabled='true']):hover {
+    background: var(--action-hover);
+    color: var(--action-hover-foreground);
+    transform: translateY(var(--soft-action-hover-travel));
+    box-shadow:
+      0 calc(var(--soft-action-depth) - var(--soft-action-hover-travel)) 0
+        var(--action-backing),
+      var(--soft-diffuse-shadow);
+  }
+}
+[data-slot='button'][data-presentation='soft']:is(
+    [data-variant='default'],
+    [data-variant='secondary'],
+    [data-variant='destructive']
+  ):not(:disabled, [aria-disabled='true']):active {
+  background: var(--action-pressed);
+  color: var(--action-pressed-foreground);
+  transform: translateY(var(--soft-action-press-travel));
+  box-shadow: 0 calc(var(--soft-action-depth) - var(--soft-action-press-travel))
+    0 var(--action-backing);
+}
+[data-slot='button'][data-presentation='soft']:is(
+    [data-variant='outline'],
+    [data-variant='outline-primary'],
+    [data-variant='ghost'],
+    [data-variant='link']
+  ) {
+  box-shadow: none;
+  transform: none;
+  color: var(--foreground);
+}
+[data-slot='button'][data-presentation='soft'][data-variant='outline-primary'] {
+  border-color: var(--border);
+}
+[data-slot='button'][data-presentation='soft']:is(
+    [data-variant='outline'],
+    [data-variant='outline-primary'],
+    [data-variant='ghost'],
+    [data-variant='link']
+  ):active {
+  background: var(--muted);
+  color: var(--foreground);
+}
+[data-slot='button'][data-presentation='soft']:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 5px;
+}
+
+[data-slot='card'][data-treatment] {
+  position: relative;
+  isolation: isolate;
+  box-shadow: none;
+  transform: none;
+  transition: none;
+  overflow-wrap: anywhere;
+}
+[data-slot='card']:is(
+  [data-treatment='featured'],
+  [data-treatment='interactive']
+) {
+  border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
+  box-shadow:
+    0 var(--soft-action-depth) 0 var(--soft-primary-backing),
+    var(--soft-diffuse-shadow);
+}
+[data-slot='card'][data-treatment='interactive'] {
+  transition:
+    transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+.soft-card-action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+.soft-card-action:focus-visible {
+  outline: none;
+}
+.soft-card-action:focus-visible::after {
+  outline: 2px solid var(--ring);
+  outline-offset: 5px;
+}
+[data-slot='card'][data-treatment='interactive']:has(.soft-card-action:active) {
+  transform: translateY(var(--soft-action-press-travel));
+  box-shadow: 0 1px 0 var(--soft-primary-backing);
+}
+@media (hover: hover) {
+  [data-slot='card'][data-treatment='interactive']:has(
+      .soft-card-action:hover
+    ):not(:has(.soft-card-action:active)) {
+    transform: translateY(var(--soft-action-hover-travel));
+    box-shadow:
+      0 3px 0 var(--soft-primary-backing),
+      var(--soft-diffuse-shadow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='button'][data-presentation='soft'],
+  [data-slot='card'][data-treatment] {
+    transform: none !important;
+    scale: none !important;
+    transition: none !important;
+  }
+  [data-slot='dialog-content'][data-presentation='soft'],
+  [data-slot='dialog-overlay'][data-presentation='soft'] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+[data-slot='button'][data-presentation='soft']:is(
+    [data-variant='outline'],
+    [data-variant='outline-primary'],
+    [data-variant='ghost'],
+    [data-variant='link']
+  ):hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+[data-slot='checkbox'][data-presentation='soft'] {
+  scale: none;
+  border-color: var(--border);
+  transition-timing-function: var(--ease-default);
+}
+[data-slot='checkbox'][data-presentation='soft']:is(
+    [data-state='checked'],
+    [data-state='indeterminate']
+  ),
+[data-slot='switch'][data-presentation='soft'][data-state='checked'] {
+  background: var(--soft-action-surface);
+  background-image: linear-gradient(
+    var(--soft-primary-fill),
+    var(--soft-primary-fill)
+  );
+  color: var(--soft-primary-foreground);
+  border-color: var(--soft-primary-foreground);
+}
+[data-slot='switch'][data-presentation='soft'] {
+  box-shadow: none;
+  transition-timing-function: var(--ease-default);
+}
+[data-slot='switch'][data-presentation='soft'][data-state='checked']
+  [data-slot='switch-thumb'] {
+  background: var(--soft-primary-foreground);
+}
+[data-slot='switch'][data-presentation='soft'] [data-slot='switch-thumb'] {
+  transition-timing-function: var(--ease-default);
+}
+[data-slot='progress'][data-presentation='soft'] {
+  background: var(--muted);
+}
+[data-slot='progress'][data-presentation='soft']
+  [data-slot='progress-indicator'] {
+  background: var(--soft-action-surface);
+  background-image: linear-gradient(
+    var(--soft-primary-fill),
+    var(--soft-primary-fill)
+  );
+  border: 1px solid var(--soft-primary-foreground);
+  border-radius: inherit;
+  transition-property: width;
+  transition-timing-function: var(--ease-default);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='checkbox'][data-presentation='soft'],
+  [data-slot='switch'][data-presentation='soft'],
+  [data-slot='switch'][data-presentation='soft'] [data-slot='switch-thumb'],
+  [data-slot='progress'][data-presentation='soft']
+    [data-slot='progress-indicator'] {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='dropdown-menu-content'][data-presentation='soft'] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+[data-slot='card'][data-treatment] [data-slot='card-title'] {
+  font-family: var(--font-heading);
+  line-height: 1.35;
+}
