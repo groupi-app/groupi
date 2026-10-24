@@ -333,6 +333,8 @@ function AuthenticatedAppearanceSettings() {
     } catch (error) {
       console.error('Failed to delete custom theme:', error);
       toast.error('Failed to delete custom theme');
+      // Keep the confirmation open so the same deletion can be retried.
+      throw error;
     }
   }, [deleteCustomTheme, themeToDelete]);
 
