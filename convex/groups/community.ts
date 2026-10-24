@@ -153,6 +153,14 @@ export const readContext = internalQuery({
           .eq('status', 'PENDING')
       )
       .unique();
+    const discordConnection = credential.actions.includes(
+      'groups.discord.connect'
+    )
+      ? await ctx.db
+          .query('groupDiscordConnections')
+          .withIndex('by_group', q => q.eq('groupId', groupId))
+          .unique()
+      : null;
     const enabled = group.applicationsEnabled ?? false;
     const questions = eligible ? (group.applicationQuestions ?? []) : [];
     return {
@@ -189,7 +197,9 @@ export const readContext = internalQuery({
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
             (a === 'groups.discord.read' && Boolean(membership)) ||
-            (a === 'groups.discord.connect' && canAccessMemberContent) ||
+            (a === 'groups.discord.connect' &&
+              canAccessMemberContent &&
+              discordConnection?.status === 'active') ||
             (a === 'groups.announcements.preferences.update' && eligible) ||
             (a === 'groups.leave' &&
               !excluded &&
