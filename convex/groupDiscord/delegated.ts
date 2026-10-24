@@ -57,7 +57,11 @@ export const initiate = internalMutation({
     if (origin.protocol !== 'https:' || origin.username || origin.password)
       throw denied('Hosted connection is unavailable.');
     const state = randomSecret();
-    const expiresAt = Date.now() + 10 * 60 * 1000;
+    const expiresAt = Math.min(
+      Date.now() + 10 * 60 * 1000,
+      actor.credential.expiresAt ?? Infinity,
+      actor.grant.expiresAt ?? Infinity
+    );
     await ctx.db.insert('groupDiscordJourneys', {
       stateHash: await secretHash(state),
       credentialId: args.credentialId,
