@@ -1530,6 +1530,617 @@ it('membership checks current removal capability before joining a screening-pend
   expect(joined).toBe(false);
 });
 
+it.each([
+  { boundary: 'native', mode: 'role' },
+  { boundary: 'better-auth', mode: 'role' },
+  { boundary: 'native', mode: 'membership' },
+  { boundary: 'better-auth', mode: 'membership' },
+] as const)(
+  'durably retires old managed identity through $boundary unlink in $mode mode',
+  async ({ boundary, mode }) => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    const base = provider.getMockImplementation()!;
+    let granted = mode === 'membership';
+    let present = true;
+    let failCleanup = true;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (init?.method === 'DELETE' && failCleanup)
+        return json({ message: 'Missing Permissions' }, 403);
+      if (path.endsWith('/members/manager-discord')) {
+        if (init?.method === 'DELETE') {
+          present = false;
+          granted = false;
+          return new Response(null, { status: 204 });
+        }
+        return present
+          ? json({ roles: granted ? ['created-role'] : [] })
+          : json({ code: 10007 }, 404);
+      }
+      if (path.endsWith('/members/manager-discord/roles/created-role')) {
+        if (init?.method === 'PUT') granted = true;
+        if (init?.method === 'DELETE') granted = false;
+        return new Response(null, { status: 204 });
+      }
+      return base(input, init);
+    });
+    await owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    // Better Auth preserves its last-account safeguard; a second login enables unlink.
+    await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: 'account',
+        data: {
+          userId: owner.user._id,
+          providerId: 'google',
+          accountId: 'google-manager',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+    });
+    if (boundary === 'native') {
+      const accounts = await owner.auth.query(
+        api.accounts.queries.getLinkedAccounts,
+        {}
+      );
+      await owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+        accountId: accounts.find(a => a.providerId === 'discord')!.id,
+      });
+    } else {
+      const key = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(
+          'discord-group-test-secret-at-least-32-characters'
+        ),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const signature = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        new TextEncoder().encode(owner.session.token)
+      );
+      const cookie = `__Secure-better-auth.session_token=${encodeURIComponent(`${owner.session.token}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`)}`;
+      const response = await t.fetch('/api/auth/unlink-account', {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin: 'https://www.groupi.gg',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ providerId: 'discord' }),
+      });
+      expect(response.status).toBe(200);
+    }
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ linked: false, cleanupPending: true, status: 'blocked' });
+    // Provider failures must remain visible after OAuth credentials are gone.
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(granted).toBe(true);
+    expect(
+      await owner.auth.query(
+        api.accounts.queries.getDiscordRetirementStatus,
+        {}
+      )
+    ).toMatchObject({ pending: true, error: expect.any(String) });
+    failCleanup = false;
+    vi.setSystemTime(Date.now() + 360000);
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(granted).toBe(false);
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ cleanupPending: false });
+  }
+);
+
+async function identityCookie(token: string) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(
+      'discord-group-test-secret-at-least-32-characters'
+    ),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(token)
+  );
+  return `__Secure-better-auth.session_token=${encodeURIComponent(`${token}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`)}`;
+}
+function identityRequest(cookie: string, body: unknown) {
+  return {
+    method: 'POST',
+    headers: {
+      cookie,
+      origin: 'https://www.groupi.gg',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  };
+}
+it('an authenticated provider replacement callback retires the previous enrollment and cannot bypass owed cleanup', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await t.run(async ctx => {
+    await ctx.db.insert('groupDiscordEnrollments', {
+      groupId,
+      personId: owner.personId,
+      discordUserId: 'manager-discord',
+      connectionGeneration: 1,
+      generation: 1,
+      guildId: '100',
+      mode: 'role',
+      roleId: 'created-role',
+      desired: 'granted',
+      status: 'connected',
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+      attempts: 0,
+      nextAttemptAt: Date.now(),
+      nextObservationAt: Date.now() + 300000,
+    });
+  });
+  const oldAccount = (
+    await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})
+  ).find(a => a.accountId === 'manager-discord')!;
+  const cookie = await identityCookie(owner.session.token);
+  const linked = await t.fetch(
+    '/api/auth/link-social',
+    identityRequest(cookie, {
+      provider: 'discord',
+      callbackURL: '/settings/account',
+      disableRedirect: true,
+    })
+  );
+  expect(linked.status).toBe(200);
+  const destination = new URL((await linked.json()).url);
+  const stateCookie = linked.headers
+    .getSetCookie()
+    .map(c => c.split(';')[0])
+    .join('; ');
+  provider.mockImplementation(async input => {
+    if (String(input) === 'https://discord.com/api/oauth2/token')
+      return json({
+        access_token: 'replacement-token',
+        token_type: 'Bearer',
+        expires_in: 3600,
+        scope: 'identify email guilds',
+      });
+    if (
+      decodeURIComponent(String(input)) === 'https://discord.com/api/users/@me'
+    )
+      return json({
+        id: '987654321000000000',
+        username: 'replacement',
+        discriminator: '0',
+        avatar: null,
+        email: owner.user.email,
+        verified: true,
+      });
+    throw new Error(`Unexpected replacement request ${String(input)}`);
+  });
+  const callback = await t.fetch(
+    `/api/auth/callback/discord?code=provider-code&state=${destination.searchParams.get('state')}`,
+    { headers: { cookie: `${cookie}; ${stateCookie}` } }
+  );
+  expect(callback.status).toBe(302);
+  expect(callback.headers.get('location')).toBe('/settings/account');
+  expect(
+    await owner.auth.query(api.accounts.queries.getDiscordRetirementStatus, {})
+  ).toMatchObject({ pending: true });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ cleanupPending: true, status: 'blocked' });
+  expect(
+    await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ accountId: 'manager-discord' }),
+      expect.objectContaining({ accountId: '987654321000000000' }),
+    ])
+  );
+  await expect(
+    owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    })
+  ).rejects.toThrow(/cleanup is still pending/);
+  await owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+    accountId: oldAccount.id,
+  });
+  await expect(
+    owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+      accountId: oldAccount.id,
+    })
+  ).rejects.toThrow(/not found/);
+  // Replayed callbacks cannot acquire new authority or cancel cleanup.
+  await t.fetch(
+    `/api/auth/callback/discord?code=provider-code&state=${destination.searchParams.get('state')}`,
+    { headers: { cookie: `${cookie}; ${stateCookie}` } }
+  );
+  expect(
+    await owner.auth.query(api.accounts.queries.getDiscordRetirementStatus, {})
+  ).toMatchObject({ pending: true });
+});
+
+it('raw Better Auth deletion routes cannot bypass Group ownership resolution or consume credentials', async () => {
+  const { t, owner } = await setup();
+  await t.mutation(components.betterAuth.adapter.updateOne, {
+    input: {
+      model: 'user',
+      where: [{ field: '_id', value: owner.user._id }],
+      update: { role: 'admin' },
+    },
+  });
+  const cookie = await identityCookie(owner.session.token);
+  const removed = await t.fetch(
+    '/api/auth/admin/remove-user',
+    identityRequest(cookie, { userId: owner.user._id })
+  );
+  expect(removed.status).toBe(403);
+  expect((await removed.json()).message).toMatch(/Groupi account resolution/);
+  const selfDelete = await t.fetch(
+    '/api/auth/delete-user',
+    identityRequest(cookie, {})
+  );
+  expect(selfDelete.status).toBe(404);
+  expect(
+    (await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})).some(
+      a => a.providerId === 'discord'
+    )
+  ).toBe(true);
+  await expect(
+    owner.auth.mutation(api.users.mutations.deleteUserAccount, {
+      confirmation: 'discord-manager',
+    })
+  ).rejects.toThrow(/owned Groups|own/i);
+});
+
+it.each(['role', 'membership'] as const)(
+  'account deletion keeps %s bot cleanup durable after the Person and OAuth credentials vanish',
+  async mode => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    const member = await createAuthAccount(t, 'retiring-member');
+    await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: 'account',
+        data: {
+          userId: member.user._id,
+          providerId: 'discord',
+          accountId: 'retiring-discord',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+    });
+    await t.run(async ctx => {
+      await ctx.db.insert('groupMemberships', {
+        groupId,
+        personId: member.personId,
+        role: 'MEMBER',
+        joinedAt: Date.now(),
+      });
+      await ctx.db.insert('groupDiscordEnrollments', {
+        groupId,
+        personId: member.personId,
+        discordUserId: 'retiring-discord',
+        connectionGeneration: 1,
+        generation: 1,
+        guildId: '100',
+        mode,
+        roleId: mode === 'role' ? 'created-role' : undefined,
+        desired: 'granted',
+        status: 'connected',
+        startedAt: Date.now(),
+        updatedAt: Date.now(),
+        attempts: 0,
+        nextAttemptAt: Date.now(),
+        nextObservationAt: Date.now() + 300000,
+      });
+    });
+    const base = provider.getMockImplementation()!;
+    let present = true;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.endsWith('/bans/retiring-discord'))
+        return json({ code: 10026 }, 404);
+      if (
+        path.endsWith('/members/retiring-discord') ||
+        path.endsWith('/members/retiring-discord/roles/created-role')
+      ) {
+        expect(new Headers(init?.headers).get('Authorization')).toBe(
+          'Bot bot-token'
+        );
+        if (init?.method === 'DELETE') {
+          present = false;
+          return new Response(null, { status: 204 });
+        }
+        return present
+          ? json({ roles: mode === 'role' ? ['created-role'] : [] })
+          : json({ code: 10007 }, 404);
+      }
+      return base(input, init);
+    });
+    expect(
+      await member.auth.mutation(api.users.mutations.deleteUserAccount, {
+        confirmation: 'retiring-member',
+      })
+    ).toEqual({ success: true });
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ cleanupPending: true });
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(present).toBe(false);
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ cleanupPending: false });
+  }
+);
+
+it('racing explicit links retain login accounts but select one managed identity and never fall back after unlink', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const cookie = await identityCookie(owner.session.token);
+  async function flow() {
+    const response = await t.fetch(
+      '/api/auth/link-social',
+      identityRequest(cookie, {
+        provider: 'discord',
+        callbackURL: '/settings/account',
+        disableRedirect: true,
+      })
+    );
+    expect(response.status).toBe(200);
+    return {
+      state: new URL((await response.json()).url).searchParams.get('state'),
+      cookie: response.headers
+        .getSetCookie()
+        .map(c => c.split(';')[0])
+        .join('; '),
+    };
+  }
+  const first = await flow();
+  const second = await flow();
+  let markFirstStarted!: () => void;
+  const firstStarted = new Promise<void>(resolve => {
+    markFirstStarted = resolve;
+  });
+  let releaseFirst!: () => void;
+  const firstReleased = new Promise<void>(resolve => {
+    releaseFirst = resolve;
+  });
+  provider.mockImplementation(async (input, init) => {
+    if (String(input) === 'https://discord.com/api/oauth2/token') {
+      if (new URLSearchParams(String(init?.body)).get('code') === 'first') {
+        markFirstStarted();
+        await firstReleased;
+      }
+      return json({
+        access_token: String(
+          new URLSearchParams(String(init?.body)).get('code')
+        ),
+        token_type: 'Bearer',
+        expires_in: 3600,
+      });
+    }
+    if (
+      decodeURIComponent(String(input)) === 'https://discord.com/api/users/@me'
+    ) {
+      const token = new Headers(init?.headers).get('authorization');
+      return json({
+        id: token?.includes('first')
+          ? '111111111111111111'
+          : '222222222222222222',
+        username: 'replacement',
+        avatar: 'avatar',
+        discriminator: '0',
+        email: owner.user.email,
+        verified: true,
+      });
+    }
+    throw new Error(`Unexpected callback provider request ${String(input)}`);
+  });
+  // Pause at the real provider boundary so component transactions never overlap
+  // in convex-test, while the older callback completes after the newer one.
+  const firstCallback = t.fetch(
+    `/api/auth/callback/discord?code=first&state=${first.state}`,
+    { headers: { cookie: `${cookie}; ${first.cookie}` } }
+  );
+  await firstStarted;
+  const secondCallback = await t.fetch(
+    `/api/auth/callback/discord?code=second&state=${second.state}`,
+    { headers: { cookie: `${cookie}; ${second.cookie}` } }
+  );
+  releaseFirst();
+  expect((await firstCallback).status).toBe(302);
+  expect(secondCallback.status).toBe(302);
+  const status = await owner.auth.query(api.groupDiscord.enrollment.getStatus, {
+    groupId,
+  });
+  expect(status?.linkedDiscordUserId).toBe('222222222222222222');
+  const accounts = await owner.auth.query(
+    api.accounts.queries.getLinkedAccounts,
+    {}
+  );
+  expect(accounts).toHaveLength(3);
+  const winner = accounts.find(
+    a => a.accountId === status?.linkedDiscordUserId
+  )!;
+  const stale = await flow();
+  await owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+    accountId: winner.id,
+  });
+  const staleCode =
+    winner.accountId === '111111111111111111' ? 'first' : 'second';
+  expect(
+    (
+      await t.fetch(
+        `/api/auth/callback/discord?code=${staleCode}&state=${stale.state}`,
+        { headers: { cookie: `${cookie}; ${stale.cookie}` } }
+      )
+    ).status
+  ).toBe(302);
+
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ linked: false });
+  expect(
+    await owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    })
+  ).toEqual({ requiresConsent: true });
+  const relink = await flow();
+  const code = winner.accountId === '111111111111111111' ? 'second' : 'first';
+  expect(
+    (
+      await t.fetch(
+        `/api/auth/callback/discord?code=${code}&state=${relink.state}`,
+        { headers: { cookie: `${cookie}; ${relink.cookie}` } }
+      )
+    ).status
+  ).toBe(302);
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    linked: true,
+    linkedDiscordUserId:
+      code === 'first' ? '111111111111111111' : '222222222222222222',
+  });
+});
+
+it('an unlink racing a successful role write fences the stale grant and durably compensates with bot credentials', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const account = (
+    await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})
+  )[0];
+  const base = provider.getMockImplementation()!;
+  let granted = false;
+  let retirementPendingDuringWrite = false;
+  let failCleanup = true;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: granted ? ['created-role'] : [] });
+    if (path.endsWith('/members/manager-discord/roles/created-role')) {
+      expect(new Headers(init?.headers).get('Authorization')).toBe(
+        'Bot bot-token'
+      );
+      if (init?.method === 'PUT') {
+        await owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+          accountId: account.id,
+        });
+        await t.action(internal.groupDiscord.reconcile.dispatch, {});
+        retirementPendingDuringWrite = (
+          await owner.auth.query(
+            api.accounts.queries.getDiscordRetirementStatus,
+            {}
+          )
+        ).pending;
+        granted = true;
+      }
+      if (init?.method === 'DELETE') {
+        if (failCleanup) return json({}, 403);
+        granted = false;
+      }
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ linked: false, status: 'blocked', cleanupPending: true });
+  expect(retirementPendingDuringWrite).toBe(true);
+  expect(granted).toBe(true);
+  failCleanup = false;
+  vi.setSystemTime(Date.now() + 360000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(granted).toBe(false);
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ cleanupPending: false, status: 'blocked' });
+});
+
+it('unlink safeguards reject another account and the last login before creating retirement', async () => {
+  const { t, owner } = await setup();
+  const account = (
+    await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})
+  )[0];
+  const outsider = await createAuthAccount(t, 'identity-outsider');
+  await expect(
+    outsider.auth.mutation(api.accounts.mutations.unlinkAccount, {
+      accountId: account.id,
+    })
+  ).rejects.toThrow(/does not belong/);
+  const cookie = await identityCookie(owner.session.token);
+  expect(
+    (
+      await t.fetch(
+        '/api/auth/unlink-account',
+        identityRequest(cookie, { providerId: 'discord' })
+      )
+    ).status
+  ).toBe(400);
+  await t.mutation(components.betterAuth.adapter.updateOne, {
+    input: {
+      model: 'user',
+      where: [{ field: '_id', value: owner.user._id }],
+      update: { emailVerified: false },
+    },
+  });
+  await expect(
+    owner.auth.mutation(api.accounts.mutations.unlinkAccount, {
+      accountId: account.id,
+    })
+  ).rejects.toThrow(/last authentication method/);
+  expect(
+    await owner.auth.query(api.accounts.queries.getDiscordRetirementStatus, {})
+  ).toMatchObject({ pending: false });
+  expect(
+    await owner.auth.query(api.accounts.queries.getLinkedAccounts, {})
+  ).toHaveLength(1);
+});
+
 it('warns before handback and re-enables with fresh connection authority', async () => {
   const { owner, groupId } = await setup();
   await owner.auth.action(api.groupDiscord.actions.configure, {
@@ -1864,4 +2475,22 @@ it('a fresh Connect after completed removal owes a new real removal in the same 
       { groupId, enabled: false, requiredCompletion: false, questions: [] }
     );
   }
+});
+
+it('a disabled connection offers no member Connect journey before or after handback', async () => {
+  const { owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+    groupId,
+    acknowledgeHandback: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toBeNull();
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ status: 'disabled' });
 });

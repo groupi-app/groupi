@@ -67,6 +67,16 @@ export default defineSchema({
   })
     .index('by_state', ['stateHash'])
     .index('by_expiresAt', ['expiresAt']),
+
+  groupDiscordManagedIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.optional(v.string()),
+    latestLinkHash: v.optional(v.string()),
+  }).index('by_person', ['personId']),
+  groupDiscordRetiredIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+  }).index('by_person_identity', ['personId', 'discordUserId']),
   groupDiscordEnrollments: defineTable({
     handedBack: v.optional(v.boolean()),
     groupId: v.id('groups'),
@@ -99,6 +109,7 @@ export default defineSchema({
     nextAttemptAt: v.number(),
   })
     .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
     .index('by_guild_identity', ['guildId', 'discordUserId'])
     .index('by_observation', ['nextObservationAt'])
     .index('by_group_person', ['groupId', 'personId'])
@@ -156,6 +167,7 @@ export default defineSchema({
     .index('by_group', ['groupId'])
     .index('by_group_status', ['groupId', 'status'])
     .index('by_group_person', ['groupId', 'personId', 'status'])
+    .index('by_person_status', ['personId', 'status'])
     .index('by_target_status', ['guildId', 'discordUserId', 'roleId', 'status'])
     .index('by_target', [
       'guildId',

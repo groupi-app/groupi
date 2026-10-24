@@ -150,18 +150,16 @@ it('announces retired cleanup on the native old Group link', async () => {
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
-  const watch = vi
-    .spyOn(client, 'watchQuery')
-    .mockImplementation(() => ({
-      onUpdate: () => () => {},
-      journal: () => undefined,
-      localQueryResult: () => ({
-        status: 'disabled',
-        groupDeleted: true,
-        cleanupPending: true,
-        synchronizationError: 'Discord cleanup blocked by hierarchy.',
-      }),
-    }));
+  const watch = vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      status: 'disabled',
+      groupDeleted: true,
+      cleanupPending: true,
+      synchronizationError: 'Discord cleanup blocked by hierarchy.',
+    }),
+  }));
   let mounted!: Mounted;
   await act(async () => {
     mounted = renderer.create(

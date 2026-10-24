@@ -243,22 +243,20 @@ it('shows retired cleanup on the old Group link and hides unauthorized summaries
     unsavedChangesWarning: false,
   });
   let visible = true;
-  const watch = vi
-    .spyOn(client, 'watchQuery')
-    .mockImplementation(() => ({
-      onUpdate: () => () => {},
-      journal: () => undefined,
-      localQueryResult: () =>
-        visible
-          ? {
-              status: 'disabled',
-              groupDeleted: true,
-              cleanupPending: true,
-              synchronizationError:
-                'Discord bot permissions lost; cleanup pending.',
-            }
-          : null,
-    }));
+  const watch = vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () =>
+      visible
+        ? {
+            status: 'disabled',
+            groupDeleted: true,
+            cleanupPending: true,
+            synchronizationError:
+              'Discord bot permissions lost; cleanup pending.',
+          }
+        : null,
+  }));
   const mounted = render(
     <ConvexProvider client={client}>
       <GroupDiscordRetiredStatus groupId={'group-one' as Id<'groups'>} />

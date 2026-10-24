@@ -147,6 +147,8 @@ export const getAccountsForEnrichment = internalQuery({
   returns: v.object({
     user: v.union(v.object({ email: v.string() }), v.null()),
     accounts: v.array(linkedAccountValidator),
+    selectedDiscordUserId: v.optional(v.string()),
+    managedDiscordIdentityRetired: v.optional(v.boolean()),
   }),
   handler: async ctx => {
     const user = await authComponent.getAuthUser(ctx);
@@ -166,8 +168,31 @@ export const getAccountsForEnrichment = internalQuery({
     });
 
     const accounts: AuthDoc<'account'>[] = result.page;
+    const person = await ctx.db
+      .query('persons')
+      .withIndex('by_user_id', q => q.eq('userId', userId))
+      .unique();
+    const selected = person
+      ? await ctx.db
+          .query('groupDiscordManagedIdentities')
+          .withIndex('by_person', q => q.eq('personId', person._id))
+          .unique()
+      : null;
 
     return {
+      managedDiscordIdentityRetired: !!(
+        person &&
+        selected?.discordUserId &&
+        (await ctx.db
+          .query('groupDiscordRetiredIdentities')
+          .withIndex('by_person_identity', q =>
+            q
+              .eq('personId', person._id)
+              .eq('discordUserId', selected.discordUserId!)
+          )
+          .unique())
+      ),
+      selectedDiscordUserId: selected?.discordUserId,
       user: { email: user.email },
       accounts: accounts.map(
         (account: {
@@ -258,5 +283,60 @@ export const getLinkedAccountsWithUsernames = action({
     );
 
     return enrichedAccounts;
+  },
+});
+
+/** Retirement remains visible after unlink, even when no provider account remains. */
+export const getDiscordRetirementStatus = query({
+  args: {},
+  returns: v.object({
+    pending: v.boolean(),
+    error: v.optional(v.string()),
+    externallyManaged: v.boolean(),
+    selectedDiscordUserId: v.optional(v.string()),
+  }),
+  handler: async ctx => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return { pending: false, externallyManaged: false };
+    const person = await ctx.db
+      .query('persons')
+      .withIndex('by_user_id', q => q.eq('userId', String(user._id)))
+      .unique();
+    if (!person) return { pending: false, externallyManaged: false };
+    let error: string | undefined;
+    let pending = false;
+    for (const status of ['pending', 'blocked'] as const) {
+      const row = await ctx.db
+        .query('groupDiscordCleanup')
+        .withIndex('by_person_status', q =>
+          q.eq('personId', String(person._id)).eq('status', status)
+        )
+        .first();
+      if (row) {
+        pending = true;
+        error ??= row.error;
+      }
+    }
+    const exception = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .filter(q =>
+        q.and(
+          q.eq(q.field('mode'), 'membership'),
+          q.eq(q.field('desired'), 'removed'),
+          q.neq(q.field('externalException'), undefined)
+        )
+      )
+      .first();
+    const selected = await ctx.db
+      .query('groupDiscordManagedIdentities')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .unique();
+    return {
+      pending,
+      error,
+      externallyManaged: !!exception,
+      selectedDiscordUserId: selected?.discordUserId,
+    };
   },
 });

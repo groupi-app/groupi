@@ -173,6 +173,10 @@ A Discord access mode in which Group membership governs joining and removal
 from the whole connected Discord server, which is reserved for one Groupi
 Group connection.
 
+**Managed Discord identity**:
+A person's selected Discord account for Group-managed access. It is distinct
+from the accounts that person can use to sign into Groupi.
+
 **Managed Discord participant**:
 A Discord account explicitly enrolled in a Group’s Discord access rules through
 Connect Discord. Existing, unlinked server accounts are not managed participants.

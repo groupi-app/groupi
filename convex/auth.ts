@@ -1,4 +1,8 @@
-import { discordEnrollmentConsent } from './groupDiscord/oauthConsent';
+import { createAuthMiddleware, APIError } from 'better-auth/api';
+import {
+  discordEnrollmentConsent,
+  discordLinkStateHash,
+} from './groupDiscord/oauthConsent';
 import { isEventExcludedForPerson } from './groups/exclusions';
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
@@ -172,7 +176,72 @@ const createAuthOptionsInternal = (
       requireEmailVerification: false,
     },
 
-    hooks: { after: discordEnrollmentConsent },
+    hooks: {
+      before: createAuthMiddleware(async request => {
+        if (request.path === '/admin/remove-user')
+          throw new APIError('FORBIDDEN', {
+            message:
+              'Use Groupi account resolution to delete an account safely.',
+          });
+      }),
+      after: discordEnrollmentConsent(async (userId, hash) => {
+        if (!('runMutation' in ctx))
+          throw new Error('Identity changes require a mutation context.');
+        await ctx.runMutation(internal.groupDiscord.identity.linkIntent, {
+          userId,
+          hash,
+        });
+      }),
+    },
+    databaseHooks: {
+      account: {
+        update: {
+          after: async (account, request) => {
+            if (
+              account.providerId !== 'discord' ||
+              !request?.path.startsWith('/callback/')
+            )
+              return;
+            if (!('runMutation' in ctx))
+              throw new Error('Identity changes require a mutation context.');
+            await ctx.runMutation(internal.groupDiscord.identity.linked, {
+              userId: account.userId,
+              identity: account.accountId,
+              stateHash: await discordLinkStateHash(
+                request?.query?.state ?? request?.body?.state
+              ),
+            });
+          },
+        },
+        delete: {
+          before: async account => {
+            if (account.providerId === 'discord') {
+              if (!('runMutation' in ctx))
+                throw new Error('Identity changes require a mutation context.');
+              await ctx.runMutation(internal.groupDiscord.identity.retire, {
+                userId: account.userId,
+                identity: account.accountId,
+              });
+            }
+          },
+        },
+        create: {
+          after: async (account, request) => {
+            if (account.providerId === 'discord') {
+              if (!('runMutation' in ctx))
+                throw new Error('Identity changes require a mutation context.');
+              await ctx.runMutation(internal.groupDiscord.identity.linked, {
+                userId: account.userId,
+                identity: account.accountId,
+                stateHash: await discordLinkStateHash(
+                  request?.query?.state ?? request?.body?.state
+                ),
+              });
+            }
+          },
+        },
+      },
+    },
 
     // Social providers (matching your current config)
     socialProviders: {

@@ -1,5 +1,12 @@
 # Current Integration Status
 
+## Discord identity retirement — source evidence as of 2026-10-23
+
+- Source branch `codex/discord-group-409`, integrated with the #410 handback checkpoint `d051c367`. Native unlink and Better Auth unlink retire old authority before credentials disappear; all supported Groupi account-deletion adapters share the same transactional retirement boundary. Raw Better Auth admin deletion directs callers to Groupi ownership resolution, and Better Auth self-deletion remains disabled.
+- Managed Discord identity is distinct from login accounts. Explicit linking selects one managed identity while preserving older login credentials. Latest explicit link intent wins over a late older callback; replayed callbacks and unlink races cannot restore old grant authority. Hashed link-state ordering markers retain no OAuth credential. Bot-only immutable cleanup and the existing dispatcher fence replacement across Groups/modes, including unfinished provider actions and permission failures. Known externally managed membership remains distinct from Role independent-access warnings.
+- Source verification: approved preview code generation passes; seven backend Discord/auth/account suites pass 121 tests, including 84 Group Discord tests. Focused web identity/Discord suites pass 15 tests and native suites pass nine. Package lint/types and 802 generated/source contracts pass; final repository formatting is checked with the source batch. Identity settings expose pending cleanup, provider guidance and externally managed membership after unlink. Disabled connections expose no member Connect journey.
+- No live guild mutation, runtime start, build or deployment. Matching feature frontend/backend, isolated signed-in browser/device/VoiceOver and controlled Discord acceptance remain unverified. Shared provider recovery/notifications/audit-gap work (#411) remains a release gate.
+
 ## Discord handback and teardown — source evidence as of 2026-10-23
 
 - Source branch `codex/discord-group-410`, based on integration `272c8eefc3b5c2083bb18c243a76640882b7b63a`. Shared transactional handback stops new grants, retains roles/membership under Discord staff, and preserves owed cleanup and in-flight compensation across disable, reconfiguration and deletion. Connection epochs never reset on re-enable; setup completion also requires its exact reservation epoch.
