@@ -13,9 +13,16 @@ import { GroupIdentityForm } from './group-identity-form';
 
 export function GroupsPanel({
   onOpenGroup,
+  headingLevel = 2,
 }: {
   onOpenGroup: (groupId: string) => void;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
+  const headingClassName =
+    headingLevel === 1
+      ? 'font-heading text-3xl font-bold tracking-tight sm:text-4xl'
+      : 'font-heading text-xl font-semibold';
   const [creating, setCreating] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const groups = useGroups({ numItems: 20, cursor });
@@ -24,7 +31,7 @@ export function GroupsPanel({
   if (creating)
     return (
       <div className='flex flex-col gap-6'>
-        <h2 className='font-heading text-xl font-semibold'>Create a Group</h2>
+        <Heading className={headingClassName}>Create a Group</Heading>
         <p className='text-sm text-muted-foreground'>
           You will be the Group’s single owner. An owner-only Group is ready to
           use.
@@ -49,7 +56,7 @@ export function GroupsPanel({
     <div className='flex flex-col gap-6'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='flex flex-col gap-1'>
-          <h2 className='font-heading text-xl font-semibold'>Your Groups</h2>
+          <Heading className={headingClassName}>Your Groups</Heading>
           <p className='text-sm text-muted-foreground'>
             A home for the people you gather with.
           </p>

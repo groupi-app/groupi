@@ -236,6 +236,7 @@ describe('Friends & Groups creation', () => {
 });
 
 import { GroupDetail } from './group-detail';
+import GroupsPage from '@/app/(groups)/groups/page';
 import {
   GroupEdit,
   GroupDiscordManagement,
@@ -424,4 +425,65 @@ it('does not redirect ordinary members into management from legacy anchors', () 
     screen.queryByRole('link', { name: 'Group settings' })
   ).not.toBeInTheDocument();
   window.history.replaceState(null, '', '/');
+});
+
+describe('Groups directory navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.isAuthenticated = true;
+    auth.isLoading = false;
+  });
+  it('opens the authenticated directory with a single page heading and navigable Groups', async () => {
+    setQueryResult({ page: [group], isDone: true, continueCursor: '' });
+    render(<GroupsPage />);
+    expect(
+      screen.getByRole('heading', { name: 'Your Groups', level: 1 })
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('heading', { name: 'Your Groups' })
+    ).toHaveLength(1);
+    await userEvent
+      .setup()
+      .click(screen.getByRole('link', { name: 'Neighbors' }));
+    expect(groupNavigation.push).toHaveBeenCalledWith('/groups/group-one');
+  });
+  it('offers creation and the invitation inbox in the empty directory', () => {
+    setQueryResult({ page: [], isDone: true, continueCursor: '' });
+    render(<GroupsPage />);
+    expect(screen.getByText('No Groups yet')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Create Group' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Your Group invitations' })
+    ).toBeInTheDocument();
+  });
+  it('gates directory queries until sign-in and preserves its destination', () => {
+    auth.isAuthenticated = false;
+    render(<GroupsPage />);
+    expect(
+      screen.getByRole('link', { name: 'Sign in or sign up to view Groups' })
+    ).toHaveAttribute('href', '/sign-in?redirect=%2Fgroups');
+    expect(useQuery).not.toHaveBeenCalled();
+    auth.isAuthenticated = true;
+  });
+  it('returns from Group overview to the real directory', () => {
+    setQueryResult(group);
+    render(<GroupDetail groupId={groupId} />);
+    expect(screen.getByRole('link', { name: 'Your Groups' })).toHaveAttribute(
+      'href',
+      '/groups'
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Friends & Groups' })
+    ).not.toBeInTheDocument();
+  });
+  it('returns unavailable Groups to the directory', () => {
+    setQueryResult(null);
+    render(<GroupDetail groupId={groupId} />);
+    expect(screen.getByRole('link', { name: 'Your Groups' })).toHaveAttribute(
+      'href',
+      '/groups'
+    );
+  });
 });

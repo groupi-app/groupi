@@ -6,3 +6,4 @@ export { GroupDiscordManagement } from './group-discord-settings';
 export { GroupAnnouncementsSettings } from './group-announcements-settings';
 export { GroupOwnershipSettings } from './group-ownership-settings';
 export { GroupQuestionnaireManagement } from './group-questionnaire-settings';
+export { GroupDirectory } from './group-directory';
