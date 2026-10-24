@@ -89,3 +89,14 @@ describe('native Group invitation notifications', () => {
     ).toBeNull();
   });
 });
+
+it('opens actionable Discord synchronization status from a manager alert', () => {
+  const notification: NotificationPresentationInput = {
+    type: 'GROUP_DISCORD_SYNC_BLOCKED',
+    groupId: 'group-123' as Id<'groups'>,
+  };
+  expect(getNotificationMessage(notification)).toContain(
+    'check permissions and retry'
+  );
+  expect(getNotificationDestination(notification)).toBe('/groups/group-123');
+});

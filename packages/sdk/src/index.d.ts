@@ -1026,6 +1026,7 @@ export type Notification = {
     | 'GROUP_APPLICATION_DECLINED'
     | 'GROUP_ANNOUNCEMENT'
     | 'GROUP_ONBOARDING_REQUIRED'
+    | 'GROUP_DISCORD_SYNC_BLOCKED'
     | 'EVENT_INVITE_RECEIVED'
     | 'EVENT_INVITE_ACCEPTED'
     | 'ADDON_CONFIG_RESET'
@@ -1156,6 +1157,7 @@ export type UpdateNotificationSettingsRequest = {
         | 'GROUP_APPLICATION_DECLINED'
         | 'GROUP_ANNOUNCEMENT'
         | 'GROUP_ONBOARDING_REQUIRED'
+        | 'GROUP_DISCORD_SYNC_BLOCKED'
         | 'EVENT_INVITE_RECEIVED'
         | 'EVENT_INVITE_ACCEPTED'
         | 'ADDON_CONFIG_RESET'
@@ -1397,6 +1399,8 @@ export type ReportSummary = {
 };
 export type DelegatedAction =
   | 'groups.context.read'
+  | 'groups.discord.read'
+  | 'groups.discord.connect'
   | 'groups.events.read'
   | 'groups.events.join'
   | 'groups.events.rsvp'
@@ -4198,7 +4202,10 @@ export class Groupi {
   ): Promise<null>;
   /** Explicitly delete a Group as owner */
   explicitlyDeleteAGroupAsOwner(
-    input: { path: { groupId: string } },
+    input: {
+      path: { groupId: string };
+      query?: { acknowledgeDiscordHandback?: 'true' | 'false' };
+    },
     options?: RequestOptions
   ): Promise<null>;
   /** Read own community context */
@@ -4438,6 +4445,30 @@ export class Groupi {
     result: { subscribed: boolean };
     effects: { email: 'not-requested'; cleanup: 'not-requested' };
   }>;
+  /** Read own selected Group Discord access and Open Discord destination */
+  readOwnGroupDiscordStatus(
+    input: { path: { groupId: string } },
+    options?: RequestOptions
+  ): Promise<{
+    mode: 'role' | 'membership';
+    guildName: string;
+    guildIconUrl?: string;
+    openUrl: string;
+    linked: boolean;
+    linkedDiscordUserId?: string;
+    eligible: boolean;
+    status: 'not_connected' | 'pending' | 'screening' | 'connected' | 'blocked';
+    error?: string;
+    externalException?: string;
+    lastObservedAt?: number;
+    observationError?: string;
+    cleanupPending?: boolean;
+  } | null>;
+  /** Begin a Groupi-hosted member identity and consent journey */
+  beginOwnGroupDiscordConnect(
+    input: { path: { groupId: string }; body: { returnUrl: string } },
+    options?: RequestOptions
+  ): Promise<{ url: string; expiresAt: number }>;
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(
     input: { path: { groupId: string } },

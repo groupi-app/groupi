@@ -203,7 +203,7 @@ class SetAddonDataRequest(TypedDict):
 class Notification(TypedDict):
     id: str
     personId: str
-    type: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'EVENT_APPLICATION_RECEIVED', 'EVENT_APPLICATION_APPROVED', 'EVENT_APPLICATION_DECLINED', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
+    type: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'EVENT_APPLICATION_RECEIVED', 'EVENT_APPLICATION_APPROVED', 'EVENT_APPLICATION_DECLINED', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'GROUP_DISCORD_SYNC_BLOCKED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
     read: bool
     createdAt: int
     group: NotRequired[Objectfa39780def0b | None]
@@ -277,7 +277,7 @@ class NotificationTypeSetting(TypedDict):
     enabled: bool
 
 class UpdateNotificationSettingsRequest(TypedDict):
-    notificationMethods: list[Object2999e75f7ec1]
+    notificationMethods: list[Object6ec82ed2d838]
 
 
 class CustomTheme(TypedDict):
@@ -534,7 +534,7 @@ class Object0216e5b199fe(TypedDict):
     description: str | None
     location: str | None
 
-class Object2999e75f7ec1(TypedDict):
+class Object6ec82ed2d838(TypedDict):
     id: NotRequired[str]
     type: Literal['EMAIL', 'PUSH', 'WEBHOOK']
     enabled: bool
@@ -543,7 +543,7 @@ class Object2999e75f7ec1(TypedDict):
     webhookFormat: NotRequired[Literal['DISCORD', 'SLACK', 'TEAMS', 'GENERIC', 'CUSTOM']]
     customTemplate: NotRequired[str]
     webhookHeaders: NotRequired[str]
-    notifications: list[Objectf191154d01b8]
+    notifications: list[Object9f4a98fa38c1]
 
 class Objectc24f606b22f3(TypedDict):
     primary: NotRequired[str]
@@ -1375,6 +1375,9 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
+class Object7e8a2ce9dd0e(TypedDict):
+    acknowledgeDiscordHandback: NotRequired[Literal['true', 'false']]
+
 class Object40f81eb82dda(TypedDict):
     contractVersion: Literal['community.v1']
     group: Object59509cf0ec83
@@ -1460,6 +1463,28 @@ class Object39140cd5ad6d(TypedDict):
 
 class Objectb93f36757224(TypedDict):
     subscribed: bool
+
+class Object69655f599fd1(TypedDict):
+    mode: Literal['role', 'membership']
+    guildName: str
+    guildIconUrl: NotRequired[str]
+    openUrl: str
+    linked: bool
+    linkedDiscordUserId: NotRequired[str]
+    eligible: bool
+    status: Literal['not_connected', 'pending', 'screening', 'connected', 'blocked']
+    error: NotRequired[str]
+    externalException: NotRequired[str]
+    lastObservedAt: NotRequired[float]
+    observationError: NotRequired[str]
+    cleanupPending: NotRequired[bool]
+
+class Objectefb5209ee17a(TypedDict):
+    url: str
+    expiresAt: float
+
+class Object6f0e18d58953(TypedDict):
+    returnUrl: str
 
 class Object056f6599a34c(TypedDict):
     groupId: str
@@ -2030,8 +2055,8 @@ class Objectd3056924d246(TypedDict):
     name: str | None
     email: str | None
 
-class Objectf191154d01b8(TypedDict):
-    notificationType: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
+class Object9f4a98fa38c1(TypedDict):
+    notificationType: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'GROUP_DISCORD_SYNC_BLOCKED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
     enabled: bool
 
 class Object65bba3d62a1c(TypedDict):

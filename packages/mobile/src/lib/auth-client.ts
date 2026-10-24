@@ -42,6 +42,7 @@ export const authClient = baseAuthClient as typeof baseAuthClient & {
   linkSocial: (options: {
     provider: 'discord' | 'google';
     callbackURL?: string;
+    scopes?: string[];
   }) => Promise<{
     data?: unknown;
     error?: { code?: string; message?: string };

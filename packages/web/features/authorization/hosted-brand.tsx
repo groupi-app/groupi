@@ -1,9 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { AppWindow } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
-export function HostedBrand({ interactionId }: { interactionId: string }) {
+export function HostedBrand({
+  interactionId,
+  compact = false,
+}: {
+  interactionId: string;
+  compact?: boolean;
+}) {
   const context = useQuery(api.delegatedApps.hosted.getAppearance, {
     interactionId,
   });
@@ -25,6 +32,31 @@ export function HostedBrand({ interactionId }: { interactionId: string }) {
         This sign-in request is unavailable or expired. Return to the app to
         start again.
       </p>
+    );
+  if (compact)
+    return (
+      <header className='flex min-w-0 items-start gap-3 border-b border-border pb-5'>
+        <div className='flex size-10 shrink-0 items-center justify-center rounded-input bg-muted text-muted-foreground'>
+          <AppWindow className='size-5' aria-hidden='true' />
+        </div>
+        <div className='min-w-0 space-y-1'>
+          <p
+            className='break-words font-semibold leading-snug'
+            style={{ color: context.appearance?.accent }}
+          >
+            {context.appearance?.brandName ?? context.appName}
+          </p>
+          <p className='text-xs text-muted-foreground'>
+            Sign-in provided by {context.providerName}
+          </p>
+          {context.appearance?.brandName &&
+            context.appearance.brandName !== context.appName && (
+              <p className='break-words text-xs text-muted-foreground'>
+                Developer app: {context.appName}
+              </p>
+            )}
+        </div>
+      </header>
     );
   return (
     <header className='space-y-1 text-center py-4'>
@@ -49,8 +81,14 @@ export function hostedInteractionId(destination: string): string | null {
   try {
     const origin = 'https://groupi.internal';
     const url = new URL(destination, origin);
-    if (url.origin !== origin || url.pathname !== '/oauth/consent') return null;
-    const ids = url.searchParams.getAll('interactionId');
+    if (
+      url.origin !== origin ||
+      !['/oauth/consent', '/oauth/discord'].includes(url.pathname)
+    )
+      return null;
+    const ids = url.searchParams.getAll(
+      url.pathname === '/oauth/discord' ? 'state' : 'interactionId'
+    );
     return ids.length === 1 && ids[0] ? ids[0] : null;
   } catch {
     return null;

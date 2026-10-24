@@ -63,3 +63,20 @@ test('a rejected delivery is reported rather than claiming the email was sent', 
     })
   ).rejects.toThrow('Sign-in email could not be delivered');
 });
+test('Discord hosted continuation reuses registered app email appearance', async () => {
+  const lookup = vi.fn().mockResolvedValue(appearance);
+  const send = vi.fn().mockResolvedValue({ error: null });
+  const callback = '/oauth/discord?state=opaque-journey';
+  await deliverMagicLink({
+    email: 'visitor@example.test',
+    url: `https://ui.example/api/auth/magic-link/verify?token=one-use&callbackURL=${encodeURIComponent(callback)}`,
+    siteOrigin: 'https://ui.example',
+    from: 'Groupi <noreply@groupi.gg>',
+    lookup,
+    send,
+  });
+  expect(lookup).toHaveBeenCalledWith('opaque-journey');
+  expect(send).toHaveBeenCalledWith(
+    expect.objectContaining({ subject: 'Sign in to Reading Circle & friends' })
+  );
+});

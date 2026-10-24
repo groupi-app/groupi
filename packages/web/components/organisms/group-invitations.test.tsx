@@ -1,3 +1,4 @@
+import { GroupInvitationsSettings } from '@/features/groups';
 vi.mock('./community-expulsion-progress', () => ({
   CommunityExpulsionProgress: () => null,
 }));
@@ -124,6 +125,8 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupDiscord/enrollment:getStatus': null,
+    'groupDiscord/queries:getConnection': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
@@ -248,7 +251,7 @@ describe('Group invitations through production screens', () => {
     const { client, mutation } = fixtureClient();
     const mounted = render(
       <AppProvider client={client}>
-        <GroupDetail groupId={groupId} />
+        <GroupInvitationsSettings groupId={groupId} />
       </AppProvider>
     );
     const user = userEvent.setup();
@@ -278,7 +281,7 @@ describe('Group invitations through production screens', () => {
     mutation.mockRejectedValueOnce(new Error('confidential privacy reason'));
     const mounted = render(
       <AppProvider client={client}>
-        <GroupDetail groupId={groupId} />
+        <GroupInvitationsSettings groupId={groupId} />
       </AppProvider>
     );
     const user = userEvent.setup();
@@ -303,7 +306,7 @@ describe('Group invitations through production screens', () => {
     const { client, mutation } = fixtureClient();
     const mounted = render(
       <AppProvider client={client}>
-        <GroupDetail groupId={groupId} />
+        <GroupInvitationsSettings groupId={groupId} />
       </AppProvider>
     );
     const user = userEvent.setup();

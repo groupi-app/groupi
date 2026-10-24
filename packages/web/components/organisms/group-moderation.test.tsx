@@ -1,3 +1,7 @@
+import {
+  GroupInvitationsSettings,
+  GroupOwnershipSettings,
+} from '@/features/groups';
 vi.mock('./community-expulsion-progress', () => ({
   CommunityExpulsionProgress: () => null,
 }));
@@ -120,6 +124,8 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupDiscord/enrollment:getStatus': null,
+    'groupDiscord/queries:getConnection': null,
     'groups/expulsions:progress': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
@@ -296,7 +302,7 @@ it('lets managers inspect the private bans page and confirm lifting a ban', asyn
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupOwnershipSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -344,7 +350,7 @@ it('allows moderator invitations while withholding owner policy and protected ta
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   expect(
@@ -373,7 +379,7 @@ it('requires confirmation to ban a pending invitee and explains that re-entry st
   const { client, mutation } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -546,14 +552,14 @@ it('uses the app provider despite a distinct shared SDK and explains the owner c
     </AppProvider>
   );
   expect(
-    await screen.findByText(/owner cannot leave or delete their account/)
+    await screen.findByText(/Owners must transfer ownership before leaving/)
   ).toBeInTheDocument();
   expect(
     screen.queryByRole('button', { name: 'Leave Group' })
   ).not.toBeInTheDocument();
   expect(
-    screen.getByRole('link', { name: 'delete the Group' })
-  ).toHaveAttribute('href', '#delete-group');
+    screen.getByRole('link', { name: 'Manage ownership' })
+  ).toHaveAttribute('href', '/groups/group-one/settings/ownership');
   expect(
     screen.queryByRole('button', { name: /transfer/i })
   ).not.toBeInTheDocument();
@@ -680,7 +686,7 @@ it('pages private bans without exposing contact metadata and shows an empty fina
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupOwnershipSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -710,7 +716,7 @@ it('withholds pending invitation ban controls when the server protects the targe
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   expect(

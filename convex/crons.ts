@@ -26,4 +26,11 @@ crons.interval(
   {}
 );
 
+crons.interval(
+  'reconcile managed Discord access',
+  { minutes: 1 },
+  internal.groupDiscord.reconcile.dispatch,
+  {}
+);
+
 export default crons;

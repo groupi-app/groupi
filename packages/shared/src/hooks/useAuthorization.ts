@@ -96,6 +96,10 @@ export function createAuthorizationHooks<
 /** Stable descriptions shared by credential and delegated-consent screens. */
 export function authorizationActionLabel(action: string): string {
   const labels: Record<string, string> = {
+    'groups.discord.read':
+      'Read your own Group Discord access and Open Discord destination',
+    'groups.discord.connect':
+      'Start a Groupi-hosted Discord identity and consent journey',
     'groups.events.read': 'Read your current community Event and own RSVP',
     'groups.events.join': 'Join your current community Event with Pending RSVP',
     'groups.events.rsvp': 'Change your own community Event RSVP',

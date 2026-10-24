@@ -1,6 +1,8 @@
 import { GroupiError, Transport } from './transport.js';
 export const delegatedActions = Object.freeze([
   'groups.context.read',
+  'groups.discord.read',
+  'groups.discord.connect',
   'groups.events.read',
   'groups.events.join',
   'groups.events.rsvp',

@@ -1,3 +1,7 @@
+import {
+  connectionFields as discordConnectionFields,
+  mode as discordMode,
+} from './groupDiscord/contracts';
 import { tables as delegatedTables } from './delegatedApps/contracts';
 import {
   principalFields,
@@ -49,6 +53,179 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupDiscordJourneys: defineTable({
+    stateHash: v.string(),
+    credentialId: v.id('authorizationCredentials'),
+    appId: v.id('delegatedApps'),
+    personId: v.id('persons'),
+    groupId: v.id('groups'),
+    connectionId: v.id('groupDiscordConnections'),
+    generation: v.number(),
+    returnUrl: v.string(),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+  })
+    .index('by_state', ['stateHash'])
+    .index('by_expiresAt', ['expiresAt']),
+
+  groupDiscordProviderState: defineTable({
+    scope: v.string(),
+    retryAt: v.number(),
+  }).index('by_scope', ['scope']),
+  groupDiscordSyncAlerts: defineTable({
+    groupId: v.id('groups'),
+    notifiedAt: v.number(),
+    pending: v.boolean(),
+    cursor: v.optional(v.string()),
+    viewerOffset: v.optional(v.number()),
+    nextDeliveryAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_delivery', ['pending', 'nextDeliveryAt']),
+  groupDiscordManagedIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.optional(v.string()),
+    latestLinkHash: v.optional(v.string()),
+  }).index('by_person', ['personId']),
+  groupDiscordRetiredIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+  }).index('by_person_identity', ['personId', 'discordUserId']),
+  groupDiscordEnrollments: defineTable({
+    handedBack: v.optional(v.boolean()),
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+    connectionGeneration: v.number(),
+    generation: v.number(),
+    guildId: v.string(),
+    mode: v.optional(discordMode),
+    cleanupDesired: v.optional(
+      v.union(v.literal('removed'), v.literal('banned'))
+    ),
+    roleId: v.optional(v.string()),
+    desired: v.union(v.literal('granted'), v.literal('removed')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('screening'),
+      v.literal('connected'),
+      v.literal('blocked')
+    ),
+    error: v.optional(v.string()),
+    externalException: v.optional(v.string()),
+    grantAttemptedAt: v.optional(v.number()),
+    connectPending: v.optional(v.boolean()),
+    nextObservationAt: v.optional(v.number()),
+    observationError: v.optional(v.string()),
+    startedAt: v.number(),
+    updatedAt: v.number(),
+    lastObservedAt: v.optional(v.number()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
+    .index('by_person_removed_exception', [
+      'personId',
+      'mode',
+      'desired',
+      'externalException',
+    ])
+    .index('by_guild_identity', ['guildId', 'discordUserId'])
+    .index('by_observation', ['nextObservationAt'])
+    .index('by_group_observationError', [
+      'groupId',
+      'connectionGeneration',
+      'observationError',
+    ])
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
+  groupDiscordAuditStreams: defineTable({
+    guildId: v.string(),
+    action: v.number(),
+    cursor: v.string(),
+    overlapCursor: v.optional(v.string()),
+    retryAt: v.optional(v.number()),
+    notificationPending: v.optional(v.boolean()),
+    notificationCursor: v.optional(v.string()),
+    nextNotificationAt: v.optional(v.number()),
+    observedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+  })
+    .index('by_guild_action', ['guildId', 'action'])
+    .index('by_notification', ['notificationPending', 'nextNotificationAt']),
+  groupDiscordAuditEntries: defineTable({
+    guildId: v.string(),
+    entryId: v.string(),
+    expiresAt: v.number(),
+  })
+    .index('by_guild_entry', ['guildId', 'entryId'])
+    .index('by_expiry', ['expiresAt']),
+  groupDiscordConnections: defineTable(discordConnectionFields)
+    .index('by_group', ['groupId'])
+    .index('by_guild', ['guildId'])
+    .index('by_guild_status', ['guildId', 'status']),
+  // Cleanup is intentionally independent of live Group/configuration lifetime.
+  // Later lifecycle slices enqueue obligations here before invalidating enrollment.
+  groupDiscordCleanup: defineTable({
+    groupId: v.string(),
+    personId: v.optional(v.string()),
+    enrollmentGeneration: v.optional(v.number()),
+    generation: v.number(),
+    guildId: v.string(),
+    mode: discordMode,
+    discordUserId: v.string(),
+    roleId: v.optional(v.string()),
+    desired: v.union(
+      v.literal('role_removed'),
+      v.literal('removed'),
+      v.literal('banned')
+    ),
+    observed: v.union(
+      v.literal('unknown'),
+      v.literal('present'),
+      v.literal('absent'),
+      v.literal('banned')
+    ),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('completed')
+    ),
+    error: v.optional(v.string()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_group_status', ['groupId', 'status'])
+    .index('by_group_person', ['groupId', 'personId', 'status'])
+    .index('by_person_status', ['personId', 'status'])
+    .index('by_target_status', ['guildId', 'discordUserId', 'roleId', 'status'])
+    .index('by_target_group_status', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'groupId',
+      'status',
+    ])
+    .index('by_target_group_enrollment', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+      'groupId',
+    ])
+    .index('by_target', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+    ])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
   ...delegatedTables,
   communityOperationReceipts: defineTable({
     operationId: v.string(),
@@ -903,6 +1080,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('GROUP_ONBOARDING_REQUIRED'),
+      v.literal('GROUP_DISCORD_SYNC_BLOCKED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -936,6 +1114,7 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
     .index('by_person_and_type', ['personId', 'type'])
+    .index('by_person_type_group', ['personId', 'type', 'groupId'])
     .index('by_person_read', ['personId', 'read']),
 
   notificationMethods: defineTable({
@@ -988,6 +1167,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('GROUP_ONBOARDING_REQUIRED'),
+      v.literal('GROUP_DISCORD_SYNC_BLOCKED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),

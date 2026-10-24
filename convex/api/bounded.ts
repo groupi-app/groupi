@@ -31,6 +31,41 @@ export async function handleBoundedRequest(
   if (
     !isV1 &&
     parts[0] === 'groups' &&
+    parts[2] === 'discord' &&
+    ((parts.length === 3 && method === 'GET') ||
+      (parts.length === 4 && parts[3] === 'connect' && method === 'POST'))
+  ) {
+    try {
+      if (method === 'GET')
+        return respond(
+          await ctx.runQuery(internal.groupDiscord.delegated.status, {
+            credentialId,
+            groupId: parts[1],
+          })
+        );
+      const body: unknown = await request.json();
+      if (
+        !body ||
+        typeof body !== 'object' ||
+        !('returnUrl' in body) ||
+        typeof body.returnUrl !== 'string' ||
+        Object.keys(body).length !== 1
+      )
+        return forbidden();
+      return respond(
+        await ctx.runMutation(internal.groupDiscord.delegated.initiate, {
+          credentialId,
+          groupId: parts[1],
+          returnUrl: body.returnUrl,
+        })
+      );
+    } catch {
+      return forbidden();
+    }
+  }
+  if (
+    !isV1 &&
+    parts[0] === 'groups' &&
     parts.length === 3 &&
     parts[2] === 'community-context' &&
     method === 'GET'
