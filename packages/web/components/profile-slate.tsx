@@ -48,6 +48,8 @@ export function ProfileSlate({
             size='icon'
             variant='ghost'
             className='rounded-full relative'
+            aria-label='Notifications'
+            aria-expanded={open}
           >
             <Icons.bell className='size-5' />
             <NotificationCount />

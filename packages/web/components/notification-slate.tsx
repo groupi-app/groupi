@@ -480,11 +480,12 @@ export function NotificationSlate({
         </ContextMenuItem>
       )}
       <ContextMenuItem
+        variant='destructive'
         onSelect={e => {
           e.preventDefault();
           deleteNotification(notification._id);
         }}
-        className='cursor-pointer text-error focus:bg-bg-error-subtle focus:text-error'
+        className='cursor-pointer'
       >
         <div className='flex items-center gap-3'>
           <Icons.delete className='size-4' />
