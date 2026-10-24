@@ -1616,8 +1616,8 @@
     :hover,
     :active
   ) {
-  background: var(--soft-primary-foreground);
-  color: var(--soft-primary-composited-fill);
+  background-color: var(--soft-primary-hover);
+  color: var(--soft-primary-foreground);
 }
 [data-slot='button'][data-presentation='soft'][data-variant='link'],
 [data-slot='button'][data-presentation='soft'][data-variant='link']:is(
