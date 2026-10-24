@@ -3,7 +3,7 @@ import { action } from '../_generated/server';
 import { api, internal } from '../_generated/api';
 import { v } from 'convex/values';
 import { joinDiscordGuild } from '../discord/userApi';
-const BASE = 'https://discord.com/api/v10';
+import { discordBot } from './provider';
 /** Explicit consent only. Admission never calls this entry point. */
 export const connect = action({
   args: {
@@ -52,10 +52,7 @@ export const connect = action({
         generation: row.generation,
       });
     const bot = (path: string, method = 'GET') =>
-      fetch(`${BASE}${path}`, {
-        method,
-        headers: { Authorization: `Bot ${token}` },
-      });
+      discordBot(ctx, path, { method });
     let joinAttempted = false;
     const memberPath = `/guilds/${row.guildId}/members/${row.discordUserId}`;
     try {

@@ -9,6 +9,7 @@ Source behavior for manager setup and explicit member Role access in [issue #405
 - [Explicit member Connect](#explicit-member-connect)
 - [Role eligibility and moderation lifecycle](#role-eligibility-and-moderation-lifecycle)
 - [Server membership lifecycle](#server-membership-lifecycle)
+- [Blocked synchronization and recovery](#blocked-synchronization-and-recovery)
 
 ## Setup contract
 
@@ -129,3 +130,35 @@ All Group deletion adapters use the same transactional handback policy. Native d
 After Group deletion, `groupDiscord.queries.getConnection({groupId})` retains the disabled connection and pending/blocked cleanup summary for the deleting actor and recorded current managers only. Both web and mobile render this summary on the old Group link, including pending/blocked removal guidance and completed cleanup. The deletion confirmation explains where to return, and successful deletion opens that stable link. The optional `retiredOnly:true` query returns no data for unrelated or signed-out viewers, who retain the ordinary unavailable view. Other actors cannot read this retired status. Removal is reported complete only after provider absence is verified; handback itself is never reported as removal. Provider credentials are not retained in this status record.
 
 Deterministic provider and authenticated/native tests establish source behavior. Live Discord mutations, signed-in browser/device/VoiceOver checks and matching deployed-source verification remain open acceptance gates; this slice performs no runtime start, build or deployment.
+
+## Blocked synchronization and recovery
+
+The existing one-minute dispatcher processes at most 25 cleanup/observation
+records per tick, reserving five observation slots during a sustained cleanup
+backlog. Cleanup targets remain independent of active configuration and Group
+lifetime. Healthy observations are due after five minutes; actual observation
+time is shown in member status and can lag during backlog or provider outages.
+
+Group Discord bot requests persist global and conservative per-guild route-family rate-limit
+pauses. Provider retry windows, including fractional seconds, survive dispatcher
+actions. Missing permissions, bot membership and hierarchy failures leave removals
+pending with actionable status. Recovery observes actual absence before completing
+cleanup; it never converts later permission loss into an externally managed
+exception, restores an eligible participant automatically or unbans an account.
+
+Manager and member status expose observation failures rather than claiming
+connected access was recently verified. A moderation observation gap reaching
+Discord's 45-day audit retention window invalidates old grant authority and
+requires fresh Connect. This is conservative recovery, not a claim of continuous
+or atomic Discord moderation coverage: audit publication can be late and bounded
+history overlap cannot prove every transient change was observed.
+
+Blocked synchronization creates a deduplicated Group manager notification, at
+most once per Group per day. The normal notification method, type preferences
+and do-not-disturb behavior apply. Native and web notification links open Group
+Discord status and retry guidance; no default Discord DMs or individual success
+alerts are sent. Manager delivery uses pages of 20 through the same dispatcher; guild-wide
+failure fan-out also pages 20 Group connections.
+After deletion, only the retained private cleanup viewers receive cleanup alerts,
+and their old Group link opens authorized retired status. Repeated delivery and
+page continuation are deduplicated per recipient.

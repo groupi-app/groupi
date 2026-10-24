@@ -382,11 +382,13 @@ export async function getMemberStatus(
     lastObservedAt: enrollment?.lastObservedAt,
     observationError: enrollment?.observationError,
     cleanupPending: !!pendingCleanup,
-    status: pendingCleanup
+    status: enrollment?.observationError
       ? ('blocked' as const)
-      : !current
+      : pendingCleanup
         ? ('blocked' as const)
-        : (enrollment?.status ?? ('not_connected' as const)),
+        : !current
+          ? ('blocked' as const)
+          : (enrollment?.status ?? ('not_connected' as const)),
     error: pendingCleanup
       ? (pendingCleanup.error ??
         'Previous Discord access cleanup is still pending. Try Connect again after cleanup completes.')

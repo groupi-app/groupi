@@ -11,6 +11,7 @@ import {
 } from './memberOperations';
 import { loadJourney } from './delegated';
 import { memberStatus } from './contracts';
+import { notifySynchronizationBlocked } from './notifications';
 export const getStatus = query({
   args: { groupId: v.id('groups') },
   returns: v.union(memberStatus, v.null()),
@@ -169,6 +170,25 @@ export const claimGrant = internalMutation({
       row.nextAttemptAt > Date.now()
     )
       return null;
+    if (Date.now() - (row.lastObservedAt ?? row.startedAt) >= 45 * 86400000) {
+      if (row.grantAttemptedAt) {
+        const cleanupId = await oweAccessCleanup(ctx, row);
+        await ctx.db.patch(cleanupId, {
+          error:
+            'Discord moderation history coverage expired. Cleanup is pending before fresh Connect.',
+        });
+      }
+      await ctx.db.patch(row._id, {
+        status: 'blocked',
+        desired: 'removed',
+        generation: row.generation + 1,
+        error:
+          'Discord moderation history coverage expired. Connect again after synchronization recovers.',
+        nextObservationAt: Date.now(),
+      });
+      await notifySynchronizationBlocked(ctx, row.groupId);
+      return null;
+    }
     const current = await enrollmentAuthorized(ctx, row);
     if (!current) {
       if (row.grantAttemptedAt) await oweAccessCleanup(ctx, row);
