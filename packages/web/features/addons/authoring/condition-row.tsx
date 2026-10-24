@@ -98,10 +98,10 @@ export function ConditionRow({
   }, [fieldOptions]);
 
   return (
-    <div className='flex items-start gap-1.5'>
+    <div className='grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-1.5 sm:flex sm:flex-wrap'>
       {/* Field selector */}
       <Select value={condition.field} onValueChange={handleFieldChange}>
-        <SelectTrigger className='rounded-input text-xs h-8 min-w-[120px]'>
+        <SelectTrigger className='col-start-1 w-full min-w-0 rounded-input text-xs h-8 sm:flex-1 sm:basis-32'>
           <SelectValue placeholder='Field' />
         </SelectTrigger>
         <SelectContent>
@@ -125,7 +125,7 @@ export function ConditionRow({
         value={condition.operator}
         onValueChange={v => onChange({ operator: v as ConditionOperator })}
       >
-        <SelectTrigger className='rounded-input text-xs h-8 min-w-[120px]'>
+        <SelectTrigger className='col-start-1 w-full min-w-0 rounded-input text-xs h-8 sm:flex-1 sm:basis-32'>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -143,7 +143,7 @@ export function ConditionRow({
           value={String(condition.value ?? '')}
           onValueChange={v => onChange({ value: v })}
         >
-          <SelectTrigger className='rounded-input text-xs h-8 min-w-[100px]'>
+          <SelectTrigger className='col-start-1 w-full min-w-0 rounded-input text-xs h-8 sm:flex-1 sm:basis-28'>
             <SelectValue placeholder='Value' />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +166,7 @@ export function ConditionRow({
             })
           }
           placeholder='Value'
-          className='rounded-input text-xs h-8'
+          className='col-start-1 w-full min-w-0 rounded-input text-xs h-8 sm:flex-1 sm:basis-28'
         />
       )}
 
@@ -175,7 +175,7 @@ export function ConditionRow({
           value={String(condition.value ?? '')}
           onChange={e => onChange({ value: e.target.value })}
           placeholder='Value'
-          className='rounded-input text-xs h-8'
+          className='col-start-1 w-full min-w-0 rounded-input text-xs h-8 sm:flex-1 sm:basis-28'
         />
       )}
 
@@ -183,7 +183,8 @@ export function ConditionRow({
         variant='ghost'
         size='sm'
         onClick={onRemove}
-        className='text-muted-foreground hover:text-error h-8 w-8 p-0 shrink-0'
+        aria-label='Remove condition'
+        className='col-start-2 row-start-1 text-muted-foreground hover:text-error h-8 w-8 p-0 shrink-0'
         type='button'
       >
         ×

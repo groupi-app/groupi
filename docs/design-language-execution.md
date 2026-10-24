@@ -22,7 +22,9 @@ uncommitted work remain unchanged.
 - [#424](https://github.com/groupi-app/groupi/issues/424): derived theme treatment;
   depends on the three correction tracks.
 - [#425](https://github.com/groupi-app/groupi/issues/425): actual component gallery;
-  depends on theme treatment.
+  depends on theme treatment and Storybook compatibility.
+- [#430](https://github.com/groupi-app/groupi/issues/430): restore Storybook
+  compatibility with Next.js 16 before gallery verification.
 - [#426](https://github.com/groupi-app/groupi/issues/426): user visual review;
   depends on the gallery.
 - [#427](https://github.com/groupi-app/groupi/issues/427): web migration and runtime
@@ -56,6 +58,8 @@ regressions. Record current-base audit observations as fixed, already fixed, or
 unconfirmed. Run focused tests and `pnpm check`; actual visual gates cannot be
 replaced with class assertions, old mockups, or unobserved runtime claims.
 
-Changeset files await a single reviewable user-approved batch with affected
-packages, bump type, and summaries, following the repository workflow. Broad
-implementation authorization does not select release-note wording.
+The user approved one `@groupi/web` patch changeset for the initial functional
+corrections: “Fix control state announcements, action-menu labels, toast delivery,
+asynchronous confirmations, and misleading navigation and validation feedback.”
+This approval covers that batch's release notes; subsequent material scope
+changes follow the repository workflow.

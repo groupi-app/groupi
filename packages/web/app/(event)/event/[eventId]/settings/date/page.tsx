@@ -16,6 +16,7 @@ export default function EventSettingsDatePage(props: {
       title='Date & Time'
       description='Choose a date or poll attendees.'
       backHref={`/event/${eventId}/settings`}
+      backLabel='Event settings'
       maxWidth='md'
     >
       <h2 className='font-heading text-3xl mt-4 mb-8'>I would like to...</h2>
