@@ -32,7 +32,7 @@ const badgeVariants = cva(
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
-  /** Quiet semantic status treatment; no sticker depth. */
+  /** Flat semantic sticker label with a paper cut edge and no backing depth. */
   presentation?: 'default' | 'soft';
 }
 
@@ -48,9 +48,10 @@ function Badge({
   return (
     <div
       data-slot='badge'
+      data-presentation={presentation}
       className={cn(
         soft
-          ? 'inline-flex items-center gap-1 rounded-badge border border-current/20 px-2.5 py-1 text-xs font-semibold'
+          ? 'inline-flex items-center gap-1 rounded-badge px-2.5 py-1 text-xs font-semibold'
           : badgeVariants({ variant }),
         className
       )}

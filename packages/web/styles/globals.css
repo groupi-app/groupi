@@ -995,7 +995,6 @@
   --soft-action-depth: 4px;
   --soft-action-hover-travel: 1px;
   --soft-action-press-travel: 3px;
-  --soft-sticker-color: var(--bg-elevated);
   --soft-diffuse-shadow: var(--shadow-raised);
 }
 
@@ -1234,4 +1233,33 @@
 [data-slot='card'][data-treatment] [data-slot='card-title'] {
   font-family: var(--font-heading);
   line-height: 1.35;
+}
+
+/* Paper seams stay quiet: actual dashed rules, without simulated torn holes. */
+.paper-divider {
+  width: 100%;
+  flex-shrink: 0;
+  border-block-start: 1px solid var(--border-strong);
+}
+.paper-divider[data-treatment='perforated'] {
+  border-block-start-style: dashed;
+}
+.paper-divider[data-orientation='vertical'] {
+  width: 0;
+  height: auto;
+  min-height: 1rem;
+  align-self: stretch;
+  border-block-start: 0;
+  border-inline-start: 1px solid var(--border-strong);
+}
+.paper-divider[data-orientation='vertical'][data-treatment='perforated'] {
+  border-inline-start-style: dashed;
+}
+[data-slot='badge'][data-presentation='soft'] {
+  border: 2px solid var(--soft-sticker-color);
+  box-shadow: none;
+}
+[data-slot='empty-state-icon'][data-presentation='soft'] {
+  border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
+  box-shadow: var(--soft-diffuse-shadow);
 }
