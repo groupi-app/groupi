@@ -341,3 +341,68 @@ it('keeps registered hosted appearance and stops the journey when the app connec
     })
   ).rejects.toThrow();
 });
+it.each(['role', 'membership'] as const)(
+  'stops delegated status and hosted Connect after %s connection handback',
+  async mode => {
+    const f = await setup();
+    const groupId = await f.owner.auth.mutation(
+      api.groups.mutations.createGroup,
+      { name: 'Community' }
+    );
+    await f.t.run(ctx =>
+      ctx.db.insert('groupDiscordConnections', {
+        groupId,
+        guildId: '123',
+        guildName: 'Community Discord',
+        mode,
+        roleId: mode === 'role' ? '456' : undefined,
+        generation: 1,
+        status: 'active',
+        updatedAt: Date.now(),
+      })
+    );
+    const result = await authorize(f, {
+      scopes: 'openid groups.discord.read groups.discord.connect',
+      actions: ['groups.discord.read', 'groups.discord.connect'],
+      selector: { kind: 'selected-group', groupId },
+      background: false,
+    });
+    const tokens = await (
+      await token(f.t, exchange(f.appId, result.code))
+    ).json();
+    const headers = {
+      Authorization: `Bearer ${tokens.access_token}`,
+      'Content-Type': 'application/json',
+    };
+    const read = () =>
+      f.t.fetch(`/api/v2/groups/${groupId}/discord`, { headers });
+    const begin = () =>
+      f.t.fetch(`/api/v2/groups/${groupId}/discord/connect`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ returnUrl: 'https://app.example/callback' }),
+      });
+    expect(await (await read()).json()).toMatchObject({
+      mode,
+      status: 'not_connected',
+    });
+    const state = new URL((await (await begin()).json()).url).searchParams.get(
+      'state'
+    )!;
+    await f.owner.auth.mutation(api.groupDiscord.mutations.disable, {
+      groupId,
+      acknowledgeHandback: true,
+    });
+    expect(await (await read()).json()).toBeNull();
+    expect(
+      await f.owner.auth.query(api.groupDiscord.delegated.inspect, { state })
+    ).toBeNull();
+    await expect(
+      f.owner.auth.action(api.groupDiscord.connect.connectHosted, {
+        state,
+        consent: true,
+      })
+    ).rejects.toThrow();
+    expect((await begin()).status).toBe(403);
+  }
+);
