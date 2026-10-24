@@ -120,6 +120,8 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupDiscord/enrollment:getStatus': null,
+    'groupDiscord/queries:getConnection': null,
     'groups/expulsions:progress': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
