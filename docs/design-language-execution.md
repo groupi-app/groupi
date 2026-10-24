@@ -202,3 +202,9 @@ Verification in isolated Chromium contexts with measured CSS viewport sizes:
 
 The three design choices and #426 gallery approval remain open. These refinements
 do not start application-wide migration or the Groups structural phase.
+
+### Selected material checkpoint
+
+Source `d1e74958` integrates the selected cut-out labels, attached index tabs, and annotation-strip alerts. Interactive card actions now tint their surface; soft dropdown items have 12px icon/text spacing. Success, error, warning, and info toast icons use semantic outcome colors while body text retains its neutral foreground.
+
+The implementation passed `pnpm check`, dedicated Storybook types, and 34 focused regressions. Chromium checks confirmed distinct hover card fills, all four outcome icon colors with neutral message text in light/dark themes, and zero heading icons. Earlier unselected studies above describe the historical review checkpoint; whole-gallery approval remains open.
