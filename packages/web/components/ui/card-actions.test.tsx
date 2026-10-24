@@ -30,4 +30,32 @@ describe('Interactive Card composition', () => {
     expect(save).toHaveBeenCalledOnce();
     expect(open).toHaveBeenCalledOnce();
   });
+  it('skips an unavailable primary action while retaining secondary controls', async () => {
+    const open = vi.fn();
+    const save = vi.fn();
+    render(
+      <Card treatment='interactive'>
+        <CardHeader>
+          <CardTitle>
+            <CardAction disabled onClick={open}>
+              Unavailable theme
+            </CardAction>
+          </CardTitle>
+          <CardActions>
+            <button onClick={save}>Preview theme</button>
+          </CardActions>
+        </CardHeader>
+      </Card>
+    );
+    const user = userEvent.setup();
+    const primary = screen.getByRole('button', { name: 'Unavailable theme' });
+    expect(primary).toBeDisabled();
+    await user.click(primary);
+    expect(open).not.toHaveBeenCalled();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Preview theme' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(save).toHaveBeenCalledOnce();
+    expect(open).not.toHaveBeenCalled();
+  });
 });
