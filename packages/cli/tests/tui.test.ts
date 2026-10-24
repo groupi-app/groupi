@@ -145,10 +145,10 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
   await act(async () => {
     ui = render(React.createElement(TerminalApp, { session, profile }));
   });
-  // Rendering the prompt precedes Ink's passive input-subscription effect.
-  // act flushes that effect and pending input state before the next keystroke.
+  // Synchronous key updates still flush Ink's passive input effects through act.
+  // Reserve async act's host-task round trips for the initial load and save.
   const press = async (input: string) => {
-    await act(async () => {
+    act(() => {
       ui.stdin.write(input);
     });
   };
@@ -177,7 +177,9 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
   expect(ui.lastFrame()).toContain(`${pointer} Cancel`);
   await press('\u001b[B');
   await waitForFrame(`${pointer} Confirm`);
-  await press('\r');
+  await act(async () => {
+    ui.stdin.write('\r');
+  });
   await vi.waitFor(() => expect(saved).toEqual([{ title: 'Final title' }]));
   await waitForFrame('Completed: Edit event picnic-1');
   await vi.waitFor(() => expect(session.state.loading).toBe(false));
@@ -440,6 +442,7 @@ test('offline refresh cancels an open confirmation and reconnect restores action
 });
 
 test('keyboard navigation preserves profile through planning, discussion, social, and advanced fallback', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('fetch', async (url: string) => {
     expect(url.startsWith(profile.apiUrl)).toBe(true);
     const path = url.slice(profile.apiUrl.length);
@@ -456,41 +459,75 @@ test('keyboard navigation preserves profile through planning, discussion, social
   });
   const screens = planningScreens(profile, 'fixture-key');
   const session = new TerminalSession(screens.home);
-  const ui = render(React.createElement(TerminalApp, { session, profile }));
-  await pause();
-  ui.stdin.write('\r');
-  await pause();
-  expect(ui.lastFrame()).toContain('Your events');
+  let ui!: ReturnType<typeof render>;
+  await act(async () => {
+    ui = render(React.createElement(TerminalApp, { session, profile }));
+  });
+  const pointer = process.platform === 'win32' ? '>' : '❯';
+  const waitForFrame = (text: string) =>
+    vi.waitFor(() => expect(ui.lastFrame()).toContain(text));
+  const press = (input: string) =>
+    act(() => {
+      ui.stdin.write(input);
+    });
+  await waitForFrame(`${pointer} Events`);
+  await act(async () => {
+    ui.stdin.write('\r');
+  });
+  await waitForFrame('Your events');
   expect(ui.lastFrame()).toContain('Create event');
-  session.open(screens.event('event1'));
-  await pause();
-  for (let i = 0; i < 4; i++) {
-    ui.stdin.write('\u001b[B');
-    await pause();
+  await act(async () => {
+    session.open(screens.event('event1'));
+  });
+  await waitForFrame(`${pointer} Your RSVP`);
+  for (const label of [
+    'Dates and availability',
+    'Attendance',
+    'Sent invitations',
+    'Discussion',
+  ]) {
+    press('\u001b[B');
+    await waitForFrame(`${pointer} ${label}`);
   }
-  ui.stdin.write('\r');
-  await pause();
-  expect(ui.lastFrame()).toContain('Event discussion');
+  await act(async () => {
+    ui.stdin.write('\r');
+  });
+  await waitForFrame('Event discussion');
   expect(ui.lastFrame()).toContain('Thread');
   expect(ui.lastFrame()).toContain(profile.name);
-  ui.stdin.write('b');
-  await pause();
-  expect(ui.lastFrame()).toContain('Picnic');
-  session.open(screens.social('incoming'));
-  await pause();
-  expect(ui.lastFrame()).toContain('Send friend request');
+  await act(async () => {
+    ui.stdin.write('b');
+  });
+  await waitForFrame('Picnic');
+  await act(async () => {
+    session.open(screens.social('incoming'));
+  });
+  await waitForFrame('Send friend request');
   expect(ui.lastFrame()).toContain(profile.apiUrl);
-  session.open(screens.home);
-  await pause();
-  for (let i = 0; i < 8; i++) {
-    ui.stdin.write('\u001b[B');
-    await pause();
+  await act(async () => {
+    session.open(screens.home);
+  });
+  await waitForFrame(`${pointer} Events`);
+  for (const label of [
+    'Invitations',
+    'Notifications',
+    'Unread notifications',
+    'Friends',
+    'Incoming friend requests',
+    'Outgoing friend requests',
+    'Blocked people',
+    'Advanced commands',
+  ]) {
+    press('\u001b[B');
+    await waitForFrame(`${pointer} ${label}`);
   }
-  ui.stdin.write('\r');
-  await pause();
+  await act(async () => {
+    ui.stdin.write('\r');
+  });
+  await waitForFrame('Exit with q');
   expect(ui.lastFrame()).toContain('Advanced commands');
   expect(ui.lastFrame()).toContain('groupi --profile staging-organizer');
   expect(ui.lastFrame()).not.toContain('fixture-key');
-  ui.stdin.write('q');
-  await pause();
+  press('q');
+  await vi.waitFor(() => expect(session.disposed).toBe(true));
 });

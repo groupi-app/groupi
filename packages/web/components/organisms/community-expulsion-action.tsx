@@ -86,7 +86,11 @@ export function CommunityExpulsionAction({
   if (progress?.exclusion === 'active')
     return (
       <div role='status'>
-        <p>Exclusion committed. Cleanup {progress.cleanup}.</p>
+        <p>Exclusion committed. Event cleanup {progress.cleanup}.</p>
+        <p>
+          Discord role removal runs separately. Check Group Discord settings for
+          pending cleanup or permission errors.
+        </p>
         <p>Generation {progress.generation}</p>
         {progress.events?.map(event => (
           <p key={event.eventId}>
@@ -96,8 +100,8 @@ export function CommunityExpulsionAction({
         {progress.conflicts.map(conflict => (
           <p key={conflict.eventId}>
             {conflict.code === 'PROTECTED_ORGANIZER'
-              ? 'Resolve protected Organizer ownership before cleanup.'
-              : 'A current Event Organizer must authorize cleanup.'}
+              ? 'Resolve protected Organizer ownership before Event cleanup.'
+              : 'A current Event Organizer must authorize Event cleanup.'}
           </p>
         ))}
         <Button
@@ -106,13 +110,13 @@ export function CommunityExpulsionAction({
             void resolve('resume').catch(() => {});
           }}
         >
-          Resume cleanup for {name}
+          Resume Event cleanup for {name}
         </Button>
         {progress.cleanup === 'complete' && (
           <GroupConfirmedAction
             label={`Reinstate ${name}`}
             confirmation={`Confirm reinstatement of ${name}`}
-            explanation='Lifts only this community exclusion after cleanup. Membership, invitations, RSVP and independent bans are never restored. Fresh admission is required.'
+            explanation='Lifts only this community exclusion after Event and Group participation cleanup. Pending Discord role cleanup continues after reinstatement. Membership, invitations, RSVP and independent bans are never restored. Fresh admission is required.'
             onConfirm={() => resolve('reinstate')}
           />
         )}
@@ -122,10 +126,13 @@ export function CommunityExpulsionAction({
   return (
     <div>
       {progress?.exclusion === 'inactive' && (
-        <p role='status'>Reinstated. Fresh admission is required.</p>
+        <p role='status'>
+          Reinstated. Fresh admission is required. Pending Discord role cleanup
+          continues.
+        </p>
       )}
       <GroupConfirmedAction
-        successMessage='Exclusion committed. Cleanup pending reconciliation.'
+        successMessage='Exclusion committed. Event cleanup pending reconciliation. Discord role removal is tracked separately.'
         label={`Expel ${name}`}
         confirmation={`Confirm coordinated expulsion of ${name}`}
         explanation='Immediately excludes this person from current and future community Events, including other audience routes. Event cleanup may remain blocked by independent Organizer authority. Completed history remains available.'

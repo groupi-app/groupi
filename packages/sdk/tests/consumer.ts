@@ -86,3 +86,19 @@ client.leaveCommunity({
 });
 // @ts-expect-error Group Leave cannot use an unbound empty destructive intent
 client.leaveCommunity({ path: { groupId: 'group' }, body: {} });
+client.readOwnGroupDiscordStatus({ path: { groupId: 'group' } });
+client.beginOwnGroupDiscordConnect({
+  path: { groupId: 'group' },
+  body: { returnUrl: 'https://app.example/callback' },
+});
+// @ts-expect-error Hosted Connect requires an explicit registered return URL.
+client.beginOwnGroupDiscordConnect({ path: { groupId: 'group' }, body: {} });
+client.explicitlyDeleteAGroupAsOwner({
+  path: { groupId: 'group' },
+  query: { acknowledgeDiscordHandback: 'true' },
+});
+client.explicitlyDeleteAGroupAsOwner({
+  path: { groupId: 'group' },
+  // @ts-expect-error Handback acknowledgement uses the explicit supported query literals.
+  query: { acknowledgeDiscordHandback: 'yes' },
+});

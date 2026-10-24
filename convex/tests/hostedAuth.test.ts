@@ -297,3 +297,60 @@ test('unavailable email delivery does not acknowledge a successful sign-in email
   expect(result.status).toBe(500);
   expect(result.body).not.toContain('"status":true');
 });
+
+test('Discord enrollment requests consent only for targeted account linking and preserves the hosted Group return', async () => {
+  vi.stubEnv('DISCORD_CLIENT_ID', 'discord-test-client');
+  vi.stubEnv('DISCORD_CLIENT_SECRET', 'discord-test-secret');
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const request = (path: string, body: unknown, cookie = '') =>
+    t.run(async ctx => {
+      const response = await createAuth(ctx).handler(
+        new Request(`https://ui.example/api/auth/${path}`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            origin: 'https://ui.example',
+            cookie,
+          },
+          body: JSON.stringify(body),
+        })
+      );
+      return {
+        status: response.status,
+        cookie: response.headers.get('set-cookie'),
+        body: await response.text(),
+        location: response.headers.get('location'),
+      };
+    });
+  const signedIn = await request('sign-up/email', {
+    name: 'Discord consent',
+    email: 'discord-consent@example.com',
+    password: 'isolated-password-123456',
+  });
+  expect(signedIn.status).toBe(200);
+  const linked = await request(
+    'link-social',
+    {
+      provider: 'discord',
+      scopes: ['identify', 'guilds', 'guilds.join'],
+      callbackURL: '/groups/confirmed',
+    },
+    signedIn.cookie ?? ''
+  );
+  expect(linked.status).toBe(200);
+  const url = new URL(JSON.parse(linked.body).url);
+  expect(url.searchParams.get('prompt')).toBe('consent');
+  expect(url.searchParams.get('scope')?.split(' ')).toContain('guilds.join');
+  expect(url.searchParams.get('state')).toBeTruthy();
+  expect(linked.location).toBe(url.toString());
+  const ordinary = await request('sign-in/social', {
+    provider: 'discord',
+    callbackURL: '/groups/confirmed',
+  });
+  const ordinaryUrl = new URL(JSON.parse(ordinary.body).url);
+  expect(ordinaryUrl.searchParams.get('prompt')).toBe('none');
+  expect(ordinaryUrl.searchParams.get('scope')?.split(' ')).not.toContain(
+    'guilds.join'
+  );
+});

@@ -93,6 +93,8 @@ export function getNotificationMessage(
       return notification.groupAnnouncement
         ? `${notification.groupAnnouncement.title}: ${notification.groupAnnouncement.message}`
         : 'Group announcement unavailable';
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_REMOVED':
@@ -115,6 +117,10 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (notification.type === 'GROUP_DISCORD_SYNC_BLOCKED') {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/groups/${groupId}` : null;
+  }
   if (notification.type === 'GROUP_ONBOARDING_REQUIRED') {
     const groupId = notification.group?.id ?? notification.groupId;
     return groupId ? `/groups/${groupId}/questionnaire` : null;

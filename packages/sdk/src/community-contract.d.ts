@@ -31,6 +31,8 @@ export type OwnApplication = {
 };
 export type CommunityAction =
   | 'groups.context.read'
+  | 'groups.discord.read'
+  | 'groups.discord.connect'
   | 'groups.applications.submit'
   | 'groups.applications.edit'
   | 'groups.applications.withdraw'

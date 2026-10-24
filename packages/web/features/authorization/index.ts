@@ -3,3 +3,4 @@ export { DeveloperAppsSettings } from './developer-apps-settings';
 export { ConnectedAppsSettings } from './connected-apps-settings';
 export { DelegatedConsent } from './delegated-consent';
 export { AppReviewSettings } from './organisms';
+export { DiscordConnect } from './discord-connect';

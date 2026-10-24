@@ -105,6 +105,24 @@ describe('NotificationSlate', () => {
     vi.clearAllMocks();
   });
 
+  test('opens Group Discord status from a blocked synchronization alert', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          type: 'GROUP_DISCORD_SYNC_BLOCKED',
+          groupId: 'group-123' as TestId<'groups'>,
+          group: { id: 'group-123' as TestId<'groups'>, title: 'Readers' },
+        }}
+      />
+    );
+    expect(screen.getByText(/check permissions and retry/)).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123'
+    );
+  });
+
   test('should render notification content correctly', () => {
     render(<NotificationSlate notification={mockNotification} />);
 

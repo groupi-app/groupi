@@ -202,7 +202,7 @@ NotificationListResponse = list[Notification]
 class Notification(TypedDict):
     id: str
     personId: str
-    type: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'EVENT_APPLICATION_RECEIVED', 'EVENT_APPLICATION_APPROVED', 'EVENT_APPLICATION_DECLINED', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
+    type: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'EVENT_APPLICATION_RECEIVED', 'EVENT_APPLICATION_APPROVED', 'EVENT_APPLICATION_DECLINED', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'GROUP_DISCORD_SYNC_BLOCKED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
     read: bool
     createdAt: int
     group: NotRequired[Objectfa39780def0b | None]
@@ -276,7 +276,7 @@ class NotificationTypeSetting(TypedDict):
     enabled: bool
 
 class UpdateNotificationSettingsRequest(TypedDict):
-    notificationMethods: list[Object2999e75f7ec1]
+    notificationMethods: list[Object6ec82ed2d838]
 
 CustomThemeListResponse = list[CustomTheme]
 class CustomTheme(TypedDict):
@@ -593,7 +593,7 @@ class Groupi:
     def create_an_owner_only_group(self, *, path: None | None = ..., query: None | None = ..., body: Objectfa3a9e641148, idempotency_key: str | None = ...) -> Object38a2ce79b0f1: ...
     def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
-    def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
+    def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: Object7e8a2ce9dd0e | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
     def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object40f81eb82dda: ...
     def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
     def join_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: dict[str, NoReturn], idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
@@ -604,6 +604,8 @@ class Groupi:
     def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def set_community_announcement_preference(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectb93f36757224, idempotency_key: str | None = ...) -> Object39140cd5ad6d: ...
+    def read_own_group_discord_status(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectfa3352bca1da | None: ...
+    def begin_own_group_discord_connect(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6f0e18d58953, idempotency_key: str | None = ...) -> Objectefb5209ee17a: ...
     def get_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     def put_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object624371b3aebe, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     def submit_or_edit_private_answers_as_an_admitted_member(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6395deb0e4ba, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
@@ -896,7 +898,7 @@ class AsyncGroupi:
     async def create_an_owner_only_group(self, *, path: None | None = ..., query: None | None = ..., body: Objectfa3a9e641148, idempotency_key: str | None = ...) -> Object38a2ce79b0f1: ...
     async def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     async def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
-    async def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
+    async def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: Object7e8a2ce9dd0e | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
     async def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object40f81eb82dda: ...
     async def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
     async def join_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: dict[str, NoReturn], idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
@@ -907,6 +909,8 @@ class AsyncGroupi:
     async def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def set_community_announcement_preference(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectb93f36757224, idempotency_key: str | None = ...) -> Object39140cd5ad6d: ...
+    async def read_own_group_discord_status(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectfa3352bca1da | None: ...
+    async def begin_own_group_discord_connect(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6f0e18d58953, idempotency_key: str | None = ...) -> Objectefb5209ee17a: ...
     async def get_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     async def put_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object624371b3aebe, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     async def submit_or_edit_private_answers_as_an_admitted_member(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6395deb0e4ba, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
@@ -1139,7 +1143,7 @@ class Object0216e5b199fe(TypedDict):
     description: str | None
     location: str | None
 
-class Object2999e75f7ec1(TypedDict):
+class Object6ec82ed2d838(TypedDict):
     id: NotRequired[str]
     type: Literal['EMAIL', 'PUSH', 'WEBHOOK']
     enabled: bool
@@ -1148,7 +1152,7 @@ class Object2999e75f7ec1(TypedDict):
     webhookFormat: NotRequired[Literal['DISCORD', 'SLACK', 'TEAMS', 'GENERIC', 'CUSTOM']]
     customTemplate: NotRequired[str]
     webhookHeaders: NotRequired[str]
-    notifications: list[Objectf191154d01b8]
+    notifications: list[Object9f4a98fa38c1]
 
 class Objectc24f606b22f3(TypedDict):
     primary: NotRequired[str]
@@ -1980,6 +1984,9 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
+class Object7e8a2ce9dd0e(TypedDict):
+    acknowledgeDiscordHandback: NotRequired[Literal['true', 'false']]
+
 class Object40f81eb82dda(TypedDict):
     contractVersion: Literal['community.v1']
     group: Object59509cf0ec83
@@ -2065,6 +2072,27 @@ class Object39140cd5ad6d(TypedDict):
 
 class Objectb93f36757224(TypedDict):
     subscribed: bool
+
+class Objectfa3352bca1da(TypedDict):
+    mode: Literal['role', 'membership']
+    guildName: str
+    openUrl: str
+    linked: bool
+    linkedDiscordUserId: NotRequired[str]
+    eligible: bool
+    status: Literal['not_connected', 'pending', 'screening', 'connected', 'blocked']
+    error: NotRequired[str]
+    externalException: NotRequired[str]
+    lastObservedAt: NotRequired[float]
+    observationError: NotRequired[str]
+    cleanupPending: NotRequired[bool]
+
+class Objectefb5209ee17a(TypedDict):
+    url: str
+    expiresAt: float
+
+class Object6f0e18d58953(TypedDict):
+    returnUrl: str
 
 class Object056f6599a34c(TypedDict):
     groupId: str
@@ -2635,8 +2663,8 @@ class Objectd3056924d246(TypedDict):
     name: str | None
     email: str | None
 
-class Objectf191154d01b8(TypedDict):
-    notificationType: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
+class Object9f4a98fa38c1(TypedDict):
+    notificationType: Literal['EVENT_EDITED', 'NEW_POST', 'NEW_REPLY', 'DATE_CHOSEN', 'DATE_CHANGED', 'DATE_RESET', 'USER_JOINED', 'USER_LEFT', 'USER_PROMOTED', 'USER_DEMOTED', 'USER_RSVP', 'USER_MENTIONED', 'EVENT_REMINDER', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_REQUEST_ACCEPTED', 'GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED', 'GROUP_MEMBER_REMOVED', 'GROUP_MEMBER_BANNED', 'GROUP_APPLICATION_RECEIVED', 'GROUP_APPLICATION_APPROVED', 'GROUP_APPLICATION_DECLINED', 'GROUP_ANNOUNCEMENT', 'GROUP_ONBOARDING_REQUIRED', 'GROUP_DISCORD_SYNC_BLOCKED', 'EVENT_INVITE_RECEIVED', 'EVENT_INVITE_ACCEPTED', 'ADDON_CONFIG_RESET', 'ADDON_AUTOMATION']
     enabled: bool
 
 class Object65bba3d62a1c(TypedDict):
