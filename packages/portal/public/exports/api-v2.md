@@ -19188,6 +19188,10 @@ Read own selected Group Discord access and Open Discord destination  Source-gene
               "guildName": {
                 "type": "string"
               },
+              "guildIconUrl": {
+                "type": "string",
+                "format": "uri"
+              },
               "openUrl": {
                 "type": "string",
                 "format": "uri"
