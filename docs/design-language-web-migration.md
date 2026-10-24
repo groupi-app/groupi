@@ -8,7 +8,7 @@ The UI/atom inventory includes 47 primitive implementations and 12 atom files (i
 
 Semantic success/warning/info and quiet destructive Button variants, menu destructive intent, and AlertDialogAction variants replace caller color overrides. Shared-theme derivation preserves readable stable ink. Actual default-component browser checks cover all 12 bundled and three custom palettes, 320/390px layouts, enlarged text, Select/Calendar/Sheet, keyboard tabs and reduced motion. Whole application-page runtime acceptance remains open because the local launch was rejected by the script guard and the hosted preview contains older source with no signed-in session.
 
-Full web suite: 1,295 tests in 110 files. Shared suite: 464 tests in 16 files. Required `pnpm check` passes. Detailed state/behavior evidence and native acceptance limits are in the [execution record](design-language-execution.md).
+Final web suite: 1,296 tests in 110 files. Shared suite: 464 tests in 16 files. Required `pnpm check` passes. Detailed state/behavior evidence and native acceptance limits are in the [execution record](design-language-execution.md).
 
 ## Higher components and page-specific UI
 
