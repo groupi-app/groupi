@@ -9,6 +9,7 @@ The specification owns requirements; this record tracks evidence and open gates.
 - [Runtime Readiness](#runtime-readiness)
 - [Validation and Release Notes](#validation-and-release-notes)
 - [Current Audit Disposition](#current-audit-disposition)
+- [Rendered Gallery Checkpoint](#rendered-gallery-checkpoint)
 
 ## Source and Task Graph
 
@@ -103,3 +104,54 @@ CLI 399, and backend 1,018 tests passed. Backend used `test:no-codegen` with the
 unchanged checked-in declarations. The top-level `pnpm test:run` prerequisite
 failed because this worktree has no `CONVEX_DEPLOYMENT`; code generation is not
 claimed successful. No generated declarations were changed to bypass that gate.
+
+## Rendered Gallery Checkpoint
+
+October 24, 2026; implementation source `6edd4c27`. The actual Storybook gallery
+runs at `http://127.0.0.1:6006/?path=/story/design-system-soft-lift--overview`.
+Its Theme toolbar uses the production ThemeProvider and saved-theme serializer;
+Inter and Geologica are loaded successfully. Five stories cover actions/surfaces,
+fields/feedback, layouts/states, and long content. The source review guide is
+`packages/web/stories/design-system/README.md`.
+
+Observed in Chromium:
+
+- Filled actions depress 1 px on hover and 3 px on press without changing size.
+  Quiet and featured passive cards retain the same transform and shadow. The
+  interactive card body opens its primary action, while its separate Save action
+  toggles without opening it.
+- All 12 bundled themes and three sparse custom examples render their actual
+  theme classes and action fills. Sampled resting primary/secondary/destructive
+  action contrast exceeds 4.5:1, including composited alpha fills.
+- Mixed/checked/defaultChecked glyphs agree with accessible state; controlled
+  mixed selection changes the visible Minus to Check. Keyboard tab selection,
+  menu Escape/focus return, visible Sonner delivery, and pending/failure/retry
+  confirmation behavior pass.
+- Overview, layout, and long-content stories have no horizontal overflow at
+  390 px and 320 px. Long content also reflows at 200% root text size.
+- Reduced motion removes button translation/scaling, spinner animation, and
+  progress transitions while preserving pressed backing and visible progress.
+- User-reported hover flashing was reproduced: replacing a gradient with a
+  background shorthand exposed the surface during transition. Actions now use
+  one composed background color throughout. Frame samples transition smoothly
+  from `rgb(130, 0, 173)` to `rgb(122, 0, 163)` without exposing white. Danger
+  foreground remains identical at rest, hover, and press across all 15 examples.
+
+Initial browser review caught the missing font static mapping, Storybook heading
+reset, and one legacy mixed-checkbox example; all were corrected and rechecked.
+Final Overview navigation has zero browser console errors. A transient story
+index failure during a watched merge cleared on a clean server restart; direct
+CSF parsing and the final story index pass without a parser workaround.
+
+The integrated gallery passed `pnpm check`, dedicated Storybook types, full web
+(1,296) and shared (456) suites before the final hover correction. That correction
+then passed `pnpm check`, 30 shared contrast/state tests and three web adapter/
+preview tests. Two independent review dimensions found no remaining actionable
+issues after the mixed-checkbox correction; a targeted adversarial review of the
+hover correction also found none. This is a scoped gallery checkpoint, not
+authenticated application, native, or observed screen-reader acceptance.
+
+**Open gate:** #426 requires user review of these actual components before #427
+changes application defaults/usages. Native parity and Groups structural review
+remain behind web readiness. The integration PR stays draft; foundation/gallery
+release-note selection belongs to the next agreed batch before release readiness.
