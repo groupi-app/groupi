@@ -133,7 +133,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
           <DialogTrigger asChild>
             <Button type='button' variant='info' className='w-fit gap-2.5'>
               <Icons.party className='size-5' />
-              <span className='text-white font-semibold'>RSVP Pending!</span>
+              <span className='font-semibold'>RSVP Pending!</span>
             </Button>
           </DialogTrigger>
         ))}
