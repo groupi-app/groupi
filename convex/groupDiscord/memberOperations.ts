@@ -96,6 +96,24 @@ export async function oweAccessCleanup(
   });
 }
 
+/** Keep retirement owed until an unfinished Node provider action can no longer write. */
+export async function oweRetirementCleanup(
+  ctx: MutationCtx,
+  row: Doc<'groupDiscordEnrollments'>
+) {
+  const id = await oweAccessCleanup(ctx, row);
+  if (
+    row.desired === 'granted' &&
+    row.grantAttemptedAt &&
+    row.status !== 'connected'
+  ) {
+    await ctx.db.patch(id, {
+      nextAttemptAt: Math.max(row.nextAttemptAt, Date.now() + 10 * 60 * 1000),
+    });
+  }
+  return id;
+}
+
 export async function hasLinkedIdentity(
   ctx: QueryCtx | MutationCtx,
   personId: Id<'persons'>,
@@ -103,6 +121,21 @@ export async function hasLinkedIdentity(
 ) {
   const person = await ctx.db.get(personId);
   if (!person) return false;
+  const selected = await ctx.db
+    .query('groupDiscordManagedIdentities')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .unique();
+  if (selected?.discordUserId && selected.discordUserId !== discordUserId)
+    return false;
+  if (
+    await ctx.db
+      .query('groupDiscordRetiredIdentities')
+      .withIndex('by_person_identity', q =>
+        q.eq('personId', personId).eq('discordUserId', discordUserId)
+      )
+      .unique()
+  )
+    return false;
   const accounts = await ctx.runQuery(components.betterAuth.adapter.findMany, {
     model: 'account',
     where: [{ field: 'userId', operator: 'eq', value: person.userId }],
@@ -138,6 +171,13 @@ async function pendingCleanupFor(
   roleId?: string
 ) {
   for (const status of ['pending', 'blocked'] as const) {
+    const retirement = await ctx.db
+      .query('groupDiscordCleanup')
+      .withIndex('by_person_status', q =>
+        q.eq('personId', String(personId)).eq('status', status)
+      )
+      .first();
+    if (retirement) return retirement;
     const obligation = await ctx.db
       .query('groupDiscordCleanup')
       .withIndex('by_group_person', q =>
@@ -289,7 +329,7 @@ export async function getMemberStatus(
     .query('groupDiscordConnections')
     .withIndex('by_group', q => q.eq('groupId', groupId))
     .unique();
-  if (!connection) return null;
+  if (!connection || connection.status !== 'active') return null;
   const enrollment = await ctx.db
     .query('groupDiscordEnrollments')
     .withIndex('by_group_person', q =>
@@ -303,9 +343,20 @@ export async function getMemberStatus(
     where: [{ field: 'userId', operator: 'eq', value: person.userId }],
     paginationOpts: { cursor: null, numItems: 100 },
   });
-  const linkedAccount = (accounts.page as AuthDoc<'account'>[]).find(
-    a => a.providerId === 'discord'
+  const selected = await ctx.db
+    .query('groupDiscordManagedIdentities')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .unique();
+  let linkedAccount = (accounts.page as AuthDoc<'account'>[]).find(
+    a =>
+      a.providerId === 'discord' &&
+      (!selected?.discordUserId || a.accountId === selected.discordUserId)
   );
+  if (
+    linkedAccount &&
+    !(await hasLinkedIdentity(ctx, personId, linkedAccount.accountId))
+  )
+    linkedAccount = undefined;
   const eligible = await canAccessGroupMemberContent(ctx, groupId, personId);
   const pendingCleanup = await pendingCleanupFor(
     ctx,

@@ -1,10 +1,7 @@
 import { ConvexError } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
-import { oweAccessCleanup } from './memberOperations';
-
-// Connect/grant run in Node: https://docs.convex.dev/production/state/limits#execution-time-and-scheduling
-const NODE_ACTION_DRAIN_MS = 10 * 60 * 1000;
+import { oweRetirementCleanup } from './memberOperations';
 
 /** Shared transactional retirement policy for settings and every Group deletion adapter. */
 export async function handBackConnection(
@@ -39,17 +36,7 @@ export async function handBackConnection(
         row.desired === 'granted' &&
         !!row.grantAttemptedAt &&
         row.status !== 'connected';
-      if (inFlight) {
-        const cleanupId = await oweAccessCleanup(ctx, row);
-        // Do not observe early absence and close compensation while an action can still write.
-        // A returned provider call may compensate immediately; abandoned actions drain before retry.
-        await ctx.db.patch(cleanupId, {
-          nextAttemptAt: Math.max(
-            row.nextAttemptAt,
-            Date.now() + NODE_ACTION_DRAIN_MS
-          ),
-        });
-      }
+      if (inFlight) await oweRetirementCleanup(ctx, row);
       await ctx.db.patch(row._id, {
         handedBack: row.desired === 'granted' && !inFlight,
         desired: 'removed',

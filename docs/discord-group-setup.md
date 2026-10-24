@@ -60,6 +60,36 @@ The shared dispatcher verifies kick absence through the exact member endpoint an
 
 This remains a source integration slice. Identity retirement (#409), warned teardown (#410), shared recovery/notifications/audit-gap work (#411), and controlled nonproduction Discord/browser/device acceptance remain release gates. No deployed runtime, live guild mutation or production rollout was performed for this slice.
 
+## Discord identity retirement
+
+Unlinking Discord through Groupi account settings or Better Auth's authenticated
+unlink endpoint captures the old managed targets and invalidates grant authority
+before deleting credentials. A successful explicit Discord link selects one managed Discord identity while
+preserving older login accounts and other providers. Replacement callbacks retire
+old managed access before selecting the replacement. Explicit unlink removes only
+the requested login account. Replayed callbacks and older link attempts completing after newer ones cannot
+restore old enrollment authority or replace the newer managed identity. The
+ordering marker is a hash of OAuth state, never a retained OAuth credential.
+
+In-flight provider actions keep removal owed through the Node action drain
+window; an early absent snapshot cannot unblock replacement before a late write.
+Cleanup uses the existing bot-only dispatcher and immutable guild, identity,
+mode and dedicated-role targets. It retains no member OAuth tokens. Replacement
+Connect waits for every pending or blocked cleanup obligation for the person,
+including obligations in another Group or mode. Cleanup failures remain visible
+in linked-account settings and Group status; Groupi retries automatically after
+bot permissions or provider availability recover. Ask the Group manager to
+resolve persistent bot access or hierarchy failures. Known externally managed
+Server membership stays an explicit exception; Role independent-access warnings
+do not exempt the dedicated role from removal.
+
+Account deletion uses Groupi's ownership-resolution boundary and preserves owed
+cleanup after the Person and credentials are deleted. Better Auth self-deletion
+remains disabled. Its raw admin removal endpoint is rejected with a direction to
+Groupi account resolution because the upstream cascade deletes credentials before
+Groupi can enforce ownership safeguards. No repository caller uses that endpoint.
+These source checks do not establish controlled Discord/browser/device acceptance.
+
 ## Warned handback and deletion
 
 The #410 source slice exposes `groupDiscord.mutations.disable({groupId, acknowledgeHandback:true})` to current managers. Both native settings surfaces explain the consequences and require acknowledgement. Disabling retains Discord roles and server membership under Discord staff control. It never deletes a server, removes the bot, mass-removes participants or rewrites channel policy. Previously owed removals and compensation for in-flight grants remain durable, visible and retryable through the existing reconciliation dispatcher. Unfinished provider writes retain pending cleanup through the Node action drain window, so an early absent snapshot cannot falsely complete compensation; returned calls may compensate immediately.
