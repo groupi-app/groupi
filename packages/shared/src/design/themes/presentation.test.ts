@@ -8,6 +8,20 @@ import {
 const light = baseThemeRegistry['groupi-light'];
 
 describe('theme presentation', () => {
+  it.each([
+    ['#757575', '#ffffff'],
+    ['#ef4444', '#000000'],
+  ])(
+    'keeps %s action text stable and readable throughout pointer states',
+    (fill, text) => {
+      const action = resolveThemePresentation(light, {
+        brand: { primary: fill },
+      }).actions.primary;
+      expect(action.foreground).toBe(text);
+      expect(action.hoverForeground).toBe(text);
+      expect(action.pressedForeground).toBe(text);
+    }
+  );
   it('preserves sparse chosen fills and pairs light fills with dark text', () => {
     const overrides = { brand: { primary: '#fff' } };
     const before = JSON.stringify(light);
@@ -54,6 +68,7 @@ describe('theme presentation', () => {
     });
     expect(result.surface).toBe('rgb(128 128 128)');
     expect(result.actions.primary.fill).toBe('rgba(255, 255, 255, 0)');
+    expect(result.actions.primary.compositedFill).toBe('rgb(128 128 128)');
     expect(result.actions.primary.foreground).toBe('#000000');
     expect(result.actions.primary.contrastVerified).toBe(true);
     const dark = resolveThemePresentation(light, {
@@ -97,11 +112,53 @@ describe('theme presentation', () => {
     expect(action.contrastVerified).toBe(true);
     if (fill === '#000') expect(action.backing).not.toBe('rgb(0 0 0)');
   });
+  it.each([
+    '#000',
+    '#fff',
+    '#757575',
+    '#ef4444',
+    'rgba(255, 0, 0, 0.5)',
+    'hsla(285, 100%, 34%, 0.25)',
+  ])(
+    'keeps custom %s fills resolved and readable without changing text between states',
+    fill => {
+      const action = resolveThemePresentation(light, {
+        brand: { primary: fill },
+      }).actions.primary;
+      expect(action.fill).toBe(fill);
+      expect(action.hoverForeground).toBe(action.foreground);
+      expect(action.pressedForeground).toBe(action.foreground);
+      for (const state of [
+        action.compositedFill,
+        action.hover,
+        action.pressed,
+      ]) {
+        const [red, green, blue] = state
+          .match(/\d+/g)!
+          .map(Number)
+          .map(channel => channel / 255)
+          .map(channel =>
+            channel <= 0.04045
+              ? channel / 12.92
+              : ((channel + 0.055) / 1.055) ** 2.4
+          );
+        const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+        const contrast =
+          action.foreground === '#000000'
+            ? (luminance + 0.05) / 0.05
+            : 1.05 / (luminance + 0.05);
+        expect(contrast).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  );
   it.each(baseThemes)('provides safe, distinct state pairs for $id', base => {
     const result = resolveThemePresentation(base);
     for (const action of Object.values(result.actions)) {
       expect(action.contrastVerified).toBe(true);
+      expect(action.hoverForeground).toBe(action.foreground);
+      expect(action.pressedForeground).toBe(action.foreground);
       for (const [fill, text] of [
+        [action.compositedFill, action.foreground],
         [action.hover, action.hoverForeground],
         [action.pressed, action.pressedForeground],
         [action.subtle, action.subtleForeground],

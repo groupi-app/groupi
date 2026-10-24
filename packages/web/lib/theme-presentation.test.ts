@@ -13,6 +13,9 @@ describe('web theme presentation adapter', () => {
     const variables = getThemePresentationVariables(base, overrides);
     const css = generateCompleteCustomThemeCSS('test', base, overrides);
     expect(variables['--soft-primary-fill']).toBe('#fff');
+    expect(variables['--soft-primary-composited-fill']).toBe(
+      'rgb(255 255 255)'
+    );
     expect(variables['--soft-primary-foreground']).toBe('#000000');
     expect(css).toContain('--soft-primary-foreground: #000000;');
     expect(css).toContain(
