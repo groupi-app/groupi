@@ -3,7 +3,7 @@ import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v } from 'convex/values';
 import { MEMBER_PERMISSIONS, roleAbove } from './permissions';
-const BASE = 'https://discord.com/api/v10';
+import { discordBot, ProviderFailure } from './provider';
 class Retry extends Error {
   constructor(public delay: number) {
     super('Discord temporarily unavailable.');
@@ -20,38 +20,16 @@ export const run = internalAction({
       args
     );
     if (!row) return;
-    const token = process.env.DISCORD_BOT_TOKEN;
     const fence = () =>
       ctx.runQuery(internal.groupDiscord.enrollment.fence, args);
     const memberPath = `/guilds/${row.guildId}/members/${row.discordUserId}`;
     const rolePath = `${memberPath}/roles/${row.roleId}`;
     let attempted = false;
-    async function bot(path: string, method = 'GET', reason?: string) {
-      if (!token)
-        throw new Error(
-          'Discord bot unavailable. Contact the Groupi administrator.'
-        );
-      const response = await fetch(`${BASE}${path}`, {
+    const bot = (path: string, method = 'GET', reason?: string) =>
+      discordBot(ctx, path, {
         method,
-        headers: {
-          Authorization: `Bot ${token}`,
-          ...(reason ? { 'X-Audit-Log-Reason': reason } : {}),
-        },
+        headers: reason ? { 'X-Audit-Log-Reason': reason } : {},
       });
-      if (response.status === 429) {
-        const body = await response.json();
-        throw new Retry(
-          Math.max(
-            1000,
-            Number(
-              response.headers.get('Retry-After') ?? body.retry_after ?? 1
-            ) * 1000
-          )
-        );
-      }
-      if (response.status >= 500) throw new Retry(5000);
-      return response;
-    }
     try {
       await ctx.runAction(internal.groupDiscord.reconcile.observeGuild, {
         guildId: row.guildId,
@@ -253,20 +231,25 @@ export const run = internalAction({
                     ? cleanupError.message
                     : 'Discord role cleanup failed. Retry pending.',
                 delay:
-                  cleanupError instanceof Retry ? cleanupError.delay : 5000,
+                  cleanupError instanceof Retry ||
+                  cleanupError instanceof ProviderFailure
+                    ? cleanupError.delay
+                    : 5000,
               }
             );
           }
       }
       if (
-        (error instanceof Retry || error instanceof TypeError) &&
+        (error instanceof Retry ||
+          error instanceof ProviderFailure ||
+          error instanceof TypeError) &&
         (await fence()) &&
         row.attempts < 8
       ) {
         await ctx.runMutation(internal.groupDiscord.enrollment.scheduleGrant, {
           ...args,
           delay:
-            error instanceof Retry
+            error instanceof Retry || error instanceof ProviderFailure
               ? error.delay
               : Math.min(60000, 1000 * 2 ** row.attempts),
         });

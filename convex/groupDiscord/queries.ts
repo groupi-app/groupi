@@ -40,6 +40,15 @@ export const getConnection = query({
       )
     );
     const obligation = cleanup.find(row => row !== null);
+    const observation = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_group_observationError', q =>
+        q
+          .eq('groupId', groupId)
+          .eq('connectionGeneration', record.generation)
+          .gt('observationError', undefined)
+      )
+      .first();
     const streams = await Promise.all(
       [20, 22, 25].map(action =>
         ctx.db
@@ -55,6 +64,7 @@ export const getConnection = query({
       cleanupPending: !!obligation,
       synchronizationError:
         obligation?.error ??
+        observation?.observationError ??
         streams.find(stream => stream?.error)?.error ??
         (obligation
           ? 'Discord access cleanup is pending. Access removal has not yet been confirmed.'

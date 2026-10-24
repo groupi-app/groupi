@@ -3,50 +3,16 @@ import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v } from 'convex/values';
 import { roleAbove } from './permissions';
-const BASE = 'https://discord.com/api/v10';
-class ProviderFailure extends Error {
-  constructor(
-    message: string,
-    public delay = 300000
-  ) {
-    super(message);
-  }
-}
-async function bot(path: string, method = 'GET', reason?: string) {
-  const token = process.env.DISCORD_BOT_TOKEN;
-  if (!token)
-    throw new ProviderFailure(
-      'Discord bot unavailable. Contact the Groupi administrator.'
-    );
-  const response = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bot ${token}`,
-      ...(reason ? { 'X-Audit-Log-Reason': reason } : {}),
-    },
-  });
-  if (response.status === 429) {
-    const body = await response.json();
-    throw new ProviderFailure(
-      'Discord synchronization rate limited; retry pending.',
-      Math.max(
-        1000,
-        Number(response.headers.get('Retry-After') ?? body.retry_after ?? 1) *
-          1000
-      )
-    );
-  }
-  if (response.status >= 500)
-    throw new ProviderFailure(
-      'Discord temporarily unavailable; retry pending.',
-      5000
-    );
-  return response;
-}
+import { discordBot, ProviderFailure } from './provider';
 /** Shared bounded audit ingestion for every Role binding on a guild; snapshots alone miss remove/re-add. */
 export const observeGuild = internalAction({
   args: { guildId: v.string() },
   handler: async (ctx, { guildId }) => {
+    const bot = (path: string, method = 'GET', reason?: string) =>
+      discordBot(ctx, path, {
+        method,
+        headers: reason ? { 'X-Audit-Log-Reason': reason } : {},
+      });
     try {
       const meResponse = await bot('/users/@me');
       if (!meResponse.ok)
@@ -146,18 +112,29 @@ export const observeGuild = internalAction({
     } catch (error) {
       await ctx.runMutation(internal.groupDiscord.reconciliation.auditFailure, {
         guildId,
+        delay: error instanceof ProviderFailure ? error.delay : 5000,
         error:
           error instanceof Error
             ? error.message
             : 'Discord moderation observation failed.',
       });
-      throw error;
+      // Audit uncertainty freezes grant retries; dispatch uses the persisted retry window.
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : 'Discord moderation observation failed.'
+      );
     }
   },
 });
 export const dispatch = internalAction({
   args: {},
   handler: async ctx => {
+    const bot = (path: string, method = 'GET', reason?: string) =>
+      discordBot(ctx, path, {
+        method,
+        headers: reason ? { 'X-Audit-Log-Reason': reason } : {},
+      });
     const batch = await ctx.runMutation(
       internal.groupDiscord.reconciliation.due,
       {}
@@ -370,7 +347,7 @@ export const dispatch = internalAction({
         );
       }
     }
-    const guilds = new Map<string, string | undefined>();
+    const guilds = new Map<string, ProviderFailure | undefined>();
     for (const row of batch.rows) {
       try {
         if (!guilds.has(row.guildId)) {
@@ -380,16 +357,26 @@ export const dispatch = internalAction({
             });
             guilds.set(row.guildId, undefined);
           } catch (error) {
+            const stream = await ctx.runQuery(
+              internal.groupDiscord.reconciliation.stream,
+              { guildId: row.guildId, action: 20 }
+            );
             guilds.set(
               row.guildId,
-              error instanceof Error
-                ? error.message
-                : 'Discord moderation observation failed.'
+              new ProviderFailure(
+                error instanceof Error
+                  ? error.message
+                  : 'Discord moderation observation failed.',
+                Math.max(
+                  1000,
+                  (stream?.retryAt ?? Date.now() + 300000) - Date.now()
+                )
+              )
             );
           }
         }
         const auditError = guilds.get(row.guildId);
-        if (auditError) throw new ProviderFailure(auditError);
+        if (auditError) throw auditError;
         const response = await bot(
           `/guilds/${row.guildId}/members/${row.discordUserId}`
         );
@@ -415,6 +402,7 @@ export const dispatch = internalAction({
         await ctx.runMutation(internal.groupDiscord.reconciliation.observe, {
           id: row._id,
           generation: row.generation,
+          delay: error instanceof ProviderFailure ? error.delay : 5000,
           error:
             error instanceof Error
               ? error.message

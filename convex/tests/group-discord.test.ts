@@ -2494,3 +2494,504 @@ it('a disabled connection offers no member Connect journey before or after handb
     await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
   ).toMatchObject({ status: 'disabled' });
 });
+
+it('continues observing managed access while cleanup backlog remains due', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  let present = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: present ? ['created-role'] : [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      present = true;
+      return new Response(null, { status: 204 });
+    }
+    if (path.includes('/members/backlog-')) return json({ code: 50001 }, 403);
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await t.run(async ctx => {
+    for (let index = 0; index < 30; index++)
+      await ctx.db.insert('groupDiscordCleanup', {
+        groupId: String(groupId),
+        guildId: '100',
+        discordUserId: `backlog-${index}`,
+        roleId: 'created-role',
+        mode: 'role',
+        generation: 1,
+        desired: 'role_removed',
+        status: 'pending',
+        observed: 'unknown',
+        attempts: 0,
+        nextAttemptAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+  });
+  present = false;
+  vi.advanceTimersByTime(300000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'blocked',
+    error: expect.stringContaining('Connect again'),
+  });
+});
+
+it('alerts managers once for repeated blocked moderation observation with an actionable Group notification', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).includes('/audit-logs?')
+      ? json({ code: 50013 }, 403)
+      : base(input, init)
+  );
+  for (let attempt = 0; attempt < 2; attempt++)
+    await expect(
+      t.action(internal.groupDiscord.reconcile.observeGuild, { guildId: '100' })
+    ).rejects.toThrow('View Audit Log');
+  const result = await owner.auth.query(
+    api.notifications.queries.fetchNotificationsForPerson,
+    {}
+  );
+  expect(
+    result.notifications.filter(
+      row => row.type === 'GROUP_DISCORD_SYNC_BLOCKED'
+    )
+  ).toHaveLength(1);
+});
+
+it('requires fresh Connect after moderation history can no longer cover an old enrollment', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  let granted = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: granted ? ['created-role'] : [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      granted = true;
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await t.run(async ctx => {
+    const enrollment = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_group', q => q.eq('groupId', groupId))
+      .unique();
+    await ctx.db.patch(enrollment!._id, {
+      lastObservedAt: Date.now() - 46 * 86400000,
+      nextObservationAt: Date.now(),
+    });
+  });
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'blocked',
+    error: expect.stringContaining('history'),
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ synchronizationError: expect.stringContaining('history') });
+});
+
+it.each([true, false])(
+  'stops matching dispatch requests on provider rate limit global=%s and waits for its retry window',
+  async global => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    await t.run(async ctx => {
+      for (const discordUserId of ['limited-a', 'limited-b'])
+        await ctx.db.insert('groupDiscordCleanup', {
+          groupId: String(groupId),
+          guildId: '100',
+          discordUserId,
+          roleId: 'created-role',
+          mode: 'role',
+          generation: 1,
+          desired: 'role_removed',
+          status: 'pending',
+          observed: 'unknown',
+          attempts: 0,
+          nextAttemptAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+    });
+    provider.mockReset();
+    provider.mockResolvedValue(json({ retry_after: 900.25, global }, 429));
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(provider).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(60000);
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(provider).toHaveBeenCalledTimes(1);
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({
+      cleanupPending: true,
+      synchronizationError: expect.stringContaining('rate limited'),
+    });
+    vi.advanceTimersByTime(841000);
+    provider.mockImplementation(async () => json({ code: 10007 }, 404));
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ cleanupPending: false });
+  }
+);
+
+it('shows blocked observation truthfully and recovers without regranting existing access', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  let granted = false;
+  let unavailable = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return unavailable
+        ? json({ code: 50001 }, 403)
+        : json({ roles: granted ? ['created-role'] : [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      granted = true;
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  unavailable = true;
+  vi.advanceTimersByTime(300000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'blocked',
+    observationError: expect.stringContaining('blocked'),
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ synchronizationError: expect.stringContaining('blocked') });
+  unavailable = false;
+  vi.advanceTimersByTime(300000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ status: 'connected' });
+  expect(
+    provider.mock.calls.filter(([, init]) => init?.method === 'PUT')
+  ).toHaveLength(1);
+});
+
+it.each([false, true])(
+  'manager synchronization alerts respect webhook preference enabled=%s',
+  async enabled => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    await owner.auth.mutation(api.settings.mutations.saveNotificationSettings, {
+      notificationMethods: [
+        {
+          type: 'WEBHOOK',
+          enabled: true,
+          value: 'https://notify.example/manager',
+          webhookFormat: 'GENERIC',
+          notifications: [
+            { notificationType: 'GROUP_DISCORD_SYNC_BLOCKED', enabled },
+          ],
+        },
+      ],
+    });
+    const base = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) => {
+      if (String(input) === 'https://notify.example/manager')
+        return new Response(null, { status: 204 });
+      if (String(input).includes('/audit-logs?'))
+        return json({ code: 50013 }, 403);
+      return base(input, init);
+    });
+    await expect(
+      t.action(internal.groupDiscord.reconcile.observeGuild, { guildId: '100' })
+    ).rejects.toThrow();
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    const deliveries = provider.mock.calls.filter(
+      ([input]) => String(input) === 'https://notify.example/manager'
+    );
+    expect(deliveries).toHaveLength(enabled ? 1 : 0);
+    if (enabled)
+      expect(String(deliveries[0][1]?.body)).toContain(`/groups/${groupId}`);
+  }
+);
+
+it('honors a route observation retry window longer than the normal polling interval', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  let granted = false;
+  let limited = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.includes('/audit-logs?') && limited)
+      return json({ retry_after: 900.25 }, 429);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: granted ? ['created-role'] : [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      granted = true;
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  limited = true;
+  vi.advanceTimersByTime(300000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  const requests = provider.mock.calls.length;
+  vi.advanceTimersByTime(300000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(provider.mock.calls).toHaveLength(requests);
+});
+
+it('does not retry an old pending grant after its moderation coverage has expired', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  let grants = 0;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord')) return json({ roles: [] });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      grants++;
+      return json({}, 503);
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  const row = await t.run(async ctx => {
+    const enrollment = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_group', q => q.eq('groupId', groupId))
+      .unique();
+    await ctx.db.patch(enrollment!._id, {
+      startedAt: Date.now() - 46 * 86400000,
+      nextAttemptAt: Date.now(),
+    });
+    return enrollment!;
+  });
+  await t.action(internal.groupDiscord.grant.run, {
+    enrollmentId: row._id,
+    generation: row.generation,
+  });
+  expect(grants).toBe(1);
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'blocked',
+    error: expect.stringContaining('history'),
+  });
+});
+
+it('alerts only retained cleanup viewers when removal is blocked after Group deletion', async () => {
+  const { t, owner, groupId } = await setup();
+  const outsider = await createAuthAccount(t, 'cleanup-outsider');
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await t.run(async ctx => {
+    await ctx.db.insert('groupDiscordCleanup', {
+      groupId: String(groupId),
+      guildId: '100',
+      discordUserId: 'owed',
+      roleId: 'created-role',
+      mode: 'role',
+      generation: 1,
+      desired: 'role_removed',
+      status: 'pending',
+      observed: 'unknown',
+      attempts: 0,
+      nextAttemptAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+  await owner.auth.mutation(api.groups.mutations.deleteGroup, {
+    groupId,
+    acknowledgeDiscordHandback: true,
+  });
+  provider.mockImplementation(async () => json({ code: 50001 }, 403));
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  const notifications = await owner.auth.query(
+    api.notifications.queries.fetchNotificationsForPerson,
+    {}
+  );
+  expect(
+    notifications.notifications.filter(
+      row => row.type === 'GROUP_DISCORD_SYNC_BLOCKED'
+    )
+  ).toHaveLength(1);
+  expect(
+    (
+      await outsider.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        {}
+      )
+    ).notifications
+  ).toHaveLength(0);
+});
+
+it('pages manager alerts through the existing dispatcher without dropping later managers', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await t.run(async ctx => {
+    for (let index = 0; index < 21; index++) {
+      const personId = await ctx.db.insert('persons', {
+        userId: `moderator-${index}`,
+      });
+      await ctx.db.insert('groupMemberships', {
+        groupId,
+        personId,
+        role: 'MODERATOR',
+        joinedAt: Date.now(),
+      });
+    }
+  });
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).includes('/audit-logs?')
+      ? json({ code: 50013 }, 403)
+      : base(input, init)
+  );
+  await expect(
+    t.action(internal.groupDiscord.reconcile.observeGuild, { guildId: '100' })
+  ).rejects.toThrow();
+  expect(
+    (
+      await owner.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        {}
+      )
+    ).notifications
+  ).toHaveLength(0);
+  vi.advanceTimersByTime(60000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    (
+      await owner.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        {}
+      )
+    ).notifications.filter(row => row.type === 'GROUP_DISCORD_SYNC_BLOCKED')
+  ).toHaveLength(1);
+});
+
+it('bounds guild-wide failure alerts and continues to later Group connections', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  for (let index = 0; index < 20; index++) {
+    const nextGroupId = await owner.auth.mutation(
+      api.groups.mutations.createGroup,
+      { name: `Community ${index}` }
+    );
+    await t.run(async ctx => {
+      await ctx.db.insert('groupDiscordConnections', {
+        groupId: nextGroupId,
+        guildId: '100',
+        guildName: 'Reading room',
+        mode: 'role',
+        roleId: `role-${index}`,
+        generation: 1,
+        status: 'active',
+        updatedAt: Date.now(),
+      });
+    });
+  }
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).includes('/audit-logs?')
+      ? json({ code: 50013 }, 403)
+      : base(input, init)
+  );
+  await expect(
+    t.action(internal.groupDiscord.reconcile.observeGuild, { guildId: '100' })
+  ).rejects.toThrow();
+  expect(
+    (
+      await owner.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        { limit: 100 }
+      )
+    ).notifications
+  ).toHaveLength(20);
+  vi.advanceTimersByTime(60000);
+  await t.action(internal.groupDiscord.reconcile.dispatch, {});
+  expect(
+    (
+      await owner.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        { limit: 100 }
+      )
+    ).notifications
+  ).toHaveLength(21);
+});

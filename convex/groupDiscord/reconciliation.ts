@@ -1,17 +1,42 @@
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import { enrollmentAuthorized, oweAccessCleanup } from './memberOperations';
+import {
+  notifySynchronizationBlocked,
+  deliverSynchronizationAlertPage,
+  deliverGuildSynchronizationAlertPage,
+} from './notifications';
 
 export const due = internalMutation({
   args: {},
   handler: async ctx => {
     const now = Date.now();
+    const alert = await ctx.db
+      .query('groupDiscordSyncAlerts')
+      .withIndex('by_delivery', q =>
+        q.eq('pending', true).lte('nextDeliveryAt', now)
+      )
+      .first();
+    if (alert) await deliverSynchronizationAlertPage(ctx, alert);
+    const guildAlert = await ctx.db
+      .query('groupDiscordAuditStreams')
+      .withIndex('by_notification', q =>
+        q.eq('notificationPending', true).lte('nextNotificationAt', now)
+      )
+      .first();
+    if (guildAlert) await deliverGuildSynchronizationAlertPage(ctx, guildAlert);
+    const pause = await ctx.db
+      .query('groupDiscordProviderState')
+      .withIndex('by_scope', q => q.eq('scope', 'bot'))
+      .unique();
+    if (pause && pause.retryAt > now) return { cleanup: [], rows: [] };
     const cleanup = await ctx.db
       .query('groupDiscordCleanup')
       .withIndex('by_status_nextAttemptAt', q =>
         q.eq('status', 'pending').lte('nextAttemptAt', now)
       )
-      .take(25);
+      // Reserve observation capacity even during a sustained removal backlog.
+      .take(20);
     const rows = await ctx.db
       .query('groupDiscordEnrollments')
       .withIndex('by_observation', q => q.lte('nextObservationAt', now))
@@ -58,6 +83,10 @@ export const cleanupOutcome = internalMutation({
     const row = await ctx.db.get(id);
     if (!row) return;
     if (expectedDesired && row.desired !== expectedDesired) return;
+    if (error) {
+      const groupId = ctx.db.normalizeId('groups', row.groupId);
+      if (groupId) await notifySynchronizationBlocked(ctx, groupId);
+    }
     await ctx.db.patch(id, {
       status: error ? 'pending' : 'completed',
       observed: error
@@ -77,6 +106,7 @@ export const observe = internalMutation({
     id: v.id('groupDiscordEnrollments'),
     generation: v.number(),
     present: v.optional(v.boolean()),
+    delay: v.optional(v.number()),
     error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -93,10 +123,14 @@ export const observe = internalMutation({
       });
       return;
     }
+    if (args.error) await notifySynchronizationBlocked(ctx, row.groupId);
     const eligible = await enrollmentAuthorized(ctx, {
       ...row,
       desired: 'granted',
     });
+    const coverageExpired =
+      row.desired === 'granted' &&
+      Date.now() - (row.lastObservedAt ?? row.startedAt) >= 45 * 86400000;
     if (!eligible) {
       if (
         args.present !== false &&
@@ -111,6 +145,15 @@ export const observe = internalMutation({
         generation:
           row.desired === 'granted' ? row.generation + 1 : row.generation,
       });
+    } else if (coverageExpired) {
+      await ctx.db.patch(row._id, {
+        desired: 'removed',
+        status: 'blocked',
+        generation: row.generation + 1,
+        error:
+          'Discord moderation history coverage expired. Connect again after synchronization recovers.',
+      });
+      await notifySynchronizationBlocked(ctx, row.groupId);
     } else if (args.present === false && row.status === 'connected') {
       await ctx.db.patch(row._id, {
         desired: 'removed',
@@ -120,8 +163,12 @@ export const observe = internalMutation({
       });
     }
     await ctx.db.patch(row._id, {
-      nextObservationAt: Date.now() + 300000,
-      observationError: args.error,
+      nextObservationAt: Date.now() + (args.delay ?? 300000),
+      observationError:
+        args.error ??
+        (eligible && coverageExpired
+          ? 'Discord moderation history coverage expired. Connect again after synchronization recovers.'
+          : undefined),
       lastObservedAt: args.error ? row.lastObservedAt : Date.now(),
     });
   },
@@ -244,6 +291,7 @@ export const auditPage = internalMutation({
       await ctx.db.patch(stream._id, {
         ...update,
         error: undefined,
+        retryAt: undefined,
         observedAt: args.complete ? Date.now() : stream.observedAt,
       });
     else
@@ -257,8 +305,12 @@ export const auditPage = internalMutation({
 });
 
 export const auditFailure = internalMutation({
-  args: { guildId: v.string(), error: v.string() },
-  handler: async (ctx, { guildId, error }) => {
+  args: {
+    guildId: v.string(),
+    error: v.string(),
+    delay: v.optional(v.number()),
+  },
+  handler: async (ctx, { guildId, error, delay }) => {
     for (const action of [20, 22, 25]) {
       const stream = await ctx.db
         .query('groupDiscordAuditStreams')
@@ -266,14 +318,62 @@ export const auditFailure = internalMutation({
           q.eq('guildId', guildId).eq('action', action)
         )
         .unique();
-      if (stream) await ctx.db.patch(stream._id, { error });
+      if (stream)
+        await ctx.db.patch(stream._id, {
+          error,
+          retryAt: Date.now() + (delay ?? 300000),
+        });
       else
         await ctx.db.insert('groupDiscordAuditStreams', {
           guildId,
           action,
           cursor: '0',
           error,
+          retryAt: Date.now() + (delay ?? 300000),
         });
     }
+    const notificationStream = await ctx.db
+      .query('groupDiscordAuditStreams')
+      .withIndex('by_guild_action', q =>
+        q.eq('guildId', guildId).eq('action', 20)
+      )
+      .unique();
+    if (notificationStream)
+      await deliverGuildSynchronizationAlertPage(ctx, notificationStream);
+  },
+});
+
+export const providerPause = internalQuery({
+  args: { scope: v.optional(v.string()) },
+  handler: async (ctx, { scope }) => {
+    const global = await ctx.db
+      .query('groupDiscordProviderState')
+      .withIndex('by_scope', q => q.eq('scope', 'bot'))
+      .unique();
+    const route = scope
+      ? await ctx.db
+          .query('groupDiscordProviderState')
+          .withIndex('by_scope', q => q.eq('scope', scope))
+          .unique()
+      : null;
+    return Math.max(global?.retryAt ?? 0, route?.retryAt ?? 0);
+  },
+});
+export const pauseProvider = internalMutation({
+  args: { until: v.number(), scope: v.optional(v.string()) },
+  handler: async (ctx, { until, scope = 'bot' }) => {
+    const state = await ctx.db
+      .query('groupDiscordProviderState')
+      .withIndex('by_scope', q => q.eq('scope', scope))
+      .unique();
+    if (state)
+      await ctx.db.patch(state._id, {
+        retryAt: Math.max(state.retryAt, until),
+      });
+    else
+      await ctx.db.insert('groupDiscordProviderState', {
+        scope,
+        retryAt: until,
+      });
   },
 });

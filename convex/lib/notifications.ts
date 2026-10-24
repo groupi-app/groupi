@@ -253,6 +253,7 @@ export type NotificationType =
   | 'GROUP_APPLICATION_APPROVED'
   | 'GROUP_APPLICATION_DECLINED'
   | 'GROUP_ONBOARDING_REQUIRED'
+  | 'GROUP_DISCORD_SYNC_BLOCKED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -523,6 +524,8 @@ export function getNotificationEmailSubject(
       return `Your application to ${groupTitle || 'a Group'} was declined`;
     case 'GROUP_ANNOUNCEMENT':
       return ctx.announcementTitle || 'Group announcement';
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -619,6 +622,8 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -714,6 +719,8 @@ function getNotificationMessageMarkdown(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -808,6 +815,8 @@ export function getNotificationMessagePlain(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':

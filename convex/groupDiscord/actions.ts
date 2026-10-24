@@ -13,7 +13,7 @@ type Role = {
   managed?: boolean;
 };
 import { MEMBER_PERMISSIONS, roleAbove } from './permissions';
-const BASE = 'https://discord.com/api/v10';
+import { discordBot } from './provider';
 export const configure = action({
   args: {
     groupId: v.id('groups'),
@@ -66,7 +66,7 @@ export const configure = action({
         'Discord bot is unavailable. Contact the Groupi administrator.'
       );
     async function bot(path: string, init: RequestInit = {}) {
-      const response = await fetch(`${BASE}${path}`, {
+      const response = await discordBot(ctx, path, {
         ...init,
         headers: {
           Authorization: `Bot ${botToken}`,
