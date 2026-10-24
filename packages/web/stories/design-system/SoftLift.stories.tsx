@@ -1,3 +1,4 @@
+import './MaterialStudies.css';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useRef, useState } from 'react';
 import {
@@ -13,6 +14,8 @@ import {
 } from 'lucide-react';
 import { Heading } from '@/components/atoms/heading';
 import { PaperDivider } from '@/components/atoms/paper-divider';
+import { PresenceIndicator } from '@/components/atoms/presence-indicator';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -211,6 +214,60 @@ function SurfaceSamples() {
           ? 'Sunday board games opened. This gallery uses local sample content.'
           : 'Try the primary card action and the separate Save event button.'}
       </p>
+    </Section>
+  );
+}
+function PeopleStickers() {
+  return (
+    <Section
+      title='People, with a place in the album'
+      description='Photo stickers keep a familiar circular silhouette. Initials and availability remain clear when a photo is unavailable.'
+    >
+      <div className='flex flex-wrap items-center gap-8'>
+        <div className='flex items-center gap-3'>
+          <div className='relative'>
+            <Avatar presentation='soft' className='size-14'>
+              <AvatarImage
+                src='https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
+                alt='Alex'
+              />
+              <AvatarFallback>AL</AvatarFallback>
+            </Avatar>
+            <PresenceIndicator
+              status='online'
+              size='lg'
+              className='absolute bottom-0 right-0'
+            />
+          </div>
+          <div>
+            <p className='font-semibold'>Alex</p>
+            <p className='text-sm text-muted-foreground'>Online</p>
+          </div>
+        </div>
+        <div className='flex items-center gap-3'>
+          <Avatar presentation='soft' className='size-14'>
+            <AvatarFallback>MR</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className='font-semibold'>Maya</p>
+            <p className='text-sm text-muted-foreground'>Initials fallback</p>
+          </div>
+        </div>
+        <div className='flex flex-col gap-2'>
+          <div
+            className='material-avatar-stack flex'
+            role='group'
+            aria-label='Alex, Maya, Jo and Sam'
+          >
+            {['AL', 'MR', 'JO', 'SA'].map(initials => (
+              <Avatar presentation='soft' key={initials}>
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+          <p className='text-sm text-muted-foreground'>A close-knit stack</p>
+        </div>
+      </div>
     </Section>
   );
 }
@@ -417,7 +474,7 @@ function Feedback() {
           Check your connection, then try saving again.
         </AlertDescription>
       </Alert>
-      <Toaster />
+      <Toaster presentation='soft' />
     </Section>
   );
 }
@@ -429,14 +486,15 @@ export const Overview: Story = {
           Component review · opt-in preview
         </Badge>
         <Heading level={1} roleSize='page'>
-          A playful system with a clear purpose.
+          Groupi’s sticker book
         </Heading>
         <p className='text-lg text-muted-foreground'>
-          Quiet surfaces. Expressive accents. Actions that feel ready to press.
+          Action stickers, writable spaces, and little labels for your plans.
         </p>
       </header>
       <Actions />
       <SurfaceSamples />
+      <PeopleStickers />
       <Fields />
       <NavigationAndStatus />
       <Feedback />
@@ -544,6 +602,196 @@ export const LongContent: Story = {
           </CardFooter>
         </Card>
       </ListPageTemplate>
+    </GalleryFrame>
+  ),
+};
+
+function StatusAlternatives() {
+  return (
+    <Section
+      title='Status labels: stamp or cut-out?'
+      description='Unselected proposals. Compare the same state and glyph: a printed mark versus a flat sticker label. Neither carries action depth.'
+    >
+      <div className='grid gap-8 md:grid-cols-2'>
+        <article className='flex flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            A · Ink stamp
+          </Heading>
+          <div className='flex flex-wrap gap-3'>
+            <Badge
+              variant='outline'
+              className='material-status-stamp'
+              data-study-status='success'
+            >
+              <Check aria-hidden='true' className='size-3' />
+              Completed
+            </Badge>
+            <Badge
+              variant='outline'
+              className='material-status-stamp'
+              data-study-status='warning'
+            >
+              <Clock aria-hidden='true' className='size-3' />
+              Pending
+            </Badge>
+          </div>
+          <p className='text-sm text-muted-foreground'>
+            Keeps status printed into the page. The keyline and glyph do the
+            work.
+          </p>
+        </article>
+        <article className='flex flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            B · Flat cut-out label
+          </Heading>
+          <div className='flex flex-wrap gap-3'>
+            <Badge presentation='soft' variant='success'>
+              <Check aria-hidden='true' className='size-3' />
+              Completed
+            </Badge>
+            <Badge presentation='soft' variant='warning'>
+              <Clock aria-hidden='true' className='size-3' />
+              Pending
+            </Badge>
+          </div>
+          <p className='text-sm text-muted-foreground'>
+            Connects status to the sticker vocabulary, but may compete with
+            identity labels.
+          </p>
+        </article>
+      </div>
+    </Section>
+  );
+}
+function StudyTabs({ attached }: { attached: boolean }) {
+  return (
+    <Tabs
+      presentation='soft'
+      defaultValue='events'
+      className={attached ? 'material-index-tabs' : 'material-ink-tabs'}
+    >
+      <TabsList
+        aria-label={
+          attached
+            ? 'Attached index destinations'
+            : 'Ink underline destinations'
+        }
+      >
+        <TabsTrigger value='events'>Events</TabsTrigger>
+        <TabsTrigger value='people'>People</TabsTrigger>
+        <TabsTrigger value='tools'>Tools</TabsTrigger>
+        <TabsTrigger value='announcements'>
+          Community announcements and shared resources
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value='events'>
+        <p>Events shared with this Group.</p>
+      </TabsContent>
+      <TabsContent value='people'>
+        <p>The people in this Group.</p>
+      </TabsContent>
+      <TabsContent value='tools'>
+        <p>Tools enabled for this Group.</p>
+      </TabsContent>
+      <TabsContent value='announcements'>
+        <p>Announcements and resources shared with this Group.</p>
+      </TabsContent>
+    </Tabs>
+  );
+}
+function NavigationAlternatives() {
+  return (
+    <Section
+      title='Destinations: attached index or ink underline?'
+      description='Unselected proposals. Both use the same real Radix tabs, content and keyboard behavior. Inspect the long destination at 320 px.'
+    >
+      <div className='grid items-start gap-8 md:grid-cols-2'>
+        <article className='flex min-w-0 flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            A · Attached index tabs
+          </Heading>
+          <StudyTabs attached />
+          <p className='text-sm text-muted-foreground'>
+            Makes a clear relationship to the sheet. Wrapping into multiple rows
+            can weaken that relationship.
+          </p>
+        </article>
+        <article className='flex min-w-0 flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            B · Ink underline
+          </Heading>
+          <StudyTabs attached={false} />
+          <p className='text-sm text-muted-foreground'>
+            Keeps navigation light and readable. Its material identity is
+            deliberately quieter.
+          </p>
+        </article>
+      </div>
+    </Section>
+  );
+}
+function StudyAlert({ note }: { note: boolean }) {
+  return (
+    <Alert
+      variant='destructive'
+      className={note ? 'material-alert-note' : 'material-alert-strip'}
+    >
+      <CircleAlert aria-hidden='true' />
+      <AlertTitle>Could not save your changes</AlertTitle>
+      <AlertDescription>
+        Check your connection, then try saving again.
+      </AlertDescription>
+    </Alert>
+  );
+}
+function NoticeAlternatives() {
+  return (
+    <Section
+      title='Notices: annotation or attached note?'
+      description='Unselected proposals. Identical error and recovery copy, with no lift, perforation or suggestion that the notice is clickable.'
+    >
+      <div className='grid items-start gap-8 md:grid-cols-2'>
+        <article className='flex min-w-0 flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            A · Annotation strip
+          </Heading>
+          <StudyAlert note={false} />
+          <p className='text-sm text-muted-foreground'>
+            Stays close to the affected task with one narrow ink edge.
+          </p>
+        </article>
+        <article className='flex min-w-0 flex-col gap-3'>
+          <Heading level={3} roleSize='content'>
+            B · Attached note
+          </Heading>
+          <StudyAlert note />
+          <p className='text-sm text-muted-foreground'>
+            Uses one small cut-out severity mark while the explanation stays
+            quiet.
+          </p>
+        </article>
+      </div>
+    </Section>
+  );
+}
+export const MaterialStudies: Story = {
+  render: () => (
+    <GalleryFrame>
+      <div className='material-studies flex flex-col gap-12'>
+        <header className='flex max-w-3xl flex-col gap-3'>
+          <Heading level={1} roleSize='page'>
+            On the paper workbench
+          </Heading>
+          <p className='text-lg text-muted-foreground'>
+            Three pairs to try: stamps or cut-out labels, attached tabs or
+            underlines, annotation strips or small notes. These proposals are
+            still unselected.
+          </p>
+        </header>
+        <StatusAlternatives />
+        <NavigationAlternatives />
+        <NoticeAlternatives />
+      </div>
     </GalleryFrame>
   ),
 };

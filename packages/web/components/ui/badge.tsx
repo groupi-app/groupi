@@ -51,7 +51,7 @@ function Badge({
       data-presentation={presentation}
       className={cn(
         soft
-          ? 'inline-flex items-center gap-1 rounded-badge px-2.5 py-1 text-xs font-semibold'
+          ? 'inline-flex w-fit max-w-full items-center gap-1 rounded-badge px-2.5 py-1 text-xs font-semibold'
           : badgeVariants({ variant }),
         className
       )}

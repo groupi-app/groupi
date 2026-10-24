@@ -106,7 +106,7 @@ export function EmptyState({
       <Message
         className={cn(
           soft
-            ? 'max-w-full break-words text-foreground font-semibold text-balance'
+            ? 'max-w-full break-words font-heading text-foreground font-semibold text-balance'
             : 'text-muted-foreground font-medium',
           sizes.message
         )}
