@@ -15,7 +15,10 @@ const config: StorybookConfig = {
     name: '@storybook/nextjs',
     options: {},
   },
-  staticDirs: ['../public'],
+  staticDirs: [
+    '../public',
+    { from: '../../../assets/fonts', to: '/assets/fonts' },
+  ],
   typescript: {
     reactDocgen: 'react-docgen-typescript',
   },

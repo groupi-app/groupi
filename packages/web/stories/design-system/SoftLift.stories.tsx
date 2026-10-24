@@ -273,6 +273,7 @@ function Fields() {
             </legend>
             <div className='flex items-center gap-3'>
               <Checkbox
+                presentation='soft'
                 id='mixed-choice'
                 checked={mixed}
                 onCheckedChange={setMixed}
