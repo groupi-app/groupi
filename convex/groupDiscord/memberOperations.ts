@@ -45,15 +45,15 @@ export async function oweAccessCleanup(
 ) {
   const existingObligation = await ctx.db
     .query('groupDiscordCleanup')
-    .withIndex('by_target', q =>
+    .withIndex('by_target_group_enrollment', q =>
       q
         .eq('guildId', row.guildId)
         .eq('discordUserId', row.discordUserId)
         .eq('roleId', row.roleId)
         .eq('generation', row.connectionGeneration ?? row.generation)
         .eq('enrollmentGeneration', row.generation)
+        .eq('groupId', String(row.groupId))
     )
-    .filter(q => q.eq(q.field('groupId'), String(row.groupId)))
     .first();
   if (existingObligation) {
     if (
@@ -257,18 +257,14 @@ export async function beginEnrollment(
   ) {
     const completed = await ctx.db
       .query('groupDiscordCleanup')
-      .withIndex('by_target', q =>
+      .withIndex('by_target_group_status', q =>
         q
           .eq('guildId', old.guildId)
           .eq('discordUserId', old.discordUserId)
           .eq('roleId', old.roleId)
           .eq('generation', old.connectionGeneration)
-      )
-      .filter(q =>
-        q.and(
-          q.eq(q.field('status'), 'completed'),
-          q.eq(q.field('groupId'), String(groupId))
-        )
+          .eq('groupId', String(groupId))
+          .eq('status', 'completed')
       )
       .first();
     if (!completed) {

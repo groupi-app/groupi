@@ -74,6 +74,7 @@ export const getConnection = query({
 });
 export const managerContext = internalQuery({
   args: { groupId: v.id('groups') },
+  returns: v.object({ personId: v.id('persons'), groupName: v.string() }),
   handler: async (ctx, { groupId }) => {
     const { person } = await requireAuth(ctx);
     const group = await requireManager(ctx, groupId, person._id);

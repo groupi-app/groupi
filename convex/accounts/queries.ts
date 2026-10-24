@@ -319,13 +319,12 @@ export const getDiscordRetirementStatus = query({
     }
     const exception = await ctx.db
       .query('groupDiscordEnrollments')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .filter(q =>
-        q.and(
-          q.eq(q.field('mode'), 'membership'),
-          q.eq(q.field('desired'), 'removed'),
-          q.neq(q.field('externalException'), undefined)
-        )
+      .withIndex('by_person_removed_exception', q =>
+        q
+          .eq('personId', person._id)
+          .eq('mode', 'membership')
+          .eq('desired', 'removed')
+          .gt('externalException', undefined)
       )
       .first();
     const selected = await ctx.db

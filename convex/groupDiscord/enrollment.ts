@@ -1,3 +1,4 @@
+import { connectionDocument, enrollmentDocument } from './documents';
 import { query, internalMutation, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -26,6 +27,10 @@ export const context = internalQuery({
     expectedGeneration: v.optional(v.number()),
     hostedState: v.optional(v.string()),
   },
+  returns: v.object({
+    personId: v.id('persons'),
+    connection: connectionDocument,
+  }),
   handler: async (ctx, { groupId, expectedGeneration, hostedState }) => {
     const { person } = await requireAuth(ctx);
     if (
@@ -50,6 +55,7 @@ export const begin = internalMutation({
     expectedGeneration: v.optional(v.number()),
     hostedState: v.optional(v.string()),
   },
+  returns: enrollmentDocument,
   handler: async (
     ctx,
     { groupId, discordUserId, fresh, expectedGeneration, hostedState }
@@ -74,6 +80,7 @@ export const fence = internalQuery({
     enrollmentId: v.id('groupDiscordEnrollments'),
     generation: v.number(),
   },
+  returns: v.union(enrollmentDocument, v.null()),
   handler: async (ctx, { enrollmentId, generation }) => {
     const row = await ctx.db.get(enrollmentId);
     if (!row || row.generation !== generation || row.desired !== 'granted')
@@ -93,6 +100,7 @@ export const finish = internalMutation({
     error: v.optional(v.string()),
     externalException: v.optional(v.string()),
   },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.enrollmentId);
     if (!row || row.generation !== args.generation || row.desired !== 'granted')
@@ -101,6 +109,7 @@ export const finish = internalMutation({
     if (!current) return false;
     await ctx.db.patch(row._id, {
       status: args.status,
+      connectPending: false,
       error: args.error,
       externalException: args.externalException,
       updatedAt: Date.now(),
@@ -119,10 +128,21 @@ export const cancelUnconsented = internalMutation({
     enrollmentId: v.id('groupDiscordEnrollments'),
     generation: v.number(),
   },
+  returns: v.null(),
   handler: async (ctx, { enrollmentId, generation }) => {
     const row = await ctx.db.get(enrollmentId);
-    if (row?.generation === generation && row.status === 'pending')
-      await ctx.db.delete(enrollmentId);
+    if (row?.generation === generation && row.status === 'pending') {
+      if (row.grantAttemptedAt) {
+        await oweAccessCleanup(ctx, row);
+        await ctx.db.patch(row._id, {
+          desired: 'removed',
+          status: 'blocked',
+          connectPending: false,
+          error:
+            'Discord join outcome is uncertain. Cleanup must complete before fresh Connect.',
+        });
+      } else await ctx.db.delete(enrollmentId);
+    }
   },
 });
 
@@ -132,6 +152,7 @@ export const scheduleGrant = internalMutation({
     generation: v.number(),
     delay: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.enrollmentId);
     if (
@@ -145,6 +166,7 @@ export const scheduleGrant = internalMutation({
     const nextAttemptAt = Date.now() + (args.delay ?? 0);
     await ctx.db.patch(row._id, {
       status: 'pending',
+      connectPending: false,
       nextAttemptAt,
       updatedAt: Date.now(),
     });
@@ -160,6 +182,7 @@ export const claimGrant = internalMutation({
     enrollmentId: v.id('groupDiscordEnrollments'),
     generation: v.number(),
   },
+  returns: v.union(enrollmentDocument, v.null()),
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.enrollmentId);
     if (
@@ -167,6 +190,7 @@ export const claimGrant = internalMutation({
       row.generation !== args.generation ||
       row.desired !== 'granted' ||
       row.status !== 'pending' ||
+      row.connectPending ||
       row.nextAttemptAt > Date.now()
     )
       return null;
@@ -219,6 +243,7 @@ export const oweCleanup = internalMutation({
     connectionGeneration: v.optional(v.number()),
     personId: v.optional(v.id('persons')),
   },
+  returns: v.union(v.id('groupDiscordCleanup'), v.null()),
   handler: async (ctx, args) => {
     if (args.personId) {
       const current = await ctx.db
@@ -248,6 +273,7 @@ export const markGrantAttempt = internalMutation({
     enrollmentId: v.id('groupDiscordEnrollments'),
     generation: v.number(),
   },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.enrollmentId);
     if (!row || row.generation !== args.generation || row.desired !== 'granted')
@@ -261,6 +287,7 @@ export const markGrantAttempt = internalMutation({
 
 export const completeCompensation = internalMutation({
   args: { cleanupId: v.id('groupDiscordCleanup') },
+  returns: v.null(),
   handler: async (ctx, { cleanupId }) => {
     const obligation = await ctx.db.get(cleanupId);
     if (obligation?.desired === 'role_removed')
@@ -270,5 +297,86 @@ export const completeCompensation = internalMutation({
         error: undefined,
         updatedAt: Date.now(),
       });
+  },
+});
+
+/** Persist continuation of explicit Connect, without storing provider credentials. */
+export const scheduleConnect = internalMutation({
+  args: {
+    enrollmentId: v.id('groupDiscordEnrollments'),
+    generation: v.number(),
+    delay: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.enrollmentId);
+    if (
+      !row ||
+      row.generation !== args.generation ||
+      !(await enrollmentAuthorized(ctx, row))
+    )
+      return null;
+    await ctx.db.patch(row._id, {
+      status: 'pending',
+      connectPending: true,
+      nextAttemptAt: Date.now() + args.delay,
+    });
+    await ctx.scheduler.runAfter(
+      args.delay,
+      internal.groupDiscord.connect.resume,
+      { enrollmentId: row._id, generation: row.generation }
+    );
+    return null;
+  },
+});
+export const claimConnect = internalMutation({
+  args: {
+    enrollmentId: v.id('groupDiscordEnrollments'),
+    generation: v.number(),
+  },
+  returns: v.union(
+    v.object({ row: enrollmentDocument, userId: v.string() }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.enrollmentId);
+    if (
+      !row ||
+      row.generation !== args.generation ||
+      row.status !== 'pending' ||
+      !row.connectPending ||
+      row.nextAttemptAt > Date.now()
+    )
+      return null;
+    if (Date.now() - (row.lastObservedAt ?? row.startedAt) >= 45 * 86400000) {
+      if (row.grantAttemptedAt) await oweAccessCleanup(ctx, row);
+      await ctx.db.patch(row._id, {
+        desired: 'removed',
+        status: 'blocked',
+        connectPending: false,
+        error:
+          'Discord moderation history coverage expired. Connect again after synchronization recovers.',
+      });
+      await notifySynchronizationBlocked(ctx, row.groupId);
+      return null;
+    }
+    if (!(await enrollmentAuthorized(ctx, row))) {
+      if (row.grantAttemptedAt) await oweAccessCleanup(ctx, row);
+      await ctx.db.patch(row._id, {
+        desired: 'removed',
+        status: 'blocked',
+        connectPending: false,
+      });
+      return null;
+    }
+    const person = await ctx.db.get(row.personId);
+    if (!person) return null;
+    await ctx.db.patch(row._id, { nextAttemptAt: Date.now() + 10 * 60 * 1000 });
+    await ctx.scheduler.runAfter(
+      10 * 60 * 1000,
+      internal.groupDiscord.connect.resume,
+      args
+    );
+    return { row, userId: person.userId };
   },
 });

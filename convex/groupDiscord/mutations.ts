@@ -12,6 +12,10 @@ export const reserve = internalMutation({
     roleId: v.optional(v.string()),
     landingChannelId: v.optional(v.string()),
   },
+  returns: v.object({
+    connectionId: v.id('groupDiscordConnections'),
+    generation: v.number(),
+  }),
   handler: async (ctx, args) => {
     await requireManager(
       ctx,
@@ -33,10 +37,13 @@ export const reserve = internalMutation({
     if (
       bindings.some(
         b =>
-          (b.status !== 'disabled' && args.mode === 'membership') ||
-          b.mode === 'membership' ||
-          (args.roleId &&
-            (b.roleId === args.roleId || b.provisionedRoleId === args.roleId))
+          b._id !== existing?._id &&
+          (b.status === 'active' || b.status === 'pending') &&
+          (args.mode === 'membership' ||
+            b.mode === 'membership' ||
+            (args.roleId &&
+              (b.roleId === args.roleId ||
+                b.provisionedRoleId === args.roleId)))
       )
     )
       throw new Error(
@@ -66,6 +73,7 @@ export const complete = internalMutation({
     roleId: v.optional(v.string()),
     roleName: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const record = await ctx.db.get(args.connectionId);
     if (!record || record.generation !== args.generation)
@@ -85,7 +93,7 @@ export const complete = internalMutation({
       bindings.some(
         other =>
           other._id !== record._id &&
-          other.status !== 'disabled' &&
+          (other.status === 'active' || other.status === 'pending') &&
           (record.mode === 'membership' ||
             other.mode === 'membership' ||
             (args.roleId &&
@@ -112,6 +120,7 @@ export const fail = internalMutation({
     error: v.string(),
     provisionedRoleId: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (
     ctx,
     { connectionId, generation, error, provisionedRoleId }

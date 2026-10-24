@@ -1,3 +1,8 @@
+import {
+  enrollmentDocument,
+  cleanupDocument,
+  auditStreamDocument,
+} from './documents';
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import { enrollmentAuthorized, oweAccessCleanup } from './memberOperations';
@@ -9,6 +14,10 @@ import {
 
 export const due = internalMutation({
   args: {},
+  returns: v.object({
+    cleanup: v.array(cleanupDocument),
+    rows: v.array(enrollmentDocument),
+  }),
   handler: async ctx => {
     const now = Date.now();
     const alert = await ctx.db
@@ -79,6 +88,7 @@ export const cleanupOutcome = internalMutation({
     error: v.optional(v.string()),
     delay: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, { id, error, delay, expectedDesired }) => {
     const row = await ctx.db.get(id);
     if (!row) return;
@@ -109,6 +119,7 @@ export const observe = internalMutation({
     delay: v.optional(v.number()),
     error: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.id);
     if (!row || row.generation !== args.generation) return;
@@ -175,6 +186,7 @@ export const observe = internalMutation({
 });
 export const stream = internalQuery({
   args: { guildId: v.string(), action: v.number() },
+  returns: v.union(auditStreamDocument, v.null()),
   handler: (ctx, args) =>
     ctx.db
       .query('groupDiscordAuditStreams')
@@ -201,6 +213,7 @@ export const auditPage = internalMutation({
     complete: v.boolean(),
     botId: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     for (const event of args.entries) {
       const seen = await ctx.db
@@ -310,6 +323,7 @@ export const auditFailure = internalMutation({
     error: v.string(),
     delay: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, { guildId, error, delay }) => {
     for (const action of [20, 22, 25]) {
       const stream = await ctx.db
@@ -345,6 +359,7 @@ export const auditFailure = internalMutation({
 
 export const providerPause = internalQuery({
   args: { scope: v.optional(v.string()) },
+  returns: v.number(),
   handler: async (ctx, { scope }) => {
     const global = await ctx.db
       .query('groupDiscordProviderState')
@@ -361,6 +376,7 @@ export const providerPause = internalQuery({
 });
 export const pauseProvider = internalMutation({
   args: { until: v.number(), scope: v.optional(v.string()) },
+  returns: v.null(),
   handler: async (ctx, { until, scope = 'bot' }) => {
     const state = await ctx.db
       .query('groupDiscordProviderState')

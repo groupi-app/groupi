@@ -24,11 +24,18 @@ export async function joinDiscordGuild(
   accountId: string,
   guildId: string,
   botToken: string,
-  authorize: () => Promise<boolean>
+  authorize: () => Promise<boolean>,
+  verifiedUserId?: string
 ): Promise<Response | null> {
-  const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+  const { auth, headers } = verifiedUserId
+    ? { auth: createAuth(ctx), headers: undefined }
+    : await authComponent.getAuth(createAuth, ctx);
   const tokens = await auth.api.getAccessToken({
-    body: { providerId: 'discord', accountId },
+    body: {
+      providerId: 'discord',
+      accountId,
+      ...(verifiedUserId ? { userId: verifiedUserId } : {}),
+    },
     headers,
   });
   if (!tokens.accessToken) return null;

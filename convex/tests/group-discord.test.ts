@@ -2995,3 +2995,215 @@ it('bounds guild-wide failure alerts and continues to later Group connections', 
     ).notifications
   ).toHaveLength(21);
 });
+
+it.each(['role', 'membership'] as const)(
+  'a handed-back membership binding allows fresh %s configuration',
+  async mode => {
+    const { owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode: 'membership',
+    });
+    await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+      groupId,
+      acknowledgeHandback: true,
+    });
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ mode, status: 'active', generation: 3 });
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'not_connected' });
+  }
+);
+
+it.each([429, 503])(
+  'initial Connect resumes after provider %s without fresh consent',
+  async status => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    const base = provider.getMockImplementation()!;
+    let unavailable = true;
+    let granted = false;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.endsWith('/bans/manager-discord')) {
+        if (unavailable) {
+          unavailable = false;
+          return json({ retry_after: 7 }, status);
+        }
+        return json({ code: 10026 }, 404);
+      }
+      if (path.endsWith('/members/manager-discord'))
+        return json({ roles: granted ? ['created-role'] : [] });
+      if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+        granted = true;
+        return new Response(null, { status: 204 });
+      }
+      return base(input, init);
+    });
+    await owner.auth
+      .action(api.groupDiscord.connect.connect, { groupId, consent: true })
+      .catch(() => {});
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'connected' });
+  }
+);
+it.each(['role', 'membership'] as const)(
+  'another Group can configure %s after membership handback',
+  async mode => {
+    const { owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode: 'membership',
+    });
+    await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+      groupId,
+      acknowledgeHandback: true,
+    });
+    const otherGroupId = await owner.auth.mutation(
+      api.groups.mutations.createGroup,
+      { name: 'Other readers' }
+    );
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId: otherGroupId,
+      guildId: '100',
+      mode,
+    });
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId: otherGroupId,
+      })
+    ).toMatchObject({ mode, status: 'active' });
+  }
+);
+it('a resumed Connect joins through current linked-account consent after initial outage', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  const base = provider.getMockImplementation()!;
+  let outage = true;
+  let joined = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/oauth2/@me'))
+      return json({
+        application: { id: 'client' },
+        scopes: ['guilds.join'],
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      });
+    if (
+      path.endsWith('/users/@me') &&
+      new Headers(init?.headers).get('Authorization')?.startsWith('Bearer')
+    )
+      return json({ id: 'manager-discord' });
+    if (path.endsWith('/bans/manager-discord')) {
+      if (outage) {
+        outage = false;
+        return json({}, 503);
+      }
+      return json({ code: 10026 }, 404);
+    }
+    if (path.endsWith('/members/manager-discord') && init?.method === 'PUT') {
+      joined = true;
+      return json({}, 201);
+    }
+    if (path.endsWith('/members/manager-discord'))
+      return joined
+        ? json({ roles: [], pending: true })
+        : json({ code: 10007 }, 404);
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ status: 'screening' });
+});
+it('disabling during initial outage fences the scheduled Connect continuation', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).endsWith('/bans/manager-discord')
+      ? json({}, 503)
+      : base(input, init)
+  );
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+    groupId,
+    acknowledgeHandback: true,
+  });
+  provider.mockClear();
+  await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+  expect(
+    provider.mock.calls.filter(([, init]) => init?.method === 'PUT')
+  ).toHaveLength(0);
+});
+it('an uncertain join remains owed when OAuth consent expires before retry', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  const base = provider.getMockImplementation()!;
+  let consent = true;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/oauth2/@me'))
+      return json({
+        application: { id: 'client' },
+        scopes: consent ? ['guilds.join'] : [],
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      });
+    if (
+      path.endsWith('/users/@me') &&
+      new Headers(init?.headers).get('Authorization')?.startsWith('Bearer')
+    )
+      return json({ id: 'manager-discord' });
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord') && init?.method === 'PUT') {
+      consent = false;
+      throw new TypeError('response lost after join');
+    }
+    if (path.endsWith('/members/manager-discord'))
+      return json({ code: 10007 }, 404);
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ cleanupPending: true });
+});
