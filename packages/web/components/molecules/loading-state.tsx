@@ -9,6 +9,8 @@ export interface LoadingStateProps {
    * Optional message to display below the spinner
    */
   message?: string;
+  /** Opt-in gallery treatment; existing callers retain their presentation. */
+  presentation?: 'default' | 'soft';
   /**
    * Size variant
    * @default "md"
@@ -48,11 +50,17 @@ export function LoadingState({
   size = 'md',
   className,
   layout = 'stacked',
+  presentation = 'default',
 }: LoadingStateProps) {
   const sizes = sizeClasses[size];
+  const soft = presentation === 'soft';
+  const statusMessage = message ?? (soft ? 'Loading…' : undefined);
 
   return (
     <div
+      role={soft ? 'status' : undefined}
+      aria-label={soft ? statusMessage : undefined}
+      aria-live={soft ? 'polite' : undefined}
       className={cn(
         'flex items-center justify-center',
         layout === 'stacked' ? 'flex-col' : 'flex-row gap-2',
@@ -61,12 +69,23 @@ export function LoadingState({
       )}
     >
       {/* Sticker journal aesthetic - spinner in sticker container */}
-      <div className='bg-muted rounded-full p-3 border-[3px] border-white shadow-raised'>
+      <div
+        aria-hidden='true'
+        className={cn(
+          soft
+            ? 'rounded-avatar bg-muted p-3 text-foreground'
+            : 'bg-muted rounded-full p-3 border-[3px] border-white shadow-raised'
+        )}
+      >
         <Loader2
-          className={cn('animate-spin text-muted-foreground', sizes.spinner)}
+          className={cn(
+            'animate-spin text-muted-foreground',
+            soft && 'motion-reduce:animate-none',
+            sizes.spinner
+          )}
         />
       </div>
-      {message && (
+      {statusMessage && (
         <p
           className={cn(
             'text-muted-foreground',
@@ -74,7 +93,7 @@ export function LoadingState({
             sizes.message
           )}
         >
-          {message}
+          {statusMessage}
         </p>
       )}
     </div>
