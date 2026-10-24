@@ -129,6 +129,18 @@ export function DiscordConnect({ state }: { state: string }) {
               ? ''
               : 'Complete required Group onboarding before connecting.'}
           </p>
+          {status.status === 'screening' && (
+            <p>
+              Open Discord and complete the server’s membership screening, then
+              confirm again to check access.
+            </p>
+          )}
+          {status.status === 'blocked' && (
+            <p>
+              Access needs attention. Review the failure below or contact a
+              Group manager or Discord staff.
+            </p>
+          )}
           {status.error && <p role='alert'>{status.error}</p>}
           {status.cleanupPending && (
             <p>
@@ -137,7 +149,10 @@ export function DiscordConnect({ state }: { state: string }) {
             </p>
           )}
           {status.externalException && (
-            <p>Externally managed access: {status.externalException}</p>
+            <p>
+              Externally managed access: {status.externalException}. Discord
+              staff manage this account’s access.
+            </p>
           )}
           <Button
             disabled={busy || !status.eligible || status.cleanupPending}
