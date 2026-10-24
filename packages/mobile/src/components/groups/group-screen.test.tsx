@@ -1,3 +1,6 @@
+vi.mock('./group-discord-connect', () => ({
+  GroupDiscordConnect: 'GroupDiscordConnect',
+}));
 vi.mock('./group-discord-settings', () => ({
   GroupDiscordSettings: 'GroupDiscordSettings',
 }));

@@ -1,5 +1,12 @@
 # Current Integration Status
 
+## Discord Group Role enrollment — source evidence as of 2026-10-23
+
+- Source branch `codex/discord-group-406`, based on the Discord integration setup checkpoint `3da6bb1a`. Explicit eligible member Connect now separates account linking, scoped join consent and managed enrollment. Web and native Group views show the linked Discord identity, current eligibility, screening/access progress, external owner/Administrator exceptions and Open Discord. Ordinary Discord sign-in retains its existing scopes and prompt behavior.
+- Bot-only initial role work persists intended access, enrollment/connection generations, attempt leases and retries. Current membership/onboarding, linked identity, ban state, dedicated-role safety and bot capability fence grants. Stale writes retain exact independent cleanup targets before compensation. Actor-aware domain operations are reusable by later transports; delegated initiation/status endpoints remain subsequent work.
+- Verification passes: the Discord Group suite contains 36 tests, and the eight backend Discord/auth/onboarding suites pass 84 tests together. Web Group/Discord suites pass 17 tests; mobile passes nine. Approved preview code generation and full `pnpm check` pass, including seven-package lint/types, 790 source/generated Convex contracts and repository formatting. These are deterministic source checks, not live provider/browser/device acceptance.
+- No production rollout or live guild mutation. Ongoing moderation observation/audit ingestion, revocation, identity retirement, handback and shared provider recovery remain release gates. Matching deployed source, isolated signed-in browser/device, live bot credentials and assistive-technology acceptance are unverified. See [the setup and enrollment contract](../../discord-group-setup.md).
+
 ## Groups web design refinement — source evidence as of 2026-10-23
 
 - Uncommitted review batch on `codex/refine-group-pages`, based on provider feature `865859b4`: Group detail and unlisted landing identity, tool navigation, Groups chooser, member roster, and shared Event layout. Existing data hooks, permission branches, onboarding, applications, confirmations, and management operations remain intact.

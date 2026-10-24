@@ -6,6 +6,8 @@ interface GroupDiscordApi {
   groupDiscord: {
     queries: { getConnection: FunctionReference<'query'> };
     actions: { configure: FunctionReference<'action'> };
+    enrollment: { getStatus: FunctionReference<'query'> };
+    connect: { connect: FunctionReference<'action'> };
   };
 }
 export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
@@ -119,7 +121,47 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
       save,
     };
   }
+  function useGroupDiscordEnrollment(
+    args: FunctionArgs<Api['groupDiscord']['enrollment']['getStatus']>,
+    requestConsent: () => Promise<void>
+  ) {
+    const enrollment = hooks.useQuery<
+      Api['groupDiscord']['enrollment']['getStatus']
+    >(api.groupDiscord.enrollment.getStatus, args);
+    const enroll = hooks.useAction<Api['groupDiscord']['connect']['connect']>(
+      api.groupDiscord.connect.connect
+    );
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+    async function connect() {
+      setBusy(true);
+      setError('');
+      setMessage('');
+      try {
+        const result = await enroll({ ...args, consent: true });
+        if (result.requiresConsent) {
+          await requestConsent();
+          setMessage(
+            'After authorizing Discord, return here and select Connect Discord to enroll.'
+          );
+        } else {
+          setMessage(
+            'Discord connection requested. Your access status will update here.'
+          );
+        }
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : 'Unable to connect Discord.'
+        );
+      } finally {
+        setBusy(false);
+      }
+    }
+    return { enrollment, busy, error, message, connect };
+  }
   return {
+    useGroupDiscordEnrollment,
     useGroupDiscordConnection,
     useConfigureGroupDiscord,
     useGroupDiscordSettings,

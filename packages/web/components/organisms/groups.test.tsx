@@ -1,3 +1,4 @@
+vi.mock('./group-discord-connect', () => ({ GroupDiscordConnect: () => null }));
 vi.mock('./group-ban-management', () => ({ GroupBanManagement: () => null }));
 vi.mock('./group-invitation-management', () => ({
   GroupInvitationManagement: () => null,

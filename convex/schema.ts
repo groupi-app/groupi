@@ -53,6 +53,32 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupDiscordEnrollments: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+    connectionGeneration: v.number(),
+    generation: v.number(),
+    guildId: v.string(),
+    roleId: v.string(),
+    desired: v.union(v.literal('granted'), v.literal('removed')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('screening'),
+      v.literal('connected'),
+      v.literal('blocked')
+    ),
+    error: v.optional(v.string()),
+    externalException: v.optional(v.string()),
+    grantAttemptedAt: v.optional(v.number()),
+    startedAt: v.number(),
+    updatedAt: v.number(),
+    lastObservedAt: v.optional(v.number()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+  })
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
   groupDiscordConnections: defineTable(discordConnectionFields)
     .index('by_group', ['groupId'])
     .index('by_guild', ['guildId']),
@@ -60,6 +86,8 @@ export default defineSchema({
   // Later lifecycle slices enqueue obligations here before invalidating enrollment.
   groupDiscordCleanup: defineTable({
     groupId: v.string(),
+    personId: v.optional(v.string()),
+    enrollmentGeneration: v.optional(v.number()),
     generation: v.number(),
     guildId: v.string(),
     mode: discordMode,

@@ -1,3 +1,4 @@
+import { discordEnrollmentConsent } from './groupDiscord/oauthConsent';
 import { isEventExcludedForPerson } from './groups/exclusions';
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
@@ -170,6 +171,8 @@ const createAuthOptionsInternal = (
       enabled: true,
       requireEmailVerification: false,
     },
+
+    hooks: { after: discordEnrollmentConsent },
 
     // Social providers (matching your current config)
     socialProviders: {

@@ -20,3 +20,21 @@ export const connectionFields = {
   updatedAt: v.number(),
 };
 export const connection = v.object(connectionFields);
+export const memberStatus = v.object({
+  mode,
+  guildName: v.string(),
+  openUrl: v.string(),
+  linked: v.boolean(),
+  linkedDiscordUserId: v.optional(v.string()),
+  eligible: v.boolean(),
+  status: v.union(
+    v.literal('not_connected'),
+    v.literal('pending'),
+    v.literal('screening'),
+    v.literal('connected'),
+    v.literal('blocked')
+  ),
+  error: v.optional(v.string()),
+  externalException: v.optional(v.string()),
+  lastObservedAt: v.optional(v.number()),
+});
