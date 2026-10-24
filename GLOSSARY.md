@@ -149,3 +149,34 @@ other events.
 A compact language for expressing proposed event dates, times, durations, and
 recurrences. Relative expressions are interpreted against a reference time and
 timezone.
+
+**Discord Group connection**:
+An association between one Group and an existing Discord server that supplies
+community communication. Groupi governs Group admission; joining the Discord
+server does not create Group membership.
+
+**Discord access**:
+Permission to participate in a Group’s connected Discord server, either through
+a dedicated role or server membership. It is distinct from Group membership
+and from linking a Discord account.
+
+**Discord access mode**:
+A Group’s choice of whether its Discord connection governs a dedicated role or
+membership of the whole server.
+
+**Role access mode**:
+A Discord access mode in which Group membership governs a dedicated role rather
+than membership of the whole Discord server.
+
+**Server membership mode**:
+A Discord access mode in which Group membership governs joining and removal
+from the whole connected Discord server, which is reserved for one Groupi
+Group connection.
+
+**Managed Discord participant**:
+A Discord account explicitly enrolled in a Group’s Discord access rules through
+Connect Discord. Existing, unlinked server accounts are not managed participants.
+
+**Managed Discord ban**:
+A Discord server ban applied by the Group add-on because of a Groupi ban or
+coordinated exclusion. It is distinct from a ban applied by Discord staff.
