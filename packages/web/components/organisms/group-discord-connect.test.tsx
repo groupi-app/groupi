@@ -31,7 +31,10 @@ it('requires explicit Connect even when Discord identity is already linked', asy
       <GroupDiscordConnect groupId={'group-one' as Id<'groups'>} />
     </ConvexProvider>
   );
-  expect(screen.getByText(/linked.*does not enroll/i)).toBeInTheDocument();
+  expect(screen.getByText('Discord account linked.')).toBeInTheDocument();
+  expect(
+    screen.getByText(/removes that role; you stay in the server/)
+  ).toBeVisible();
   expect(action).not.toHaveBeenCalled();
   await userEvent
     .setup()
@@ -124,9 +127,26 @@ it('shows connected access and opens the configured Discord destination', async 
   expect(screen.getByRole('status')).toHaveTextContent(
     'Connected to this Group'
   );
-  expect(screen.getByText(/Externally managed access/)).toHaveTextContent(
-    'Discord server owner'
-  );
+  expect(
+    screen.getByText('Server owner access is managed in Discord.')
+  ).toBeVisible();
+  expect(
+    screen.queryByText(/Connect joins this server/)
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/Linking your Discord account/)
+  ).not.toBeInTheDocument();
+  const user = userEvent.setup();
+  const help = screen.getByRole('button', {
+    name: 'About your Discord access',
+  });
+  help.focus();
+  await user.keyboard('{Enter}');
+  expect(
+    await screen.findByText(/Externally managed access: Discord server owner/)
+  ).toBeVisible();
+  await user.keyboard('{Escape}');
+  expect(help).toHaveFocus();
   expect(
     screen.queryByRole('button', { name: 'Connect Discord' })
   ).not.toBeInTheDocument();
@@ -195,9 +215,7 @@ it('explains server removal and bans before explicitly enrolling in membership m
   expect(screen.getByText(/remove you from the server/)).toHaveTextContent(
     'ban'
   );
-  expect(
-    screen.queryByText(/your server membership remains/i)
-  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/you stay in the server/i)).not.toBeInTheDocument();
   expect(action).not.toHaveBeenCalled();
   await userEvent
     .setup()

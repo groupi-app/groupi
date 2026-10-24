@@ -6,11 +6,52 @@ import { useAction, useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
+import { ContextHelp } from '@/components/molecules/context-help';
+import {
+  ArrowRight,
+  CircleCheck,
+  Clock3,
+  CircleAlert,
+  ExternalLink,
+  MessageCircle,
+  UserRound,
+} from 'lucide-react';
 
 function isUnavailableRequest(cause: unknown) {
   return (
     cause instanceof Error &&
     /\bConnection request unavailable or expired\./i.test(cause.message)
+  );
+}
+
+function JourneyNotice({
+  title,
+  message,
+  alert = false,
+}: {
+  title: string;
+  message: string;
+  alert?: boolean;
+}) {
+  const Icon = alert ? CircleAlert : Clock3;
+  return (
+    <section className='space-y-4 rounded-card border border-border bg-card p-5 sm:p-8'>
+      <div className='flex items-center gap-3'>
+        <Icon
+          className='size-5 shrink-0 text-muted-foreground'
+          aria-hidden='true'
+        />
+        <h1 className='font-heading text-2xl font-bold tracking-tight'>
+          {title}
+        </h1>
+      </div>
+      <p
+        role={alert ? 'alert' : 'status'}
+        className='text-sm leading-relaxed text-muted-foreground'
+      >
+        {message}
+      </p>
+    </section>
   );
 }
 
@@ -28,29 +69,49 @@ export function DiscordConnect({ state }: { state: string }) {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const callback = `/oauth/discord?state=${encodeURIComponent(state)}`;
-  if (isLoading) return <p role='status'>Checking your Groupi account…</p>;
+  if (isLoading)
+    return (
+      <JourneyNotice
+        title='Connect Discord'
+        message='Checking your Groupi account…'
+      />
+    );
   if (!isAuthenticated)
     return (
-      <>
-        <HostedBrand interactionId={state} />
-        <h1>Sign in to connect Discord</h1>
+      <section className='space-y-6 rounded-card border border-border bg-card p-5 sm:p-8'>
+        <HostedBrand interactionId={state} compact />
+        <h1 className='font-heading text-2xl font-bold tracking-tight'>
+          Sign in to connect Discord
+        </h1>
         <Button asChild>
           <Link href={`/sign-in?redirect=${encodeURIComponent(callback)}`}>
             Sign in
           </Link>
         </Button>
-      </>
+      </section>
     );
   // Successful consumption invalidates the live query before navigation completes.
-  if (redirecting) return <p role='status'>Returning to your application…</p>;
+  if (redirecting)
+    return (
+      <JourneyNotice
+        title='Returning to application'
+        message='Returning to your application…'
+      />
+    );
   if (unavailableState !== state && journey === undefined)
-    return <p role='status'>Loading Discord connection…</p>;
+    return (
+      <JourneyNotice
+        title='Connect Discord'
+        message='Loading Discord connection…'
+      />
+    );
   if (!journey || unavailableState === state)
     return (
-      <p role='alert'>
-        This connection request is unavailable or expired. Return to your
-        application to start again.
-      </p>
+      <JourneyNotice
+        title='Connection unavailable'
+        alert
+        message='This connection request is unavailable or expired. Return to your application to start again.'
+      />
     );
   const status = journey.status;
   async function confirm() {
@@ -107,97 +168,198 @@ export function DiscordConnect({ state }: { state: string }) {
       setBusy(false);
     }
   }
+  const connected = status?.status === 'connected';
+  const AccessIcon = connected
+    ? CircleCheck
+    : status?.status === 'blocked'
+      ? CircleAlert
+      : Clock3;
+  const accessLabels = {
+    not_connected: 'Not connected',
+    pending: 'Connection pending',
+    screening: 'Membership screening',
+    connected: 'Connected',
+    blocked: 'Access needs attention',
+  };
+  const accessLabel = status
+    ? (accessLabels[status.status] ?? 'Access status unavailable')
+    : 'Access status unavailable';
   return (
     <section
-      className='space-y-4 rounded-card border border-border p-4'
+      className='space-y-6 rounded-card border border-border bg-card p-5 sm:p-8'
       aria-label='Connect Discord'
     >
-      <HostedBrand interactionId={state} />
-      <h1 className='text-xl font-semibold'>
-        Connect Discord for {journey.appName}
-      </h1>
-      <p>
-        Your Groupi account stays in control of Discord consent. This
-        application receives your access status, never your Discord credentials.
-      </p>
+      <HostedBrand interactionId={state} compact />
+      <div className='flex items-start justify-between gap-3'>
+        <div className='space-y-2'>
+          <h1 className='font-heading text-2xl font-bold tracking-tight sm:text-3xl'>
+            Connect Discord
+          </h1>
+          <p className='text-sm leading-relaxed text-muted-foreground'>
+            {connected
+              ? 'Your Discord access is ready.'
+              : 'Confirm your account to connect to this Group’s server.'}
+          </p>
+        </div>
+        <ContextHelp label='About connecting Discord'>
+          <div className='space-y-3'>
+            <p>
+              The application receives your access status, never your Discord
+              credentials. Your Groupi account controls consent.
+            </p>
+            <p>
+              Linking alone does not enroll you. Existing server members enroll
+              in place.
+            </p>
+            <p>
+              {status?.mode === 'membership'
+                ? 'Discord staff must remove Discord bans before you can connect again.'
+                : 'Other Discord roles and channel permissions may preserve independent access.'}
+            </p>
+            {status?.externalException && (
+              <p>
+                Externally managed access: {status.externalException}. Discord
+                staff manage this account’s access.
+              </p>
+            )}
+          </div>
+        </ContextHelp>
+      </div>
       {!status && (
-        <p role='status'>
+        <p
+          role='status'
+          className='text-sm leading-relaxed text-muted-foreground'
+        >
           Current Group membership is required to connect Discord. Return to
           your application to review your membership.
         </p>
       )}
       {status && (
         <>
-          <h2>{status.guildName}</h2>
-          <p>
-            {status.linked
-              ? `Confirm your linked Discord account ID: ${status.linkedDiscordUserId}.`
-              : 'Link and confirm your Discord identity before connecting.'}
-          </p>
-          <p>
-            {status.mode === 'membership'
-              ? 'Connect allows Groupi to join you to this server and manage your server membership. Ending Group access can remove you; a Group ban or coordinated exclusion can ban you. Discord staff must remove Discord bans.'
-              : 'Connect allows Groupi to join you to this server and manage its dedicated Group role. Ending Group access removes that role and leaves server membership. Other roles can preserve independent access.'}{' '}
-            Existing members enroll in place. Linking alone does not enroll you.
-          </p>
-          <p role='status'>
-            Discord access: {status.status}.{' '}
-            {status.eligible
-              ? ''
-              : 'Complete required Group onboarding before connecting.'}
-          </p>
+          <div className='divide-y divide-border rounded-input border border-border'>
+            <div className='flex items-start gap-3 p-4'>
+              <MessageCircle
+                className='mt-0.5 size-5 shrink-0 text-muted-foreground'
+                aria-hidden='true'
+              />
+              <div className='min-w-0 space-y-1'>
+                <p className='text-xs text-muted-foreground'>Discord server</p>
+                <h2 className='break-words font-semibold'>
+                  {status.guildName}
+                </h2>
+              </div>
+            </div>
+            <div className='flex items-start gap-3 p-4'>
+              <UserRound
+                className='mt-0.5 size-5 shrink-0 text-muted-foreground'
+                aria-hidden='true'
+              />
+              <div className='min-w-0 space-y-1'>
+                <p className='text-xs text-muted-foreground'>
+                  Your Discord account
+                </p>
+                <p className='break-all text-sm font-medium'>
+                  {status.linked ? status.linkedDiscordUserId : 'Not linked'}
+                </p>
+              </div>
+            </div>
+            <div className='flex items-center gap-3 p-4'>
+              <AccessIcon
+                className='size-5 shrink-0 text-muted-foreground'
+                aria-hidden='true'
+              />
+              <p role='status' className='text-sm font-medium'>
+                {accessLabel}
+              </p>
+            </div>
+          </div>
+          {!connected && (
+            <p className='text-sm leading-relaxed'>
+              {status.mode === 'membership'
+                ? 'Connect lets Groupi join this server and manage your membership. Ending Group access can remove you; a Group ban or coordinated exclusion can ban you.'
+                : 'Connect lets Groupi join this server and manage your Group role. Ending Group access removes that role; you stay in the server.'}
+            </p>
+          )}
+          {!status.eligible && (
+            <p className='text-sm'>
+              Complete required Group onboarding before connecting.
+            </p>
+          )}
           {status.status === 'screening' && (
-            <p>
-              Open Discord and complete the server’s membership screening, then
-              confirm again to check access.
+            <p className='text-sm leading-relaxed'>
+              Complete membership screening in Discord, then confirm again to
+              check access.
             </p>
           )}
-          {status.status === 'blocked' && (
-            <p>
-              Access needs attention. Review the failure below or contact a
-              Group manager or Discord staff.
+          {status.status === 'blocked' && !status.error && (
+            <p className='text-sm'>
+              Contact a Group manager or Discord staff to review your access.
             </p>
           )}
-          {status.error && <p role='alert'>{status.error}</p>}
+          {status.error && (
+            <p role='alert' className='text-sm text-destructive'>
+              {status.error}
+            </p>
+          )}
           {status.cleanupPending && (
-            <p>
-              Previous Discord access cleanup is pending. Wait for cleanup
-              before connecting again.
+            <p className='text-sm'>
+              Previous Discord access cleanup is pending. Wait before connecting
+              again.
             </p>
           )}
           {status.externalException && (
-            <p>
-              Externally managed access: {status.externalException}. Discord
-              staff manage this account’s access.
+            <p className='text-sm text-muted-foreground'>
+              {status.externalException.toLowerCase().includes('owner')
+                ? 'Server owner access is managed in Discord.'
+                : 'This account’s access is managed in Discord.'}
             </p>
           )}
-          <Button
-            disabled={busy || !status.eligible || status.cleanupPending}
-            onClick={() => void confirm()}
-          >
-            {busy ? 'Please wait…' : 'Confirm identity and Connect Discord'}
-          </Button>
-          {(status.status === 'connected' || status.status === 'screening') && (
-            <a
-              className='text-primary underline'
-              href={status.openUrl}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              Open Discord
-            </a>
-          )}
+          <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center'>
+            {!connected && (
+              <Button
+                className='h-auto min-h-10 whitespace-normal py-3 text-center'
+                disabled={busy || !status.eligible || status.cleanupPending}
+                onClick={() => void confirm()}
+              >
+                {busy ? 'Please wait…' : 'Confirm identity and Connect Discord'}
+              </Button>
+            )}
+            {(connected || status.status === 'screening') && (
+              <Button asChild variant='outline'>
+                <a
+                  href={status.openUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  Open Discord
+                  <ExternalLink data-icon='inline-end' aria-hidden='true' />
+                </a>
+              </Button>
+            )}
+          </div>
         </>
       )}
-      {message && <p role='status'>{message}</p>}
-      {error && <p role='alert'>{error}</p>}
-      <Button
-        disabled={busy}
-        variant='outline'
-        onClick={() => void returnToApp()}
-      >
-        Return to application
-      </Button>
+      {message && (
+        <p role='status' className='text-sm'>
+          {message}
+        </p>
+      )}
+      {error && (
+        <p role='alert' className='text-sm text-destructive'>
+          {error}
+        </p>
+      )}
+      <div className='border-t border-border pt-5'>
+        <Button
+          className='w-full sm:w-auto'
+          disabled={busy}
+          variant='outline'
+          onClick={() => void returnToApp()}
+        >
+          Return to application
+          <ArrowRight data-icon='inline-end' aria-hidden='true' />
+        </Button>
+      </div>
     </section>
   );
 }

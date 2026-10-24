@@ -4,6 +4,7 @@ Current feature evidence and historical integration checkpoints. Source verifica
 
 ## Table of Contents
 
+- [Hosted Discord and Group pages — 2026-10-24](#hosted-discord-and-group-pages--2026-10-24)
 - [Discord Group add-on candidate — 2026-10-23](#discord-group-add-on-candidate--2026-10-23)
 - [Groups web design refinement — source evidence as of 2026-10-23](#groups-web-design-refinement--source-evidence-as-of-2026-10-23)
 - [Universal community integration — source evidence as of 2026-10-19](#universal-community-integration--source-evidence-as-of-2026-10-19)
@@ -16,6 +17,14 @@ Current feature evidence and historical integration checkpoints. Source verifica
 - [Verification and open gates](#verification-and-open-gates)
 - [Evidence and maintenance](#evidence-and-maintenance)
 - [Architecture integration candidate — 2026-10-11](#architecture-integration-candidate--2026-10-11)
+
+## Hosted Discord and Group pages — 2026-10-24
+
+- [Test PR #416](https://github.com/groupi-app/groupi/pull/416) merged at `12c177f9c91134d91140b1f79980b3124b915324` after passing required CI and an approved exact-head override. Vercel deployment `dpl_58sM5ypR5woPwh8kbjiFEiq5YFW4` is READY at [test.groupi.gg](https://test.groupi.gg), with the existing `zany-rooster-824` backend. Conditional authenticated E2E was skipped, not passed.
+- The deployed Group overview has separate Edit and settings routes. Back navigation reaches the real `/groups` directory. Authenticated checks passed Edit cancellation, save and restoration, mobile navigation at 390 pixels with no horizontal overflow, and keyboard help opening with Enter and restoring focus after Escape.
+- Hosted Discord rendering at 390 pixels and natural five-minute credential expiry passed live. After expiry, the API returned HTTP 401 and Return showed clear restart guidance without stale actions or a raw server error. The temporary client grant was revoked, connection disabled, and RAM-only helper stopped; the personal linked account remains intact.
+- The user deferred checks needing another Discord identity: ordinary joins/removals/bans, account replacement, staff moderation and representative permission-loss recovery. These are not passing checks. Signing-key rotation remains waived. No production release occurred.
+- [Test PR #417](https://github.com/groupi-app/groupi/pull/417), exact head `8c8b86b98c226628b42c164251bef47e4fe14b53`, contains the compact overview copy/help follow-up. Its exact-head test override is approved, with CI pending at this checkpoint. Full local check and 48 targeted tests pass; independent review found no blockers. A further hosted Discord visual refinement is in progress and is not included in this deployed evidence.
 
 ## Discord Group add-on candidate — 2026-10-23
 
