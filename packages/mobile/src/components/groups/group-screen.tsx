@@ -1,4 +1,5 @@
 import { GroupDiscordSettings } from './group-discord-settings';
+import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
@@ -268,6 +269,7 @@ export function GroupDetailScreen() {
               </Button>
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
+            <GroupDiscordConnect groupId={id} />
             {group.canManageMembers ? (
               <GroupDiscordSettings groupId={id} />
             ) : null}
