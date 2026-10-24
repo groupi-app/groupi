@@ -10,6 +10,7 @@ import {
 import { useMobile } from '@/hooks/use-mobile';
 
 interface ActionMenuButtonProps {
+  label: string;
   onClick: (e: React.MouseEvent) => void;
   onContextMenu: (e: React.MouseEvent | React.TouchEvent) => void;
   className?: string;
@@ -23,6 +24,7 @@ interface ActionMenuButtonProps {
  * On desktop: Dropdown menu trigger
  */
 export function ActionMenuButton({
+  label,
   onClick,
   onContextMenu,
   className,
@@ -34,6 +36,8 @@ export function ActionMenuButton({
   if (isMobile) {
     return (
       <Button
+        type='button'
+        aria-label={label}
         variant='ghost'
         size='icon'
         className={className}
@@ -49,7 +53,12 @@ export function ActionMenuButton({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon' className={className}>
+        <Button
+          aria-label={label}
+          variant='ghost'
+          size='icon'
+          className={className}
+        >
           {children}
         </Button>
       </DropdownMenuTrigger>

@@ -572,6 +572,7 @@ export function NotificationSlate({
       )}
 
       <ActionMenuButton
+        label={`Notification actions${event?.title || notification.group?.title ? ` for ${event?.title || notification.group?.title}` : ''}`}
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
         className={`size-8 absolute right-2 top-0 bottom-0 my-auto ${
