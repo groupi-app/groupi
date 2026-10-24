@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import type {
-  ThemeTokenOverrides,
-  BaseTheme,
+import {
+  resolveThemePresentation,
+  type ThemeTokenOverrides,
+  type BaseTheme,
 } from '@groupi/shared/design/themes';
 import { cn } from '@/lib/utils';
 
@@ -11,38 +12,6 @@ interface ThemePreviewProps {
   baseTheme: BaseTheme | undefined;
   overrides: ThemeTokenOverrides;
   className?: string;
-}
-
-/**
- * Adjust the lightness of an HSL color string.
- * Positive amount = lighter, negative amount = darker.
- */
-function adjustLightness(hslString: string, amount: number): string {
-  const hslMatch = hslString.match(
-    /hsl\(\s*(\d+)\s*[,\s]\s*(\d+)%?\s*[,\s]\s*(\d+)%?\s*\)/i
-  );
-
-  if (!hslMatch) {
-    // If not HSL format, return as-is
-    return hslString;
-  }
-
-  const h = parseInt(hslMatch[1], 10);
-  const s = parseInt(hslMatch[2], 10);
-  const l = parseInt(hslMatch[3], 10);
-
-  // Clamp lightness between 0 and 100
-  const newL = Math.max(0, Math.min(100, l + amount));
-
-  return `hsl(${h}, ${s}%, ${newL}%)`;
-}
-
-/**
- * Generate a hover color from a base color.
- * Darkens by 7% for a subtle hover effect.
- */
-function generateHoverColor(baseColor: string): string {
-  return adjustLightness(baseColor, -7);
 }
 
 /**
@@ -58,20 +27,19 @@ export function ThemePreview({
   const previewStyles = useMemo(() => {
     if (!baseTheme) return {};
 
-    const tokens = baseTheme.tokens;
-    const styles: Record<string, string> = {};
-
-    // Brand colors with auto-generated hover states
-    const primaryColor = overrides.brand?.primary ?? tokens.brand.primary;
-    const secondaryColor = overrides.brand?.secondary ?? tokens.brand.secondary;
-    const accentColor = overrides.brand?.accent ?? tokens.brand.accent;
-
-    styles['--preview-primary'] = primaryColor;
-    styles['--preview-primary-hover'] = generateHoverColor(primaryColor);
-    styles['--preview-secondary'] = secondaryColor;
-    styles['--preview-secondary-hover'] = generateHoverColor(secondaryColor);
-    styles['--preview-accent'] = accentColor;
-    styles['--preview-accent-hover'] = generateHoverColor(accentColor);
+    const { tokens, actions, surface } = resolveThemePresentation(
+      baseTheme,
+      overrides
+    );
+    const styles: Record<string, string> = {
+      '--preview-action-surface': surface,
+    };
+    for (const [role, treatment] of Object.entries(actions)) {
+      styles[`--preview-${role}`] = treatment.fill;
+      styles[`--preview-${role}-foreground`] = treatment.foreground;
+      styles[`--preview-${role}-hover`] = treatment.hover;
+      styles[`--preview-${role}-hover-foreground`] = treatment.hoverForeground;
+    }
 
     // Background colors
     styles['--preview-bg-page'] =
@@ -87,7 +55,7 @@ export function ThemePreview({
     styles['--preview-text-secondary'] =
       overrides.text?.secondary ?? tokens.text.secondary;
     styles['--preview-text-muted'] = overrides.text?.muted ?? tokens.text.muted;
-    styles['--preview-text-on-primary'] = tokens.text.onPrimary;
+    styles['--preview-text-on-primary'] = actions.primary.foreground;
 
     // Status colors
     styles['--preview-success'] =
@@ -153,6 +121,8 @@ export function ThemePreview({
               className='w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium'
               style={{
                 backgroundColor: 'var(--preview-primary)',
+                backgroundImage:
+                  'linear-gradient(var(--preview-primary), var(--preview-primary)), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))',
                 color: 'var(--preview-text-on-primary)',
               }}
             >
@@ -188,16 +158,22 @@ export function ThemePreview({
               label='Primary'
               bgVar='--preview-primary'
               hoverVar='--preview-primary-hover'
+              foregroundVar='--preview-primary-foreground'
+              hoverForegroundVar='--preview-primary-hover-foreground'
             />
             <PreviewButton
               label='Secondary'
               bgVar='--preview-secondary'
               hoverVar='--preview-secondary-hover'
+              foregroundVar='--preview-secondary-foreground'
+              hoverForegroundVar='--preview-secondary-hover-foreground'
             />
             <PreviewButton
               label='Accent'
               bgVar='--preview-accent'
               hoverVar='--preview-accent-hover'
+              foregroundVar='--preview-accent-foreground'
+              hoverForegroundVar='--preview-accent-hover-foreground'
             />
           </div>
         </div>
@@ -208,7 +184,9 @@ export function ThemePreview({
             className='px-2 py-1 rounded-badge text-xs font-medium'
             style={{
               backgroundColor: 'var(--preview-success)',
-              color: 'white',
+              backgroundImage:
+                'linear-gradient(var(--preview-success), var(--preview-success)), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))',
+              color: 'var(--preview-success-foreground)',
             }}
           >
             Success
@@ -217,7 +195,9 @@ export function ThemePreview({
             className='px-2 py-1 rounded-badge text-xs font-medium'
             style={{
               backgroundColor: 'var(--preview-warning)',
-              color: 'white',
+              backgroundImage:
+                'linear-gradient(var(--preview-warning), var(--preview-warning)), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))',
+              color: 'var(--preview-warning-foreground)',
             }}
           >
             Warning
@@ -226,7 +206,9 @@ export function ThemePreview({
             className='px-2 py-1 rounded-badge text-xs font-medium'
             style={{
               backgroundColor: 'var(--preview-error)',
-              color: 'white',
+              backgroundImage:
+                'linear-gradient(var(--preview-error), var(--preview-error)), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))',
+              color: 'var(--preview-destructive-foreground)',
             }}
           >
             Error
@@ -257,23 +239,33 @@ function PreviewButton({
   label,
   bgVar,
   hoverVar,
+  foregroundVar,
+  hoverForegroundVar,
 }: {
   label: string;
   bgVar: string;
   hoverVar: string;
+  foregroundVar: string;
+  hoverForegroundVar: string;
 }) {
   return (
     <button
-      className='px-3 py-1.5 rounded-button text-xs font-medium transition-colors hover:opacity-90'
+      type='button'
+      className='px-3 py-1.5 rounded-button text-xs font-medium transition-colors'
       style={{
         backgroundColor: `var(${bgVar})`,
-        color: 'var(--preview-text-on-primary)',
+        backgroundImage: `linear-gradient(var(${bgVar}), var(${bgVar})), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))`,
+        color: `var(${foregroundVar})`,
       }}
       onMouseEnter={e => {
         e.currentTarget.style.backgroundColor = `var(${hoverVar})`;
+        e.currentTarget.style.backgroundImage = `linear-gradient(var(${hoverVar}), var(${hoverVar}))`;
+        e.currentTarget.style.color = `var(${hoverForegroundVar})`;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.backgroundColor = `var(${bgVar})`;
+        e.currentTarget.style.backgroundImage = `linear-gradient(var(${bgVar}), var(${bgVar})), linear-gradient(var(--preview-action-surface), var(--preview-action-surface))`;
+        e.currentTarget.style.color = `var(${foregroundVar})`;
       }}
     >
       {label}
