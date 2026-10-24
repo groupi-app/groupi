@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HostingBadge, StickerIcon } from '@/components/atoms';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { Doc, Id } from '@/convex/_generated/dataModel';
@@ -451,6 +452,8 @@ export function VisualEventCard({
             <div className='flex items-center gap-2 text-sm'>
               {event.visibility === 'FRIENDS' ? (
                 <Icons.people className='size-3.5 text-muted-foreground/60' />
+              ) : event.visibility === 'PUBLIC' ? (
+                <Globe className='size-3.5 text-muted-foreground/60' />
               ) : (
                 <Icons.lock className='size-3.5 text-muted-foreground/60' />
               )}

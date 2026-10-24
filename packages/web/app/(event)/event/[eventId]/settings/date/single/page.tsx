@@ -25,6 +25,7 @@ export default function EventSettingsDateSinglePage(props: {
     <SettingsPageTemplate
       title='Choose a Date'
       backHref={`/event/${eventId}/settings/date`}
+      backLabel='Date settings'
       maxWidth='md'
     >
       {!event ? (

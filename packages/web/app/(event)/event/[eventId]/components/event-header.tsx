@@ -7,6 +7,7 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { StickerIcon } from '@/components/atoms';
 import Link from 'next/link';
@@ -514,6 +515,8 @@ export function EventHeader({ data }: EventHeaderProps) {
           <div className='flex items-center gap-2.5'>
             {visibility === 'FRIENDS' ? (
               <Icons.people className='size-4 text-muted-foreground/70' />
+            ) : visibility === 'PUBLIC' ? (
+              <Globe className='size-4 text-muted-foreground/70' />
             ) : (
               <Icons.lock className='size-4 text-muted-foreground/70' />
             )}

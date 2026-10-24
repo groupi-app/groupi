@@ -53,7 +53,6 @@ export function FriendsDialog() {
     pendingRequests,
     sentRequests,
     pendingCount,
-    sentCount,
     isLoading,
     isPendingLoading,
     isSentLoading,
@@ -130,12 +129,12 @@ export function FriendsDialog() {
               </TabsTrigger>
               <TabsTrigger value='requests' className='flex-1 gap-1'>
                 <span>Requests</span>
-                {(pendingCount > 0 || sentCount > 0) && (
+                {pendingCount > 0 && (
                   <Badge
-                    variant={pendingCount > 0 ? 'destructive' : 'secondary'}
+                    variant='destructive'
                     className='size-4 p-0 flex items-center justify-center text-[10px]'
                   >
-                    {pendingCount + sentCount}
+                    {pendingCount}
                   </Badge>
                 )}
               </TabsTrigger>
