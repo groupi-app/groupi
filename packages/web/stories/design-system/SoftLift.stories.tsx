@@ -3,6 +3,16 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useRef, useState } from 'react';
 import {
   ArrowRight,
+  Bell,
+  Bookmark,
+  Copy,
+  Lock,
+  MapPin,
+  MessageSquare,
+  Pencil,
+  Save,
+  Trash2,
+  Wrench,
   CalendarDays,
   Check,
   CircleAlert,
@@ -94,22 +104,41 @@ function Actions() {
       description='Hover a filled action, then hold to press it farther. Tab through to inspect focus.'
     >
       <div className='flex flex-wrap items-start gap-5'>
-        <Button presentation='soft' icon={<Plus aria-hidden='true' />}>
+        <Button
+          presentation='soft'
+          icon={<Plus aria-hidden='true' className='size-4' />}
+        >
           Create event
         </Button>
-        <Button presentation='soft' variant='secondary'>
+        <Button
+          presentation='soft'
+          variant='secondary'
+          icon={<Save aria-hidden='true' className='size-4' />}
+        >
           Save draft
         </Button>
-        <Button presentation='soft' variant='destructive'>
+        <Button
+          presentation='soft'
+          variant='destructive'
+          icon={<Trash2 aria-hidden='true' className='size-4' />}
+        >
           Remove
         </Button>
-        <Button presentation='soft' variant='outline'>
+        <Button
+          presentation='soft'
+          variant='outline'
+          icon={<Pencil aria-hidden='true' className='size-4' />}
+        >
           Edit details
         </Button>
         <Button presentation='soft' variant='ghost'>
           Cancel
         </Button>
-        <Button presentation='soft' variant='link'>
+        <Button
+          presentation='soft'
+          variant='link'
+          icon={<ArrowRight aria-hidden='true' className='size-4' />}
+        >
           See all events
         </Button>
       </div>
@@ -117,16 +146,21 @@ function Actions() {
         <Button presentation='soft' isLoading loadingText='Saving changes'>
           Save changes
         </Button>
-        <Button presentation='soft' disabled>
+        <Button
+          presentation='soft'
+          disabled
+          icon={<Plus aria-hidden='true' className='size-4' />}
+        >
           Create event
         </Button>
         <Button presentation='soft' asChild>
           <a href='#surfaces'>
-            Explore surfaces <ArrowRight aria-hidden='true' />
+            Explore surfaces{' '}
+            <ArrowRight aria-hidden='true' className='size-4' />
           </a>
         </Button>
         <Button presentation='soft' size='icon' aria-label='Add a date'>
-          <Plus aria-hidden='true' />
+          <Plus aria-hidden='true' className='size-4' />
         </Button>
       </div>
     </Section>
@@ -160,7 +194,7 @@ function SurfaceSamples() {
         <Card treatment='featured'>
           <CardHeader>
             <Badge presentation='soft' variant='info' className='self-start'>
-              <CalendarDays aria-hidden='true' className='size-3' /> Up next
+              <CalendarDays aria-hidden='true' className='size-4' /> Up next
             </Badge>
             <CardTitle>Picnic in the park</CardTitle>
             <CardDescription>Saturday · 2:00 PM</CardDescription>
@@ -172,7 +206,11 @@ function SurfaceSamples() {
           </CardContent>
           <PaperDivider treatment='perforated' className='mb-5' />
           <CardFooter>
-            <Button presentation='soft' variant='outline'>
+            <Button
+              presentation='soft'
+              variant='outline'
+              icon={<ArrowRight aria-hidden='true' className='size-4' />}
+            >
               View details
             </Button>
           </CardFooter>
@@ -180,19 +218,19 @@ function SurfaceSamples() {
         <Card treatment='interactive'>
           <CardHeader>
             <Badge presentation='soft' variant='success' className='self-start'>
-              <Globe aria-hidden='true' className='size-3' /> Public event
+              <Globe aria-hidden='true' className='size-4' /> Public event
             </Badge>
             <CardTitle>
               <CardAction onClick={() => setOpened(true)}>
-                Sunday board games{' '}
-                <ArrowRight aria-hidden='true' className='inline size-4' />
+                Sunday board games
               </CardAction>
             </CardTitle>
             <CardDescription>Sunday · 4:00 PM</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className='text-sm'>
-              Open from the card. Save it independently.
+            <p className='flex items-center gap-2 text-sm'>
+              <ArrowRight aria-hidden='true' className='size-4 shrink-0' />
+              <span>Open from the card. Save it independently.</span>
             </p>
           </CardContent>
           <CardFooter>
@@ -200,6 +238,13 @@ function SurfaceSamples() {
               <Button
                 presentation='soft'
                 variant='outline'
+                icon={
+                  <Bookmark
+                    aria-hidden='true'
+                    className='size-4'
+                    fill={saved ? 'currentColor' : 'none'}
+                  />
+                }
                 aria-pressed={saved}
                 onClick={() => setSaved(!saved)}
               >
@@ -280,7 +325,12 @@ function Fields() {
       <div className='grid gap-8 md:grid-cols-2'>
         <div className='flex min-w-0 flex-col gap-5'>
           <div className='flex flex-col gap-2'>
-            <Label htmlFor='event-name'>Event name</Label>
+            <Label
+              htmlFor='event-name'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              Event name
+            </Label>
             <Input
               presentation='soft'
               id='event-name'
@@ -291,7 +341,13 @@ function Fields() {
             </p>
           </div>
           <div className='flex flex-col gap-2'>
-            <Label htmlFor='invalid-time'>Start time</Label>
+            <Label
+              htmlFor='invalid-time'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <Clock aria-hidden='true' className='size-4 shrink-0' />
+              Start time
+            </Label>
             <Input
               presentation='soft'
               id='invalid-time'
@@ -308,7 +364,13 @@ function Fields() {
             </p>
           </div>
           <div className='flex flex-col gap-2'>
-            <Label htmlFor='disabled-location'>Location</Label>
+            <Label
+              htmlFor='disabled-location'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <MapPin aria-hidden='true' className='size-4 shrink-0' />
+              Location
+            </Label>
             <Input
               presentation='soft'
               id='disabled-location'
@@ -319,7 +381,12 @@ function Fields() {
         </div>
         <div className='flex min-w-0 flex-col gap-5'>
           <div className='flex flex-col gap-2'>
-            <Label htmlFor='details'>A little more detail</Label>
+            <Label
+              htmlFor='details'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              A little more detail
+            </Label>
             <Textarea
               presentation='soft'
               id='details'
@@ -337,7 +404,13 @@ function Fields() {
                 checked={mixed}
                 onCheckedChange={setMixed}
               />
-              <Label htmlFor='mixed-choice'>Notify people about updates</Label>
+              <Label
+                htmlFor='mixed-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <Bell aria-hidden='true' className='size-4 shrink-0' />
+                Notify people about updates
+              </Label>
             </div>
             <div className='flex items-center gap-3'>
               <Checkbox
@@ -345,16 +418,34 @@ function Fields() {
                 id='checked-choice'
                 defaultChecked
               />
-              <Label htmlFor='checked-choice'>Allow replies</Label>
+              <Label
+                htmlFor='checked-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <MessageSquare aria-hidden='true' className='size-4 shrink-0' />
+                Allow replies
+              </Label>
             </div>
             <div className='flex items-center gap-3'>
               <Checkbox presentation='soft' id='disabled-choice' disabled />
-              <Label htmlFor='disabled-choice'>Registration closed</Label>
+              <Label
+                htmlFor='disabled-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <Lock aria-hidden='true' className='size-4 shrink-0' />
+                Registration closed
+              </Label>
             </div>
           </fieldset>
           <div className='flex items-center gap-3'>
             <Switch presentation='soft' id='reminder-choice' />
-            <Label htmlFor='reminder-choice'>Send a reminder</Label>
+            <Label
+              htmlFor='reminder-choice'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <Bell aria-hidden='true' className='size-4 shrink-0' />
+              Send a reminder
+            </Label>
           </div>
         </div>
       </div>
@@ -366,9 +457,18 @@ function NavigationAndStatus() {
     <Section title='Location and status at a glance'>
       <Tabs presentation='soft' defaultValue='events'>
         <TabsList aria-label='Sample Group destinations'>
-          <TabsTrigger value='events'>Events</TabsTrigger>
-          <TabsTrigger value='people'>People</TabsTrigger>
-          <TabsTrigger value='tools'>Tools</TabsTrigger>
+          <TabsTrigger value='events' className='gap-2'>
+            <CalendarDays aria-hidden='true' className='size-4 shrink-0' />
+            Events
+          </TabsTrigger>
+          <TabsTrigger value='people' className='gap-2'>
+            <Users aria-hidden='true' className='size-4 shrink-0' />
+            People
+          </TabsTrigger>
+          <TabsTrigger value='tools' className='gap-2'>
+            <Wrench aria-hidden='true' className='size-4 shrink-0' />
+            Tools
+          </TabsTrigger>
         </TabsList>
         <TabsContent value='events'>
           <p className='py-3 text-sm text-muted-foreground'>
@@ -388,16 +488,16 @@ function NavigationAndStatus() {
       </Tabs>
       <div className='flex flex-wrap gap-3'>
         <Badge presentation='soft' variant='success'>
-          <Check aria-hidden='true' className='size-3' /> Completed
+          <Check aria-hidden='true' className='size-4' /> Completed
         </Badge>
         <Badge presentation='soft' variant='warning'>
-          <Clock aria-hidden='true' className='size-3' /> Pending
+          <Clock aria-hidden='true' className='size-4' /> Pending
         </Badge>
         <Badge presentation='soft' variant='destructive'>
-          <CircleAlert aria-hidden='true' className='size-3' /> Needs attention
+          <CircleAlert aria-hidden='true' className='size-4' /> Needs attention
         </Badge>
         <Badge presentation='soft' variant='info'>
-          <Users aria-hidden='true' className='size-3' /> Open to members
+          <Users aria-hidden='true' className='size-4' /> Open to members
         </Badge>
       </div>
       <Progress presentation='soft' value={60} aria-label='Setup progress' />
@@ -416,7 +516,8 @@ function Feedback() {
               variant='outline'
               aria-label='Actions for Picnic in the park'
             >
-              <MoreHorizontal aria-hidden='true' /> Event actions
+              <MoreHorizontal aria-hidden='true' className='size-4' /> Event
+              actions
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent presentation='soft'>
@@ -424,11 +525,13 @@ function Feedback() {
               <DropdownMenuItem
                 onSelect={() => toast({ title: 'Event link copied' })}
               >
+                <Copy aria-hidden='true' className='size-4' />
                 Copy event link
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => toast({ title: 'Draft saved' })}
               >
+                <Save aria-hidden='true' className='size-4' />
                 Save draft
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -527,7 +630,10 @@ export const LayoutAndStates: Story = {
         title='Make room for a good time'
         subtitle='Page, section, and content headings each have a clear role.'
         controls={
-          <Button presentation='soft' icon={<Plus aria-hidden='true' />}>
+          <Button
+            presentation='soft'
+            icon={<Plus aria-hidden='true' className='size-4' />}
+          >
             Create event
           </Button>
         }
@@ -543,7 +649,12 @@ export const LayoutAndStates: Story = {
                   message='Your next plan starts here'
                   description='Create an event and invite people to join you.'
                   action={
-                    <Button presentation='soft'>Create your first event</Button>
+                    <Button
+                      presentation='soft'
+                      icon={<Plus aria-hidden='true' className='size-4' />}
+                    >
+                      Create your first event
+                    </Button>
                   }
                 />
               </CardContent>
@@ -569,7 +680,10 @@ export const LongContent: Story = {
         presentation='soft'
         title='A very long event name that needs room to wrap gracefully on a smaller screen'
         controls={
-          <Button presentation='soft'>
+          <Button
+            presentation='soft'
+            icon={<Plus aria-hidden='true' className='size-4' />}
+          >
             Create an event with the neighborhood
           </Button>
         }
@@ -593,10 +707,17 @@ export const LongContent: Story = {
             />
           </CardContent>
           <CardFooter className='flex-wrap gap-4'>
-            <Button presentation='soft'>
+            <Button
+              presentation='soft'
+              icon={<Save aria-hidden='true' className='size-4' />}
+            >
               Save changes and invite everyone
             </Button>
-            <Button presentation='soft' variant='outline'>
+            <Button
+              presentation='soft'
+              variant='outline'
+              icon={<Pencil aria-hidden='true' className='size-4' />}
+            >
               Keep editing this event
             </Button>
           </CardFooter>
@@ -623,7 +744,7 @@ function StatusAlternatives() {
               className='material-status-stamp'
               data-study-status='success'
             >
-              <Check aria-hidden='true' className='size-3' />
+              <Check aria-hidden='true' className='size-4' />
               Completed
             </Badge>
             <Badge
@@ -631,7 +752,7 @@ function StatusAlternatives() {
               className='material-status-stamp'
               data-study-status='warning'
             >
-              <Clock aria-hidden='true' className='size-3' />
+              <Clock aria-hidden='true' className='size-4' />
               Pending
             </Badge>
           </div>
@@ -646,11 +767,11 @@ function StatusAlternatives() {
           </Heading>
           <div className='flex flex-wrap gap-3'>
             <Badge presentation='soft' variant='success'>
-              <Check aria-hidden='true' className='size-3' />
+              <Check aria-hidden='true' className='size-4' />
               Completed
             </Badge>
             <Badge presentation='soft' variant='warning'>
-              <Clock aria-hidden='true' className='size-3' />
+              <Clock aria-hidden='true' className='size-4' />
               Pending
             </Badge>
           </div>
@@ -663,7 +784,13 @@ function StatusAlternatives() {
     </Section>
   );
 }
-function StudyTabs({ attached }: { attached: boolean }) {
+function StudyTabs({
+  attached,
+  longLabel = false,
+}: {
+  attached: boolean;
+  longLabel?: boolean;
+}) {
   return (
     <Tabs
       presentation='soft'
@@ -677,12 +804,23 @@ function StudyTabs({ attached }: { attached: boolean }) {
             : 'Ink underline destinations'
         }
       >
-        <TabsTrigger value='events'>Events</TabsTrigger>
-        <TabsTrigger value='people'>People</TabsTrigger>
-        <TabsTrigger value='tools'>Tools</TabsTrigger>
-        <TabsTrigger value='announcements'>
-          Community announcements and shared resources
+        <TabsTrigger value='events' className='gap-2'>
+          <CalendarDays aria-hidden='true' className='size-4 shrink-0' />
+          Events
         </TabsTrigger>
+        <TabsTrigger value='people' className='gap-2'>
+          <Users aria-hidden='true' className='size-4 shrink-0' />
+          People
+        </TabsTrigger>
+        <TabsTrigger value='tools' className='gap-2'>
+          <Wrench aria-hidden='true' className='size-4 shrink-0' />
+          Tools
+        </TabsTrigger>
+        {longLabel && (
+          <TabsTrigger value='announcements'>
+            Community announcements and shared resources
+          </TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value='events'>
         <p>Events shared with this Group.</p>
@@ -693,9 +831,11 @@ function StudyTabs({ attached }: { attached: boolean }) {
       <TabsContent value='tools'>
         <p>Tools enabled for this Group.</p>
       </TabsContent>
-      <TabsContent value='announcements'>
-        <p>Announcements and resources shared with this Group.</p>
-      </TabsContent>
+      {longLabel && (
+        <TabsContent value='announcements'>
+          <p>Announcements and resources shared with this Group.</p>
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
@@ -727,6 +867,25 @@ function NavigationAlternatives() {
           </p>
         </article>
       </div>
+      <details>
+        <summary className='cursor-pointer py-3 text-sm font-semibold'>
+          Try a long destination label
+        </summary>
+        <div className='grid items-start gap-8 pt-4 md:grid-cols-2'>
+          <article className='flex min-w-0 flex-col gap-3'>
+            <Heading level={3} roleSize='content'>
+              A · Attached index tabs
+            </Heading>
+            <StudyTabs attached longLabel />
+          </article>
+          <article className='flex min-w-0 flex-col gap-3'>
+            <Heading level={3} roleSize='content'>
+              B · Ink underline
+            </Heading>
+            <StudyTabs attached={false} longLabel />
+          </article>
+        </div>
+      </details>
     </Section>
   );
 }

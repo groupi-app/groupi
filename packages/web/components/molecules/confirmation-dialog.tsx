@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Trash2 } from 'lucide-react';
 import {
   DialogClose,
   DialogContent,
@@ -138,6 +139,15 @@ export function ConfirmationDialog({
           </DialogClose>
           <Button
             presentation={presentation}
+            icon={
+              presentation === 'soft' &&
+              isDestructive &&
+              (!confirmVariant || confirmVariant === 'destructive') ? (
+                <Trash2 aria-hidden='true' className='size-4' />
+              ) : undefined
+            }
+            isLoading={presentation === 'soft' && loading}
+            loadingText={loadingText}
             onClick={handleConfirm}
             disabled={loading}
             variant={variant}
