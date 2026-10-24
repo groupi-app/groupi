@@ -26,7 +26,7 @@ export function ConfirmSettings({ shouldFlash }: { shouldFlash?: boolean }) {
       <Card
         className={cn(
           'mx-auto md:left-[175px] fixed z-sticky bottom-20 right-0 left-0 w-full max-w-md transition-colors duration-300',
-          shouldFlash && 'border-destructive bg-destructive'
+          shouldFlash && 'ring-2 ring-error'
         )}
       >
         <CardHeader>

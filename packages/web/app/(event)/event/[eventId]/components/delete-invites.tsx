@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 as ActionTrash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -74,7 +75,11 @@ export function DeleteInvites({
               <Button variant='ghost'>Cancel</Button>
             </DialogClose>
             <DialogClose asChild>
-              <Button onClick={handleDeleteInvites} variant='destructive'>
+              <Button
+                icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
+                onClick={handleDeleteInvites}
+                variant='destructive'
+              >
                 Delete
               </Button>
             </DialogClose>

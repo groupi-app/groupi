@@ -54,11 +54,11 @@ function PreviewDisplayField({
         : 'No content set';
       switch (field.textFormat) {
         case 'h1':
-          return <h1 className='text-2xl font-bold'>{text}</h1>;
+          return <h1 className='font-heading text-2xl font-bold'>{text}</h1>;
         case 'h2':
-          return <h2 className='text-xl font-semibold'>{text}</h2>;
+          return <h2 className='font-heading text-xl font-semibold'>{text}</h2>;
         case 'h3':
-          return <h3 className='text-lg font-semibold'>{text}</h3>;
+          return <h3 className='font-heading text-lg font-semibold'>{text}</h3>;
         default:
           return <p className='whitespace-pre-wrap text-sm'>{text}</p>;
       }
@@ -356,7 +356,7 @@ export function PreviewSection({
         {(section.title || section.description) && (
           <div>
             {section.title && (
-              <h3 className='font-semibold'>{section.title}</h3>
+              <h3 className='font-heading font-semibold'>{section.title}</h3>
             )}
             {section.description && (
               <p className='text-sm text-muted-foreground'>
@@ -395,7 +395,9 @@ export function PreviewSection({
     <div className='space-y-3'>
       {(section.title || section.description) && (
         <div>
-          {section.title && <h3 className='font-semibold'>{section.title}</h3>}
+          {section.title && (
+            <h3 className='font-heading font-semibold'>{section.title}</h3>
+          )}
           {section.description && (
             <p className='text-sm text-muted-foreground'>
               {section.description}

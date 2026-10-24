@@ -1,5 +1,6 @@
 'use client';
 
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 export type EventTabValue = 'upcoming' | 'hosting' | 'attended';
@@ -42,42 +43,36 @@ export function EventTabFilter({
   className,
 }: EventTabFilterProps) {
   return (
-    <div
-      className={cn('inline-flex gap-1 p-1 rounded-button bg-muted', className)}
-      role='tablist'
+    <Tabs
+      value={value}
+      onValueChange={next => {
+        if (next === 'upcoming' || next === 'hosting' || next === 'attended')
+          onChange(next);
+      }}
+      className={className}
     >
-      {tabs.map(tab => {
-        const isSelected = value === tab.value;
-        const count = counts?.[tab.value];
+      <TabsList aria-label='Filter events'>
+        {tabs.map(tab => {
+          const isSelected = value === tab.value;
+          const count = counts?.[tab.value];
 
-        return (
-          <button
-            key={tab.value}
-            role='tab'
-            aria-selected={isSelected}
-            onClick={() => onChange(tab.value)}
-            className={cn(
-              'px-3 py-1.5 rounded-button text-sm font-medium transition-all',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              isSelected
-                ? 'bg-background text-foreground shadow-raised'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {tab.label}
-            {count !== undefined && count > 0 && (
-              <span
-                className={cn(
-                  'ml-1.5 text-xs',
-                  isSelected ? 'text-muted-foreground' : ''
-                )}
-              >
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+          return (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+              {count !== undefined && count > 0 && (
+                <span
+                  className={cn(
+                    'ml-1.5 text-xs',
+                    isSelected ? 'text-muted-foreground' : ''
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
   );
 }

@@ -62,7 +62,10 @@ function AudienceControls({
       className='rounded-card border border-border p-4 space-y-4'
       aria-labelledby='event-audiences-heading'
     >
-      <h2 id='event-audiences-heading' className='text-xl font-semibold'>
+      <h2
+        id='event-audiences-heading'
+        className='font-heading text-xl font-semibold'
+      >
         Event logistics audiences
       </h2>
       <p>

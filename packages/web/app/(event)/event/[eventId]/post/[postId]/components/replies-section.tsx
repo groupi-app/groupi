@@ -355,7 +355,7 @@ export function RepliesSection({
           onClick={scrollToPresent}
           variant='secondary'
           className={cn(
-            'fixed z-float shadow-overlay text-xs w-auto',
+            'fixed z-float  text-xs w-auto',
             'animate-in fade-in slide-in-from-bottom-4'
           )}
           style={{

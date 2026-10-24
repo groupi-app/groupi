@@ -9,7 +9,7 @@ export interface LoadingStateProps {
    * Optional message to display below the spinner
    */
   message?: string;
-  /** Opt-in gallery treatment; existing callers retain their presentation. */
+  /** Material presentation; Soft lift is the application default. */
   presentation?: 'default' | 'soft';
   /**
    * Size variant
@@ -50,7 +50,7 @@ export function LoadingState({
   size = 'md',
   className,
   layout = 'stacked',
-  presentation = 'default',
+  presentation = 'soft',
 }: LoadingStateProps) {
   const sizes = sizeClasses[size];
   const soft = presentation === 'soft';

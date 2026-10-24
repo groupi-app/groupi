@@ -1,5 +1,7 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
@@ -97,13 +99,9 @@ export function EventInviteItem({
   const inviterInitials = inviterDisplayName.slice(0, 2).toUpperCase();
 
   return (
-    <div
-      className={cn(
-        'flex flex-col overflow-hidden rounded-card shadow-raised bg-card',
-        'transition-all duration-fast ease-bounce',
-        'hover:shadow-floating',
-        className
-      )}
+    <Card
+      treatment='quiet'
+      className={cn('flex flex-col overflow-hidden', className)}
     >
       {/* Cover image area */}
       <div className='relative aspect-[16/9] overflow-hidden'>
@@ -125,9 +123,9 @@ export function EventInviteItem({
         )}
 
         {/* RSVP badge - top left */}
-        <div className='absolute top-3 left-3 bg-primary text-primary-foreground px-2.5 py-1 rounded-badge text-xs font-semibold shadow-raised border-2 border-white w-fit animate-wiggle-periodic'>
+        <Badge variant='info' className='absolute top-3 left-3'>
           RSVP Pending!
-        </div>
+        </Badge>
       </div>
 
       {/* Content area */}
@@ -248,6 +246,6 @@ export function EventInviteItem({
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

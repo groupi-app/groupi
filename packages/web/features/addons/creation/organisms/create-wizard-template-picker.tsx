@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardAction, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -101,40 +101,44 @@ export function CreateWizardTemplatePicker({
 
               return (
                 <Card
+                  treatment='interactive'
                   key={tmpl._id}
                   className={cn(
-                    'rounded-card shadow-raised transition-shadow',
-                    isAlreadyAdded
-                      ? 'opacity-50'
-                      : 'cursor-pointer hover:shadow-floating'
+                    'rounded-card  ',
+                    isAlreadyAdded ? 'opacity-50' : 'cursor-pointer '
                   )}
-                  onClick={() =>
-                    !isAlreadyAdded &&
-                    handleSelect({
-                      _id: tmpl._id,
-                      name: tmpl.name,
-                      template: tmpl.template as CustomAddonTemplate,
-                    })
-                  }
                 >
-                  <CardContent className='flex items-center gap-3 p-3'>
-                    <div className='flex size-9 items-center justify-center rounded-button bg-bg-interactive'>
-                      <IconComponent className='size-4 text-primary' />
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate text-sm font-medium'>
-                        {tmpl.name}
-                      </p>
-                      <p className='truncate text-xs text-muted-foreground'>
-                        {tmpl.description}
-                      </p>
-                    </div>
-                    {isAlreadyAdded && (
-                      <span className='text-xs text-muted-foreground'>
-                        Added
-                      </span>
-                    )}
-                  </CardContent>
+                  <CardAction
+                    disabled={isAlreadyAdded}
+                    onClick={() =>
+                      !isAlreadyAdded &&
+                      handleSelect({
+                        _id: tmpl._id,
+                        name: tmpl.name,
+                        template: tmpl.template as CustomAddonTemplate,
+                      })
+                    }
+                    className='w-full'
+                  >
+                    <CardContent className='flex items-center gap-3 p-3'>
+                      <div className='flex size-9 items-center justify-center rounded-button bg-bg-interactive'>
+                        <IconComponent className='size-4 text-primary' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-medium'>
+                          {tmpl.name}
+                        </p>
+                        <p className='truncate text-xs text-muted-foreground'>
+                          {tmpl.description}
+                        </p>
+                      </div>
+                      {isAlreadyAdded && (
+                        <span className='text-xs text-muted-foreground'>
+                          Added
+                        </span>
+                      )}
+                    </CardContent>
+                  </CardAction>
                 </Card>
               );
             }

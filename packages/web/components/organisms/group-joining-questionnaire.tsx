@@ -29,7 +29,10 @@ export function GroupJoiningQuestionnaire({
       className='space-y-4'
       aria-labelledby='joining-questionnaire-heading'
     >
-      <h2 id='joining-questionnaire-heading' className='text-lg font-semibold'>
+      <h2
+        id='joining-questionnaire-heading'
+        className='font-heading text-lg font-semibold'
+      >
         Joining questionnaire
       </h2>
       {form.shouldPrompt && (

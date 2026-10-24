@@ -1,4 +1,5 @@
 'use client';
+import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import { GROUP_POLL_TEMPLATES } from '@groupi/shared/utils';
 import Link from 'next/link';
@@ -63,7 +64,7 @@ export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading polls…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1 className='text-2xl font-bold'>Group polls</h1>
+      <h1 className='font-heading text-2xl font-bold'>Group polls</h1>
       <p>
         Independent ongoing polls. They do not choose Event dates or change
         Event RSVP or joining requirements.
@@ -73,7 +74,7 @@ export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
           className='rounded-card border border-border p-4 space-y-3'
           aria-label='Poll availability policy'
         >
-          <h2>Owner settings</h2>
+          <h2 className='font-heading'>Owner settings</h2>
           <Button
             disabled={policyBusy}
             onClick={() => savePolicy(!policy.enabled, policy.creation)}
@@ -242,7 +243,9 @@ function PollEditor({
   const [busy, setBusy] = useState(false);
   return (
     <main className='p-6 space-y-4'>
-      <h1>{initial ? 'Manage poll' : 'Create poll'}</h1>
+      <h1 className='font-heading'>
+        {initial ? 'Manage poll' : 'Create poll'}
+      </h1>
       {!initial &&
         GROUP_POLL_TEMPLATES.map(template => (
           <Button
@@ -484,7 +487,7 @@ function PollInteraction({
   const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
-      <h1>{poll.title}</h1>
+      <h1 className='font-heading'>{poll.title}</h1>
       <p>{poll.description}</p>
       <p>
         Group polls do not choose Event dates or change Event RSVP. One latest
@@ -545,7 +548,12 @@ function PollInteraction({
             </Label>
           ))}
         </fieldset>
-        <Button disabled={busy}>Save vote</Button>
+        <Button
+          icon={<ActionSave aria-hidden='true' className='size-4' />}
+          disabled={busy}
+        >
+          Save vote
+        </Button>
       </form>
       {poll.savedVersion !== null && (
         <p>
@@ -626,7 +634,7 @@ export function GroupPollHistory({ toolId }: { toolId: Id<'groupTools'> }) {
   const remove = useRemovePollVote();
   return (
     <section className='p-6 space-y-4'>
-      <h1>My saved poll history</h1>
+      <h1 className='font-heading'>My saved poll history</h1>
       <p>
         Only your retained votes and original definitions are shown. Current
         private options are not exposed by this recovery view.
@@ -681,7 +689,7 @@ function PollResultsRecords({
   const remove = useRemovePollResult();
   return (
     <section className='space-y-3'>
-      <h2>Latest votes</h2>
+      <h2 className='font-heading'>Latest votes</h2>
       <p>
         Latest votes on this page; this is not a Group-wide total. Historical
         votes do not count under the current rule.

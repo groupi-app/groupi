@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus as ActionPlus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -304,6 +305,7 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
           <Icons.back className='text-sm' />
         </Button>
         <Button
+          icon={<ActionPlus aria-hidden='true' className='size-4' />}
           data-test='create-event-button'
           type='button'
           onClick={onSubmit}

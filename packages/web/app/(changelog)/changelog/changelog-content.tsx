@@ -82,7 +82,7 @@ function ChangelogEntryComponent({ entry }: { entry: ChangelogEntry }) {
   return (
     <Card className='p-6 space-y-4'>
       <div className='flex items-center justify-between'>
-        <h2 className='text-xl font-semibold'>v{entry.version}</h2>
+        <h2 className='font-heading text-xl font-semibold'>v{entry.version}</h2>
         {entry.date && (
           <span className='text-sm text-muted-foreground'>{entry.date}</span>
         )}
@@ -106,7 +106,7 @@ export default function ChangelogContent() {
             Back
           </Button>
         </Link>
-        <h1 className='text-3xl font-bold'>Changelog</h1>
+        <h1 className='font-heading text-3xl font-bold'>Changelog</h1>
         <p className='text-muted-foreground mt-2'>
           All notable changes to Groupi are documented here.
         </p>

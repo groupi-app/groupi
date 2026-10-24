@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -312,6 +313,7 @@ export default function EditEventInfo({
           )}
         />
         <Button
+          icon={<ActionSave aria-hidden='true' className='size-4' />}
           type='submit'
           isLoading={isSaving}
           loadingText='Saving...'

@@ -129,7 +129,7 @@ export function DateCardList() {
  */
 function DateCardSkeleton() {
   return (
-    <div className='w-full md:max-w-lg border border-border shadow-floating rounded-md py-4 px-4 bg-card'>
+    <div className='w-full md:max-w-lg border border-border rounded-card py-4 px-4 bg-card'>
       <div className='flex items-start gap-4'>
         {/* Rank */}
         <Skeleton className='h-8 w-8' />

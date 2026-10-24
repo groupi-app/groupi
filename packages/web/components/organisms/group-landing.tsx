@@ -39,7 +39,9 @@ export function GroupLanding({ groupId }: { groupId: Id<'groups'> }) {
         <AvatarImage src={group.image ?? undefined} alt='' />
         <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
       </Avatar>
-      <h1 className='break-words text-3xl font-bold'>{group.name}</h1>
+      <h1 className='font-heading break-words text-3xl font-bold'>
+        {group.name}
+      </h1>
       {group.description && (
         <p className='whitespace-pre-wrap break-words text-muted-foreground'>
           {group.description}

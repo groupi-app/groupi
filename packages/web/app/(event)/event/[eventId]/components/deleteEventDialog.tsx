@@ -1,4 +1,5 @@
 'use client';
+import { Trash2 as ActionTrash2 } from 'lucide-react';
 import {
   DialogClose,
   DialogContent,
@@ -55,6 +56,7 @@ export function DeleteEventDialog({ eventId }: { eventId: Id<'events'> }) {
           </DialogClose>
           <DialogClose className='grow' asChild>
             <Button
+              icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
               onClick={handleDelete}
               className='w-full'
               variant='destructive'

@@ -3,7 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,10 +63,7 @@ function TemplateCard({
     ] ?? Icons.info;
 
   return (
-    <Card
-      className='cursor-pointer rounded-card shadow-raised transition-shadow hover:shadow-floating'
-      onClick={() => router.push(`/addon-builder/${template._id}`)}
-    >
+    <Card treatment='interactive'>
       <CardHeader className='flex flex-row items-start justify-between gap-2 pb-2'>
         <div className='flex items-center gap-3'>
           <div className='flex size-10 items-center justify-center rounded-button bg-bg-interactive'>
@@ -67,79 +71,93 @@ function TemplateCard({
           </div>
           <div className='min-w-0'>
             <CardTitle className='truncate text-base'>
-              {template.name || 'Untitled'}
+              <CardAction
+                onClick={() => router.push(`/addon-builder/${template._id}`)}
+              >
+                {template.name || 'Untitled'}
+              </CardAction>
             </CardTitle>
             <p className='truncate text-sm text-muted-foreground'>
               {template.description || 'No description'}
             </p>
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-            <Button variant='ghost' size='icon' className='size-8 shrink-0'>
-              <Icons.more className='size-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' onClick={e => e.stopPropagation()}>
-            <DropdownMenuItem
-              onClick={() => router.push(`/addon-builder/${template._id}`)}
-            >
-              <Icons.edit className='mr-2 size-4' />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                const newId = await duplicateTemplate(template._id);
-                if (newId) router.push(`/addon-builder/${newId}`);
-              }}
-            >
-              <Icons.copy className='mr-2 size-4' />
-              Duplicate
-            </DropdownMenuItem>
-            {template.isPublished ? (
-              <DropdownMenuItem onClick={() => unpublishTemplate(template._id)}>
-                <Icons.close className='mr-2 size-4' />
-                Unpublish
+        <CardActions>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-8 shrink-0'
+                aria-label={`Actions for ${template.name || 'Untitled'}`}
+              >
+                <Icons.more className='size-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' onClick={e => e.stopPropagation()}>
+              <DropdownMenuItem
+                onClick={() => router.push(`/addon-builder/${template._id}`)}
+              >
+                <Icons.edit className='mr-2 size-4' />
+                Edit
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={() => publishTemplate(template._id)}>
-                <Icons.check className='mr-2 size-4' />
-                Publish
+              <DropdownMenuItem
+                onClick={async () => {
+                  const newId = await duplicateTemplate(template._id);
+                  if (newId) router.push(`/addon-builder/${newId}`);
+                }}
+              >
+                <Icons.copy className='mr-2 size-4' />
+                Duplicate
               </DropdownMenuItem>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+              {template.isPublished ? (
                 <DropdownMenuItem
-                  className='text-destructive'
-                  onSelect={e => e.preventDefault()}
+                  onClick={() => unpublishTemplate(template._id)}
                 >
-                  <Icons.trash className='mr-2 size-4' />
-                  Delete
+                  <Icons.close className='mr-2 size-4' />
+                  Unpublish
                 </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent className='rounded-modal'>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete add-on?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete &quot;{template.name}&quot;.
-                    Events already using this add-on will not be affected.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className='rounded-button'>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    className='rounded-button bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                    onClick={() => deleteTemplate(template._id)}
+              ) : (
+                <DropdownMenuItem onClick={() => publishTemplate(template._id)}>
+                  <Icons.check className='mr-2 size-4' />
+                  Publish
+                </DropdownMenuItem>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    variant='destructive'
+                    className=''
+                    onSelect={e => e.preventDefault()}
                   >
+                    <Icons.trash className='mr-2 size-4' />
                     Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent className='rounded-modal'>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete add-on?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete &quot;{template.name}&quot;.
+                      Events already using this add-on will not be affected.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className='rounded-button'>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant='destructive'
+                      onClick={() => deleteTemplate(template._id)}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardActions>
       </CardHeader>
       <CardContent className='pt-0'>
         <div className='flex items-center gap-2'>
@@ -152,6 +170,10 @@ function TemplateCard({
           <span className='text-xs text-muted-foreground'>
             v{template.version}
           </span>
+          <Icons.forward
+            aria-hidden='true'
+            className='ml-auto size-4 text-muted-foreground'
+          />
         </div>
       </CardContent>
     </Card>
@@ -170,7 +192,9 @@ export function TemplateLibrary({
         {showHeader && (
           <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-2xl font-bold'>Add-on Builder</h1>
+              <h1 className='font-heading text-2xl font-bold'>
+                Add-on Builder
+              </h1>
               <p className='text-muted-foreground'>
                 Create custom add-ons for your events
               </p>
@@ -179,7 +203,7 @@ export function TemplateLibrary({
         )}
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
           {[1, 2, 3].map(i => (
-            <Card key={i} className='rounded-card shadow-raised'>
+            <Card key={i} className='rounded-card'>
               <CardHeader className='pb-2'>
                 <div className='flex items-center gap-3'>
                   <div className='size-10 animate-pulse rounded-button bg-muted' />
@@ -201,7 +225,7 @@ export function TemplateLibrary({
       {showHeader ? (
         <div className='flex items-center justify-between'>
           <div>
-            <h1 className='text-2xl font-bold'>Add-on Builder</h1>
+            <h1 className='font-heading text-2xl font-bold'>Add-on Builder</h1>
             <p className='text-muted-foreground'>
               Create custom add-ons for your events
             </p>
@@ -227,12 +251,12 @@ export function TemplateLibrary({
       )}
 
       {templates.length === 0 ? (
-        <Card className='rounded-card shadow-raised'>
+        <Card className='rounded-card'>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <div className='flex size-16 items-center justify-center rounded-avatar bg-bg-interactive'>
               <Icons.listChecks className='size-8 text-muted-foreground' />
             </div>
-            <h3 className='mt-4 text-lg font-semibold'>
+            <h3 className='font-heading mt-4 text-lg font-semibold'>
               No custom add-ons yet
             </h3>
             <p className='mt-1 text-center text-sm text-muted-foreground'>

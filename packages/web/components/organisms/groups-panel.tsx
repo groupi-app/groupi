@@ -6,6 +6,7 @@ import { ChevronRight, Plus, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/molecules/empty-state';
+import { Card, CardAction } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCreateGroup, useGroups } from '@/hooks/convex/use-groups';
 import { GroupInvitationInbox } from './group-invitation-inbox';
@@ -24,7 +25,7 @@ export function GroupsPanel({
   if (creating)
     return (
       <div className='flex flex-col gap-6'>
-        <h2 className='text-xl font-bold'>Create a Group</h2>
+        <h2 className='font-heading text-xl font-bold'>Create a Group</h2>
         <p className='text-sm text-muted-foreground'>
           You will be the Group’s single owner. An owner-only Group is ready to
           use.
@@ -49,7 +50,7 @@ export function GroupsPanel({
     <div className='flex flex-col gap-6'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='flex flex-col gap-1'>
-          <h2 className='text-xl font-bold'>Your Groups</h2>
+          <h2 className='font-heading text-xl font-bold'>Your Groups</h2>
           <p className='text-sm text-muted-foreground'>
             A home for the people you gather with.
           </p>
@@ -79,34 +80,40 @@ export function GroupsPanel({
           <ul className='grid gap-3'>
             {groups.page.map(group => (
               <li key={group._id}>
-                <Link
-                  href={`/groups/${group._id}`}
-                  onClick={event => {
-                    event.preventDefault();
-                    onOpenGroup(group._id);
-                  }}
-                  aria-label={group.name}
-                  className='flex items-center gap-3 rounded-card border border-border bg-card p-4 shadow-raised transition-colors duration-fast hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
-                >
-                  <Avatar className='size-12 shrink-0'>
-                    <AvatarImage src={group.image} alt='' />
-                    <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
-                  </Avatar>
-                  <div className='min-w-0 flex-1'>
-                    <span className='block break-words font-semibold'>
-                      {group.name}
-                    </span>
-                    {group.description && (
-                      <p className='text-sm text-muted-foreground line-clamp-2'>
-                        {group.description}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight
-                    aria-hidden='true'
-                    className='size-4 shrink-0 text-muted-foreground'
-                  />
-                </Link>
+                <Card treatment='interactive'>
+                  <CardAction asChild>
+                    <Link
+                      href={`/groups/${group._id}`}
+                      onClick={event => {
+                        event.preventDefault();
+                        onOpenGroup(group._id);
+                      }}
+                      aria-label={group.name}
+                      className='flex items-center gap-3 p-4'
+                    >
+                      <Avatar className='size-12 shrink-0'>
+                        <AvatarImage src={group.image} alt='' />
+                        <AvatarFallback>
+                          {group.name.slice(0, 1)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0 flex-1'>
+                        <span className='block break-words font-semibold'>
+                          {group.name}
+                        </span>
+                        {group.description && (
+                          <p className='text-sm text-muted-foreground line-clamp-2'>
+                            {group.description}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight
+                        aria-hidden='true'
+                        className='size-4 shrink-0 text-muted-foreground'
+                      />
+                    </Link>
+                  </CardAction>
+                </Card>
               </li>
             ))}
           </ul>

@@ -23,7 +23,9 @@ export default function EventSettingsLayout({
       fallback={
         <div className='container mx-auto py-8 text-center'>
           <div className='max-w-md mx-auto'>
-            <h1 className='text-2xl font-bold mb-4'>Access Denied</h1>
+            <h1 className='font-heading text-2xl font-bold mb-4'>
+              Access Denied
+            </h1>
             <p className='text-muted-foreground mb-6'>
               Only event organizers and moderators can access event settings.
             </p>

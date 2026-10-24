@@ -97,7 +97,7 @@ export function ThemePreview({
         {/* Header */}
         <div className='text-center mb-4'>
           <h3
-            className='text-lg font-semibold'
+            className='font-heading text-lg font-semibold'
             style={{ color: 'var(--preview-text-primary)' }}
           >
             Theme Preview

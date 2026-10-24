@@ -91,10 +91,10 @@ export function SettingsPageTemplate({
             <span className='text-sm'>{backLabel}</span>
           </Link>
         )}
-        <h1 className='text-3xl font-heading font-medium flex items-center gap-2'>
-          {title}
+        <div className='flex flex-wrap items-center gap-2'>
+          <h1 className='text-3xl font-heading font-medium'>{title}</h1>
           {titleBadge}
-        </h1>
+        </div>
         {description && (
           <p className='text-muted-foreground mt-1'>{description}</p>
         )}

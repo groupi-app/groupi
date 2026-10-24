@@ -32,7 +32,7 @@ export function BuilderWorkspace() {
       <div className='fixed bottom-6 right-6 lg:hidden z-float'>
         <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
           <SheetTrigger asChild>
-            <Button className='rounded-button shadow-floating' size='lg'>
+            <Button className='rounded-button' size='lg'>
               <Icons.eye className='mr-2 size-4' />
               Preview
             </Button>

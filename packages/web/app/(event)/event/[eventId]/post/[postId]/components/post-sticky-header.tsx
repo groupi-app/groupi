@@ -54,7 +54,7 @@ export function PostStickyHeader({
       )}
     >
       <div className='py-2 flex items-center justify-between'>
-        <h2 className='text-sm font-medium truncate flex-1 mr-4'>
+        <h2 className='font-heading text-sm font-medium truncate flex-1 mr-4'>
           {postTitle}
         </h2>
         <Button

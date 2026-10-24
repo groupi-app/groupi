@@ -1,5 +1,11 @@
 'use client';
 
+import {
+  Plus as ActionPlus,
+  Pencil as ActionPencil,
+  Trash2 as ActionTrash2,
+  Save as ActionSave,
+} from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useInviteListNavigationGuard } from '@/hooks/use-invite-list-navigation-guard';
@@ -78,7 +84,11 @@ function ListCollection({
         <p role='status'>You have reached the limit of 100 invite lists.</p>
       )}
       <div ref={createRef}>
-        <Button disabled={lists.items.length >= 100} onClick={startCreate}>
+        <Button
+          icon={<ActionPlus aria-hidden='true' className='size-4' />}
+          disabled={lists.items.length >= 100}
+          onClick={startCreate}
+        >
           Create invite list
         </Button>
       </div>
@@ -128,10 +138,15 @@ function ListDetail({
         <InviteListPersonRow key={index} person={person} />
       ))}
       <div className='flex flex-wrap gap-2'>
-        <Button onClick={() => edit(list)} autoFocus={focusEdit}>
+        <Button
+          icon={<ActionPencil aria-hidden='true' className='size-4' />}
+          onClick={() => edit(list)}
+          autoFocus={focusEdit}
+        >
           Edit list
         </Button>
         <Button
+          icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
           variant='destructive'
           onClick={() => remove(list)}
           autoFocus={focusDelete}
@@ -452,6 +467,7 @@ export function InviteListsSettings() {
                 Keep list
               </Button>
               <Button
+                icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
                 variant='destructive'
                 onClick={deleteList}
                 isLoading={saving}
@@ -528,7 +544,7 @@ export function InviteListsSettings() {
               aria-label='Selected people'
               className='flex flex-col gap-2'
             >
-              <h3 className='font-medium'>
+              <h3 className='font-heading font-medium'>
                 Selected people ({selected.length}/100)
               </h3>
               <QuerySection message='Unable to check selected people. Your list draft is preserved.'>
@@ -603,6 +619,7 @@ export function InviteListsSettings() {
             )}
             <div className='flex flex-wrap gap-2'>
               <Button
+                icon={<ActionSave aria-hidden='true' className='size-4' />}
                 onClick={save}
                 isLoading={saving}
                 loadingText='Saving list…'

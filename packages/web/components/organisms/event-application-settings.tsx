@@ -71,7 +71,9 @@ function ApplicationSettingsForm({
         }
       }}
     >
-      <h2 className='text-lg font-semibold'>Approval application form</h2>
+      <h2 className='font-heading text-lg font-semibold'>
+        Approval application form
+      </h2>
       <p>
         These private admission questions are separate from member
         questionnaires and add-ons. Enable Apply for approval in Event admission

@@ -85,7 +85,7 @@ export function AttendeeSlate({
               )}
             </div>
           </div>
-          <div className='flex items-center text-muted-foreground gap-1 '>
+          <div className='flex items-center text-muted-foreground gap-1'>
             {member.role === 'ORGANIZER' && <Icons.crown />}
             {member.role === 'MODERATOR' && <Icons.shield />}
             {member.role === 'ATTENDEE' && <Icons.account />}
@@ -155,11 +155,11 @@ export function AttendeeSlate({
                       onClick={() => {
                         setDialogAction(MemberAction.DEMOTE);
                       }}
-                      className='hover:bg-destructive hover:text-destructive-foreground'
+                      aria-label='Demote attendee'
                       size='icon'
-                      variant='outline'
+                      variant='destructive-ghost'
                     >
-                      <Icons.shieldOff />
+                      <Icons.shieldOff aria-hidden='true' />
                     </Button>
                   </DialogTrigger>
                 </TooltipTrigger>
@@ -174,9 +174,9 @@ export function AttendeeSlate({
                       onClick={() => {
                         setDialogAction(MemberAction.KICK);
                       }}
-                      className='hover:bg-destructive hover:text-destructive-foreground'
+                      aria-label='Remove attendee'
                       size='icon'
-                      variant='outline'
+                      variant='destructive-ghost'
                     >
                       <Icons.kick />
                     </Button>
@@ -217,7 +217,7 @@ export function AttendeeSlate({
                         )}
                       >
                         <div className='flex flex-col'>
-                          <h1>
+                          <h1 className='font-heading'>
                             {dateTime.toLocaleDateString([], {
                               weekday: 'short',
                               year: 'numeric',

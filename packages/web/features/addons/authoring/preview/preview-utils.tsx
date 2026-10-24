@@ -86,7 +86,7 @@ export function AddonHeader({ template }: { template: CustomAddonTemplate }) {
         />
       </div>
       <div>
-        <h2 className='text-lg font-bold'>
+        <h2 className='font-heading text-lg font-bold'>
           {template.name || 'Untitled Add-on'}
         </h2>
         {template.description && (

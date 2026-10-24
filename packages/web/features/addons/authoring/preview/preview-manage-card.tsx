@@ -26,7 +26,7 @@ export function ManageCardPreview({
 
   return (
     <PreviewWrapper label='Manage add-ons page'>
-      <Card className='rounded-card shadow-raised'>
+      <Card className='rounded-card'>
         <CardHeader className='flex flex-row items-center justify-between'>
           <div className='flex items-center gap-3'>
             <div className='flex size-10 items-center justify-center rounded-button bg-bg-interactive'>

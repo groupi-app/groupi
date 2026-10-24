@@ -435,7 +435,9 @@ function AuthenticatedAppearanceSettings() {
       <div className='space-y-8'>
         {/* Theme Mode Section - Two options: Single Theme or Match System */}
         <section className='space-y-4'>
-          <h3 className='text-lg font-semibold text-foreground'>Theme Mode</h3>
+          <h3 className='font-heading text-lg font-semibold text-foreground'>
+            Theme Mode
+          </h3>
           <div className='grid gap-3 sm:grid-cols-2'>
             <ThemeModeOption
               mode='single'
@@ -461,7 +463,7 @@ function AuthenticatedAppearanceSettings() {
         {/* System Theme Pickers (only show when using system preference) */}
         {themeMode === 'system' && (
           <section className='space-y-4'>
-            <h3 className='text-lg font-semibold text-foreground'>
+            <h3 className='font-heading text-lg font-semibold text-foreground'>
               System Theme Mapping
             </h3>
             <p className='text-sm text-muted-foreground'>
@@ -479,7 +481,7 @@ function AuthenticatedAppearanceSettings() {
                   type='button'
                   className={cn(
                     'w-full flex items-center justify-between gap-3 rounded-card border-2 p-4 text-left transition-all duration-fast',
-                    'hover:shadow-raised hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                    ' hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                     'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
                     lightThemeExpanded
                       ? 'border-primary bg-bg-surface shadow-raised'
@@ -505,7 +507,7 @@ function AuthenticatedAppearanceSettings() {
               <CollapsibleContent className='pt-4 space-y-6'>
                 {/* Base Themes */}
                 <div>
-                  <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                  <h4 className='font-heading text-sm font-medium text-muted-foreground mb-3'>
                     Base Themes
                   </h4>
                   <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
@@ -529,7 +531,7 @@ function AuthenticatedAppearanceSettings() {
                 {/* Custom Themes */}
                 {customThemes && customThemes.length > 0 && (
                   <div>
-                    <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                    <h4 className='font-heading text-sm font-medium text-muted-foreground mb-3'>
                       Custom Themes
                     </h4>
                     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
@@ -568,7 +570,7 @@ function AuthenticatedAppearanceSettings() {
                   type='button'
                   className={cn(
                     'w-full flex items-center justify-between gap-3 rounded-card border-2 p-4 text-left transition-all duration-fast',
-                    'hover:shadow-raised hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                    ' hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                     'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
                     darkThemeExpanded
                       ? 'border-primary bg-bg-surface shadow-raised'
@@ -594,7 +596,7 @@ function AuthenticatedAppearanceSettings() {
               <CollapsibleContent className='pt-4 space-y-6'>
                 {/* Base Themes */}
                 <div>
-                  <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                  <h4 className='font-heading text-sm font-medium text-muted-foreground mb-3'>
                     Base Themes
                   </h4>
                   <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
@@ -618,7 +620,7 @@ function AuthenticatedAppearanceSettings() {
                 {/* Custom Themes */}
                 {customThemes && customThemes.length > 0 && (
                   <div>
-                    <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                    <h4 className='font-heading text-sm font-medium text-muted-foreground mb-3'>
                       Custom Themes
                     </h4>
                     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
@@ -653,7 +655,7 @@ function AuthenticatedAppearanceSettings() {
         {themeMode === 'single' && (
           <section className='space-y-6'>
             <div>
-              <h3 className='text-lg font-semibold text-foreground'>
+              <h3 className='font-heading text-lg font-semibold text-foreground'>
                 Base Themes
               </h3>
               <p className='text-sm text-muted-foreground'>
@@ -678,7 +680,7 @@ function AuthenticatedAppearanceSettings() {
 
             {/* Custom Themes */}
             <div>
-              <h3 className='text-lg font-semibold text-foreground'>
+              <h3 className='font-heading text-lg font-semibold text-foreground'>
                 Custom Themes
               </h3>
               <p className='text-sm text-muted-foreground'>
@@ -763,7 +765,7 @@ function ThemeModeOption({
       disabled={disabled}
       className={cn(
         'flex items-center gap-3 rounded-card border-2 p-4 text-left transition-all duration-fast cursor-pointer',
-        'hover:shadow-raised hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+        ' hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         isSelected
           ? 'border-primary bg-bg-surface shadow-raised'
@@ -843,7 +845,9 @@ function AppearanceSettingsSkeleton() {
     <div className='space-y-8'>
       {/* Theme Mode Section */}
       <section className='space-y-4'>
-        <h3 className='text-lg font-semibold text-foreground'>Theme Mode</h3>
+        <h3 className='font-heading text-lg font-semibold text-foreground'>
+          Theme Mode
+        </h3>
         <div className='grid gap-3 sm:grid-cols-2'>
           <ThemeModeOptionSkeleton />
           <ThemeModeOptionSkeleton />
@@ -852,7 +856,9 @@ function AppearanceSettingsSkeleton() {
 
       {/* Base Themes Section */}
       <section className='space-y-4'>
-        <h3 className='text-lg font-semibold text-foreground'>Base Themes</h3>
+        <h3 className='font-heading text-lg font-semibold text-foreground'>
+          Base Themes
+        </h3>
         <p className='text-sm text-muted-foreground'>
           Choose from our pre-designed themes.
         </p>
@@ -866,7 +872,7 @@ function AppearanceSettingsSkeleton() {
 
       {/* Custom Themes Section */}
       <section className='space-y-4'>
-        <h3 className='text-lg font-semibold text-foreground'>
+        <h3 className='font-heading text-lg font-semibold text-foreground'>
           My Custom Themes
         </h3>
         <p className='text-sm text-muted-foreground'>

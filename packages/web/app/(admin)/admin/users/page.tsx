@@ -201,7 +201,7 @@ export default function AdminUsersPage() {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-3xl font-bold'>Users</h1>
+        <h1 className='font-heading text-3xl font-bold'>Users</h1>
         <p className='text-muted-foreground'>
           Manage user accounts and permissions
         </p>
@@ -329,11 +329,12 @@ export default function AdminUsersPage() {
                           Ban User
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          variant='destructive'
                           onClick={() => {
                             setSelectedUser(user as User);
                             setActionType('delete');
                           }}
-                          className='text-destructive'
+                          className=''
                         >
                           <Icons.trash className='h-4 w-4 mr-2' />
                           Delete User

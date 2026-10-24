@@ -141,7 +141,9 @@ export default function GDLReferencePage() {
   return (
     <div className='mx-auto max-w-2xl px-4 py-12'>
       <div className='mb-8'>
-        <h1 className='text-2xl font-bold mb-2'>Groupi Date Language (GDL)</h1>
+        <h1 className='font-heading text-2xl font-bold mb-2'>
+          Groupi Date Language (GDL)
+        </h1>
         <p className='text-muted-foreground'>
           A shorthand syntax for quickly entering complex date and time options.
           Type GDL directly into the date input field — it&apos;ll be detected
@@ -150,7 +152,7 @@ export default function GDLReferencePage() {
       </div>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-3'>Symbols</h2>
+        <h2 className='font-heading text-lg font-semibold mb-3'>Symbols</h2>
         <div className='grid gap-2'>
           {SYMBOLS.map(s => (
             <div
@@ -173,7 +175,9 @@ export default function GDLReferencePage() {
       </section>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-3'>Day Abbreviations</h2>
+        <h2 className='font-heading text-lg font-semibold mb-3'>
+          Day Abbreviations
+        </h2>
         <div className='flex flex-wrap gap-2'>
           {DAYS.map(d => (
             <div
@@ -190,7 +194,7 @@ export default function GDLReferencePage() {
       </section>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-3'>Time Format</h2>
+        <h2 className='font-heading text-lg font-semibold mb-3'>Time Format</h2>
         <div className='rounded-card bg-card p-4 text-sm space-y-2'>
           <p>
             GDL uses <strong>24-hour time</strong> by default.{' '}
@@ -209,7 +213,9 @@ export default function GDLReferencePage() {
       </section>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-3'>Lists vs Ranges vs Spans</h2>
+        <h2 className='font-heading text-lg font-semibold mb-3'>
+          Lists vs Ranges vs Spans
+        </h2>
         <div className='rounded-card bg-card p-4 text-sm space-y-3'>
           <div className='flex items-start gap-3'>
             <code className='text-purple-300 font-mono shrink-0'>[ ]</code>
@@ -237,10 +243,10 @@ export default function GDLReferencePage() {
       </section>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-4'>Examples</h2>
+        <h2 className='font-heading text-lg font-semibold mb-4'>Examples</h2>
         {categories.map(cat => (
           <div key={cat} className='mb-6'>
-            <h3 className='text-sm font-medium text-muted-foreground mb-2'>
+            <h3 className='font-heading text-sm font-medium text-muted-foreground mb-2'>
               {cat}
             </h3>
             <div className='space-y-1.5'>
@@ -264,7 +270,7 @@ export default function GDLReferencePage() {
       </section>
 
       <section className='mb-10'>
-        <h2 className='text-lg font-semibold mb-3'>Tips</h2>
+        <h2 className='font-heading text-lg font-semibold mb-3'>Tips</h2>
         <ul className='space-y-2 text-sm text-muted-foreground list-disc list-inside'>
           <li>
             If end time is before start, it wraps to the next day:{' '}

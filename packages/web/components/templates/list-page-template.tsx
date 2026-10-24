@@ -48,7 +48,7 @@ const maxWidthClasses = {
 
 export function ListPageTemplate({
   title,
-  presentation,
+  presentation = 'soft',
   subtitle,
   controls,
   children,

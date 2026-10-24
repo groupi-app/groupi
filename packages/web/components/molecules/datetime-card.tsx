@@ -65,7 +65,7 @@ export function DateTimeCard({
   return (
     <Card
       className={cn(
-        'w-fit overflow-hidden border-border shadow-raised',
+        'w-fit overflow-hidden border-border ',
         disabled && 'opacity-60 pointer-events-none',
         className
       )}

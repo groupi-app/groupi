@@ -15,7 +15,7 @@ export function GroupBanManagement({ groupId }: { groupId: Id<'groups'> }) {
   const lift = useLiftGroupBan();
   return (
     <section className='space-y-3' aria-labelledby='group-bans-heading'>
-      <h2 id='group-bans-heading' className='font-semibold'>
+      <h2 id='group-bans-heading' className='font-heading font-semibold'>
         Group bans
       </h2>
       <p className='text-sm text-muted-foreground'>

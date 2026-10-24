@@ -84,9 +84,9 @@ function AccountItem({
 
       {!session.isActive && showRemove && onRemove && !isSwitching && (
         <Button
-          variant='ghost'
+          variant='destructive-ghost'
           size='icon'
-          className='size-6 p-0 hover:bg-destructive/10 hover:text-destructive'
+          className='size-6 p-0'
           onClick={e => {
             e.stopPropagation();
             onRemove();

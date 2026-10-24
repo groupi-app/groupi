@@ -37,7 +37,7 @@ export function GroupOwnershipTransfer({ groupId }: { groupId: Id<'groups'> }) {
       aria-labelledby='group-ownership-heading'
       className='rounded-card border border-border p-4 space-y-3'
     >
-      <h2 id='group-ownership-heading' className='font-semibold'>
+      <h2 id='group-ownership-heading' className='font-heading font-semibold'>
         Group ownership
       </h2>
       <p>{status.explanation}</p>

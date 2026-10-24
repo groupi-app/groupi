@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Information we process</h2>
+        <h2 className='font-heading'>Information we process</h2>
         <p>
           We process account and profile information such as your name, email,
           username, avatar, biography and pronouns; event and group details,
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>How information is used</h2>
+        <h2 className='font-heading'>How information is used</h2>
         <p>
           We use information to operate accounts, events, groups, invitations
           and conversations; deliver requested notifications; maintain
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Visibility and service providers</h2>
+        <h2 className='font-heading'>Visibility and service providers</h2>
         <p>
           Your contributions are available according to the audiences,
           permissions and features you use. Organizers and moderators can access
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Website diagnostics and session replay</h2>
+        <h2 className='font-heading'>Website diagnostics and session replay</h2>
         <p>
           Groupi’s website uses Sentry for error diagnostics, performance
           monitoring and sampled session replay to help troubleshoot problems
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Retention and deletion</h2>
+        <h2 className='font-heading'>Retention and deletion</h2>
         <p>
           We do not apply a single fixed retention period to all user data. You
           can request account deletion through Settings → Account → Danger Zone
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Your choices and requests</h2>
+        <h2 className='font-heading'>Your choices and requests</h2>
         <p>
           You can edit available profile details, manage notification
           preferences and available privacy controls, and disconnect supported
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>Changes and contact</h2>
+        <h2 className='font-heading'>Changes and contact</h2>
         <p>
           Updates will appear on this page with a revised date. Questions about
           this policy can be sent to{' '}
