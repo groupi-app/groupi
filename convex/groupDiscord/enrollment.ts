@@ -65,14 +65,17 @@ export const finish = internalMutation({
   },
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.enrollmentId);
-    if (!row || row.generation !== args.generation) return false;
+    if (!row || row.generation !== args.generation || row.desired !== 'granted')
+      return false;
     const current = await enrollmentAuthorized(ctx, row);
-    if (!current && args.status !== 'blocked') return false;
+    if (!current) return false;
     await ctx.db.patch(row._id, {
       status: args.status,
       error: args.error,
       externalException: args.externalException,
       updatedAt: Date.now(),
+      nextObservationAt: Date.now() + 300000,
+      nextAttemptAt: Date.now(),
       lastObservedAt:
         args.status === 'blocked' ? row.lastObservedAt : Date.now(),
       attempts: row.attempts + 1,
@@ -104,7 +107,9 @@ export const scheduleGrant = internalMutation({
     if (
       !row ||
       row.generation !== args.generation ||
-      row.status === 'connected'
+      row.desired !== 'granted' ||
+      row.status === 'connected' ||
+      !(await enrollmentAuthorized(ctx, row))
     )
       return;
     const nextAttemptAt = Date.now() + (args.delay ?? 0);
@@ -130,6 +135,7 @@ export const claimGrant = internalMutation({
     if (
       !row ||
       row.generation !== args.generation ||
+      row.desired !== 'granted' ||
       row.status !== 'pending' ||
       row.nextAttemptAt > Date.now()
     )
@@ -164,6 +170,25 @@ export const oweCleanup = internalMutation({
     personId: v.optional(v.id('persons')),
   },
   handler: async (ctx, args) => {
+    if (args.personId) {
+      const current = await ctx.db
+        .query('groupDiscordEnrollments')
+        .withIndex('by_group_person', q =>
+          q.eq('groupId', args.groupId).eq('personId', args.personId!)
+        )
+        .unique();
+      // A newer explicit consent owns this exact target. Creating cleanup before replacement
+      // blocks it transactionally; observing replacement first must preserve its authorized access.
+      if (
+        current &&
+        current.generation > args.generation &&
+        current.guildId === args.guildId &&
+        current.discordUserId === args.discordUserId &&
+        current.roleId === args.roleId &&
+        (await enrollmentAuthorized(ctx, current))
+      )
+        return null;
+    }
     return oweRoleCleanup(ctx, args);
   },
 });
@@ -192,6 +217,7 @@ export const completeCompensation = internalMutation({
       await ctx.db.patch(cleanupId, {
         observed: 'absent',
         status: 'completed',
+        error: undefined,
         updatedAt: Date.now(),
       });
   },

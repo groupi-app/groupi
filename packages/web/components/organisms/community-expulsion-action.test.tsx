@@ -35,10 +35,12 @@ it('shows committed exclusion separately from blocked Organizer cleanup', () => 
     />
   );
   expect(
-    screen.getByText('Exclusion committed. Cleanup blocked.')
+    screen.getByText('Exclusion committed. Event cleanup blocked.')
   ).toBeInTheDocument();
   expect(
-    screen.getByText('Resolve protected Organizer ownership before cleanup.')
+    screen.getByText(
+      'Resolve protected Organizer ownership before Event cleanup.'
+    )
   ).toBeInTheDocument();
   expect(screen.queryByText(/completed/i)).not.toBeInTheDocument();
 });
@@ -65,11 +67,11 @@ it('retries an uncertain cleanup with the original operation and generation', as
     />
   );
   fireEvent.click(
-    screen.getByRole('button', { name: 'Resume cleanup for Member' })
+    screen.getByRole('button', { name: 'Resume Event cleanup for Member' })
   );
   await screen.findByRole('alert');
   fireEvent.click(
-    screen.getByRole('button', { name: 'Resume cleanup for Member' })
+    screen.getByRole('button', { name: 'Resume Event cleanup for Member' })
   );
   await waitFor(() => expect(resume).toHaveBeenCalledTimes(2));
   expect(resume.mock.calls[1][0]).toEqual(resume.mock.calls[0][0]);
@@ -78,4 +80,33 @@ it('retries an uncertain cleanup with the original operation and generation', as
     groupId: 'group',
     personId: 'person',
   });
+});
+
+it('labels completed Event cleanup without claiming Discord access removal is complete', () => {
+  vi.mocked(useQuery).mockReturnValue({
+    outcome: 'committed',
+    exclusion: 'active',
+    cleanup: 'complete',
+    generation: 1,
+    conflicts: [],
+  });
+  render(
+    <CommunityExpulsionAction
+      groupId={'group' as Id<'groups'>}
+      personId={'person' as Id<'persons'>}
+      name='Member'
+    />
+  );
+  expect(
+    screen.getByText('Exclusion committed. Event cleanup complete.')
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Discord role removal runs separately/)
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Reinstate Member' }));
+  expect(
+    screen.getByText(
+      /Pending Discord role cleanup continues after reinstatement/
+    )
+  ).toBeInTheDocument();
 });

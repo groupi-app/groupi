@@ -71,14 +71,34 @@ export default defineSchema({
     error: v.optional(v.string()),
     externalException: v.optional(v.string()),
     grantAttemptedAt: v.optional(v.number()),
+    nextObservationAt: v.optional(v.number()),
+    observationError: v.optional(v.string()),
     startedAt: v.number(),
     updatedAt: v.number(),
     lastObservedAt: v.optional(v.number()),
     attempts: v.number(),
     nextAttemptAt: v.number(),
   })
+    .index('by_group', ['groupId'])
+    .index('by_guild_identity', ['guildId', 'discordUserId'])
+    .index('by_observation', ['nextObservationAt'])
     .index('by_group_person', ['groupId', 'personId'])
     .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
+  groupDiscordAuditStreams: defineTable({
+    guildId: v.string(),
+    action: v.number(),
+    cursor: v.string(),
+    overlapCursor: v.optional(v.string()),
+    observedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+  }).index('by_guild_action', ['guildId', 'action']),
+  groupDiscordAuditEntries: defineTable({
+    guildId: v.string(),
+    entryId: v.string(),
+    expiresAt: v.number(),
+  })
+    .index('by_guild_entry', ['guildId', 'entryId'])
+    .index('by_expiry', ['expiresAt']),
   groupDiscordConnections: defineTable(discordConnectionFields)
     .index('by_group', ['groupId'])
     .index('by_guild', ['guildId']),
@@ -115,6 +135,16 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_group', ['groupId'])
+    .index('by_group_status', ['groupId', 'status'])
+    .index('by_group_person', ['groupId', 'personId', 'status'])
+    .index('by_target_status', ['guildId', 'discordUserId', 'roleId', 'status'])
+    .index('by_target', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+    ])
     .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
   ...delegatedTables,
   communityOperationReceipts: defineTable({

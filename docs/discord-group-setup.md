@@ -7,6 +7,7 @@ Source behavior for manager setup and explicit member Role access in [issue #405
 - [Setup contract](#setup-contract)
 - [Lifecycle and verification gates](#lifecycle-and-verification-gates)
 - [Explicit member Connect](#explicit-member-connect)
+- [Role eligibility and moderation lifecycle](#role-eligibility-and-moderation-lifecycle)
 
 ## Setup contract
 
@@ -18,7 +19,7 @@ The authenticated manager query subscribes to `pending`, `active` or `blocked` c
 
 ## Lifecycle and verification gates
 
-`groupDiscordCleanup` has independent lifetime: its Group reference is a historical string, and each obligation carries server, mode, identity, role, generation, desired outcome, observed state and retry status. Group/configuration deletion must never cascade-delete owed removals. The table establishes persistence ownership; enrollment, revocation, cleanup workers, handback and setup recovery belong to the subsequent lifecycle slices. No membership effects are performed synchronously by setup.
+`groupDiscordCleanup` has independent lifetime: its Group reference is a historical string, and each obligation carries server, mode, identity, role, generation, desired outcome, observed state and retry status. Group/configuration deletion must never cascade-delete owed removals. The table establishes persistence ownership; enrollment and Role revocation/cleanup are implemented below, while handback and setup recovery remain subsequent lifecycle slices. No membership effects are performed synchronously by setup.
 
 Generation starts at one. Later reconfiguration must invalidate old grant authority and create a fresh generation before enrollment can resume. A process interruption after reservation remains visibly pending; a known setup failure remains blocked. Do not automatically repeat uncertain role creation. Discord provides no role-creation idempotency key, so a lost creation response requires staff resolution rather than pretending the external write failed.
 
@@ -35,3 +36,13 @@ Connect checks current membership, required onboarding and Discord ban state. Jo
 Initial grant intents persist with enrollment and connection generations, desired access, attempt lease, retry due time and observed status. Bot-only scheduled work retries transient failures, honors provider retry delay, stops repeated permission failures and checks current eligibility/linked identity before and after provider writes. Duplicate jobs converge through targeted role PUT and observed membership. A stale or ambiguous successful grant records its immutable cleanup target before compensation. Cleanup obligations outlive the enrollment. A successful compensation records completion; uncertain or denied compensation remains pending for the later lifecycle workers.
 
 This is not a production rollout. Ongoing moderation observation, audit ingestion, revocation/identity-retirement/handback, shared global rate-limit recovery and cleanup dispatch remain release gates in the subsequent lifecycle tickets. The initial-grant worker does not establish an atomic ordering with Discord staff actions or complete moderation history. Deterministic API/provider and hosted-auth tests establish the source contract; live Discord, signed-in browser/device and assistive-technology acceptance remain unverified.
+
+## Role eligibility and moderation lifecycle
+
+The [#407](https://github.com/groupi-app/groupi/issues/407) source slice invalidates Role enrollment inside the owning Group leave, removal, ban and coordinated-exclusion transactions. Required questionnaire reconfiguration schedules a paginated eligibility pass, including members who previously completed onboarding. Each invalidation snapshots the exact server, identity, dedicated role and generations before fencing old grants. Completing onboarding or returning to a Group requires another explicit Connect. Server-owner or Administrator exceptions describe independent access; they never exempt the dedicated role from cleanup.
+
+One shared `groupDiscord.reconcile` dispatcher runs every minute. Each tick claims at most 25 due cleanup/observation records, prioritizing cleanup, and checks enrolled identities rather than scanning Discord population. Role cleanup uses only the dedicated member-role DELETE and confirms absence through a targeted member read. It never kicks, bans, replaces the role array or changes unrelated roles. Permission failures, rate limits and uncertain observations remain visible and retryable. Independent cleanup records continue after configuration or Group deletion. Retained handed-back enrollments are excluded from observation.
+
+Moderation observation combines targeted state reads with persisted guild/action audit cursors for kicks, bans and role changes. Forward and ten-minute overlap passes each read at most one 100-entry page per action per invocation. A full page persists its cursor and blocks grants until a later pass catches up. Entry deduplication and enrollment start times keep duplicate/old moderation from authorizing automatic restoration or invalidating newer consent. External removal followed by restoration between snapshots still invalidates the managed enrollment when its audit entry is observed. While an enrollment is still managed and Group-ineligible, restored dedicated-role access is removed again; eligible staff-restored access is left for staff and requires fresh Connect before managed enrollment resumes.
+
+The normal observation target is five minutes; backlog or outages can delay it. Member status exposes last successful observation, observation failures and pending cleanup. Snapshot and audit processing do not provide atomic ordering with Discord staff changes. Discord audit publication has no documented delay bound, and the bounded overlap does not prove complete history. Shared global throttling, retained-history coverage-gap recovery, deeper overlap sweeps and preference-aware manager notifications remain #411 work on this same reconciler. Identity retirement and warned teardown remain #408–#409. No rollout is authorized before #409–#411 and controlled nonproduction Discord/browser/device acceptance are complete.

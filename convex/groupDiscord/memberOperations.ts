@@ -42,19 +42,29 @@ export async function oweRoleCleanup(
     personId?: Id<'persons'>;
   }
 ) {
-  const existing = await ctx.db
+  const existingObligation = await ctx.db
     .query('groupDiscordCleanup')
-    .withIndex('by_group', q => q.eq('groupId', String(row.groupId)))
-    .collect();
-  const existingObligation = existing.find(
-    o =>
-      o.generation === (row.connectionGeneration ?? row.generation) &&
-      o.enrollmentGeneration === row.generation &&
-      o.discordUserId === row.discordUserId &&
-      o.roleId === row.roleId &&
-      o.status !== 'completed'
-  );
-  if (existingObligation) return existingObligation._id;
+    .withIndex('by_target', q =>
+      q
+        .eq('guildId', row.guildId)
+        .eq('discordUserId', row.discordUserId)
+        .eq('roleId', row.roleId)
+        .eq('generation', row.connectionGeneration ?? row.generation)
+        .eq('enrollmentGeneration', row.generation)
+    )
+    .filter(q => q.eq(q.field('groupId'), String(row.groupId)))
+    .first();
+  if (existingObligation) {
+    if (existingObligation.status === 'completed')
+      await ctx.db.patch(existingObligation._id, {
+        status: 'pending',
+        observed: 'unknown',
+        error: undefined,
+        nextAttemptAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    return existingObligation._id;
+  }
   return ctx.db.insert('groupDiscordCleanup', {
     guildId: row.guildId,
     discordUserId: row.discordUserId,
@@ -105,6 +115,47 @@ export async function enrollmentAuthorized(
   }
 }
 
+/** Bound reads to the member and exact provider targets, excluding completed history. */
+async function pendingCleanupFor(
+  ctx: QueryCtx | MutationCtx,
+  groupId: Id<'groups'>,
+  personId: Id<'persons'>,
+  guildId: string,
+  discordUserId?: string,
+  roleId?: string
+) {
+  for (const status of ['pending', 'blocked'] as const) {
+    const obligation = await ctx.db
+      .query('groupDiscordCleanup')
+      .withIndex('by_group_person', q =>
+        q
+          .eq('groupId', String(groupId))
+          .eq('personId', String(personId))
+          .eq('status', status)
+      )
+      .first();
+    if (obligation) return obligation;
+  }
+  if (discordUserId) {
+    for (const targetRole of roleId ? [roleId, undefined] : [undefined]) {
+      for (const status of ['pending', 'blocked'] as const) {
+        const obligation = await ctx.db
+          .query('groupDiscordCleanup')
+          .withIndex('by_target_status', q =>
+            q
+              .eq('guildId', guildId)
+              .eq('discordUserId', discordUserId)
+              .eq('roleId', targetRole)
+              .eq('status', status)
+          )
+          .first();
+        if (obligation) return obligation;
+      }
+    }
+  }
+  return null;
+}
+
 /** A verified native or delegated actor can enroll only their own currently linked identity. */
 export async function beginEnrollment(
   ctx: MutationCtx,
@@ -116,6 +167,19 @@ export async function beginEnrollment(
   if (!(await hasLinkedIdentity(ctx, personId, discordUserId)))
     throw new Error('Confirm the linked Discord identity before connecting.');
   const connection = await eligibleConnection(ctx, groupId, personId);
+  if (
+    await pendingCleanupFor(
+      ctx,
+      groupId,
+      personId,
+      connection.guildId,
+      discordUserId,
+      connection.roleId!
+    )
+  )
+    throw new Error(
+      'Previous Discord access cleanup is still pending. Try Connect again after cleanup completes.'
+    );
   const old = await ctx.db
     .query('groupDiscordEnrollments')
     .withIndex('by_group_person', q =>
@@ -125,11 +189,50 @@ export async function beginEnrollment(
   if (
     !fresh &&
     old &&
+    old.desired === 'granted' &&
     old.discordUserId === discordUserId &&
     old.connectionGeneration === connection.generation &&
     ['pending', 'connected', 'screening'].includes(old.status)
   )
     return old;
+  if (
+    old &&
+    (old.discordUserId !== discordUserId ||
+      old.connectionGeneration !== connection.generation)
+  ) {
+    const completed = await ctx.db
+      .query('groupDiscordCleanup')
+      .withIndex('by_target', q =>
+        q
+          .eq('guildId', old.guildId)
+          .eq('discordUserId', old.discordUserId)
+          .eq('roleId', old.roleId)
+          .eq('generation', old.connectionGeneration)
+          .eq('enrollmentGeneration', old.generation)
+      )
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .first();
+    if (!completed) {
+      await oweRoleCleanup(ctx, old);
+      await ctx.db.patch(old._id, {
+        desired: 'removed',
+        status: 'blocked',
+        error:
+          'Previous Discord access cleanup is still pending. Try Connect again after cleanup completes.',
+        updatedAt: Date.now(),
+        nextObservationAt: Date.now(),
+      });
+      return (await ctx.db.get(old._id))!;
+    }
+  }
+  if (
+    old?.grantAttemptedAt &&
+    old.desired === 'removed' &&
+    old.nextAttemptAt > Date.now()
+  )
+    throw new Error(
+      'Previous Discord access cleanup is waiting for an in-flight grant. Try Connect again shortly.'
+    );
   const data = {
     groupId,
     personId: personId,
@@ -144,14 +247,10 @@ export async function beginEnrollment(
     updatedAt: Date.now(),
     attempts: 0,
     nextAttemptAt: Date.now(),
+    nextObservationAt: Date.now() + 300000,
   };
   const id = old?._id ?? (await ctx.db.insert('groupDiscordEnrollments', data));
   if (old) {
-    if (
-      old.discordUserId !== discordUserId ||
-      old.connectionGeneration !== connection.generation
-    )
-      await oweRoleCleanup(ctx, old);
     await ctx.db.replace(id, data);
   }
   return (await ctx.db.get(id))!;
@@ -187,6 +286,14 @@ export async function getMemberStatus(
     a => a.providerId === 'discord'
   );
   const eligible = await canAccessGroupMemberContent(ctx, groupId, personId);
+  const pendingCleanup = await pendingCleanupFor(
+    ctx,
+    groupId,
+    personId,
+    connection.guildId,
+    linkedAccount?.accountId,
+    connection.roleId
+  );
   const current =
     !enrollment ||
     (eligible &&
@@ -201,12 +308,19 @@ export async function getMemberStatus(
     linkedDiscordUserId: linkedAccount?.accountId,
     eligible,
     lastObservedAt: enrollment?.lastObservedAt,
-    status: !current
+    observationError: enrollment?.observationError,
+    cleanupPending: !!pendingCleanup,
+    status: pendingCleanup
       ? ('blocked' as const)
-      : (enrollment?.status ?? ('not_connected' as const)),
-    error: !current
-      ? 'Group eligibility, connection or linked identity changed. Connect again when eligible.'
-      : enrollment?.error,
+      : !current
+        ? ('blocked' as const)
+        : (enrollment?.status ?? ('not_connected' as const)),
+    error: pendingCleanup
+      ? (pendingCleanup.error ??
+        'Previous Discord access cleanup is still pending. Try Connect again after cleanup completes.')
+      : !current
+        ? 'Group eligibility, connection or linked identity changed. Connect again when eligible.'
+        : (enrollment?.error ?? enrollment?.observationError),
     externalException: enrollment?.externalException,
   };
 }
