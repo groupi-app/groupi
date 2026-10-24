@@ -28,19 +28,20 @@ controls remain functional exceptions; they need not pretend to be paper.
 ## Component decisions
 
 “Retain” describes a defensible existing treatment. “Refine” identifies the
-current gallery iteration. “Compare” remains an explicit user decision.
+current gallery iteration. “Selected” records an explicit user visual decision.
 
 | Component                          | Alignment and decision                                                                                                                                                                                                                                     |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Filled Button                      | **Refine:** die-cut action sticker, persistent white edge, colored backing. Preserve hover depression, smooth color transition and stable text polarity.                                                                                                   |
 | Outline / ghost / link actions     | **Retain:** printed utility rather than another raised object. Distinct keyline, hover patch, underline and focus communicate their jobs. Cancel needs no sticker rim.                                                                                     |
 | Icon actions / action menu trigger | **Retain:** printed tool mark with a reachable hit area and contextual name. Principal Add actions may be filled stickers; every ellipsis need not be.                                                                                                     |
-| Badge / status                     | **Compare:** a status ink stamp and a flat cut-out label are both plausible. Current pastel pills were generic; do not assume all status and category labels have the same material role. Show identical states in both treatments.                        |
+| Badge / status                     | **Selected:** flat cut-out labels. Compact semantic fill, readable glyph/text and a crisp white cut edge; no action backing or lift.                                                                                                                       |
 | Input                              | **Retain:** a writable blank, with a calm sunken fill, rounded frame and strong focus/error feedback. Perforation or a white action rim would obscure that job.                                                                                            |
 | Textarea                           | **Retain:** the same writing family at a larger scale. Avoid decorative ruling behind user text or a separate notebook-field vocabulary.                                                                                                                   |
 | Label / helper / error text        | **Retain:** printed prompts and corrections next to their controls. Consistent ink weight and an explicit error glyph matter more than ornament.                                                                                                           |
 | Checkbox                           | **Retain:** an ink-marked checklist box. Check and Minus remain crisp, correctly announced and stable in size.                                                                                                                                             |
 | Switch                             | **Retain as a pragmatic exception:** recognizable mechanical slider. Its end position and label explain the persistent setting; a fake paper toggle would add learning cost.                                                                               |
+| Tabs                               | **Selected:** attached index tabs. The selected tab joins its paper content panel; inactive destinations remain distinct, with visible keyboard focus and responsive wrapping.                                                                             |
 | Progress                           | **Retain:** a filled progress strip with honest value semantics. Stage divisions require actual stages; decorative perforated ticks would imply structure that does not exist.                                                                             |
 | Skeleton                           | **Retain:** temporary content silhouettes, not finished stickers. Keep quiet geometry and remove pulse under reduced motion.                                                                                                                               |
 | Avatar                             | **Refine:** a photo sticker is a strong identity metaphor. Show a white cut edge around both portrait and initials, including a compact stack in dark mode.                                                                                                |
@@ -53,25 +54,29 @@ current gallery iteration. “Compare” remains an explicit user decision.
 | Dropdown menu                      | **Refine:** compact floating action slip, themed interior and white cut edge. Icons and genuine action groups supply hierarchy; do not perforate every item.                                                                                               |
 | Dialog                             | **Refine:** foreground working sheet with a distinct cut edge and title. Existing overlay establishes modality; the sheet needs no button-like backing or motion.                                                                                          |
 | Confirmation                       | **Refine:** decision sheet with one quiet seam between explanation and actions. Pending/error/retry context remains readable and stable; danger is not celebratory.                                                                                        |
-| Alert                              | **Compare:** quiet annotation strip versus an attached note with a status marker. The current raised panel is generic and too bulky. Show the same corrective message in both.                                                                             |
+| Alert                              | **Selected:** annotation strip. Quiet semantic fill and a narrow ink edge keep the notice close to its task without a raised card or attached sticker.                                                                                                     |
 | Toast                              | **Refine:** a compact floating result label with a cut edge and semantic glyph. Preserve notification delivery, announcements, actions and dismissal; no perforation or confetti.                                                                          |
 | EmptyState                         | **Refine:** meaningful illustration sticker, clear heading and one next action. The previous soft gray circle removed too much identity. It needs no enclosing card by default.                                                                            |
 | LoadingState                       | **Retain as honest status:** a physical metaphor adds little. A compact readable label and real content silhouettes are enough; do not invent a detachable loading artifact.                                                                               |
 | List template / section layout     | **Review in composition:** album ground with one clear featured object and quieter supporting content. Repeated equal-weight gallery sections are documentation, not a page-layout recommendation. Feature restructuring retains its separate review gate. |
 | PaperDivider                       | **Refine:** reusable solid/perforated seam. Decorative by default; semantic orientation only when the separator carries information. No pointer capture or extra reading-order noise.                                                                      |
 
-## Alternatives to review together
+## Selected material directions
 
-The actual-component Material Studies story should compare three decisions:
+On October 24 the user selected all three directions from the actual-component
+comparison:
 
-1. **Status:** compact ink stamp versus flat die-cut label, using the same states.
-2. **Tabs:** attached index tabs versus quiet ink-underline navigation, using the
-   same destinations and a long label at narrow widths.
-3. **Alerts:** annotation strip versus attached note, using the same error and
-   correction text.
+1. **Status:** flat cut-out labels.
+2. **Tabs:** attached index tabs.
+3. **Alerts:** annotation strips.
 
-These are proposals, not additional application defaults. Keep the choice set
-small; do not ask for a separate visual vote on every label and primitive.
+Promote these into the existing canonical opt-in components, rather than keeping
+selected styling in a gallery-only implementation. The review story identifies
+these selections; rejected alternatives may remain inside an explicit comparison
+disclosure. Keep the separate long-label stress example available.
+
+This selects those three component treatments. It does not imply approval of the
+entire gallery or start application-wide migration or Groups restructuring.
 
 Validate the refinements in light/dark/custom themes, actual overlays, keyboard
 focus, 320/390 px layouts, enlarged text and reduced motion. Recheck white edges
