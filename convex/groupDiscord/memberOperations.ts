@@ -210,6 +210,7 @@ export async function beginEnrollment(
     return old;
   if (
     old &&
+    !old.handedBack &&
     !(old.mode === 'membership' && old.externalException) &&
     (old.discordUserId !== discordUserId ||
       old.connectionGeneration !== connection.generation)
@@ -222,9 +223,13 @@ export async function beginEnrollment(
           .eq('discordUserId', old.discordUserId)
           .eq('roleId', old.roleId)
           .eq('generation', old.connectionGeneration)
-          .eq('enrollmentGeneration', old.generation)
       )
-      .filter(q => q.eq(q.field('status'), 'completed'))
+      .filter(q =>
+        q.and(
+          q.eq(q.field('status'), 'completed'),
+          q.eq(q.field('groupId'), String(groupId))
+        )
+      )
       .first();
     if (!completed) {
       await oweAccessCleanup(ctx, old);
@@ -240,6 +245,7 @@ export async function beginEnrollment(
     }
   }
   if (
+    !old?.handedBack &&
     old?.grantAttemptedAt &&
     old.desired === 'removed' &&
     old.nextAttemptAt > Date.now()

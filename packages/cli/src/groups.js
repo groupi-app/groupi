@@ -78,7 +78,7 @@ export async function listGroups(profile, key, options) {
   } while (cursor);
   throw new CliError('INVALID_RESPONSE', 'Incomplete Group page.', 5);
 }
-/** @param {Profile} profile @param {string} key @param {'create'|'edit'|'delete'} operation @param {string|undefined} id @param {{name?:string,description?:string|null,image?:string|null}} input @param {{yes?:boolean,json?:boolean}} options */
+/** @param {Profile} profile @param {string} key @param {'create'|'edit'|'delete'} operation @param {string|undefined} id @param {{name?:string,description?:string|null,image?:string|null}} input @param {{yes?:boolean,json?:boolean,acknowledgeDiscordHandback?:boolean}} options */
 export async function changeGroup(
   profile,
   key,
@@ -119,7 +119,9 @@ export async function changeGroup(
   const value = await mutateApi(
     profile,
     key,
-    operation === 'create' ? '/groups' : `/groups/${identifier(id ?? '')}`,
+    operation === 'create'
+      ? '/groups'
+      : `/groups/${identifier(id ?? '')}${operation === 'delete' && options.acknowledgeDiscordHandback ? '?acknowledgeDiscordHandback=true' : ''}`,
     {
       method:
         operation === 'create'

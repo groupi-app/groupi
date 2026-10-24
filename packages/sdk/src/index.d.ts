@@ -4198,7 +4198,10 @@ export class Groupi {
   ): Promise<null>;
   /** Explicitly delete a Group as owner */
   explicitlyDeleteAGroupAsOwner(
-    input: { path: { groupId: string } },
+    input: {
+      path: { groupId: string };
+      query?: { acknowledgeDiscordHandback?: 'true' | 'false' };
+    },
     options?: RequestOptions
   ): Promise<null>;
   /** Read own community context */

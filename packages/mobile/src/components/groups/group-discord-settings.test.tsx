@@ -13,7 +13,10 @@ vi.mock('uniwind', () => ({
   withUniwind: (component: unknown) => component,
   useCSSVariable: () => 'transparent',
 }));
-import { GroupDiscordSettings } from './group-discord-settings';
+import {
+  GroupDiscordSettings,
+  GroupDiscordRetiredStatus,
+} from './group-discord-settings';
 const require = createRequire(import.meta.url);
 interface Node {
   type: unknown;
@@ -90,6 +93,98 @@ it('lets managers explicitly adopt a role and set a landing channel', async () =
     roleId: '456',
     landingChannelId: '789',
   });
+  await act(async () => mounted.unmount());
+  await client.close();
+});
+it('requires explicit handback acknowledgement before native disable', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildId: '123',
+      guildName: 'Community',
+      mode: 'membership',
+      generation: 1,
+      status: 'active',
+    }),
+  }));
+  const mutation = vi.spyOn(client, 'mutation').mockResolvedValue(null);
+  let mounted!: Mounted;
+  await act(async () => {
+    mounted = renderer.create(
+      createElement(
+        ConvexProvider,
+        { client },
+        createElement(GroupDiscordSettings, {
+          groupId: 'group-one' as Id<'groups'>,
+        })
+      )
+    );
+  });
+  const button = (text: string) =>
+    mounted.root.findAll(
+      n => n.props.children === text && typeof n.props.onPress === 'function'
+    )[0];
+  expect(button('Disable Discord connection').props.disabled).toBe(true);
+  await act(async () => {
+    (button('I understand Discord handback').props.onPress as () => void)();
+  });
+  await act(async () => {
+    (button('Disable Discord connection').props.onPress as () => void)();
+  });
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'groupDiscord/mutations:disable'
+  );
+  expect(mutation.mock.calls[0][1]).toEqual({
+    groupId: 'group-one',
+    acknowledgeHandback: true,
+  });
+  await act(async () => mounted.unmount());
+  await client.close();
+});
+
+it('announces retired cleanup on the native old Group link', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  const watch = vi
+    .spyOn(client, 'watchQuery')
+    .mockImplementation(() => ({
+      onUpdate: () => () => {},
+      journal: () => undefined,
+      localQueryResult: () => ({
+        status: 'disabled',
+        groupDeleted: true,
+        cleanupPending: true,
+        synchronizationError: 'Discord cleanup blocked by hierarchy.',
+      }),
+    }));
+  let mounted!: Mounted;
+  await act(async () => {
+    mounted = renderer.create(
+      createElement(
+        ConvexProvider,
+        { client },
+        createElement(GroupDiscordRetiredStatus, {
+          groupId: 'group-one' as Id<'groups'>,
+        })
+      )
+    );
+  });
+  expect(watch.mock.calls[0][1]).toEqual({
+    groupId: 'group-one',
+    retiredOnly: true,
+  });
+  expect(
+    mounted.root.findAll(
+      n =>
+        n.props.accessibilityLiveRegion === 'polite' &&
+        n.props.children === 'Discord cleanup blocked by hierarchy.'
+    ).length
+  ).toBeGreaterThan(0);
   await act(async () => mounted.unmount());
   await client.close();
 });

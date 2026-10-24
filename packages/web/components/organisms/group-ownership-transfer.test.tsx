@@ -244,6 +244,6 @@ it('acceptance reports the terminal outcome and retirement requires explicit con
   await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/g/group'));
   expect(writes.at(-1)).toEqual({
     name: 'groups/mutations:deleteGroup',
-    args: { groupId },
+    args: { groupId, acknowledgeDiscordHandback: true },
   });
 });

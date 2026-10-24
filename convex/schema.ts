@@ -54,6 +54,7 @@ import { v } from 'convex/values';
 
 export default defineSchema({
   groupDiscordEnrollments: defineTable({
+    handedBack: v.optional(v.boolean()),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     discordUserId: v.string(),
