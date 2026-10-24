@@ -1,0 +1,5 @@
+/* Storybook's unlayered heading reset otherwise wins over Tailwind utilities.
+ * Restore the application's real font token within the Groupi preview only. */
+[data-groupi-preview] .font-heading {
+  font-family: var(--font-heading);
+}
