@@ -1,5 +1,11 @@
 # Current Integration Status
 
+## Discord composed acceptance — source checkpoint as of 2026-10-23
+
+- Source branch `codex/discord-group-413`, based on merged recovery/delegated integration `a59e6f09355468619a71a606a508b564bcb05739`. New focused tests pass: both-mode native/delegated REST/JavaScript SDK/hosted status through identity retirement, denied cleanup and recovery; authenticated Event Discord scheduled-event create/update/delete effects with a coexisting Group connection and independent handback.
+- Only Discord HTTP is replaced at the provider boundary. Short-lived delegated authority expires during the cleanup retry and requires fresh authorization/hosted consent; the tracer preserves that safeguard. Event evidence observes actual provider effects and public sync status, not scheduled queue metadata. Legacy Event transport is unchanged and remains outside Group-provider global retry pauses.
+- Root-owned independent review fixes and the final once-only full-repository test run remain pending. No repository-wide pass is claimed for this acceptance slice yet. No runtime/build/deploy, live guild mutation, new resource or extra release note was performed. Real Discord/browser/device/accessibility acceptance and the additional CLI release-note approval remain open gates.
+
 ## Discord recovery — source evidence as of 2026-10-23
 
 - Source branch `codex/discord-group-411`, based on integration `b47ae0fd6ce8cfc81fbc014a03bd90b5ad93184a` including the delegated API/SDK slice. The same bounded dispatcher reserves observation capacity during cleanup backlog, preserves global and per-guild route-family retry windows, and exposes member/manager observation failures truthfully. Expired 45-day moderation coverage invalidates old grant authority; initial pending grants cannot resume across that gap.
