@@ -119,6 +119,15 @@ export async function loadJourney(
 }
 export const inspect = query({
   args: { state: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      groupId: v.id('groups'),
+      generation: v.number(),
+      appName: v.string(),
+      status: v.union(memberStatus, v.null()),
+    })
+  ),
   handler: async (ctx, { state }) => {
     let row;
     try {
