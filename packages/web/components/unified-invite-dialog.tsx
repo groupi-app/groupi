@@ -173,14 +173,14 @@ function AnimatedTabsContent({
       className='flex-1 flex flex-col min-h-0'
     >
       <div hidden={editorActive}>
-        <TabsList className='grid w-full grid-cols-4'>
+        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4'>
           <TabsTrigger
             value='link'
             aria-label='Link'
             className='flex items-center gap-1.5'
           >
             <Link2 className='size-4' />
-            <span className='hidden sm:inline'>Link</span>
+            <span>Link</span>
           </TabsTrigger>
           <TabsTrigger
             value='email'
@@ -188,7 +188,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <Mail className='size-4' />
-            <span className='hidden sm:inline'>Email</span>
+            <span>Email</span>
           </TabsTrigger>
           <TabsTrigger
             value='username'
@@ -196,7 +196,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <AtSign className='size-4' />
-            <span className='hidden sm:inline'>Username</span>
+            <span>Username</span>
           </TabsTrigger>
           <TabsTrigger
             value='list'
@@ -204,7 +204,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <Users className='size-4' />
-            <span className='hidden sm:inline'>From list</span>
+            <span>From list</span>
           </TabsTrigger>
         </TabsList>
       </div>

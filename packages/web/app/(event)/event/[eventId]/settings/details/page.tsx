@@ -22,6 +22,7 @@ export default function EventSettingsDetailsPage(props: {
       title='Details'
       description='Edit event title, description, location, visibility, and admission.'
       backHref={`/event/${eventId}/settings`}
+      backLabel='Event settings'
       maxWidth='md'
     >
       {!event ? (
