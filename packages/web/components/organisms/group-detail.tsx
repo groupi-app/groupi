@@ -290,12 +290,12 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         )}
         {group.viewerRole === 'OWNER' && (
           <p className='text-sm text-muted-foreground'>
-            To leave, transfer ownership or{' '}
+            Owners must transfer ownership before leaving.{' '}
             <Link
               className='text-primary underline'
-              href={`/groups/${groupId}/settings/ownership#delete-group`}
+              href={`/groups/${groupId}/settings/ownership`}
             >
-              delete the Group
+              Manage ownership
             </Link>
             .
           </p>

@@ -3,6 +3,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useGroupDiscordEnrollment } from '@/hooks/convex/use-group-discord';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
+import { ContextHelp } from '@/components/molecules/context-help';
 
 export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
   const form = useGroupDiscordEnrollment({ groupId }, async () => {
@@ -22,25 +23,60 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
   if (!status) return null;
   return (
     <section
-      className='rounded-card border border-border p-4 space-y-4'
+      className='rounded-card border border-border p-4 space-y-3'
       aria-label='Your Discord access'
     >
-      <h2 className='text-xl font-semibold'>Your Discord access</h2>
-      <p>{status.guildName}</p>
-      {status.linkedDiscordUserId && (
-        <p>Linked Discord account ID: {status.linkedDiscordUserId}</p>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <h2 className='font-heading text-lg font-semibold'>
+            Your Discord access
+          </h2>
+          <p className='text-sm text-muted-foreground'>{status.guildName}</p>
+        </div>
+        <ContextHelp label='About your Discord access'>
+          <div className='space-y-3'>
+            <p>
+              Linking your Discord account does not connect it to this Group’s
+              server. Select Connect Discord to give consent.
+            </p>
+            <p>
+              {status.mode === 'membership'
+                ? 'Discord staff must remove any Discord ban before you can reconnect. Groupi cannot remove server owners or accounts at or above the bot’s role.'
+                : 'Discord staff control bans and server rules. Other roles and channel permissions can preserve independent Discord access.'}
+            </p>
+            <p>
+              If the server requires membership screening, complete it in
+              Discord to finish connecting. Discord access does not grant Group
+              membership or management permissions.
+            </p>
+            {status.externalException && (
+              <p>
+                Externally managed access: {status.externalException}. Discord
+                staff manage this account’s access.
+              </p>
+            )}
+          </div>
+        </ContextHelp>
+      </div>
+      {status.linked && (
+        <p className='text-sm text-muted-foreground'>
+          {status.linkedDiscordUserId
+            ? `Linked Discord account ID: ${status.linkedDiscordUserId}`
+            : 'Discord account linked.'}
+        </p>
       )}
-      <p>
-        {status.linked
-          ? 'Your Discord account is linked. Linking an account does not enroll you in this Group’s Discord access.'
-          : 'Connect your Discord account to request access to this Group’s server.'}
-      </p>
-      <p>
-        {status.mode === 'membership'
-          ? 'By selecting Connect Discord, you allow Groupi to join you to this server and manage your server membership. When Group access ends, Groupi can remove you from the server. A Group ban or coordinated exclusion can ban your Discord account from this server. Discord staff must review and remove Discord bans before you can connect again.'
-          : 'Connecting lets Groupi join you to this server and manage its dedicated Group role. When Group access ends, Groupi removes that role; your server membership remains. Discord staff control bans and server rules. Other roles and channel permissions can preserve independent Discord access.'}{' '}
-        Complete required Group onboarding before connecting.
-      </p>
+      {(status.status === 'not_connected' || status.status === 'blocked') && (
+        <p className='text-sm leading-relaxed'>
+          {status.mode === 'membership'
+            ? 'Connect joins this server and lets Groupi manage your membership. Losing Group access can remove you from the server; a Group ban or coordinated exclusion can ban your Discord account.'
+            : 'Connect joins this server and lets Groupi manage your Group role. Losing Group access removes that role; you stay in the server.'}
+        </p>
+      )}
+      {status.eligible === false && (
+        <p className='text-sm'>
+          Complete required Group onboarding before connecting.
+        </p>
+      )}
       <p role='status'>
         {status.status === 'not_connected'
           ? 'Not connected to this Group’s Discord.'
@@ -54,11 +90,10 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
       </p>
       {status.error && <p role='alert'>{status.error}</p>}
       {status.externalException && (
-        <p>
-          Externally managed access: {status.externalException}. Discord staff
-          manage this account’s access.
-          {status.mode === 'membership' &&
-            ' Groupi cannot remove server owners or accounts at or above the bot’s role. This exception does not grant Group membership or management permissions.'}
+        <p className='text-sm text-muted-foreground'>
+          {status.externalException.toLowerCase().includes('owner')
+            ? 'Server owner access is managed in Discord.'
+            : 'This account’s access is managed in Discord.'}
         </p>
       )}
       {(status.status === 'not_connected' || status.status === 'blocked') && (
