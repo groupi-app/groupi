@@ -62,7 +62,7 @@ export function ActionMenu({
         >
           {children}
         </div>
-        <DrawerContent>
+        <DrawerContent aria-describedby={undefined}>
           <VisuallyHidden>
             <DrawerTitle>{drawerTitle}</DrawerTitle>
           </VisuallyHidden>

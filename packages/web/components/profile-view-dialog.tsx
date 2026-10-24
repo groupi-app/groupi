@@ -497,6 +497,7 @@ function ProfileActions({
           <TooltipTrigger asChild>
             <div>
               <ActionMenuButton
+                label={`Actions for ${userName}`}
                 onClick={handleMoreClick}
                 onContextMenu={handleContextMenu}
                 className='size-10'

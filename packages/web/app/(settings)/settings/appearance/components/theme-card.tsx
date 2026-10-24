@@ -304,6 +304,7 @@ export function CustomThemeCard({
       {/* Action menu button */}
       {hasActions && (
         <ActionMenuButton
+          label={`Actions for theme ${name}`}
           onClick={e => {
             e.stopPropagation();
             handleMoreClick(e);
