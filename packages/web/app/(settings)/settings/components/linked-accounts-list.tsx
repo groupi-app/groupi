@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -47,6 +49,11 @@ export function LinkedAccountsList({
   const [pendingUnlinkAccountId, setPendingUnlinkAccountId] = useState<
     string | null
   >(null);
+
+  const retirement = useQuery(
+    api.accounts.queries.getDiscordRetirementStatus,
+    {}
+  );
 
   // Use Convex mutation for unlinking accounts
   const unlinkAccountMutation = useUnlinkAccount();
@@ -273,6 +280,19 @@ export function LinkedAccountsList({
 
   return (
     <>
+      {retirement?.pending && (
+        <p role='status'>
+          Previous Discord access cleanup is pending. Replacement access is
+          blocked until cleanup is confirmed. Groupi retries automatically;
+          contact your Group manager if this persists. {retirement.error}
+        </p>
+      )}
+      {retirement?.externallyManaged && (
+        <p>
+          Previous Discord server membership remains externally managed. Ask
+          Discord staff to review access.
+        </p>
+      )}
       <AlertDialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -281,7 +301,9 @@ export function LinkedAccountsList({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {buildRemainingAuthMethodsMessage()} Are you sure you want to
-              unlink this account?
+              unlink this account?{' '}
+              {pendingAccount?.providerId === 'discord' &&
+                'Old managed Discord access will be retired. Replacement access waits for confirmed cleanup.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -311,6 +333,13 @@ export function LinkedAccountsList({
                       <span className='font-medium'>
                         {getProviderDisplayName(account.providerId)}
                       </span>
+                      {account.providerId === 'discord' &&
+                        retirement?.selectedDiscordUserId ===
+                          account.accountId && (
+                          <span className='text-sm text-muted-foreground'>
+                            Used for Group Discord access
+                          </span>
+                        )}
                       <span className='text-sm text-muted-foreground'>
                         {account.providerId.toLowerCase() === 'discord' &&
                         account.username

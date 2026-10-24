@@ -260,6 +260,7 @@ import type * as groupDiscord_contracts from "../groupDiscord/contracts.js";
 import type * as groupDiscord_eligibility from "../groupDiscord/eligibility.js";
 import type * as groupDiscord_enrollment from "../groupDiscord/enrollment.js";
 import type * as groupDiscord_grant from "../groupDiscord/grant.js";
+import type * as groupDiscord_identity from "../groupDiscord/identity.js";
 import type * as groupDiscord_memberOperations from "../groupDiscord/memberOperations.js";
 import type * as groupDiscord_mutations from "../groupDiscord/mutations.js";
 import type * as groupDiscord_oauthConsent from "../groupDiscord/oauthConsent.js";
@@ -684,6 +685,7 @@ declare const fullApi: ApiFromModules<{
   "groupDiscord/eligibility": typeof groupDiscord_eligibility;
   "groupDiscord/enrollment": typeof groupDiscord_enrollment;
   "groupDiscord/grant": typeof groupDiscord_grant;
+  "groupDiscord/identity": typeof groupDiscord_identity;
   "groupDiscord/memberOperations": typeof groupDiscord_memberOperations;
   "groupDiscord/mutations": typeof groupDiscord_mutations;
   "groupDiscord/oauthConsent": typeof groupDiscord_oauthConsent;

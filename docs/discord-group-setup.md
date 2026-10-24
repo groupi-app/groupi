@@ -59,3 +59,29 @@ Connect records known server-owner and unremovable hierarchy exceptions explicit
 The shared dispatcher verifies kick absence through the exact member endpoint and bans through the exact ban endpoint. Unknown ban (`10026`) means unbanned; unknown guild or unavailable permissions never prove absence. Ban escalation remains owed across kick completion, and restored ineligible membership is removed again within the managed scope. Late joined membership after grant authority changes snapshots the old identity/generations and uses that same cleanup dispatcher for compensation. Cleanup survives configuration/Group deletion, and pending old cleanup fences new enrollment.
 
 This remains a source integration slice. Identity retirement (#409), warned teardown (#410), shared recovery/notifications/audit-gap work (#411), and controlled nonproduction Discord/browser/device acceptance remain release gates. No deployed runtime, live guild mutation or production rollout was performed for this slice.
+
+## Discord identity retirement
+
+Unlinking Discord through Groupi account settings or Better Auth's authenticated
+unlink endpoint captures the old managed targets and invalidates grant authority
+before deleting credentials. A successful explicit Discord link selects one managed Discord identity while
+preserving older login accounts and other providers. Replacement callbacks retire
+old managed access before selecting the replacement. Explicit unlink removes only
+the requested login account. Replayed or racing callbacks cannot restore old enrollment authority.
+
+Cleanup uses the existing bot-only dispatcher and immutable guild, identity,
+mode and dedicated-role targets. It retains no member OAuth tokens. Replacement
+Connect waits for every pending or blocked cleanup obligation for the person,
+including obligations in another Group or mode. Cleanup failures remain visible
+in linked-account settings and Group status; Groupi retries automatically after
+bot permissions or provider availability recover. Ask the Group manager to
+resolve persistent bot access or hierarchy failures. Known externally managed
+Server membership stays an explicit exception; Role independent-access warnings
+do not exempt the dedicated role from removal.
+
+Account deletion uses Groupi's ownership-resolution boundary and preserves owed
+cleanup after the Person and credentials are deleted. Better Auth self-deletion
+remains disabled. Its raw admin removal endpoint is rejected with a direction to
+Groupi account resolution because the upstream cascade deletes credentials before
+Groupi can enforce ownership safeguards. No repository caller uses that endpoint.
+These source checks do not establish controlled Discord/browser/device acceptance.

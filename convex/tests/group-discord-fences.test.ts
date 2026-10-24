@@ -83,40 +83,49 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
-it('Connect waits for a pending cleanup of the same person before replacing enrollment', async () => {
-  const { t, owner, groupId } = await setup();
-  await owner.auth.action(api.groupDiscord.actions.configure, {
-    groupId,
-    guildId: '100',
-  });
-  await t.run(async ctx => {
-    await ctx.db.insert('groupDiscordCleanup', {
-      groupId: String(groupId),
-      personId: String(owner.personId),
-      guildId: '100',
-      discordUserId: 'previous-identity',
-      roleId: 'created-role',
-      generation: 1,
-      enrollmentGeneration: 1,
-      mode: 'role',
-      desired: 'role_removed',
-      observed: 'unknown',
-      status: 'pending',
-      attempts: 0,
-      nextAttemptAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  });
-  await expect(
-    owner.auth.action(api.groupDiscord.connect.connect, {
+it.each(['same', 'other'])(
+  'Connect waits for pending cleanup of the same person in $s Group before replacing enrollment',
+  async scope => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
       groupId,
-      consent: true,
-    })
-  ).rejects.toThrow('cleanup');
-  expect(
-    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
-  ).toMatchObject({ status: 'blocked', cleanupPending: true });
-});
+      guildId: '100',
+    });
+    const cleanupGroupId =
+      scope === 'other'
+        ? await owner.auth.mutation(api.groups.mutations.createGroup, {
+            name: 'Other managed Group',
+          })
+        : groupId;
+    await t.run(async ctx => {
+      await ctx.db.insert('groupDiscordCleanup', {
+        groupId: String(cleanupGroupId),
+        personId: String(owner.personId),
+        guildId: '100',
+        discordUserId: 'previous-identity',
+        roleId: 'created-role',
+        generation: 1,
+        enrollmentGeneration: 1,
+        mode: 'role',
+        desired: 'role_removed',
+        observed: 'unknown',
+        status: 'pending',
+        attempts: 0,
+        nextAttemptAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    await expect(
+      owner.auth.action(api.groupDiscord.connect.connect, {
+        groupId,
+        consent: true,
+      })
+    ).rejects.toThrow('cleanup');
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'blocked', cleanupPending: true });
+  }
+);
 it('an in-flight grant preserves a removed enrollment and its moderation explanation', async () => {
   const { t, owner, groupId } = await setup();
   await owner.auth.action(api.groupDiscord.actions.configure, {

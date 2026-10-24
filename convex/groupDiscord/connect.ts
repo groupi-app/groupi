@@ -14,7 +14,12 @@ export const connect = action({
       internal.accounts.queries.getAccountsForEnrichment,
       {}
     );
-    const account = accounts.accounts.find(a => a.providerId === 'discord');
+    const account = accounts.accounts.find(
+      a =>
+        a.providerId === 'discord' &&
+        (!accounts.selectedDiscordUserId ||
+          a.accountId === accounts.selectedDiscordUserId)
+    );
     if (!account) return { requiresConsent: true };
     const token = process.env.DISCORD_BOT_TOKEN;
     if (!token) throw new Error('Discord bot is unavailable.');

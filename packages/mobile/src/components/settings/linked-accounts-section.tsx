@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { useAction, useMutation } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 
 import { Text } from '@/components/ui/text';
@@ -44,6 +44,10 @@ export function LinkedAccountsSection() {
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
   const { showActionMenu } = useActionMenu();
+  const retirement = useQuery(
+    api.accounts.queries.getDiscordRetirementStatus,
+    {}
+  );
 
   const fetchAccounts = useAction(
     api.accounts.queries.getLinkedAccountsWithUsernames
@@ -195,6 +199,19 @@ export function LinkedAccountsSection() {
         <CardTitle>Linked Accounts</CardTitle>
       </CardHeader>
       <CardContent className='gap-3'>
+        {retirement?.pending && (
+          <Text accessibilityRole='alert'>
+            Previous Discord access cleanup is pending. Replacement access is
+            blocked until cleanup is confirmed. Groupi retries automatically;
+            contact your Group manager if this persists. {retirement.error}
+          </Text>
+        )}
+        {retirement?.externallyManaged && (
+          <Text>
+            Previous Discord server membership remains externally managed. Ask
+            Discord staff to review access.
+          </Text>
+        )}
         {accounts && accounts.length > 0 ? (
           accounts.map(account => (
             <View
@@ -211,6 +228,12 @@ export function LinkedAccountsSection() {
                   <Text className='font-medium'>
                     {getProviderDisplayName(account.providerId)}
                   </Text>
+                  {account.providerId === 'discord' &&
+                    retirement?.selectedDiscordUserId === account.accountId && (
+                      <Text className='text-sm text-muted-foreground'>
+                        Used for Group Discord access
+                      </Text>
+                    )}
                   <Text className='text-sm text-muted-foreground'>
                     {account.providerId.toLowerCase() === 'discord' &&
                     account.username
