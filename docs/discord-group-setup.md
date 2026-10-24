@@ -162,3 +162,25 @@ failure fan-out also pages 20 Group connections.
 After deletion, only the retained private cleanup viewers receive cleanup alerts,
 and their old Group link opens authorized retired status. Repeated delivery and
 page continuation are deduplicated per recipient.
+
+## Source-side integration acceptance
+
+The #413 source acceptance tests exercise both access modes through native Group
+status, delegated REST/JavaScript SDK reads and the hosted Connect journey. They
+cover authenticated identity unlink, denied old-access cleanup, replacement
+withholding, bot recovery and fresh authorization/hosted return after the original
+short-lived delegated credential expires. These are deterministic provider
+fixtures, not real Discord/browser/device acceptance.
+
+A separate authenticated Event lifecycle tracer executes scheduled-event create,
+update and delete provider effects alongside a Group connection. Group handback
+retains the enabled Event add-on; Event changes do not mutate Group connection
+state. The legacy Event transport remains unchanged. Group-provider global retry
+pauses coordinate Group bot calls only, not every legacy Event call sharing the
+bot token; this acceptance evidence makes no all-token throttling claim.
+
+Final review fixes and the once-only full repository regression run are pending.
+The existing test bot/application identity, authorized ordinary test identities,
+matching deployed feature source, isolated sessions and observed browser/native
+accessibility remain open live gates. The additional CLI release-note approval is
+still pending; no release or production deployment is authorized.
