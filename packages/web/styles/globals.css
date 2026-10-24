@@ -989,7 +989,7 @@
   }
 }
 
-/* Staged Soft lift component tokens. Opt-in until the actual gallery is approved. */
+/* Canonical sticker action geometry, approved in the component gallery. */
 :root {
   --soft-sticker-edge: 3px;
   --soft-action-depth: 4px;
@@ -1607,16 +1607,23 @@
   --action-backing: var(--soft-info-backing);
 }
 
-[data-slot='button'][data-variant='outline-primary'] {
+[data-slot='button'][data-presentation='soft'][data-variant='outline-primary'] {
   background: transparent;
   border-color: var(--soft-primary-foreground);
   color: var(--soft-primary-foreground);
 }
-[data-slot='button'][data-variant='outline-primary']:is(:hover, :active) {
+[data-slot='button'][data-presentation='soft'][data-variant='outline-primary']:is(
+    :hover,
+    :active
+  ) {
   background: var(--soft-primary-foreground);
   color: var(--soft-primary-composited-fill);
 }
-[data-slot='button'][data-variant='link'] {
+[data-slot='button'][data-presentation='soft'][data-variant='link'],
+[data-slot='button'][data-presentation='soft'][data-variant='link']:is(
+    :hover,
+    :active
+  ) {
   color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 0.2em;
