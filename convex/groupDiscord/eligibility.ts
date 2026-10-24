@@ -19,7 +19,17 @@ export async function invalidateGroupDiscordEnrollment(
       q.eq('groupId', groupId).eq('personId', personId)
     )
     .unique();
-  if (!row) return;
+  if (!row || row.handedBack) return;
+  const connection = await ctx.db
+    .query('groupDiscordConnections')
+    .withIndex('by_group', q => q.eq('groupId', groupId))
+    .unique();
+  if (
+    connection &&
+    (connection.status !== 'active' ||
+      connection.generation !== row.connectionGeneration)
+  )
+    return;
   if (
     row.desired === 'removed' &&
     (removal !== 'banned' ||

@@ -25,7 +25,10 @@ import {
 import { useLeaveGroup } from '@/hooks/convex/use-group-moderation';
 import { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
 import { GroupApplications } from './group-applications';
-import { GroupDiscordSettings } from './group-discord-settings';
+import {
+  GroupDiscordSettings,
+  GroupDiscordRetiredStatus,
+} from './group-discord-settings';
 import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupApplicationSettings } from './group-application-settings';
 import { GroupBanManagement } from './group-ban-management';
@@ -73,6 +76,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
             </Button>
           }
         />
+        <GroupDiscordRetiredStatus groupId={groupId} />
       </div>
     );
 
@@ -344,7 +348,11 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
               <p className='text-sm text-muted-foreground'>
                 Permanently retire this Group and remove its data and audience
                 grants. Independent Events, invitations, memberships and RSVP
-                remain unchanged. This cannot be undone.
+                remain unchanged. Discord retained roles and server membership
+                pass to Discord staff; pending removals still run. No Discord
+                server or bot is deleted. After deletion, this Group’s existing
+                link shows Discord cleanup status to authorized managers. This
+                cannot be undone.
               </p>
               {deleting ? (
                 <form
@@ -354,7 +362,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
                     setPending(true);
                     setError('');
                     try {
-                      await remove({ groupId });
+                      await remove({
+                        groupId,
+                        acknowledgeDiscordHandback: true,
+                      });
                       router.push(`/g/${groupId}`);
                       openFriends('groups');
                     } catch (cause) {

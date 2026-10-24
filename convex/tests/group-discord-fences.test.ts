@@ -84,7 +84,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 it.each(['same', 'other'])(
-  'Connect waits for pending cleanup of the same person in $s Group before replacing enrollment',
+  'Connect waits for pending cleanup of the same person in %s Group before replacing enrollment',
   async scope => {
     const { t, owner, groupId } = await setup();
     await owner.auth.action(api.groupDiscord.actions.configure, {

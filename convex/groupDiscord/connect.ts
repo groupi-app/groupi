@@ -20,7 +20,8 @@ export const connect = action({
         (!accounts.selectedDiscordUserId ||
           a.accountId === accounts.selectedDiscordUserId)
     );
-    if (!account) return { requiresConsent: true };
+    if (!account || accounts.managedDiscordIdentityRetired)
+      return { requiresConsent: true };
     const token = process.env.DISCORD_BOT_TOKEN;
     if (!token) throw new Error('Discord bot is unavailable.');
     let row = await ctx.runMutation(internal.groupDiscord.enrollment.begin, {

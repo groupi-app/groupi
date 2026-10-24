@@ -1,4 +1,5 @@
 'use client';
+import { GroupDiscordRetiredStatus } from './group-discord-settings';
 
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,6 +30,7 @@ export function GroupLanding({ groupId }: { groupId: Id<'groups'> }) {
     return (
       <div role='alert' className='mx-auto max-w-xl px-4 py-8'>
         <EmptyState message='This Group is unavailable.' />
+        <GroupDiscordRetiredStatus groupId={groupId} />
       </div>
     );
   const returnPath = `/g/${group.groupId}`;

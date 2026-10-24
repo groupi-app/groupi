@@ -69,6 +69,10 @@ export function registerGroupCommands(program, json) {
       'Explicitly retire an owned Group and its data; independent Events remain'
     )
     .option('--yes', 'Confirm Group deletion')
+    .option(
+      '--acknowledge-discord-handback',
+      'Hand retained Discord access to staff; owed removals continue, server and bot remain'
+    )
     .action(async (id, input) => {
       const { profile, key } = await connection();
       output(
@@ -78,7 +82,11 @@ export function registerGroupCommands(program, json) {
           'delete',
           id,
           {},
-          { yes: input.yes, json }
+          {
+            yes: input.yes,
+            json,
+            acknowledgeDiscordHandback: input.acknowledgeDiscordHandback,
+          }
         )
       );
     });

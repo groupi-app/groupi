@@ -4,7 +4,10 @@ import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
 import { expect, it, vi } from 'vitest';
 import type { Id } from '@/convex/_generated/dataModel';
-import { GroupDiscordSettings } from './group-discord-settings';
+import {
+  GroupDiscordSettings,
+  GroupDiscordRetiredStatus,
+} from './group-discord-settings';
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
 it('configures a Group server with a newly created role by default', async () => {
@@ -191,5 +194,89 @@ it('shows membership permission guidance when setup is blocked', async () => {
     screen.queryByRole('button', { name: 'Save Discord connection' })
   ).not.toBeInTheDocument();
   mounted.unmount();
+  await client.close();
+});
+it('requires an explicit handback acknowledgement before disabling', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildId: '123',
+      guildName: 'Community',
+      mode: 'membership',
+      generation: 1,
+      status: 'active',
+    }),
+  }));
+  const mutation = vi.spyOn(client, 'mutation').mockResolvedValue(null);
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  const user = userEvent.setup();
+  const disable = screen.getByRole('button', {
+    name: 'Disable Discord connection',
+  });
+  expect(disable).toBeDisabled();
+  await user.click(
+    screen.getByRole('checkbox', { name: 'I understand Discord handback' })
+  );
+  await user.click(disable);
+  await waitFor(() => expect(mutation).toHaveBeenCalled());
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'groupDiscord/mutations:disable'
+  );
+  expect(mutation.mock.calls[0][1]).toEqual({
+    groupId: 'group-one',
+    acknowledgeHandback: true,
+  });
+  mounted.unmount();
+  await client.close();
+});
+
+it('shows retired cleanup on the old Group link and hides unauthorized summaries', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  let visible = true;
+  const watch = vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () =>
+      visible
+        ? {
+            status: 'disabled',
+            groupDeleted: true,
+            cleanupPending: true,
+            synchronizationError:
+              'Discord bot permissions lost; cleanup pending.',
+          }
+        : null,
+  }));
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordRetiredStatus groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Discord bot permissions lost'
+  );
+  expect(watch.mock.calls[0][1]).toEqual({
+    groupId: 'group-one',
+    retiredOnly: true,
+  });
+  mounted.unmount();
+  visible = false;
+  const hidden = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordRetiredStatus groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(screen.queryByText('Discord handback')).not.toBeInTheDocument();
+  hidden.unmount();
   await client.close();
 });

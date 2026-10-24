@@ -334,7 +334,8 @@ export function LinkedAccountsList({
                         {getProviderDisplayName(account.providerId)}
                       </span>
                       {account.providerId === 'discord' &&
-                        retirement?.selectedDiscordUserId ===
+                        retirement?.selectedDiscordUserId &&
+                        retirement.selectedDiscordUserId ===
                           account.accountId && (
                           <span className='text-sm text-muted-foreground'>
                             Used for Group Discord access

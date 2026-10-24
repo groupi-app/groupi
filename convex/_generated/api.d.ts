@@ -268,6 +268,7 @@ import type * as groupDiscord_permissions from "../groupDiscord/permissions.js";
 import type * as groupDiscord_queries from "../groupDiscord/queries.js";
 import type * as groupDiscord_reconcile from "../groupDiscord/reconcile.js";
 import type * as groupDiscord_reconciliation from "../groupDiscord/reconciliation.js";
+import type * as groupDiscord_teardown from "../groupDiscord/teardown.js";
 import type * as groupEventAudiences_access from "../groupEventAudiences/access.js";
 import type * as groupEventAudiences_cleanup from "../groupEventAudiences/cleanup.js";
 import type * as groupEventAudiences_contracts from "../groupEventAudiences/contracts.js";
@@ -693,6 +694,7 @@ declare const fullApi: ApiFromModules<{
   "groupDiscord/queries": typeof groupDiscord_queries;
   "groupDiscord/reconcile": typeof groupDiscord_reconcile;
   "groupDiscord/reconciliation": typeof groupDiscord_reconciliation;
+  "groupDiscord/teardown": typeof groupDiscord_teardown;
   "groupEventAudiences/access": typeof groupEventAudiences_access;
   "groupEventAudiences/cleanup": typeof groupEventAudiences_cleanup;
   "groupEventAudiences/contracts": typeof groupEventAudiences_contracts;

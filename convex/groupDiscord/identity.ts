@@ -3,7 +3,7 @@ import { components } from '../_generated/api';
 import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
-import { oweAccessCleanup } from './memberOperations';
+import { oweRetirementCleanup } from './memberOperations';
 
 /** Capture immutable bot cleanup targets before an account credential disappears. */
 export async function retireDiscordIdentity(
@@ -22,7 +22,7 @@ export async function retireDiscordIdentity(
       .query('groupDiscordManagedIdentities')
       .withIndex('by_person', q => q.eq('personId', person._id))
       .unique();
-    if (selected?.discordUserId === identity)
+    if (selected)
       await ctx.db.patch(selected._id, { latestLinkHash: 'retired' });
     const retired = await ctx.db
       .query('groupDiscordRetiredIdentities')
@@ -42,6 +42,7 @@ export async function retireDiscordIdentity(
     .collect();
   for (const row of rows) {
     if (
+      row.handedBack ||
       row.desired !== 'granted' ||
       (identity && row.discordUserId !== identity) ||
       row.discordUserId === keepIdentity
@@ -66,7 +67,7 @@ export async function retireDiscordIdentity(
         discordUserId: row.discordUserId,
       });
     if (!(row.mode === 'membership' && row.externalException))
-      await oweAccessCleanup(ctx, row);
+      await oweRetirementCleanup(ctx, row);
     await ctx.db.patch(row._id, {
       desired: 'removed',
       status: 'blocked',

@@ -63,6 +63,7 @@ export default defineSchema({
     discordUserId: v.string(),
   }).index('by_person_identity', ['personId', 'discordUserId']),
   groupDiscordEnrollments: defineTable({
+    handedBack: v.optional(v.boolean()),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     discordUserId: v.string(),

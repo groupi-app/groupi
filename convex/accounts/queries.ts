@@ -148,6 +148,7 @@ export const getAccountsForEnrichment = internalQuery({
     user: v.union(v.object({ email: v.string() }), v.null()),
     accounts: v.array(linkedAccountValidator),
     selectedDiscordUserId: v.optional(v.string()),
+    managedDiscordIdentityRetired: v.optional(v.boolean()),
   }),
   handler: async ctx => {
     const user = await authComponent.getAuthUser(ctx);
@@ -179,6 +180,18 @@ export const getAccountsForEnrichment = internalQuery({
       : null;
 
     return {
+      managedDiscordIdentityRetired: !!(
+        person &&
+        selected?.discordUserId &&
+        (await ctx.db
+          .query('groupDiscordRetiredIdentities')
+          .withIndex('by_person_identity', q =>
+            q
+              .eq('personId', person._id)
+              .eq('discordUserId', selected.discordUserId!)
+          )
+          .unique())
+      ),
       selectedDiscordUserId: selected?.discordUserId,
       user: { email: user.email },
       accounts: accounts.map(

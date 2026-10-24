@@ -67,8 +67,12 @@ unlink endpoint captures the old managed targets and invalidates grant authority
 before deleting credentials. A successful explicit Discord link selects one managed Discord identity while
 preserving older login accounts and other providers. Replacement callbacks retire
 old managed access before selecting the replacement. Explicit unlink removes only
-the requested login account. Replayed or racing callbacks cannot restore old enrollment authority.
+the requested login account. Replayed callbacks and older link attempts completing after newer ones cannot
+restore old enrollment authority or replace the newer managed identity. The
+ordering marker is a hash of OAuth state, never a retained OAuth credential.
 
+In-flight provider actions keep removal owed through the Node action drain
+window; an early absent snapshot cannot unblock replacement before a late write.
 Cleanup uses the existing bot-only dispatcher and immutable guild, identity,
 mode and dedicated-role targets. It retains no member OAuth tokens. Replacement
 Connect waits for every pending or blocked cleanup obligation for the person,
@@ -85,3 +89,15 @@ remains disabled. Its raw admin removal endpoint is rejected with a direction to
 Groupi account resolution because the upstream cascade deletes credentials before
 Groupi can enforce ownership safeguards. No repository caller uses that endpoint.
 These source checks do not establish controlled Discord/browser/device acceptance.
+
+## Warned handback and deletion
+
+The #410 source slice exposes `groupDiscord.mutations.disable({groupId, acknowledgeHandback:true})` to current managers. Both native settings surfaces explain the consequences and require acknowledgement. Disabling retains Discord roles and server membership under Discord staff control. It never deletes a server, removes the bot, mass-removes participants or rewrites channel policy. Previously owed removals and compensation for in-flight grants remain durable, visible and retryable through the existing reconciliation dispatcher. Unfinished provider writes retain pending cleanup through the Node action drain window, so an early absent snapshot cannot falsely complete compensation; returned calls may compensate immediately.
+
+To change server or mode, explicitly disable the old connection, then configure a new one. The connection epoch increases across disable/re-enable, and setup completion is tied to the exact reserved epoch. Old callbacks and workers cannot reuse authority. Retained participants are marked handed back and are never silently reclaimed, migrated or cleaned up on fresh enrollment; members must explicitly Connect again. Pending cleanup still fences enrollment, including after reconfiguration.
+
+All Group deletion adapters use the same transactional handback policy. Native deletion confirmations explicitly explain handback; `groups.mutations.deleteGroup` accepts `acknowledgeDiscordHandback:true`. REST owners may send `DELETE /groups/{groupId}?acknowledgeDiscordHandback=true`; only literal `true` acknowledges, and omission/`false` returns an actionable conflict when a live connection exists. CLI owners use `groups delete <id> --yes --acknowledge-discord-handback`. Existing exclusion/cascade restrictions still apply atomically.
+
+After Group deletion, `groupDiscord.queries.getConnection({groupId})` retains the disabled connection and pending/blocked cleanup summary for the deleting actor and recorded current managers only. Both web and mobile render this summary on the old Group link, including pending/blocked removal guidance and completed cleanup. The deletion confirmation explains where to return, and successful deletion opens that stable link. The optional `retiredOnly:true` query returns no data for unrelated or signed-out viewers, who retain the ordinary unavailable view. Other actors cannot read this retired status. Removal is reported complete only after provider absence is verified; handback itself is never reported as removal. Provider credentials are not retained in this status record.
+
+Deterministic provider and authenticated/native tests establish source behavior. Live Discord mutations, signed-in browser/device/VoiceOver checks and matching deployed-source verification remain open acceptance gates; this slice performs no runtime start, build or deployment.

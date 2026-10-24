@@ -134,7 +134,7 @@ export const configure = action({
           'Choose a text landing channel in the selected Discord server.'
         );
     }
-    const connectionId = await ctx.runMutation(
+    const reservation = await ctx.runMutation(
       internal.groupDiscord.mutations.reserve,
       { ...args, mode: args.mode ?? 'role', guildName: guild.name }
     );
@@ -163,13 +163,13 @@ export const configure = action({
           'Discord role creation returned an unsuitable role. Contact Discord staff before retrying.'
         );
       await ctx.runMutation(internal.groupDiscord.mutations.complete, {
-        connectionId,
+        ...reservation,
         roleId: role?.id,
         roleName: role?.name,
       });
     } catch (error) {
       await ctx.runMutation(internal.groupDiscord.mutations.fail, {
-        connectionId,
+        ...reservation,
         error: error instanceof Error ? error.message : 'Discord setup failed.',
         provisionedRoleId:
           !args.roleId && typeof role?.id === 'string' ? role.id : undefined,
