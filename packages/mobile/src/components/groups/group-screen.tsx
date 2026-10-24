@@ -1,3 +1,4 @@
+import { GroupDiscordSettings } from './group-discord-settings';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
@@ -267,6 +268,9 @@ export function GroupDetailScreen() {
               </Button>
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
+            {group.canManageMembers ? (
+              <GroupDiscordSettings groupId={id} />
+            ) : null}
             {group.canManageRoles ? (
               <GroupApplicationSettings
                 groupId={id}
