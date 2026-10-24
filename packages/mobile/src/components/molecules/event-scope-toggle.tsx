@@ -33,7 +33,7 @@ export function EventScopeToggle({ value, onChange }: EventScopeToggleProps) {
             accessibilityState={{ checked: isSelected }}
             accessibilityLabel={scope.label}
             className={cn(
-              'items-center justify-center rounded-button px-3 py-1.5 active:scale-95',
+              'items-center justify-center rounded-button px-3 py-1.5',
               isSelected ? 'bg-card shadow-raised' : 'bg-transparent'
             )}
           >

@@ -1,3 +1,4 @@
+import { useCSSVariable } from 'uniwind';
 import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './text';
@@ -18,6 +19,9 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
+  const cueColor = String(
+    useCSSVariable('--color-primary-subtle-foreground') ?? ''
+  );
   return (
     <View className='flex-1 items-center justify-center px-6'>
       <View
@@ -27,11 +31,11 @@ export function EmptyState({
       >
         {/* Sticker journal aesthetic — icon in sticker container with white border */}
         <View
-          className='mb-4 h-20 w-20 items-center justify-center rounded-full border-[3px] border-white bg-muted shadow-raised'
+          className='mb-4 h-20 w-20 items-center justify-center rounded-full border-[3px] border-sticker-edge bg-primary-subtle shadow-raised'
           accessibilityElementsHidden
           importantForAccessibility='no-hide-descendants'
         >
-          <Ionicons name={icon} size={36} color='#9ca3af' />
+          <Ionicons name={icon} size={36} color={cueColor} />
         </View>
         <Text variant='h4'>{title}</Text>
         {description ? (

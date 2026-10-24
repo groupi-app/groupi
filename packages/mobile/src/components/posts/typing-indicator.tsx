@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
   useSharedValue,
+  useReducedMotion,
+  cancelAnimation,
   useAnimatedStyle,
   withRepeat,
   withSequence,
@@ -24,8 +26,13 @@ interface TypingIndicatorProps {
 
 function BouncingDot({ delay }: { delay: number }) {
   const translateY = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) {
+      translateY.value = 0;
+      return;
+    }
     translateY.value = withDelay(
       delay,
       withRepeat(
@@ -37,7 +44,8 @@ function BouncingDot({ delay }: { delay: number }) {
         false
       )
     );
-  }, [delay, translateY]);
+    return () => cancelAnimation(translateY);
+  }, [delay, translateY, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

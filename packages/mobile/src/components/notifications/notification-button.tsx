@@ -27,7 +27,7 @@ export function NotificationButton({ unreadCount }: NotificationButtonProps) {
         hasUnread ? `Notifications, ${unreadCount} unread` : 'Notifications'
       }
       accessibilityHint='Opens notifications'
-      className='relative h-11 w-11 items-center justify-center rounded-badge bg-muted active:scale-95 active:bg-accent'
+      className='relative h-11 w-11 items-center justify-center rounded-badge bg-muted active:bg-accent'
     >
       <Ionicons
         name={hasUnread ? 'notifications' : 'notifications-outline'}

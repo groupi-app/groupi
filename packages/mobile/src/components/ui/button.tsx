@@ -1,7 +1,8 @@
 import { Text, TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Platform, Pressable } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
+import { Platform, Pressable, ActivityIndicator } from 'react-native';
 
 // NOTE: group-* is not supported yet by Uniwind
 
@@ -16,23 +17,23 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: cn(
-          'bg-primary active:bg-primary/90 shadow-raised',
+          'bg-primary active:bg-primary-pressed border-2 border-sticker-edge shadow-raised',
           Platform.select({ web: 'hover:bg-primary/90' })
         ),
         destructive: cn(
-          'bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-raised',
+          'bg-destructive active:bg-destructive-pressed border-2 border-sticker-edge shadow-raised',
           Platform.select({
             web: 'hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
           })
         ),
         outline: cn(
-          'border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 border shadow-raised',
+          'border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 border shadow-none',
           Platform.select({
             web: 'hover:bg-accent dark:hover:bg-input/50',
           })
         ),
         secondary: cn(
-          'bg-secondary active:bg-secondary/80 shadow-raised',
+          'bg-secondary active:bg-secondary-pressed border-2 border-sticker-edge shadow-raised',
           Platform.select({ web: 'hover:bg-secondary/80' })
         ),
         ghost: cn(
@@ -73,13 +74,10 @@ const buttonTextVariants = cva(
     variants: {
       variant: {
         default: 'text-primary-foreground',
-        destructive: 'text-white',
-        outline: cn(
-          'group-active:text-accent-foreground',
-          Platform.select({ web: 'group-hover:text-accent-foreground' })
-        ),
+        destructive: 'text-destructive-foreground',
+        outline: 'text-foreground',
         secondary: 'text-secondary-foreground',
-        ghost: 'group-active:text-accent-foreground',
+        ghost: 'text-foreground',
         link: cn(
           'text-primary group-active:underline',
           Platform.select({
@@ -114,32 +112,63 @@ function Button({
   isLoading,
   loadingText,
   children,
+  disabled,
+  accessibilityState,
   ...props
 }: ButtonProps) {
-  const isDisabled = props.disabled || isLoading;
+  const isDisabled = !!(disabled || isLoading);
+  const reducedMotion = useReducedMotion();
+  const renderContent = (content: React.ReactNode) => (
+    <>
+      {isLoading && (
+        <ActivityIndicator
+          size='small'
+          animating={!reducedMotion}
+          colorClassName={
+            variant === 'destructive'
+              ? 'accent-destructive-foreground'
+              : variant === 'secondary'
+                ? 'accent-secondary-foreground'
+                : variant === 'default' || !variant
+                  ? 'accent-primary-foreground'
+                  : 'accent-foreground'
+          }
+        />
+      )}
+      {isLoading && loadingText ? (
+        <Text className={cn(buttonTextVariants({ variant, size }))}>
+          {loadingText}
+        </Text>
+      ) : typeof content === 'string' ? (
+        <Text className={cn(buttonTextVariants({ variant, size }))}>
+          {content}
+        </Text>
+      ) : (
+        content
+      )}
+    </>
+  );
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
         className={cn(
           isDisabled && 'opacity-50',
           buttonVariants({ variant, size }),
+          !isDisabled && !reducedMotion && 'active:translate-y-[3px]',
           className
         )}
         role='button'
-        disabled={isDisabled}
         {...props}
+        disabled={isDisabled}
+        accessibilityState={{
+          ...accessibilityState,
+          disabled: !!isDisabled,
+          busy: !!isLoading,
+        }}
       >
-        {isLoading && loadingText ? (
-          <Text className={cn(buttonTextVariants({ variant, size }))}>
-            {loadingText}
-          </Text>
-        ) : typeof children === 'string' ? (
-          <Text className={cn(buttonTextVariants({ variant, size }))}>
-            {children}
-          </Text>
-        ) : (
-          children
-        )}
+        {typeof children === 'function'
+          ? state => renderContent(children(state))
+          : renderContent(children)}
       </Pressable>
     </TextClassContext.Provider>
   );

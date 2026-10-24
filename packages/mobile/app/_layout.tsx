@@ -1,6 +1,8 @@
 import '../global.css';
 
 import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
+import Geologica from '../../../assets/fonts/Geologica.ttf';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -32,11 +34,19 @@ function ThemedStatusBar() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Geologica,
+  });
   useEffect(() => {
     const cleanup = setupPlatformAdapters();
-    SplashScreen.hideAsync();
     return cleanup;
   }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
