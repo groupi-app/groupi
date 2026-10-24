@@ -362,8 +362,13 @@ it.each(['role', 'membership'] as const)(
       })
     );
     const result = await authorize(f, {
-      scopes: 'openid groups.discord.read groups.discord.connect',
-      actions: ['groups.discord.read', 'groups.discord.connect'],
+      scopes:
+        'openid groups.context.read groups.discord.read groups.discord.connect',
+      actions: [
+        'groups.context.read',
+        'groups.discord.read',
+        'groups.discord.connect',
+      ],
       selector: { kind: 'selected-group', groupId },
       background: false,
     });
@@ -386,6 +391,11 @@ it.each(['role', 'membership'] as const)(
       mode,
       status: 'not_connected',
     });
+    const context = () =>
+      f.t.fetch(`/api/v2/groups/${groupId}/community-context`, { headers });
+    expect((await (await context()).json()).allowedActions).toContain(
+      'groups.discord.connect'
+    );
     const state = new URL((await (await begin()).json()).url).searchParams.get(
       'state'
     )!;
@@ -394,6 +404,9 @@ it.each(['role', 'membership'] as const)(
       acknowledgeHandback: true,
     });
     expect(await (await read()).json()).toBeNull();
+    expect((await (await context()).json()).allowedActions).not.toContain(
+      'groups.discord.connect'
+    );
     expect(
       await f.owner.auth.query(api.groupDiscord.delegated.inspect, { state })
     ).toBeNull();
