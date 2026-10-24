@@ -401,6 +401,7 @@ function Feedback() {
             loadingText='Removing draft'
             onConfirm={async () => {
               attempts.current += 1;
+              await new Promise(resolve => window.setTimeout(resolve, 700));
               if (attempts.current === 1) throw new Error('Preview retry');
             }}
           />

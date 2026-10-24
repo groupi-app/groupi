@@ -7,7 +7,7 @@ import {
   type ThemeTokenOverrides,
 } from '@groupi/shared/design/themes';
 import { ThemeProvider, useGroupiTheme } from '../providers/theme-provider';
-import { generateCompleteCustomThemeCSS } from '../components/theme-sync';
+import { generateCompleteCustomThemeCSS } from '../lib/theme-css';
 import '../styles/globals.css';
 
 const bodyFont = Inter({ subsets: ['latin'], variable: '--font-sans' });
