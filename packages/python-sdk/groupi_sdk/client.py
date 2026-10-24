@@ -254,6 +254,9 @@ from .types import (
     Objectece999219204,
     Object39140cd5ad6d,
     Objectb93f36757224,
+    Objectfa3352bca1da,
+    Objectefb5209ee17a,
+    Object6f0e18d58953,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -1020,6 +1023,14 @@ class Groupi(Transport):
     def set_community_announcement_preference(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Change own Group announcement subscription."""
         return self.request('PUT', '/groups/{groupId}/announcement-preference', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_own_group_discord_status(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read own selected Group Discord access and Open Discord destination."""
+        return self.request('GET', '/groups/{groupId}/discord', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def begin_own_group_discord_connect(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Begin a Groupi-hosted member identity and consent journey."""
+        return self.request('POST', '/groups/{groupId}/discord/connect', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -2159,6 +2170,14 @@ class AsyncGroupi(AsyncTransport):
     async def set_community_announcement_preference(self, **kwargs):
         """Change own Group announcement subscription."""
         return await self.request('PUT', '/groups/{groupId}/announcement-preference', **kwargs)
+
+    async def read_own_group_discord_status(self, **kwargs):
+        """Read own selected Group Discord access and Open Discord destination."""
+        return await self.request('GET', '/groups/{groupId}/discord', **kwargs)
+
+    async def begin_own_group_discord_connect(self, **kwargs):
+        """Begin a Groupi-hosted member identity and consent journey."""
+        return await self.request('POST', '/groups/{groupId}/discord/connect', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""

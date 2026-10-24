@@ -53,6 +53,20 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupDiscordJourneys: defineTable({
+    stateHash: v.string(),
+    credentialId: v.id('authorizationCredentials'),
+    appId: v.id('delegatedApps'),
+    personId: v.id('persons'),
+    groupId: v.id('groups'),
+    connectionId: v.id('groupDiscordConnections'),
+    generation: v.number(),
+    returnUrl: v.string(),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+  })
+    .index('by_state', ['stateHash'])
+    .index('by_expiresAt', ['expiresAt']),
   groupDiscordEnrollments: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),

@@ -2,6 +2,8 @@
 export const communityContractVersion = 'community.v1';
 const operationActions = {
   readOwnCommunityContext: 'groups.context.read',
+  readOwnGroupDiscordStatus: 'groups.discord.read',
+  beginOwnGroupDiscordConnect: 'groups.discord.connect',
   submitCommunityApplication: 'groups.applications.submit',
   editCommunityApplication: 'groups.applications.edit',
   withdrawCommunityApplication: 'groups.applications.withdraw',
@@ -23,6 +25,20 @@ const op = (method, path, sdk, milestone, status = 'proposed') => ({
   status,
 });
 export const communityOperations = Object.freeze({
+  discordStatus: op(
+    'GET',
+    '/groups/{groupId}/discord',
+    'readOwnGroupDiscordStatus',
+    'Discord',
+    'implemented'
+  ),
+  discordConnect: op(
+    'POST',
+    '/groups/{groupId}/discord/connect',
+    'beginOwnGroupDiscordConnect',
+    'Discord',
+    'implemented'
+  ),
   context: op(
     'GET',
     '/groups/{groupId}/community-context',

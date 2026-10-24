@@ -188,6 +188,8 @@ export const readContext = internalQuery({
         a =>
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
+            (a === 'groups.discord.read' && Boolean(membership)) ||
+            (a === 'groups.discord.connect' && canAccessMemberContent) ||
             (a === 'groups.announcements.preferences.update' && eligible) ||
             (a === 'groups.leave' &&
               !excluded &&

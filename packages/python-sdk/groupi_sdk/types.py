@@ -1461,6 +1461,27 @@ class Object39140cd5ad6d(TypedDict):
 class Objectb93f36757224(TypedDict):
     subscribed: bool
 
+class Objectfa3352bca1da(TypedDict):
+    mode: Literal['role', 'membership']
+    guildName: str
+    openUrl: str
+    linked: bool
+    linkedDiscordUserId: NotRequired[str]
+    eligible: bool
+    status: Literal['not_connected', 'pending', 'screening', 'connected', 'blocked']
+    error: NotRequired[str]
+    externalException: NotRequired[str]
+    lastObservedAt: NotRequired[float]
+    observationError: NotRequired[str]
+    cleanupPending: NotRequired[bool]
+
+class Objectefb5209ee17a(TypedDict):
+    url: str
+    expiresAt: float
+
+class Object6f0e18d58953(TypedDict):
+    returnUrl: str
+
 class Object056f6599a34c(TypedDict):
     groupId: str
     enabled: bool

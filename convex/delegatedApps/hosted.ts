@@ -2,6 +2,8 @@ import { ConvexError, v } from 'convex/values';
 import { mutation, query, internalQuery } from '../_generated/server';
 import { getCurrentPerson, requireAuth } from '../auth';
 import { isAdminRole } from '../lib/constants';
+import { secretHash } from '../authorization/model';
+import type { QueryCtx } from '../_generated/server';
 import { hostedAppearance } from './contracts';
 
 /** Appearance is administrative configuration, never an authorization parameter. */
@@ -57,6 +59,26 @@ export const configureAppearance = mutation({
   },
 });
 
+async function hostedRequest(ctx: QueryCtx, interactionId: string) {
+  const consent = await ctx.db
+    .query('delegatedConsentRequests')
+    .withIndex('by_interactionId', q => q.eq('interactionId', interactionId))
+    .unique();
+  if (consent) return consent;
+  const hash = await secretHash(interactionId);
+  const journey = await ctx.db
+    .query('groupDiscordJourneys')
+    .withIndex('by_state', q => q.eq('stateHash', hash))
+    .unique();
+  if (!journey || journey.consumedAt !== undefined) return null;
+  return {
+    appId: journey.appId,
+    expiresAt: journey.expiresAt,
+    decision: undefined,
+    instanceId: process.env.DELEGATED_ISSUER ?? '',
+  };
+}
+
 export const getAppearance = query({
   args: { interactionId: v.string() },
   returns: v.union(
@@ -70,10 +92,7 @@ export const getAppearance = query({
     })
   ),
   handler: async (ctx, { interactionId }) => {
-    const request = await ctx.db
-      .query('delegatedConsentRequests')
-      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId))
-      .unique();
+    const request = await hostedRequest(ctx, interactionId);
     if (!request || request.decision || request.expiresAt <= Date.now())
       return null;
     const app = await ctx.db.get(request.appId);
@@ -97,10 +116,7 @@ export const getEmailAppearance = internalQuery({
   args: { interactionId: v.string() },
   returns: v.union(v.null(), hostedAppearance),
   handler: async (ctx, { interactionId }) => {
-    const request = await ctx.db
-      .query('delegatedConsentRequests')
-      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId))
-      .unique();
+    const request = await hostedRequest(ctx, interactionId);
     if (!request || request.decision || request.expiresAt <= Date.now())
       return null;
     const app = await ctx.db.get(request.appId);
