@@ -1375,6 +1375,9 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
+class Object7e8a2ce9dd0e(TypedDict):
+    acknowledgeDiscordHandback: NotRequired[Literal['true', 'false']]
+
 class Object40f81eb82dda(TypedDict):
     contractVersion: Literal['community.v1']
     group: Object59509cf0ec83

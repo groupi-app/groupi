@@ -237,6 +237,7 @@ from .types import (
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
+    Object7e8a2ce9dd0e,
     Object40f81eb82dda,
     Objecta2791daed18f,
     Object6edaff610f96,

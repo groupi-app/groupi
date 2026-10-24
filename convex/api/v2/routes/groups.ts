@@ -408,13 +408,26 @@ export function createGroupRoutes() {
       tags: ['Groups'],
       summary: 'Explicitly delete a Group as owner',
       security: [{ apiKey: [] }],
-      request: { params },
+      request: {
+        params,
+        query: z.object({
+          acknowledgeDiscordHandback: z
+            .enum(['true', 'false'])
+            .optional()
+            .openapi({
+              description:
+                'Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain.',
+            }),
+        }),
+      },
       responses: { 204: { description: 'Deleted' }, ...errors },
     }),
     async c => {
       await c.get('ctx').runMutation(internal.groups.rest.remove, {
         personId: c.get('personId') as Id<'persons'>,
         groupId: c.req.valid('param').groupId as Id<'groups'>,
+        acknowledgeDiscordHandback:
+          c.req.valid('query').acknowledgeDiscordHandback === 'true',
       });
       return c.body(null, 204);
     }

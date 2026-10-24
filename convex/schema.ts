@@ -68,6 +68,7 @@ export default defineSchema({
     .index('by_state', ['stateHash'])
     .index('by_expiresAt', ['expiresAt']),
   groupDiscordEnrollments: defineTable({
+    handedBack: v.optional(v.boolean()),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     discordUserId: v.string(),

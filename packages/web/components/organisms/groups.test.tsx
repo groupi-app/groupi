@@ -4,6 +4,7 @@ vi.mock('./group-invitation-management', () => ({
   GroupInvitationManagement: () => null,
 }));
 vi.mock('./group-discord-settings', () => ({
+  GroupDiscordRetiredStatus: () => null,
   GroupDiscordSettings: () => <div>Discord manager settings</div>,
 }));
 vi.mock('./community-expulsion-progress', () => ({
@@ -300,7 +301,12 @@ describe('Group identity and authority', () => {
     await user.click(
       screen.getByRole('button', { name: 'Permanently delete Group' })
     );
-    await waitFor(() => expect(create).toHaveBeenCalledWith({ groupId }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({
+        groupId,
+        acknowledgeDiscordHandback: true,
+      })
+    );
   });
   it('preserves the landing path through sign-in and signup', () => {
     auth.isAuthenticated = false;

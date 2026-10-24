@@ -7,11 +7,15 @@ export const connectionFields = {
   mode,
   // Provider-created identity is retained even if activation is rejected.
   provisionedRoleId: v.optional(v.string()),
+  handedBackRoleIds: v.optional(v.array(v.string())),
   roleId: v.optional(v.string()),
   roleName: v.optional(v.string()),
   landingChannelId: v.optional(v.string()),
   generation: v.number(),
+  cleanupViewerIds: v.optional(v.array(v.id('persons'))),
+  groupDeleted: v.optional(v.boolean()),
   status: v.union(
+    v.literal('disabled'),
     v.literal('active'),
     v.literal('pending'),
     v.literal('blocked')
