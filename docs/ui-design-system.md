@@ -25,12 +25,39 @@ The Groupi UI is built on three foundational pillars:
 
 ### Design Philosophy
 
-Inspired by Duolingo's fun-first aesthetic:
+Groupi is a playful sticker book for real communities and their events. **Soft lift** is the approved material treatment: a true white cut edge, shallow colored backing, and restrained shadow. Personality comes from recognizable material and purposeful semantic accents, with quiet space around them.
 
-- **Dramatically rounded corners** - Buttons, cards, and modals use generous border radii
-- **Bouncy animations** - Playful easing functions for micro-interactions
-- **Semantic colors** - Purpose-driven color choices, not arbitrary values
-- **Dark mode first** - Full dark mode support with automatic switching
+Use Inter for body and controls, Geologica for headings. Headings carry hierarchy through type, spacing, and clear wording; keep icons outside headings. Pair obvious actions and metadata with recognizable icons (Save, Remove, Location, Time), keeping visible text. Generic prose and labels need no decorative glyph.
+
+### Material and interaction contracts
+
+| Component role   | Treatment                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Filled action    | White sticker edge and shallow backing; depress 1px on hover and 3px on press, without growing or changing text color.                           |
+| Quiet action     | Outline, ghost, or text treatment with visible focus and clear activation.                                                                       |
+| Information card | Quiet, static surface. Use featured sticker framing only for intentional emphasis.                                                               |
+| Clickable card   | Explicit link/button primary action; subtle background tint on hover and keyboard focus, compression on press. Inner actions remain independent. |
+| Field            | Quiet writable frame; distinct label, supporting message, focus, invalid, disabled, and pending states.                                          |
+| Status label     | Flat cut-out label with semantic color, readable text, and white edge; no button-like depth.                                                     |
+| Tabs             | Attached index tabs joined to their panel, with a clearly selected tab and visible keyboard focus.                                               |
+| Alert            | Annotation strip with semantic rule and subtle fill; concise message and useful next step.                                                       |
+| Overlay          | Floating paper surface with white cut edge, themed interior, restrained shadow, and preserved focus/dismissal behavior.                          |
+| Divider          | Subtle perforation at meaningful content/action seams; ordinary separators remain quiet.                                                         |
+| Toast            | Outcome-colored icon (success/error/warning/info) and neutral readable message text.                                                             |
+
+The cut edge stays white in light, dark, and custom themes; use the shared sticker token rather than the page background. Derive backing, readable ink, and state fills through the shared theme presentation resolver. Keep foreground stable across action states and transition a consistent background property to avoid flashes.
+
+Depth communicates action or deliberate emphasis. Calendar cells, dense tables, navigation utilities, and passive content remain quiet. Menu icon/text spacing is 12px. Touch targets and wrapping must remain usable with long content and enlarged text.
+
+Reduced motion removes translation, growth, spring movement, and decorative continuous animation while retaining immediate color, outline, shadow, progress, and loading meaning. Native controls use press compression rather than hover; respect platform focus, scrolling, touch targets, and accessibility announcements.
+
+### Component review and rollout
+
+Review from base UI and atoms through molecules, organisms, templates, and page-specific components. For every component, explain how its material, hierarchy, and interaction serve its role. If the answer is unclear, present alternatives for review instead of inventing a new metaphor. Evolve the canonical component and semantic tokens; remove conflicting caller-level lift/growth styles.
+
+The actual gallery direction was approved on October 24, 2026. Web migration is authorized, including page-specific components; web takes priority over native parity. Keep page structure and business behavior stable during the design-language migration. The subsequent structural review starts with Groups.
+
+See the [selected component rationale](design-language-material-review.md), [refresh plan](design-language-refresh-plan.md), and [source-bound execution evidence](design-language-execution.md).
 
 ## Design Tokens
 
@@ -241,7 +268,7 @@ className = 'shadow-overlay'; // Modals, sheets
 className = 'shadow-popup'; // Tooltips, toasts
 ```
 
-**Fun shadows**:
+**Legacy shadow tokens** (use the canonical material treatment for new or migrated components):
 
 ```tsx
 className = 'shadow-pop'; // Playful depth effect
@@ -290,7 +317,7 @@ className = 'duration-slower'; // 500ms
 className = 'ease-default'; // Standard ease
 className = 'ease-enter'; // Enter animations
 className = 'ease-exit'; // Exit animations
-className = 'ease-bounce'; // Bouncy (Duolingo-style)
+className = 'ease-bounce'; // Restrained interaction easing; no hover growth
 className = 'ease-spring'; // Spring effect
 ```
 

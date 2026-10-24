@@ -1,7 +1,7 @@
 # Soft lift component review
 
-This is the actual canonical component gallery. Presentation is opt-in until the
-human review gate; existing application defaults are preserved.
+This is the actual canonical component gallery. The user approved the treatment on
+October 24, 2026; canonical defaults and application callers are now being migrated.
 
 Start at `/?path=/story/design-system-soft-lift--overview` in the running Storybook.
 The **Theme** toolbar uses the production ThemeProvider and custom-theme serializer
@@ -27,7 +27,7 @@ featured passive cards stay still in every interaction state.
 
 ## Semantic composition
 
-Use `presentation='soft'` on staged controls and molecules. `Tabs` propagates it
+Migrated controls and molecules use Soft lift by default. Explicit presentation props remain compatible during migration. `Tabs` propagates it
 to its list and triggers. `ConfirmationDialog` propagates it to its actions and
 portal content. Heading `level` controls the document rank independently of its
 visual `roleSize` (`page`, `section` or `content`).
@@ -82,3 +82,5 @@ fallback, an overlapping stack and unchanged PresenceIndicator status vocabulary
 Interactive cards now tint their themed paper surface subtly on primary-action
 hover/focus, and slightly farther on press. Independent inner controls do not
 trigger that primary tint. Passive and featured information surfaces remain still.
+
+`design-system-application-defaults--everyday-planning` renders canonical components without presentation opt-ins, including a real Select, calendar Popover, Sheet, attached tabs, annotation Alert and Slider. Use this alongside the detailed state studies to verify application defaults.

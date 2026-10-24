@@ -164,6 +164,8 @@ rather than leaving conflicting visual decisions to individual feature callers.
 
 ### Migrate Web Usages and Validate Real Screens
 
+**Authorized October 24, 2026:** the user approved the rendered direction and requested documentation first, followed by all components from simplest to most complex, including page-specific UI. Prioritize web, then native parity. The selected material vocabulary is recorded in the [design system](ui-design-system.md#material-and-interaction-contracts).
+
 Apply the reviewed shared variants across existing usages, remove conflicting
 hover/growth styles, and repair spacing or focus regressions caused by the
 component changes. Keep page tasks, route structure, permissions, and business
