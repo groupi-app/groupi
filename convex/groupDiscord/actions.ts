@@ -4,7 +4,7 @@ import {
   hasPermissions,
   DISCORD_PERMISSIONS,
 } from './permissions';
-import { action } from '../_generated/server';
+import { action, type ActionCtx } from '../_generated/server';
 import { internal, api } from '../_generated/api';
 import { v, type Infer } from 'convex/values';
 import { fetchDiscordUserApi } from '../discord/userApi';
@@ -19,6 +19,57 @@ type Role = {
 };
 import { MEMBER_PERMISSIONS, roleAbove } from './permissions';
 import { discordBot } from './provider';
+
+/** Build only Discord's fixed public CDN path from verified provider metadata.
+ * Existing records remain iconless until a metadata refresh or fresh setup.
+ */
+function verifiedGuildIconUrl(guildId: string, icon: unknown) {
+  if (
+    !/^[0-9]{1,20}$/.test(guildId) ||
+    typeof icon !== 'string' ||
+    !/^(?:a_)?[a-fA-F0-9]{32}$/.test(icon)
+  )
+    return undefined;
+  return `https://cdn.discordapp.com/icons/${guildId}/${icon}.png?size=128`;
+}
+
+async function manageableGuild(ctx: ActionCtx, guildId: string) {
+  const data = await ctx.runQuery(
+    internal.accounts.queries.getAccountsForEnrichment,
+    {}
+  );
+  const account = data.accounts.find(a => a.providerId === 'discord');
+  if (!account)
+    throw new Error(
+      'Link a Discord account before configuring this connection.'
+    );
+  const guildResponse = await fetchDiscordUserApi(
+    ctx,
+    account.accountId,
+    '/users/@me/guilds'
+  );
+  if (!guildResponse.ok)
+    throw new Error(
+      'Discord server authorization failed. Relink Discord and try again.'
+    );
+  const guilds: {
+    id: string;
+    name: string;
+    icon?: string | null;
+    permissions: string;
+    owner?: boolean;
+  }[] = await guildResponse.json();
+  const guild = guilds.find(g => g.id === guildId);
+  if (
+    !guild ||
+    (!guild.owner &&
+      (BigInt(guild.permissions) & 8n) === 0n &&
+      !hasManageGuildPermission(guild.permissions))
+  )
+    throw new Error('Discord Manage Server authority is required.');
+  return guild;
+}
+
 export const configure = action({
   args: {
     groupId: v.id('groups'),
@@ -33,38 +84,7 @@ export const configure = action({
       internal.groupDiscord.queries.managerContext,
       { groupId: args.groupId }
     );
-    const data = await ctx.runQuery(
-      internal.accounts.queries.getAccountsForEnrichment,
-      {}
-    );
-    const account = data.accounts.find(a => a.providerId === 'discord');
-    if (!account)
-      throw new Error(
-        'Link a Discord account before configuring this connection.'
-      );
-    const guildResponse = await fetchDiscordUserApi(
-      ctx,
-      account.accountId,
-      '/users/@me/guilds'
-    );
-    if (!guildResponse.ok)
-      throw new Error(
-        'Discord server authorization failed. Relink Discord and try again.'
-      );
-    const guilds: {
-      id: string;
-      name: string;
-      permissions: string;
-      owner?: boolean;
-    }[] = await guildResponse.json();
-    const guild = guilds.find(g => g.id === args.guildId);
-    if (
-      !guild ||
-      (!guild.owner &&
-        (BigInt(guild.permissions) & 8n) === 0n &&
-        !hasManageGuildPermission(guild.permissions))
-    )
-      throw new Error('Discord Manage Server authority is required.');
+    const guild = await manageableGuild(ctx, args.guildId);
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken)
       throw new Error(
@@ -142,7 +162,12 @@ export const configure = action({
     }
     const reservation = await ctx.runMutation(
       internal.groupDiscord.mutations.reserve,
-      { ...args, mode: args.mode ?? 'role', guildName: guild.name }
+      {
+        ...args,
+        mode: args.mode ?? 'role',
+        guildName: guild.name,
+        guildIconUrl: verifiedGuildIconUrl(guild.id, guild.icon),
+      }
     );
     try {
       if ((args.mode ?? 'role') === 'role' && !role)
@@ -187,5 +212,28 @@ export const configure = action({
     });
     if (!result) throw new Error('Discord connection was retired.');
     return result;
+  },
+});
+
+/** Refresh display metadata only; fresh two-sided authority never changes managed access. */
+export const refreshMetadata = action({
+  args: { groupId: v.id('groups') },
+  returns: v.null(),
+  handler: async (ctx, { groupId }): Promise<null> => {
+    const current = await ctx.runQuery(api.groupDiscord.queries.getConnection, {
+      groupId,
+    });
+    if (!current || current.status !== 'active')
+      throw new Error(
+        'An active Discord connection is required to refresh server details.'
+      );
+    const guild = await manageableGuild(ctx, current.guildId);
+    return ctx.runMutation(internal.groupDiscord.mutations.refreshMetadata, {
+      groupId,
+      guildId: current.guildId,
+      generation: current.generation,
+      guildName: guild.name,
+      guildIconUrl: verifiedGuildIconUrl(guild.id, guild.icon),
+    });
   },
 });

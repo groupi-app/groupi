@@ -3,6 +3,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useGroupDiscordEnrollment } from '@/hooks/convex/use-group-discord';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
+import { DiscordIdentityCards } from '@/features/discord';
 import { ContextHelp } from '@/components/molecules/context-help';
 
 export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
@@ -31,7 +32,6 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
           <h2 className='font-heading text-lg font-semibold'>
             Your Discord access
           </h2>
-          <p className='text-sm text-muted-foreground'>{status.guildName}</p>
         </div>
         <ContextHelp label='About your Discord access'>
           <div className='space-y-3'>
@@ -58,13 +58,12 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
           </div>
         </ContextHelp>
       </div>
-      {status.linked && (
-        <p className='text-sm text-muted-foreground'>
-          {status.linkedDiscordUserId
-            ? `Linked Discord account ID: ${status.linkedDiscordUserId}`
-            : 'Discord account linked.'}
-        </p>
-      )}
+      <DiscordIdentityCards
+        guildName={status.guildName}
+        guildIconUrl={status.guildIconUrl}
+        linked={status.linked}
+        linkedDiscordUserId={status.linkedDiscordUserId}
+      />
       {(status.status === 'not_connected' || status.status === 'blocked') && (
         <p className='text-sm leading-relaxed'>
           {status.mode === 'membership'
@@ -77,17 +76,17 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
           Complete required Group onboarding before connecting.
         </p>
       )}
-      <p role='status'>
-        {status.status === 'not_connected'
-          ? 'Not connected to this Group’s Discord.'
-          : status.status === 'connected'
-            ? 'Connected to this Group’s Discord.'
+      {status.status !== 'connected' && (
+        <p role='status'>
+          {status.status === 'not_connected'
+            ? 'Not connected to this Group’s Discord.'
             : status.status === 'pending'
               ? 'Discord connection is pending.'
               : status.status === 'screening'
                 ? 'Complete the server’s membership screening in Discord to finish connecting.'
                 : 'Discord access needs attention. Contact a Group manager or Discord staff before trying again.'}
-      </p>
+        </p>
+      )}
       {status.error && <p role='alert'>{status.error}</p>}
       {status.externalException && (
         <p className='text-sm text-muted-foreground'>

@@ -7,7 +7,23 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { GroupDiscordConnect } from './group-discord-connect';
 const auth = vi.hoisted(() => ({ linkSocial: vi.fn() }));
 vi.mock('@/lib/auth-client', () => ({ authClient: auth }));
-vi.unmock('convex/react');
+vi.mock('convex/react', async importOriginal => ({
+  ...(await importOriginal<typeof import('convex/react')>()),
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+vi.mock('@/hooks/convex/use-accounts', () => ({
+  useLinkedAccounts: () => ({
+    accounts: [
+      {
+        providerId: 'discord',
+        accountId: '789012345678901234',
+        username: 'river',
+        displayName: 'River Reader',
+        avatarUrl: 'https://cdn.discordapp.com/avatars/member/avatar.png',
+      },
+    ],
+  }),
+}));
 vi.unmock('@/convex/_generated/api');
 
 it('requires explicit Connect even when Discord identity is already linked', async () => {
@@ -31,7 +47,7 @@ it('requires explicit Connect even when Discord identity is already linked', asy
       <GroupDiscordConnect groupId={'group-one' as Id<'groups'>} />
     </ConvexProvider>
   );
-  expect(screen.getByText('Discord account linked.')).toBeInTheDocument();
+  expect(screen.getByText('Discord account linked')).toBeInTheDocument();
   expect(
     screen.getByText(/removes that role; you stay in the server/)
   ).toBeVisible();
@@ -124,9 +140,8 @@ it('shows connected access and opens the configured Discord destination', async 
     'href',
     'https://discord.com/channels/123/456'
   );
-  expect(screen.getByRole('status')).toHaveTextContent(
-    'Connected to this Group'
-  );
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Connected to this Group/)).not.toBeInTheDocument();
   expect(
     screen.getByText('Server owner access is managed in Discord.')
   ).toBeVisible();
@@ -177,9 +192,9 @@ it('identifies the linked account while required Group onboarding prevents Conne
       <GroupDiscordConnect groupId={'group-one' as Id<'groups'>} />
     </ConvexProvider>
   );
-  expect(
-    screen.getByText('Linked Discord account ID: 789012345678901234')
-  ).toBeInTheDocument();
+  expect(screen.getByText('River Reader')).toBeVisible();
+  expect(screen.getByText('@river')).toBeVisible();
+  expect(screen.queryByText(/789012345678901234/)).not.toBeInTheDocument();
   const connect = screen.getByRole('button', { name: 'Connect Discord' });
   expect(connect).toBeDisabled();
   expect(

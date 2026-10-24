@@ -6,7 +6,10 @@ interface GroupDiscordApi {
   groupDiscord: {
     queries: { getConnection: FunctionReference<'query'> };
     mutations: { disable: FunctionReference<'mutation'> };
-    actions: { configure: FunctionReference<'action'> };
+    actions: {
+      configure: FunctionReference<'action'>;
+      refreshMetadata: FunctionReference<'action'>;
+    };
     enrollment: { getStatus: FunctionReference<'query'> };
     connect: { connect: FunctionReference<'action'> };
   };
@@ -37,6 +40,9 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
   ) {
     const connection = useGroupDiscordConnection(args);
     const configure = useConfigureGroupDiscord();
+    const refreshMetadata = hooks.useAction<
+      Api['groupDiscord']['actions']['refreshMetadata']
+    >(api.groupDiscord.actions.refreshMetadata);
     const disableMutation = hooks.useMutation<
       Api['groupDiscord']['mutations']['disable']
     >(api.groupDiscord.mutations.disable);
@@ -130,8 +136,26 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
         setBusy(false);
       }
     }
+    async function refreshServerDetails() {
+      setBusy(true);
+      setError('');
+      setMessage('');
+      try {
+        await refreshMetadata(args);
+        setMessage('Discord server details refreshed.');
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Unable to refresh Discord server details.'
+        );
+      } finally {
+        setBusy(false);
+      }
+    }
     return {
       connection,
+      refreshServerDetails,
       disable,
       handbackConfirmed,
       setHandbackConfirmed,

@@ -255,7 +255,7 @@ from .types import (
     Objectece999219204,
     Object39140cd5ad6d,
     Objectb93f36757224,
-    Objectfa3352bca1da,
+    Object69655f599fd1,
     Objectefb5209ee17a,
     Object6f0e18d58953,
     Object056f6599a34c,

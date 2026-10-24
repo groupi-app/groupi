@@ -19,6 +19,19 @@ vi.mock('@/convex/_generated/api', () => ({
     },
   },
 }));
+vi.mock('@/hooks/convex/use-accounts', () => ({
+  useLinkedAccounts: () => ({
+    accounts: [
+      {
+        providerId: 'discord',
+        accountId: 'discord-member',
+        username: 'river',
+        displayName: 'River Reader',
+        avatarUrl: 'https://cdn.discordapp.com/avatars/member/avatar.png',
+      },
+    ],
+  }),
+}));
 vi.mock('@/lib/auth-client', () => ({ authClient: { linkSocial: vi.fn() } }));
 function journey(mode: 'role' | 'membership' = 'role') {
   return {
@@ -58,9 +71,9 @@ it('explains both modes and requires explicit identity confirmation before hoste
   vi.mocked(useAction).mockReturnValue(connect);
   vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
   render(<DiscordConnect state='opaque-state' />);
-  expect(screen.getByText('discord-member')).toHaveTextContent(
-    'discord-member'
-  );
+  expect(screen.getByText('River Reader')).toBeVisible();
+  expect(screen.getByText('@river')).toBeVisible();
+  expect(screen.queryByText('discord-member')).not.toBeInTheDocument();
   expect(
     screen.getByText(/Ending Group access can remove you/)
   ).toHaveTextContent('ban you');
@@ -148,9 +161,9 @@ it.each(['connect', 'return'] as const)(
       vi.fn().mockRejectedValue(rejection) as never
     );
     render(<DiscordConnect state='opaque-state' />);
-    expect(screen.getByRole('status')).toHaveTextContent(
-      operation === 'connect' ? /pending/i : /connected/i
-    );
+    if (operation === 'connect')
+      expect(screen.getByRole('status')).toHaveTextContent(/pending/i);
+    else expect(screen.queryByRole('status')).not.toBeInTheDocument();
     await userEvent.setup().click(
       screen.getByRole('button', {
         name:
@@ -234,6 +247,8 @@ it('keeps a single page title and compact app identity when connected, with acce
   expect(
     screen.getByRole('button', { name: 'Return to application' })
   ).toBeVisible();
+  expect(screen.queryByText('Connected')).not.toBeInTheDocument();
+  expect(screen.getByText('@river')).toBeVisible();
   expect(screen.queryByText(/Ending Group access/)).not.toBeInTheDocument();
   expect(
     screen.queryByText(/never your Discord credentials/)
@@ -285,7 +300,9 @@ it.each([
     vi.mocked(useAction).mockReturnValue(vi.fn());
     vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
     render(<DiscordConnect state='opaque-state' />);
-    expect(screen.getByRole('status')).toHaveTextContent(label);
+    if (status === 'connected')
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    else expect(screen.getByRole('status')).toHaveTextContent(label);
     if (status !== 'connected') {
       expect(
         screen.getByRole('button', {

@@ -4,6 +4,7 @@ import { ErrorResponseSchema } from '../schemas/common';
 const status = z.object({
   mode: z.enum(['role', 'membership']),
   guildName: z.string(),
+  guildIconUrl: z.string().url().optional(),
   openUrl: z.string().url(),
   linked: z.boolean(),
   linkedDiscordUserId: z.string().optional(),
