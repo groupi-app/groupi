@@ -1,3 +1,4 @@
+import { useCSSVariable } from 'uniwind';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,6 +43,8 @@ export function AddonCard({
   className,
 }: AddonCardProps) {
   const icon = ADDON_ICONS[addonType] ?? 'extension-puzzle-outline';
+  const glyphColor = String(useCSSVariable('--color-primary-foreground') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
   const name = getAddonName(addonType, config);
 
   return (
@@ -55,8 +58,8 @@ export function AddonCard({
     >
       <Card className={cn('flex-row items-center gap-3', className)}>
         {/* Sticker journal aesthetic — icon container with white border */}
-        <View className='h-10 w-10 items-center justify-center rounded-card border-2 border-white bg-primary shadow-raised'>
-          <Ionicons name={icon} size={20} color='#ffffff' />
+        <View className='h-10 w-10 items-center justify-center rounded-card border-2 border-sticker-edge bg-primary shadow-raised'>
+          <Ionicons name={icon} size={20} color={glyphColor} />
         </View>
         <View className='flex-1'>
           <Text className='text-base font-medium text-foreground'>{name}</Text>
@@ -65,14 +68,16 @@ export function AddonCard({
         {completed !== undefined ? (
           <View
             className={cn(
-              'rounded-badge border-2 border-white px-2 py-0.5 shadow-raised',
-              completed ? 'bg-success' : 'bg-muted'
+              'rounded-badge border-2 border-sticker-edge px-2 py-0.5',
+              completed ? 'bg-success-subtle' : 'bg-muted'
             )}
           >
             <Text
               className={cn(
                 'text-xs font-semibold',
-                completed ? 'text-white' : 'text-muted-foreground'
+                completed
+                  ? 'text-success-subtle-foreground'
+                  : 'text-muted-foreground'
               )}
             >
               {completed ? 'Done' : 'Required'}
@@ -80,7 +85,7 @@ export function AddonCard({
           </View>
         ) : null}
         {onPress ? (
-          <Ionicons name='chevron-forward' size={16} color='#9ca3af' />
+          <Ionicons name='chevron-forward' size={16} color={mutedColor} />
         ) : null}
       </Card>
     </Pressable>

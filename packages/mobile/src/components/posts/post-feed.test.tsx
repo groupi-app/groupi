@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Children, isValidElement, type ReactElement } from 'react';
 import { router } from 'expo-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,7 +82,7 @@ function getList(feed: ReturnType<typeof createFeed>) {
 }
 
 function getNewPostButton(feed: ReturnType<typeof createFeed>) {
-  const button = feedChildren(feed).find(child => child.type === 'Pressable');
+  const button = feedChildren(feed).find(child => child.type === Button);
   if (!button) throw new Error('New post button was not rendered');
   return button as unknown as ReactElement<NewPostButtonTestProps>;
 }
@@ -147,8 +148,6 @@ describe('PostFeed infinite scrolling', () => {
       loadMore: mocks.loadMore,
     });
 
-    expect(feedChildren(feed).some(child => child.type === 'Pressable')).toBe(
-      false
-    );
+    expect(feedChildren(feed).some(child => child.type === Button)).toBe(false);
   });
 });

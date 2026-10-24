@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { discussionLengthAllowed } from '@groupi/shared';
 import { useState, useMemo, useEffect } from 'react';
 import {
@@ -532,7 +533,7 @@ export default function PostDetailScreen() {
                           showLabel
                         />
                         <View className='mt-2 flex-row gap-2'>
-                          <Pressable
+                          <Button
                             onPress={handleSaveEditReply}
                             disabled={
                               isUploadingReplyEdit || isEditingReplyTooLong
@@ -552,7 +553,7 @@ export default function PostDetailScreen() {
                             >
                               Save
                             </Text>
-                          </Pressable>
+                          </Button>
                           <Pressable
                             onPress={() => {
                               setEditingReplyId(null);

@@ -1,3 +1,4 @@
+import { useCSSVariable } from 'uniwind';
 import { useState } from 'react';
 import { View, Pressable, ScrollView, Modal } from 'react-native';
 import { Text } from '@/components/ui/text';
@@ -23,6 +24,9 @@ import { usePushNotifications } from '@/context/push-notification-context';
 const { api } = require('convex/_generated/api') as { api: any };
 
 export default function YouScreen() {
+  const cameraColor = String(
+    useCSSVariable('--color-primary-foreground') ?? 'transparent'
+  );
   const { user, person } = useGlobalUser();
   const updateProfile = useMutation(api.users.mutations.updateUserProfile);
   const { pickImage } = useImagePicker();
@@ -128,8 +132,8 @@ export default function YouScreen() {
                 name={user?.name as string}
                 size='xl'
               />
-              <View className='absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-primary'>
-                <Ionicons name='camera' size={14} color='#ffffff' />
+              <View className='absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full border-2 border-sticker-edge bg-primary'>
+                <Ionicons name='camera' size={14} color={cameraColor} />
               </View>
             </View>
           </Pressable>

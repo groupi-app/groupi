@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useMemo, useState } from 'react';
 import { View, FlatList, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
@@ -200,7 +201,7 @@ export default function AttendeesScreen() {
           </Text>
         </View>
         {canManage ? (
-          <Pressable
+          <Button
             onPress={() => router.push(`/event/${eventId}/invite`)}
             accessibilityRole='button'
             accessibilityLabel='Invite people to this event'
@@ -214,7 +215,7 @@ export default function AttendeesScreen() {
             <Text className='text-sm font-medium text-primary-foreground'>
               Invite
             </Text>
-          </Pressable>
+          </Button>
         ) : null}
       </View>
 

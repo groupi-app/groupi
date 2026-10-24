@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/components/ui/toast-feedback';
 import { PortalHost } from '@rn-primitives/portal';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ActionMenuProvider } from '@/components/ui/action-menu';
@@ -66,7 +67,7 @@ export default function RootLayout() {
                 <GlobalPresenceTracker />
                 <ThemedStatusBar />
                 <PortalHost />
-                <Toast />
+                <Toast config={toastConfig} />
               </PushNotificationProvider>
             </GlobalUserProvider>
           </ThemeProvider>

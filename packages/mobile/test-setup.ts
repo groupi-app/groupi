@@ -390,3 +390,8 @@ vi.mock('@groupi/shared/design/themes', () => ({
 // Suppress console noise in tests
 global.console.warn = vi.fn();
 global.console.error = vi.fn();
+
+vi.mock('uniwind', () => ({
+  useCSSVariable: vi.fn(() => '#8200ad'),
+  Uniwind: { setTheme: vi.fn(), updateCSSVariables: vi.fn() },
+}));

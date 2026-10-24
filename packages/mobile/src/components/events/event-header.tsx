@@ -231,7 +231,7 @@ export function EventHeader({
           <BackButton />
           <Pressable
             onPress={handleShowMenu}
-            className='h-11 w-11 items-center justify-center rounded-badge border-2 border-background bg-muted shadow-raised'
+            className='h-11 w-11 items-center justify-center rounded-badge border-2 border-sticker-edge bg-muted'
             accessibilityRole='button'
             accessibilityLabel='Event actions'
           >

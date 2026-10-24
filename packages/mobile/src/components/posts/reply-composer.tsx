@@ -1,6 +1,7 @@
+import { Button } from '@/components/ui/button';
 import { discussionLengthAllowed } from '@groupi/shared';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Id } from 'convex/_generated/dataModel';
 import { useCSSVariable } from 'uniwind';
@@ -132,7 +133,7 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
             minHeight={REPLY_EDITOR_HEIGHT}
             accessibilityLabel='Write a reply'
           />
-          <Pressable
+          <Button
             onPress={handleSubmit}
             disabled={!canSubmit || isBusy}
             className={`h-11 w-11 items-center justify-center rounded-full ${canSubmit && !isBusy ? 'bg-primary' : 'bg-muted'}`}
@@ -157,7 +158,7 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
                 }
               />
             )}
-          </Pressable>
+          </Button>
         </View>
       </View>
     </View>

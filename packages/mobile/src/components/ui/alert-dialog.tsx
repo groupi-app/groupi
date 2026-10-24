@@ -1,6 +1,7 @@
 import { buttonTextVariants, buttonVariants } from '@/components/ui/button';
 import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/components/ui/text';
+import { PaperDivider } from './paper-divider';
 import { cn } from '@/lib/utils';
 import * as AlertDialogPrimitive from '@rn-primitives/alert-dialog';
 import * as React from 'react';
@@ -62,7 +63,7 @@ function AlertDialogContent({
       <AlertDialogOverlay>
         <AlertDialogPrimitive.Content
           className={cn(
-            'bg-popover border-sticker-edge z-50 flex flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
+            'bg-popover border-sticker-edge z-50 flex flex-col gap-4 rounded-modal border-2 p-6 shadow-overlay sm:max-w-lg',
             Platform.select({
               web: 'animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200',
             }),
@@ -83,15 +84,14 @@ function AlertDialogHeader({ className, ...props }: ViewProps) {
   );
 }
 
-function AlertDialogFooter({ className, ...props }: ViewProps) {
+function AlertDialogFooter({ className, children, ...props }: ViewProps) {
   return (
-    <View
-      className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
-        className
-      )}
-      {...props}
-    />
+    <View className={cn('flex flex-col gap-3', className)} {...props}>
+      <PaperDivider />
+      <View className='flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
+        {children}
+      </View>
+    </View>
   );
 }
 
