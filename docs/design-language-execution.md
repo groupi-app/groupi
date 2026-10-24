@@ -8,6 +8,7 @@ The specification owns requirements; this record tracks evidence and open gates.
 - [Source and Task Graph](#source-and-task-graph)
 - [Runtime Readiness](#runtime-readiness)
 - [Validation and Release Notes](#validation-and-release-notes)
+- [Current Audit Disposition](#current-audit-disposition)
 
 ## Source and Task Graph
 
@@ -63,3 +64,42 @@ corrections: “Fix control state announcements, action-menu labels, toast deliv
 asynchronous confirmations, and misleading navigation and validation feedback.”
 This approval covers that batch's release notes; subsequent material scope
 changes follow the repository workflow.
+
+## Current Audit Disposition
+
+These statuses describe the integration branch before gallery approval. A fixed
+behavior with an open visual check is not a completed visual acceptance gate.
+
+| Audit finding               | Current disposition                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Status contrast/foreground  | Theme derivation and actual gallery verification in progress (#424–425)                                            |
+| Action press language       | Confirmed legacy growth; opt-in depression under development (#425)                                                |
+| Passive hover behavior      | Confirmed passive Card hover shadow; quiet/static variants under development (#425)                                |
+| Reduced motion              | Component variants and gallery coverage in progress; app migration pending (#425, #427)                            |
+| Typography roles            | Existing fonts retained; shared role/gallery work in progress (#425)                                               |
+| Mixed checkbox              | ARIA already supported mixed; distinct glyph corrected and behavior tests pass (#421); browser glyph check pending |
+| Invalid fields              | Opt-in field state work in progress (#425)                                                                         |
+| Action menu names           | Contextual caller labels and desktop/mobile behavior corrected (#421)                                              |
+| Presence presentation       | Shared gallery review pending; domain equivalence must be preserved (#425, #427)                                   |
+| Progress semantics          | Value/max normalization and forwarded announcements corrected (#421); actual 60/100 browser value matches 60% bar  |
+| Toast delivery              | Legacy calls reach mounted Sonner; rendered provider regressions pass (#422)                                       |
+| Async confirmation          | Pending dismissal/duplicates protected; failure retains retry; actual appearance route regression passes (#422)    |
+| Empty-state hierarchy       | Canonical opt-in molecule work in progress (#425)                                                                  |
+| Date selection              | Silent validation corrected (#423); editor restructuring deferred to Events review                                 |
+| Event cards/visibility      | Contradictory Public icons corrected (#423); hierarchy deferred to Events review                                   |
+| Add-on density              | Deferred to add-on structural review; no unrelated restructuring authorized                                        |
+| Notifications/request count | Incoming-only attention count corrected (#423); activity structure deferred                                        |
+| Settings/navigation         | Contextual back labels corrected (#423); page composition deferred                                                 |
+| Profile initial tab         | Nonexistent initial tab corrected; asynchronous-load regression passes (#423)                                      |
+| Authoring condition rows    | Responsive reflow corrected (#423); narrow browser check pending; authoring restructure deferred                   |
+| Native press language       | Pending validated web language (#428)                                                                              |
+| Native spacing/fields       | Pending native parity (#428)                                                                                       |
+| Native screen hierarchy     | Shared control adaptation in parity; structural composition deferred to feature reviews                            |
+| Friendship emphasis         | Deferred to Social review; existing confirmations preserved                                                        |
+| Mobile invite methods       | Visible labels corrected (#423); narrow browser visual check pending                                               |
+
+Initial combined verification at `d499e63b`: web 1,286, shared 434, mobile 581,
+CLI 399, and backend 1,018 tests passed. Backend used `test:no-codegen` with the
+unchanged checked-in declarations. The top-level `pnpm test:run` prerequisite
+failed because this worktree has no `CONVEX_DEPLOYMENT`; code generation is not
+claimed successful. No generated declarations were changed to bypass that gate.
