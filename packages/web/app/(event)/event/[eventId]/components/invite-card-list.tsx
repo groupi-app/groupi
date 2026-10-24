@@ -429,11 +429,12 @@ function PendingInternalInviteCard({
 
             {/* Cancel button */}
             <Button
-              variant='ghost'
+              variant='destructive-ghost'
               size='icon'
+              aria-label='Cancel invite'
               onClick={handleCancel}
               disabled={isCancelling}
-              className='size-9 text-muted-foreground hover:text-error hover:bg-bg-error-subtle'
+              className='size-9'
             >
               {isCancelling ? (
                 <Icons.spinner className='size-4 animate-spin' />

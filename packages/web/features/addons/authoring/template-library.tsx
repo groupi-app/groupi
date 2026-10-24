@@ -147,7 +147,7 @@ function TemplateCard({
                       Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
-                      className='rounded-button bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                      variant='destructive'
                       onClick={() => deleteTemplate(template._id)}
                     >
                       Delete

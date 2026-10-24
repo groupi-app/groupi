@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, getInitialsFromName } from '@/lib/utils';
+import { getInitialsFromName } from '@/lib/utils';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -81,12 +81,9 @@ export function AvailabilityCard({
           <Button
             type='button'
             size='icon'
-            variant='outline'
-            className={cn(
-              'text-muted-foreground',
-              answer === 'yes' &&
-                'bg-success hover:bg-success text-primary-foreground'
-            )}
+            variant={answer === 'yes' ? 'success' : 'outline'}
+            aria-pressed={answer === 'yes'}
+            aria-label='Available'
             onClick={() =>
               setFormAnswer(index, {
                 potentialDateTimeId: pdt._id,
@@ -99,12 +96,9 @@ export function AvailabilityCard({
           <Button
             type='button'
             size='icon'
-            variant='outline'
-            className={cn(
-              'text-muted-foreground',
-              answer === 'maybe' &&
-                'bg-warning hover:bg-warning text-primary-foreground'
-            )}
+            variant={answer === 'maybe' ? 'warning' : 'outline'}
+            aria-pressed={answer === 'maybe'}
+            aria-label='Maybe available'
             onClick={() =>
               setFormAnswer(index, {
                 potentialDateTimeId: pdt._id,
@@ -117,12 +111,9 @@ export function AvailabilityCard({
           <Button
             type='button'
             size='icon'
-            variant='outline'
-            className={cn(
-              'text-muted-foreground',
-              answer === 'no' &&
-                'bg-error hover:bg-error text-primary-foreground'
-            )}
+            variant={answer === 'no' ? 'destructive' : 'outline'}
+            aria-pressed={answer === 'no'}
+            aria-label='Unavailable'
             onClick={() =>
               setFormAnswer(index, {
                 potentialDateTimeId: pdt._id,
