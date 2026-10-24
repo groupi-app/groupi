@@ -1,3 +1,4 @@
+import { createGroupDiscordRoutes } from './routes/groupDiscord';
 import { handleBoundedRequest, boundedCors } from '../bounded';
 import type { Id } from '../../_generated/dataModel';
 import type { CredentialContext } from '../middleware/auth';
@@ -313,7 +314,14 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         groupApplications: { version: 1 },
         groupEventAudiences: { version: 1 },
         groupDiscovery: { version: 1 },
-        groups: { version: 1, announcements: 1, forms: 1, polls: 1, lists: 1 },
+        groups: {
+          version: 1,
+          announcements: 1,
+          forms: 1,
+          polls: 1,
+          lists: 1,
+          discord: 1,
+        },
         groupQuestionnaire: { version: 2 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
@@ -355,6 +363,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createGroupFormRoutes());
   app.route('/', createGroupPollRoutes());
   app.route('/', createGroupRoutes());
+  app.route('/', createGroupDiscordRoutes());
   app.route('/', createGroupQuestionnaireRoutes());
   app.route('/', createGroupInviteRoutes());
   app.route('/', createGroupModerationRoutes());

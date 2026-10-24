@@ -9,6 +9,7 @@ import {
   enrollmentAuthorized,
   getMemberStatus,
 } from './memberOperations';
+import { loadJourney } from './delegated';
 import { memberStatus } from './contracts';
 export const getStatus = query({
   args: { groupId: v.id('groups') },
@@ -19,13 +20,25 @@ export const getStatus = query({
   },
 });
 export const context = internalQuery({
-  args: { groupId: v.id('groups') },
-  handler: async (ctx, { groupId }) => {
+  args: {
+    groupId: v.id('groups'),
+    expectedGeneration: v.optional(v.number()),
+    hostedState: v.optional(v.string()),
+  },
+  handler: async (ctx, { groupId, expectedGeneration, hostedState }) => {
     const { person } = await requireAuth(ctx);
-    return {
-      personId: person._id,
-      connection: await eligibleConnection(ctx, groupId, person._id),
-    };
+    if (
+      hostedState &&
+      (await loadJourney(ctx, hostedState)).groupId !== groupId
+    )
+      throw new Error('Connection request does not match this Group.');
+    const connection = await eligibleConnection(ctx, groupId, person._id);
+    if (
+      expectedGeneration !== undefined &&
+      expectedGeneration !== connection.generation
+    )
+      throw new Error('Discord configuration changed. Start Connect again.');
+    return { personId: person._id, connection };
   },
 });
 export const begin = internalMutation({
@@ -33,9 +46,25 @@ export const begin = internalMutation({
     groupId: v.id('groups'),
     discordUserId: v.string(),
     fresh: v.optional(v.boolean()),
+    expectedGeneration: v.optional(v.number()),
+    hostedState: v.optional(v.string()),
   },
-  handler: async (ctx, { groupId, discordUserId, fresh }) => {
+  handler: async (
+    ctx,
+    { groupId, discordUserId, fresh, expectedGeneration, hostedState }
+  ) => {
     const { person } = await requireAuth(ctx);
+    if (
+      hostedState &&
+      (await loadJourney(ctx, hostedState)).groupId !== groupId
+    )
+      throw new Error('Connection request does not match this Group.');
+    const connection = await eligibleConnection(ctx, groupId, person._id);
+    if (
+      expectedGeneration !== undefined &&
+      expectedGeneration !== connection.generation
+    )
+      throw new Error('Discord configuration changed. Start Connect again.');
     return beginEnrollment(ctx, groupId, person._id, discordUserId, fresh);
   },
 });

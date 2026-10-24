@@ -16892,6 +16892,20 @@ Explicitly delete a Group as owner  Source-generated operation; schemas and per-
       "required": true,
       "name": "groupId",
       "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "description": "Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain."
+      },
+      "required": false,
+      "description": "Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain.",
+      "name": "acknowledgeDiscordHandback",
+      "in": "query"
     }
   ],
   "responses": {
@@ -19124,6 +19138,207 @@ Change own Group announcement subscription  Source-generated operation; schemas 
     },
     "409": {
       "description": "Operation intent conflict",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## GET /api/v2/groups/{groupId}/discord
+Canonical passage: /v2/reference/api#get-groups-groupId-discord
+
+Read own selected Group Discord access and Open Discord destination  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Own status; no Discord credentials or configuration authority",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "role",
+                  "membership"
+                ]
+              },
+              "guildName": {
+                "type": "string"
+              },
+              "openUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "linked": {
+                "type": "boolean"
+              },
+              "linkedDiscordUserId": {
+                "type": "string"
+              },
+              "eligible": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_connected",
+                  "pending",
+                  "screening",
+                  "connected",
+                  "blocked"
+                ]
+              },
+              "error": {
+                "type": "string"
+              },
+              "externalException": {
+                "type": "string"
+              },
+              "lastObservedAt": {
+                "type": "number"
+              },
+              "observationError": {
+                "type": "string"
+              },
+              "cleanupPending": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "mode",
+              "guildName",
+              "openUrl",
+              "linked",
+              "eligible",
+              "status"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Delegated authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Selected Group scope and current member authority required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## POST /api/v2/groups/{groupId}/discord/connect
+Canonical passage: /v2/reference/api#post-groups-groupId-discord-connect
+
+Begin a Groupi-hosted member identity and consent journey  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+
+```json
+{
+  "parameters": [
+    {
+      "schema": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      },
+      "required": true,
+      "name": "groupId",
+      "in": "path"
+    }
+  ],
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "returnUrl": {
+              "type": "string",
+              "maxLength": 2048,
+              "format": "uri"
+            }
+          },
+          "required": [
+            "returnUrl"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Short-lived hosted URL; initiation does not grant Discord access",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "expiresAt": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "url",
+              "expiresAt"
+            ]
+          }
+        }
+      }
+    },
+    "401": {
+      "description": "Delegated authentication required",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        }
+      }
+    },
+    "403": {
+      "description": "Selected Group scope and current member authority required",
       "content": {
         "application/json": {
           "schema": {

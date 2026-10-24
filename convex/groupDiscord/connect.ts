@@ -1,15 +1,27 @@
 'use node';
 import { action } from '../_generated/server';
-import { internal } from '../_generated/api';
+import { api, internal } from '../_generated/api';
 import { v } from 'convex/values';
 import { joinDiscordGuild } from '../discord/userApi';
 const BASE = 'https://discord.com/api/v10';
 /** Explicit consent only. Admission never calls this entry point. */
 export const connect = action({
-  args: { groupId: v.id('groups'), consent: v.literal(true) },
+  args: {
+    groupId: v.id('groups'),
+    consent: v.literal(true),
+    expectedGeneration: v.optional(v.number()),
+    hostedState: v.optional(v.string()),
+  },
   returns: v.object({ requiresConsent: v.optional(v.boolean()) }),
-  handler: async (ctx, { groupId }): Promise<{ requiresConsent?: boolean }> => {
-    await ctx.runQuery(internal.groupDiscord.enrollment.context, { groupId });
+  handler: async (
+    ctx,
+    { groupId, expectedGeneration, hostedState }
+  ): Promise<{ requiresConsent?: boolean }> => {
+    await ctx.runQuery(internal.groupDiscord.enrollment.context, {
+      groupId,
+      expectedGeneration,
+      hostedState,
+    });
     const accounts = await ctx.runQuery(
       internal.accounts.queries.getAccountsForEnrichment,
       {}
@@ -26,6 +38,8 @@ export const connect = action({
     if (!token) throw new Error('Discord bot is unavailable.');
     let row = await ctx.runMutation(internal.groupDiscord.enrollment.begin, {
       groupId,
+      expectedGeneration,
+      hostedState,
       discordUserId: account.accountId,
     });
     if (row.desired !== 'granted')
@@ -64,6 +78,8 @@ export const connect = action({
       )
         row = await ctx.runMutation(internal.groupDiscord.enrollment.begin, {
           groupId,
+          expectedGeneration,
+          hostedState,
           discordUserId: account.accountId,
           fresh: true,
         });
@@ -201,5 +217,23 @@ export const connect = action({
       });
       throw error;
     }
+  },
+});
+
+/** Hosted requests recheck the signed-in subject and short-lived journey before native Connect. */
+export const connectHosted = action({
+  args: { state: v.string(), consent: v.literal(true) },
+  returns: v.object({ requiresConsent: v.optional(v.boolean()) }),
+  handler: async (ctx, { state }): Promise<{ requiresConsent?: boolean }> => {
+    const journey = await ctx.runQuery(api.groupDiscord.delegated.inspect, {
+      state,
+    });
+    if (!journey) throw new Error('Connection request unavailable or expired.');
+    return ctx.runAction(api.groupDiscord.connect.connect, {
+      groupId: journey.groupId,
+      expectedGeneration: journey.generation,
+      hostedState: state,
+      consent: true,
+    });
   },
 });

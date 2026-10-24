@@ -30,7 +30,7 @@ This slice remains unreleased until enrollment, identity retirement, teardown, d
 
 The [#406](https://github.com/groupi-app/groupi/issues/406) Role access slice exposes authenticated `groupDiscord.enrollment.getStatus({groupId})` and `groupDiscord.connect.connect({groupId, consent: true})`. Status distinguishes linked identity from managed enrollment, includes current Group eligibility, safe Open Discord destination and last successfully observed screening/access time. Web and native Group pages display the linked Discord account ID before consent. Account linking alone and Group admission never trigger enrollment.
 
-An existing guild member enrolls in place. An absent member must separately authorize `guilds.join`; Better Auth owns session, state, callback validation and credential storage. A narrowly scoped auth after-hook sets `prompt=consent` only for Discord account-link requests containing `guilds.join`, preserving ordinary sign-in behavior. The server validates actual OAuth application, granted scope, expiry and Discord identity immediately before joining. No OAuth credentials or bot tokens enter Group status or shared clients. Hosted callbacks return to the known Group page; delegated application initiation/return is a subsequent transport slice.
+An existing guild member enrolls in place. An absent member must separately authorize `guilds.join`; Better Auth owns session, state, callback validation and credential storage. A narrowly scoped auth after-hook sets `prompt=consent` only for Discord account-link requests containing `guilds.join`, preserving ordinary sign-in behavior. The server validates actual OAuth application, granted scope, expiry and Discord identity immediately before joining. No OAuth credentials or bot tokens enter Group status or shared clients. Hosted callbacks return to the known Group page; delegated application initiation/return follows the hosted journey below.
 
 Connect checks current membership, required onboarding and Discord ban state. Joining omits optional roles and screening-bypass fields. Pending membership screening stays incomplete; the member opens Discord, completes its rules and explicitly checks access again. Grants affect only the dedicated ordinary-member role. Current bot capability and dedicated-role hierarchy are checked before assignment; a target's higher unrelated role does not itself prohibit managing the dedicated role. Server ownership and Administrator access are reported as independent external access, while the dedicated role remains managed. Other roles/channel overwrites may independently retain channel access.
 
@@ -59,6 +59,34 @@ Connect records known server-owner and unremovable hierarchy exceptions explicit
 The shared dispatcher verifies kick absence through the exact member endpoint and bans through the exact ban endpoint. Unknown ban (`10026`) means unbanned; unknown guild or unavailable permissions never prove absence. Ban escalation remains owed across kick completion, and restored ineligible membership is removed again within the managed scope. Late joined membership after grant authority changes snapshots the old identity/generations and uses that same cleanup dispatcher for compensation. Cleanup survives configuration/Group deletion, and pending old cleanup fences new enrollment.
 
 This remains a source integration slice. Identity retirement (#409), warned teardown (#410), shared recovery/notifications/audit-gap work (#411), and controlled nonproduction Discord/browser/device acceptance remain release gates. No deployed runtime, live guild mutation or production rollout was performed for this slice.
+
+## Delegated member connection
+
+Delegated applications request `groups.discord.read` and `groups.discord.connect` through ordinary selected-Group consent. Existing approvals keep their original actions; applications must request and receive fresh consent for additional actions. These scopes grant only the current member's status and hosted initiation, never manager setup, reconfiguration or Discord staff authority.
+
+`GET /api/v2/groups/{groupId}/discord` returns the same member eligibility, access progress, cleanup failures, external exceptions and Open Discord destination as native Group clients. `POST /api/v2/groups/{groupId}/discord/connect` accepts `{ "returnUrl": "https://app.example/callback" }` and returns a Groupi-hosted URL valid for up to ten minutes and bounded by the current credential/grant expiry. The return must exactly match a registered HTTPS application redirect URI and cannot contain credentials or a fragment. Initiation performs no Discord join or enrollment.
+
+The hosted page reuses registered application branding across the existing sign-in, onboarding and email continuation, requires the matching Groupi member session, shows the linked Discord identity and mode-specific role/removal/ban consequences, and requires explicit Connect. Additional Discord join consent uses the existing Better Auth session/state/callback and server-side token storage. Returning from Discord requires fresh explicit confirmation; account linking alone does not enroll. Hosted requests bind the app, credential, person, selected Group and connection generation, recheck current authority, and consume once on Return to application. Revoked, expired, replayed and obsolete requests fail closed. A required onboarding change stays visible and prevents Connect while still allowing a safe return. Return conveys no credential or success assertion; applications read current status again.
+
+```typescript
+const path = { groupId };
+const status = await client.readOwnGroupDiscordStatus({ path });
+const journey = await client.beginOwnGroupDiscordConnect({
+  path,
+  body: { returnUrl: 'https://app.example/callback' },
+});
+// Show a user-selected link to journey.url. On return, read status again.
+```
+
+```python
+status = client.read_own_group_discord_status(path={"groupId": group_id})
+journey = client.begin_own_group_discord_connect(
+    path={"groupId": group_id},
+    body={"returnUrl": "https://app.example/callback"},
+)
+```
+
+Both SDKs derive named operations and types from the canonical REST/OpenAPI source. Member responses never include user OAuth tokens or bot credentials. Source-level authenticated REST/SDK and hosted component checks do not establish live browser, assistive-technology, device or controlled Discord acceptance; those remain release gates. No runtime, deployment or live guild mutation was performed for this slice beyond the separately approved preview code generation.
 
 ## Discord identity retirement
 
