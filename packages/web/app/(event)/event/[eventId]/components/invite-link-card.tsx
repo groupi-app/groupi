@@ -1,6 +1,7 @@
 'use client';
 
 import { Trash2 as ActionTrash2 } from 'lucide-react';
+import { Card, CardAction } from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -86,8 +87,9 @@ export function InviteLinkCard({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <div className='relative max-w-3xl'>
+      <Card treatment='interactive' className='relative max-w-3xl'>
         <Checkbox
+          aria-label={`Select ${name || 'invite link'}`}
           checked={selectedInvites.includes(id)}
           onCheckedChange={() => {
             if (!selectedInvites.includes(id)) {
@@ -107,10 +109,10 @@ export function InviteLinkCard({
           }}
           asChild
         >
-          <div
+          <CardAction
             className={cn(
-              'cursor-pointer border border-border shadow-floating rounded-lg py-3 px-6 hover:bg-accent/80 transition-all z-lifted overflow-hidden',
-              selectedInvites.includes(id) ? 'bg-primary/30' : 'bg-card'
+              'w-full py-3 px-6',
+              selectedInvites.includes(id) && 'ring-2 ring-primary rounded-card'
             )}
           >
             <div className='flex items-center md:pl-8'>
@@ -163,7 +165,7 @@ export function InviteLinkCard({
                 </div>
               </div>
             </div>
-          </div>
+          </CardAction>
         </DialogTrigger>
         <DialogTrigger asChild>
           <Button
@@ -179,7 +181,7 @@ export function InviteLinkCard({
             <Icons.delete className='size-5' />
           </Button>
         </DialogTrigger>
-      </div>
+      </Card>
 
       <DialogContent
         preventOverlayClose={dialogType === 'delete'}
