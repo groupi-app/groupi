@@ -1124,14 +1124,18 @@
   outline: 2px solid var(--ring);
   outline-offset: 5px;
 }
-[data-slot='card'][data-treatment='interactive']:has(.soft-card-action:active) {
+[data-slot='card'][data-treatment='interactive']:has(
+    .soft-card-action:not(:disabled, [aria-disabled='true']):active
+  ) {
   transform: translateY(var(--soft-action-press-travel));
   box-shadow: 0 1px 0 var(--soft-primary-backing);
 }
 @media (hover: hover) {
   [data-slot='card'][data-treatment='interactive']:has(
-      .soft-card-action:hover
-    ):not(:has(.soft-card-action:active)) {
+      .soft-card-action:not(:disabled, [aria-disabled='true']):hover
+    ):not(
+      :has(.soft-card-action:not(:disabled, [aria-disabled='true']):active)
+    ) {
     transform: translateY(var(--soft-action-hover-travel));
     box-shadow:
       0 3px 0 var(--soft-primary-backing),
@@ -1384,23 +1388,29 @@
   );
   background-color: var(--card);
 }
-.soft-card-action,
-.soft-card-action::after {
+.soft-card-action:not(:disabled, [aria-disabled='true']),
+.soft-card-action:not(:disabled, [aria-disabled='true'])::after {
   cursor: pointer;
 }
+.soft-card-action:is(:disabled, [aria-disabled='true']),
+.soft-card-action:is(:disabled, [aria-disabled='true'])::after {
+  cursor: default;
+}
 [data-slot='card'][data-treatment='interactive']:has(
-    .soft-card-action:focus-visible
+    .soft-card-action:not(:disabled, [aria-disabled='true']):focus-visible
   ) {
   background-color: var(--soft-card-hover-fill);
 }
 @media (hover: hover) {
   [data-slot='card'][data-treatment='interactive']:has(
-      .soft-card-action:hover
+      .soft-card-action:not(:disabled, [aria-disabled='true']):hover
     ) {
     background-color: var(--soft-card-hover-fill);
   }
 }
-[data-slot='card'][data-treatment='interactive']:has(.soft-card-action:active) {
+[data-slot='card'][data-treatment='interactive']:has(
+    .soft-card-action:not(:disabled, [aria-disabled='true']):active
+  ) {
   background-color: var(--soft-card-pressed-fill);
 }
 
