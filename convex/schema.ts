@@ -1,3 +1,7 @@
+import {
+  connectionFields as discordConnectionFields,
+  mode as discordMode,
+} from './groupDiscord/contracts';
 import { tables as delegatedTables } from './delegatedApps/contracts';
 import {
   principalFields,
@@ -49,6 +53,41 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupDiscordConnections: defineTable(discordConnectionFields)
+    .index('by_group', ['groupId'])
+    .index('by_guild', ['guildId']),
+  // Cleanup is intentionally independent of live Group/configuration lifetime.
+  // Later lifecycle slices enqueue obligations here before invalidating enrollment.
+  groupDiscordCleanup: defineTable({
+    groupId: v.string(),
+    generation: v.number(),
+    guildId: v.string(),
+    mode: discordMode,
+    discordUserId: v.string(),
+    roleId: v.optional(v.string()),
+    desired: v.union(
+      v.literal('role_removed'),
+      v.literal('removed'),
+      v.literal('banned')
+    ),
+    observed: v.union(
+      v.literal('unknown'),
+      v.literal('present'),
+      v.literal('absent'),
+      v.literal('banned')
+    ),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('completed')
+    ),
+    error: v.optional(v.string()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
   ...delegatedTables,
   communityOperationReceipts: defineTable({
     operationId: v.string(),

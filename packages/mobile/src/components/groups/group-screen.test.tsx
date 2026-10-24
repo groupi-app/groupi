@@ -1,3 +1,6 @@
+vi.mock('./group-discord-settings', () => ({
+  GroupDiscordSettings: 'GroupDiscordSettings',
+}));
 vi.mock('./group-event-sharing-policy', () => ({
   GroupEventSharingPolicy: 'GroupEventSharingPolicy',
 }));
@@ -29,6 +32,8 @@ const mocks = vi.hoisted(() => ({
     ownerId: 'person-123',
     viewerRole: 'MEMBER',
     canManageIdentity: false,
+    canManageMembers: false,
+    canManageRoles: false,
     memberCount: 1,
   },
   push: vi.fn(),
@@ -133,4 +138,14 @@ describe('Native Group screens', () => {
     expect(mocks.deleteGroup).toHaveBeenCalledWith({ groupId: 'group-123' });
     expect(mocks.replace).toHaveBeenCalledWith('/g/group-123');
   });
+});
+
+it('shows native Discord settings to moderators without owner role controls', () => {
+  mocks.group.viewerRole = 'MODERATOR';
+  mocks.group.canManageMembers = true;
+  mocks.group.canManageRoles = false;
+  const tree = elements(GroupDetailScreen());
+  expect(tree.some(element => element.type === 'GroupDiscordSettings')).toBe(
+    true
+  );
 });

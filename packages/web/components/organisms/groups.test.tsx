@@ -1,3 +1,10 @@
+vi.mock('./group-ban-management', () => ({ GroupBanManagement: () => null }));
+vi.mock('./group-invitation-management', () => ({
+  GroupInvitationManagement: () => null,
+}));
+vi.mock('./group-discord-settings', () => ({
+  GroupDiscordSettings: () => <div>Discord manager settings</div>,
+}));
 vi.mock('./community-expulsion-progress', () => ({
   CommunityExpulsionProgress: () => null,
 }));
@@ -327,4 +334,16 @@ describe('Group identity and authority', () => {
       screen.queryByRole('button', { name: 'Edit Group' })
     ).not.toBeInTheDocument();
   });
+});
+
+it('shows Discord settings to Group moderators without owner role controls', () => {
+  setQueryResult({
+    ...group,
+    viewerRole: 'MODERATOR',
+    canManageIdentity: false,
+    canManageMembers: true,
+    canManageRoles: false,
+  });
+  render(<GroupDetail groupId={groupId} />);
+  expect(screen.getByText('Discord manager settings')).toBeInTheDocument();
 });

@@ -25,6 +25,7 @@ import {
 import { useLeaveGroup } from '@/hooks/convex/use-group-moderation';
 import { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
 import { GroupApplications } from './group-applications';
+import { GroupDiscordSettings } from './group-discord-settings';
 import { GroupApplicationSettings } from './group-application-settings';
 import { GroupBanManagement } from './group-ban-management';
 import { GroupConfirmedAction } from './group-confirmed-action';
@@ -270,6 +271,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           )
         )}
         <GroupOwnershipTransfer groupId={groupId} />
+        {group.canManageMembers && <GroupDiscordSettings groupId={groupId} />}
         <Link
           className='self-start text-sm font-medium text-primary underline underline-offset-4'
           href={`/announcement-preferences/${groupId}`}
