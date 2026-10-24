@@ -74,6 +74,10 @@ export function NotificationSlate({
   };
 
   const getNotificationLink = (): string => {
+    if (type === 'GROUP_DISCORD_SYNC_BLOCKED')
+      return notification.groupId || notification.group?.id
+        ? `/groups/${notification.group?.id ?? notification.groupId}`
+        : '/events';
     if (type === 'GROUP_ONBOARDING_REQUIRED')
       return notification.group
         ? `/groups/${notification.group.id}/questionnaire`
@@ -343,6 +347,13 @@ export function NotificationSlate({
             {notification.groupAnnouncement?.message
               ? `: ${notification.groupAnnouncement.message}`
               : ' — unavailable'}
+          </>
+        );
+      case 'GROUP_DISCORD_SYNC_BLOCKED':
+        return (
+          <>
+            Discord synchronization needs attention. Open Group Discord settings
+            to check permissions and retry.
           </>
         );
       case 'GROUP_ONBOARDING_REQUIRED':

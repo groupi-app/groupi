@@ -1,5 +1,33 @@
 # Current Integration Status
 
+Current feature evidence and historical integration checkpoints. Source verification does not imply live runtime acceptance.
+
+## Table of Contents
+
+- [Discord Group add-on candidate — 2026-10-23](#discord-group-add-on-candidate--2026-10-23)
+- [Groups web design refinement — source evidence as of 2026-10-23](#groups-web-design-refinement--source-evidence-as-of-2026-10-23)
+- [Universal community integration — source evidence as of 2026-10-19](#universal-community-integration--source-evidence-as-of-2026-10-19)
+- [Historical provider checkpoint](#historical-provider-checkpoint)
+- [Developer platform candidate — 2026-10-15](#developer-platform-candidate--2026-10-15)
+- [Test promotion checkpoint — 2026-10-15](#test-promotion-checkpoint--2026-10-15)
+- [Historical staging record — 2026-10-09](#historical-staging-record--2026-10-09)
+- [Table of Contents](#table-of-contents)
+- [Source and deployment](#source-and-deployment)
+- [Verification and open gates](#verification-and-open-gates)
+- [Evidence and maintenance](#evidence-and-maintenance)
+- [Architecture integration candidate — 2026-10-11](#architecture-integration-candidate--2026-10-11)
+
+## Discord Group add-on candidate — 2026-10-23
+
+[Draft PR #414](https://github.com/groupi-app/groupi/pull/414) integrates [spec #404](https://github.com/groupi-app/groupi/issues/404) on `codex/discord-group-integration`, based on `19e071e78738c071977d7305719066724106364e`. Feature and review-fix integration checkpoint: `ff1657d0831c5c647dcc3a07405e0ab03130b5db`; tested implementation tip: `705459b139bb0cb183664dee700e8f99dd69aafa`. Earlier Discord source checkpoints are retained in Git history.
+
+- Both Role and Server membership modes, explicit enrollment, independent moderation, identity retirement, durable cleanup, warned handback, preference-aware manager alerts and scoped delegated/hosted SDK journeys are integrated. Existing Event scheduled-event transport remains separate. Group-provider retry pauses do not claim coordination over every legacy Event request sharing the token.
+- Independent Standards and Spec review found six issues; all are corrected and closure-reviewed. Active/pending bindings determine exclusivity. Initial Connect retries preserve explicit consent and recheck current identity, eligibility, configuration and provider authority. Uncertain provider joins retain cleanup obligations. Runtime return validators, indexed predicates, direct same-runtime helpers and shared capability calculation preserve operation-specific permissions.
+- Final `pnpm check` and approved code generation pass, including 810 source/generated Convex contracts and SDK freshness. Corrected package coverage totals **4,101 passing tests**: CLI 400, portal 12, web 1,337, Convex 1,279, mobile 598, shared 434, JavaScript transport 8, Python transport 9 and authenticated SDK integration 24. The initial aggregate commands failed on feature-added query mocks and one capability expectation; corrected affected suites and the full web suite passed. This is package-suite evidence, not a claim that the original aggregate invocation exited zero.
+- Composed both-mode tests prove native/REST/JavaScript SDK/hosted status agreement through identity retirement, denied cleanup and recovery. Authenticated Event lifecycle tests execute provider create/update/delete effects beside an independent Group connection. Python transport tests are not reclassified as authenticated backend journeys.
+- **Open acceptance gates:** existing nonproduction Discord application/bot credentials and test identities, matching feature frontend/backend, actual native-web/hosted keyboard/status/narrow-screen journeys, and controlled real Discord checks in both modes. Separate mobile-device or VoiceOver acceptance is not required by the confirmed testing boundary and remains unclaimed. No runtime start/build/deploy, live guild mutation, new service or production change was performed.
+- The approved five-package minor feature changeset is included. The additional CLI minor handback-acknowledgement entry still awaits exact-summary approval. [#413](https://github.com/groupi-app/groupi/issues/413) remains open and the PR remains draft until the remaining acceptance/release-note gates are handled. No package versioning or release was performed. See [Discord Group setup](../../discord-group-setup.md).
+
 ## Groups web design refinement — source evidence as of 2026-10-23
 
 - Uncommitted review batch on `codex/refine-group-pages`, based on provider feature `865859b4`: Group detail and unlisted landing identity, tool navigation, Groups chooser, member roster, and shared Event layout. Existing data hooks, permission branches, onboarding, applications, confirmations, and management operations remain intact.

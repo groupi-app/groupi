@@ -176,6 +176,12 @@ const NOTIFICATION_CATEGORIES: Array<{
         icon: 'person-remove-outline',
       },
       {
+        type: 'GROUP_DISCORD_SYNC_BLOCKED',
+        icon: 'warning-outline',
+        label: 'Discord synchronization blocked',
+        description: 'A Group you manage needs Discord permissions or retry.',
+      },
+      {
         type: 'GROUP_ONBOARDING_REQUIRED',
         label: 'Required Group onboarding',
         description: 'Current required Group answers need completing.',

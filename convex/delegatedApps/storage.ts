@@ -345,6 +345,8 @@ export const prepareConsent = internalMutation({
           s !== 'offline_access' &&
           ![
             'groups.context.read',
+            'groups.discord.read',
+            'groups.discord.connect',
             'groups.events.read',
             'groups.events.join',
             'groups.events.rsvp',
@@ -562,23 +564,38 @@ export const pruneExpired = internalMutation({
   returns: v.null(),
   handler: async (ctx): Promise<null> => {
     const now = Date.now();
-    const [artifacts, approvals, requests] = await Promise.all([
-      ctx.db
-        .query('delegatedArtifacts')
-        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
-        .take(100),
-      ctx.db
-        .query('delegatedConsentApprovals')
-        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
-        .take(100),
-      ctx.db
-        .query('delegatedConsentRequests')
-        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
-        .take(100),
-    ]);
-    for (const record of [...artifacts, ...approvals, ...requests])
+    const [discordJourneys, artifacts, approvals, requests] = await Promise.all(
+      [
+        ctx.db
+          .query('groupDiscordJourneys')
+          .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+          .take(100),
+        ctx.db
+          .query('delegatedArtifacts')
+          .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+          .take(100),
+        ctx.db
+          .query('delegatedConsentApprovals')
+          .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+          .take(100),
+        ctx.db
+          .query('delegatedConsentRequests')
+          .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+          .take(100),
+      ]
+    );
+    for (const record of [
+      ...artifacts,
+      ...approvals,
+      ...requests,
+      ...discordJourneys,
+    ])
       await ctx.db.delete(record._id);
-    if ([artifacts, approvals, requests].some(rows => rows.length === 100))
+    if (
+      [artifacts, approvals, requests, discordJourneys].some(
+        rows => rows.length === 100
+      )
+    )
       await ctx.scheduler.runAfter(
         0,
         internal.delegatedApps.storage.pruneExpired,

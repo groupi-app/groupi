@@ -106,3 +106,7 @@ receipts last 30 days with permanent mismatch tombstones. Ownership/last-Organiz
 conflicts require resolution; never display successful departure for those errors.
 See the repository's `docs/community-integration-contract.md` for exact bodies,
 result shapes, independent read/write authority and deployment gates.
+
+### Selected Group Discord
+
+Request `groups.discord.read` and `groups.discord.connect` through fresh selected-Group consent. Read own status/Open Discord with `readOwnGroupDiscordStatus` (`read_own_group_discord_status` in Python). Start explicit hosted consent with `beginOwnGroupDiscordConnect` (`begin_own_group_discord_connect`), passing `path.groupId` and `body.returnUrl`, an exact registered HTTPS redirect URI. Open the returned `url` only on member intent and re-read status on return. Neither initiation nor linking a Discord identity enrolls the member automatically. Pending, screening, blocked cleanup and externally managed exceptions remain visible; member scopes grant no setup authority or Discord credentials. See [the hosted contract](../../docs/discord-group-setup.md#delegated-member-connection).

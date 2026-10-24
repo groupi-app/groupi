@@ -28,10 +28,19 @@ export const update = internalMutation({
     }),
 });
 export const remove = internalMutation({
-  args: { personId: v.id('persons'), groupId: v.string() },
+  args: {
+    personId: v.id('persons'),
+    groupId: v.string(),
+    acknowledgeDiscordHandback: v.optional(v.boolean()),
+  },
   returns: v.null(),
   handler: (ctx, args) =>
-    model.remove(ctx, args.personId, groupId(ctx, args.groupId)),
+    model.remove(
+      ctx,
+      args.personId,
+      groupId(ctx, args.groupId),
+      args.acknowledgeDiscordHandback
+    ),
 });
 export const get = internalQuery({
   args: { personId: v.id('persons'), groupId: v.string() },

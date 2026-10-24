@@ -28,10 +28,12 @@ function interactionFromMagicLink(url: string, siteOrigin: string) {
     }
     if (
       continuation.origin !== origin ||
-      continuation.pathname !== '/oauth/consent'
+      !['/oauth/consent', '/oauth/discord'].includes(continuation.pathname)
     )
       return null;
-    const ids = continuation.searchParams.getAll('interactionId');
+    const ids = continuation.searchParams.getAll(
+      continuation.pathname === '/oauth/discord' ? 'state' : 'interactionId'
+    );
     return ids.length === 1 && ids[0] ? ids[0] : null;
   } catch {
     return null;

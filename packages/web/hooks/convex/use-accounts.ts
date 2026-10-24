@@ -4,20 +4,9 @@ import { useQuery, useMutation, useAction } from 'convex/react';
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let accountQueries: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let accountMutations: any;
-
-function initApi() {
-  if (!accountQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    accountQueries = api.accounts?.queries ?? {};
-    accountMutations = api.accounts?.mutations ?? {};
-  }
-}
-initApi();
+import { api } from '@/convex/_generated/api';
+const accountQueries = api.accounts.queries;
+const accountMutations = api.accounts.mutations;
 
 type LinkedAccount = {
   id: string;

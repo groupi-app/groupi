@@ -101,7 +101,7 @@ from .types import (
     Object02c010229f76,
     Objectd53e7a082e12,
     Object0216e5b199fe,
-    Object2999e75f7ec1,
+    Object6ec82ed2d838,
     Objectc24f606b22f3,
     Objectf82be304b3e2,
     Object76f39dd7d1f8,
@@ -237,6 +237,7 @@ from .types import (
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
+    Object7e8a2ce9dd0e,
     Object40f81eb82dda,
     Objecta2791daed18f,
     Object6edaff610f96,
@@ -254,6 +255,9 @@ from .types import (
     Objectece999219204,
     Object39140cd5ad6d,
     Objectb93f36757224,
+    Objectfa3352bca1da,
+    Objectefb5209ee17a,
+    Object6f0e18d58953,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -367,7 +371,7 @@ from .types import (
     Object3cd40e9719f2,
     Object356518753784,
     Objectd3056924d246,
-    Objectf191154d01b8,
+    Object9f4a98fa38c1,
     Object65bba3d62a1c,
     Objecte86accd2d51f,
     Object5b24a1db1824,
@@ -1020,6 +1024,14 @@ class Groupi(Transport):
     def set_community_announcement_preference(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Change own Group announcement subscription."""
         return self.request('PUT', '/groups/{groupId}/announcement-preference', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_own_group_discord_status(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read own selected Group Discord access and Open Discord destination."""
+        return self.request('GET', '/groups/{groupId}/discord', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def begin_own_group_discord_connect(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Begin a Groupi-hosted member identity and consent journey."""
+        return self.request('POST', '/groups/{groupId}/discord/connect', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -2159,6 +2171,14 @@ class AsyncGroupi(AsyncTransport):
     async def set_community_announcement_preference(self, **kwargs):
         """Change own Group announcement subscription."""
         return await self.request('PUT', '/groups/{groupId}/announcement-preference', **kwargs)
+
+    async def read_own_group_discord_status(self, **kwargs):
+        """Read own selected Group Discord access and Open Discord destination."""
+        return await self.request('GET', '/groups/{groupId}/discord', **kwargs)
+
+    async def begin_own_group_discord_connect(self, **kwargs):
+        """Begin a Groupi-hosted member identity and consent journey."""
+        return await self.request('POST', '/groups/{groupId}/discord/connect', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""

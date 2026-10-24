@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 export const actions = [
   'groups.context.read',
+  'groups.discord.read',
+  'groups.discord.connect',
   'groups.events.read',
   'groups.events.join',
   'groups.events.rsvp',

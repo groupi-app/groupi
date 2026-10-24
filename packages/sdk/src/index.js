@@ -1064,6 +1064,19 @@ export class Groupi extends Transport {
       options
     );
   }
+  /** Read own selected Group Discord access and Open Discord destination */
+  readOwnGroupDiscordStatus(input = {}, options = {}) {
+    return this.request('GET', '/groups/{groupId}/discord', input, options);
+  }
+  /** Begin a Groupi-hosted member identity and consent journey */
+  beginOwnGroupDiscordConnect(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/discord/connect',
+      input,
+      options
+    );
+  }
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(input = {}, options = {}) {
     return this.request(

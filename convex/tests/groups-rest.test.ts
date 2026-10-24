@@ -141,3 +141,59 @@ describe('Groups authenticated REST boundary', () => {
     );
   });
 });
+it('REST deletion requires literal handback acknowledgement without widening ownership', async () => {
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const owner = await actor(t, 'rest-handback-owner', {
+    groups: ['read', 'write'],
+  });
+  const other = await actor(t, 'rest-handback-other', {
+    groups: ['read', 'write'],
+  });
+  const groupId = await owner.auth.mutation(api.groups.mutations.createGroup, {
+    name: 'Handback',
+  });
+  await t.run(async ctx => {
+    await ctx.db.insert('groupDiscordConnections', {
+      groupId,
+      guildId: '100',
+      guildName: 'Community',
+      mode: 'membership',
+      generation: 1,
+      status: 'active',
+      updatedAt: Date.now(),
+    });
+  });
+  await body(await owner.request(`/groups/${groupId}`, 'DELETE'), 409);
+  await body(
+    await owner.request(
+      `/groups/${groupId}?acknowledgeDiscordHandback=false`,
+      'DELETE'
+    ),
+    409
+  );
+  await body(
+    await owner.request(
+      `/groups/${groupId}?acknowledgeDiscordHandback=1`,
+      'DELETE'
+    ),
+    400
+  );
+  await body(
+    await other.request(
+      `/groups/${groupId}?acknowledgeDiscordHandback=true`,
+      'DELETE'
+    ),
+    403
+  );
+  await body(
+    await owner.request(
+      `/groups/${groupId}?acknowledgeDiscordHandback=true`,
+      'DELETE'
+    ),
+    204
+  );
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ status: 'disabled', groupDeleted: true });
+});

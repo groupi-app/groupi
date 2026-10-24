@@ -1,3 +1,12 @@
+vi.mock('./group-discord-connect', () => ({ GroupDiscordConnect: () => null }));
+vi.mock('./group-ban-management', () => ({ GroupBanManagement: () => null }));
+vi.mock('./group-invitation-management', () => ({
+  GroupInvitationManagement: () => null,
+}));
+vi.mock('./group-discord-settings', () => ({
+  GroupDiscordRetiredStatus: () => null,
+  GroupDiscordSettings: () => <div>Discord manager settings</div>,
+}));
 vi.mock('./community-expulsion-progress', () => ({
   CommunityExpulsionProgress: () => null,
 }));
@@ -292,7 +301,12 @@ describe('Group identity and authority', () => {
     await user.click(
       screen.getByRole('button', { name: 'Permanently delete Group' })
     );
-    await waitFor(() => expect(create).toHaveBeenCalledWith({ groupId }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({
+        groupId,
+        acknowledgeDiscordHandback: true,
+      })
+    );
   });
   it('preserves the landing path through sign-in and signup', () => {
     auth.isAuthenticated = false;
@@ -327,4 +341,16 @@ describe('Group identity and authority', () => {
       screen.queryByRole('button', { name: 'Edit Group' })
     ).not.toBeInTheDocument();
   });
+});
+
+it('shows Discord settings to Group moderators without owner role controls', () => {
+  setQueryResult({
+    ...group,
+    viewerRole: 'MODERATOR',
+    canManageIdentity: false,
+    canManageMembers: true,
+    canManageRoles: false,
+  });
+  render(<GroupDetail groupId={groupId} />);
+  expect(screen.getByText('Discord manager settings')).toBeInTheDocument();
 });

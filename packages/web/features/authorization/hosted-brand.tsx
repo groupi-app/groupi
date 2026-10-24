@@ -49,8 +49,14 @@ export function hostedInteractionId(destination: string): string | null {
   try {
     const origin = 'https://groupi.internal';
     const url = new URL(destination, origin);
-    if (url.origin !== origin || url.pathname !== '/oauth/consent') return null;
-    const ids = url.searchParams.getAll('interactionId');
+    if (
+      url.origin !== origin ||
+      !['/oauth/consent', '/oauth/discord'].includes(url.pathname)
+    )
+      return null;
+    const ids = url.searchParams.getAll(
+      url.pathname === '/oauth/discord' ? 'state' : 'interactionId'
+    );
     return ids.length === 1 && ids[0] ? ids[0] : null;
   } catch {
     return null;
