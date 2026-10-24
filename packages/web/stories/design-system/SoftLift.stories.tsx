@@ -359,7 +359,7 @@ function Feedback() {
               <MoreHorizontal aria-hidden='true' /> Event actions
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent presentation='soft'>
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onSelect={() => toast({ title: 'Event link copied' })}
@@ -461,6 +461,7 @@ export const LayoutAndStates: Story = {
   render: () => (
     <GalleryFrame>
       <ListPageTemplate
+        className='px-0'
         presentation='soft'
         title='Make room for a good time'
         subtitle='Page, section, and content headings each have a clear role.'
@@ -503,6 +504,7 @@ export const LongContent: Story = {
   render: () => (
     <GalleryFrame>
       <ListPageTemplate
+        className='px-0'
         presentation='soft'
         title='A very long event name that needs room to wrap gracefully on a smaller screen'
         controls={

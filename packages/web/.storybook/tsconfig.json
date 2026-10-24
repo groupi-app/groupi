@@ -1,6 +1,18 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": { "incremental": false },
-  "include": ["./**/*.ts", "./**/*.tsx", "../stories/**/*.ts", "../stories/**/*.tsx", "../next-env.d.ts"],
-  "exclude": ["../node_modules", "../../../convex/tests/**/*", "../../../convex/**/*.test.ts", "../../../convex/**/*.test.tsx", "**/test-helpers.tsx"]
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../stories/**/*.ts",
+    "../stories/**/*.tsx",
+    "../next-env.d.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../../../convex/tests/**/*",
+    "../../../convex/**/*.test.ts",
+    "../../../convex/**/*.test.tsx",
+    "**/test-helpers.tsx"
+  ]
 }

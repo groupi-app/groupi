@@ -1229,3 +1229,15 @@
     animation: none !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='dropdown-menu-content'][data-presentation='soft'] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+[data-slot='card'][data-treatment] [data-slot='card-title'] {
+  font-family: var(--font-heading);
+  line-height: 1.35;
+}
