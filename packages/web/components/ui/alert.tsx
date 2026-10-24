@@ -28,7 +28,7 @@ const alertVariants = cva(
 export function Alert({
   className,
   variant,
-  presentation,
+  presentation = 'soft',
   ...props
 }: React.ComponentProps<'div'> &
   VariantProps<typeof alertVariants> & { presentation?: 'soft' }) {

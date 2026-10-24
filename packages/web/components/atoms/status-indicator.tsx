@@ -59,6 +59,7 @@ export function StatusIndicator({
     return (
       <span
         data-slot='status-indicator'
+        data-status={status}
         className={cn(baseClasses, 'bg-success')}
         aria-label='Status: Online'
       />
@@ -70,6 +71,7 @@ export function StatusIndicator({
     return (
       <span
         data-slot='status-indicator'
+        data-status={status}
         className={cn(baseClasses, 'bg-warning')}
         aria-label='Status: Idle'
       >
@@ -89,6 +91,7 @@ export function StatusIndicator({
     return (
       <span
         data-slot='status-indicator'
+        data-status={status}
         className={cn(baseClasses, 'bg-error')}
         aria-label='Status: Do Not Disturb'
       >
@@ -104,6 +107,7 @@ export function StatusIndicator({
   return (
     <span
       data-slot='status-indicator'
+      data-status={status}
       className={cn(baseClasses, 'bg-muted-foreground/50')}
       aria-label={`Status: ${status === 'invisible' ? 'Invisible' : 'Offline'}`}
     />

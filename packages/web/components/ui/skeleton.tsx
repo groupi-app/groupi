@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 function Skeleton({
   className,
-  presentation,
+  presentation = 'soft',
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { presentation?: 'soft' }) {
   return (

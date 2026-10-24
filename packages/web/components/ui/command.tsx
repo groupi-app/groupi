@@ -18,7 +18,7 @@ export function Command({
     <CommandPrimitive
       data-slot='command'
       className={cn(
-        'flex h-full w-full flex-col rounded-md bg-popover text-popover-foreground',
+        'flex h-full w-full flex-col rounded-dropdown bg-popover text-popover-foreground',
         className
       )}
       {...props}
@@ -53,7 +53,7 @@ export function CommandInput({
       <CommandPrimitive.Input
         data-slot='command-input'
         className={cn(
-          'flex h-11 w-full  rounded-md bg-background py-3 px-3 ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm border-border border placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-11 w-full  rounded-input bg-bg-sunken py-3 px-3 ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm border-border border placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         {...props}
@@ -127,7 +127,7 @@ export function CommandItem({
     <CommandPrimitive.Item
       data-slot='command-item'
       className={cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled='true']:pointer-events-none data-[disabled='true']:opacity-50",
+        "relative flex cursor-default select-none items-center rounded-subtle px-2 py-1.5 text-sm outline-hidden aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled='true']:pointer-events-none data-[disabled='true']:opacity-50",
         className
       )}
       {...props}

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 export function Avatar({
   className,
-  presentation,
+  presentation = 'soft',
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & {
   presentation?: 'soft';

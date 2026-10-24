@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 function Switch({
   className,
-  presentation,
+  presentation = 'soft',
   ...props
 }: React.ComponentProps<typeof SwitchPrimitive.Root> & {
   presentation?: 'soft';
