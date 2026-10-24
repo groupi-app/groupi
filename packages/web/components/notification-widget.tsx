@@ -138,6 +138,7 @@ export function NotificationWidget({
               </TabsList>
             </Tabs>
             <ActionMenuButton
+              label='Notification actions'
               onClick={handleMoreClick}
               onContextMenu={handleContextMenu}
               className='size-8'

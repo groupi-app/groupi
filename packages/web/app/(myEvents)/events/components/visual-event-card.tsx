@@ -354,6 +354,7 @@ export function VisualEventCard({
     >
       {/* Action menu button */}
       <ActionMenuButton
+        label={`Actions for event ${event.title}`}
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
         className='absolute z-float size-8 bg-card/80 backdrop-blur-sm hover:bg-card transition-colors rounded-md top-2 right-2 flex items-center justify-center opacity-0 group-hover:opacity-100'
