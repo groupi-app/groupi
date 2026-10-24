@@ -34,7 +34,7 @@ export function EventScopeToggle({ value, onChange }: EventScopeToggleProps) {
             accessibilityLabel={scope.label}
             className={cn(
               'items-center justify-center rounded-button px-3 py-1.5',
-              isSelected ? 'bg-card shadow-raised' : 'bg-transparent'
+              isSelected ? 'bg-card' : 'bg-transparent'
             )}
           >
             <Text

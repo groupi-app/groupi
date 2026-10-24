@@ -18,7 +18,7 @@ describe('native theme presentation adapter', () => {
       };
       const resolved = resolveThemePresentation(base, overrides);
       const vars = tokensToCssVars(base, overrides);
-      expect(vars['--color-sticker-edge']).toBe('#ffffff');
+      expect(vars['--color-sticker-edge']).toBe('hsl(0, 0%, 100%)');
       for (const [name, action] of Object.entries(resolved.actions)) {
         expect(vars[`--color-${name}`]).toBe(action.compositedFill);
         expect(vars[`--color-${name}-foreground`]).toBe(action.foreground);

@@ -1,5 +1,6 @@
+import { Button } from '@/components/ui/button';
 import { useState, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -148,7 +149,7 @@ export default function NewPostScreen() {
       <View className='flex-row items-center justify-between border-b border-border px-4 py-3'>
         <BackButton />
         <Text className='text-lg font-semibold text-foreground'>New Post</Text>
-        <Pressable
+        <Button
           onPress={handleSubmit}
           disabled={!canSubmit}
           accessibilityRole='button'
@@ -175,7 +176,7 @@ export default function NewPostScreen() {
                 ? 'Posting...'
                 : 'Post'}
           </Text>
-        </Pressable>
+        </Button>
       </View>
 
       <PostComposerKeyboardView>

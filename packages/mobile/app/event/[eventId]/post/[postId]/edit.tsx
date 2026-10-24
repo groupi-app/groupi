@@ -1,5 +1,6 @@
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -181,7 +182,7 @@ export default function EditPostScreen() {
       <View className='flex-row items-center justify-between border-b border-border px-4 py-3'>
         <BackButton />
         <Text className='text-lg font-semibold text-foreground'>Edit Post</Text>
-        <Pressable
+        <Button
           onPress={handleSubmit}
           disabled={!isValid || !hasChanges || isSubmitting || isUploading}
           className={`rounded-button px-4 py-2 ${isValid && hasChanges && !isSubmitting ? 'bg-primary' : 'bg-muted'}`}
@@ -191,7 +192,7 @@ export default function EditPostScreen() {
           >
             {isUploading ? 'Uploading...' : isSubmitting ? 'Saving...' : 'Save'}
           </Text>
-        </Pressable>
+        </Button>
       </View>
 
       <PostComposerKeyboardView>

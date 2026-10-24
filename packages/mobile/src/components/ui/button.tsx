@@ -1,6 +1,7 @@
 import { Text, TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { useCSSVariable } from 'uniwind';
 import { useReducedMotion } from 'react-native-reanimated';
 import { Platform, Pressable, ActivityIndicator } from 'react-native';
 
@@ -114,10 +115,26 @@ function Button({
   children,
   disabled,
   accessibilityState,
+  style,
   ...props
 }: ButtonProps) {
   const isDisabled = !!(disabled || isLoading);
   const reducedMotion = useReducedMotion();
+  const primaryBacking = useCSSVariable('--color-primary-backing');
+  const secondaryBacking = useCSSVariable('--color-secondary-backing');
+  const destructiveBacking = useCSSVariable('--color-destructive-backing');
+  const filled =
+    !variant ||
+    variant === 'default' ||
+    variant === 'secondary' ||
+    variant === 'destructive';
+  const backing = String(
+    variant === 'secondary'
+      ? (secondaryBacking ?? 'transparent')
+      : variant === 'destructive'
+        ? (destructiveBacking ?? 'transparent')
+        : (primaryBacking ?? 'transparent')
+  );
   const renderContent = (content: React.ReactNode) => (
     <>
       {isLoading && (
@@ -157,6 +174,15 @@ function Button({
           !isDisabled && !reducedMotion && 'active:translate-y-[3px]',
           className
         )}
+        style={state => [
+          {
+            boxShadow:
+              filled && !isDisabled
+                ? `0 ${state.pressed ? 0 : 3}px 0 0 ${backing}`
+                : 'none',
+          },
+          typeof style === 'function' ? style(state) : style,
+        ]}
         role='button'
         {...props}
         disabled={isDisabled}

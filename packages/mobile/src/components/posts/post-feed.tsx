@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   View,
   type ListRenderItem,
 } from 'react-native';
@@ -144,7 +144,7 @@ export function PostFeed({
       />
 
       {showNewPost ? (
-        <Pressable
+        <Button
           onPress={() => router.push(`/event/${eventId}/new-post`)}
           accessibilityRole='button'
           accessibilityLabel='Create new post'
@@ -156,7 +156,7 @@ export function PostFeed({
           <Text className='font-semibold text-primary-foreground'>
             New Post
           </Text>
-        </Pressable>
+        </Button>
       ) : null}
     </View>
   );

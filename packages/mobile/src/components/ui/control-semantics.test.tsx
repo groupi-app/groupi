@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { useReducedMotion } from 'react-native-reanimated';
 import { Button } from './button';
 vi.mock('@rn-primitives/progress', () => ({
   Root: 'Progress',
@@ -38,6 +39,24 @@ describe('native control semantics', () => {
       disabled: false,
       busy: false,
     });
+  });
+  it('forwards pressed state to the caller style without losing it during material styling', () => {
+    const style = vi.fn(({ pressed }: { pressed: boolean }) => ({
+      opacity: pressed ? 0.8 : 1,
+    }));
+    const control = Button({ children: 'Save', style }).props.children;
+    const resolved = control.props.style({ pressed: true });
+    expect(style).toHaveBeenCalledWith({ pressed: true });
+    expect(resolved).toContainEqual({ opacity: 0.8 });
+  });
+  it('retains busy meaning while stopping continuous loading animation for reduced motion', () => {
+    vi.mocked(useReducedMotion).mockReturnValueOnce(true);
+    const control = Button({ children: 'Save', isLoading: true }).props
+      .children;
+    expect(control.props.accessibilityState.busy).toBe(true);
+    expect(control.props.children.props.children[0].props.animating).toBe(
+      false
+    );
   });
   it('uses the same bounded value and custom maximum for accessible and visible progress', () => {
     const control = Progress({ value: 30, max: 60 });

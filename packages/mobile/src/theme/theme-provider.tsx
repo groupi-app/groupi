@@ -12,6 +12,7 @@ import type { FunctionArgs, FunctionReturnType } from 'convex/server';
 import { Uniwind } from 'uniwind';
 
 import { api } from 'convex/_generated/api';
+import { components } from '@groupi/shared/design';
 import type { Id } from 'convex/_generated/dataModel';
 import {
   type ThemeTokens,
@@ -110,7 +111,7 @@ export function tokensToCssVars(
     '--color-input': tokens.border.default,
     '--color-ring': tokens.border.focus ?? tokens.brand.primary,
   };
-  vars['--color-sticker-edge'] = '#ffffff';
+  vars['--color-sticker-edge'] = components.sticker.edgeColor;
   for (const [name, action] of Object.entries(presentation.actions)) {
     const token = name === 'destructive' ? 'destructive' : name;
     vars[`--color-${token}`] = action.compositedFill;

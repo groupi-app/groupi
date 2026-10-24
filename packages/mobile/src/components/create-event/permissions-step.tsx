@@ -222,7 +222,7 @@ export function PermissionsStep({
                         className={cn(
                           'flex-1 items-center rounded-badge px-2 py-2',
                           isActive
-                            ? 'border-2 border-primary-foreground bg-primary shadow-raised'
+                            ? 'min-h-11 border-2 border-sticker-edge bg-primary shadow-none'
                             : 'bg-muted'
                         )}
                       >
