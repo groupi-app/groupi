@@ -79,7 +79,7 @@ export function ProfileViewDialog({
   userId,
   open,
   onOpenChange,
-  initialTab = 'profile',
+  initialTab = 'mutualFriends',
 }: ProfileViewDialogProps) {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id as string | undefined;
@@ -209,7 +209,12 @@ export function ProfileViewDialog({
 
         {/* Tabs Section - Only show for other users' profiles */}
         {currentUserId && !isOwnProfile && !isLoading && userProfile && (
-          <Tabs defaultValue={initialTab} className='flex-1 flex flex-col pb-6'>
+          <Tabs
+            defaultValue={
+              initialTab === 'profile' ? 'mutualFriends' : initialTab
+            }
+            className='flex-1 flex flex-col pb-6'
+          >
             <div className='px-6'>
               <TabsList className='w-full'>
                 <TabsTrigger value='mutualFriends' className='flex-1 gap-1.5'>

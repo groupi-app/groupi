@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { StickerIcon } from '@/components/atoms';
@@ -238,6 +239,8 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
         <div className='flex items-center gap-2 text-sm'>
           {visibility === 'FRIENDS' ? (
             <Icons.people className='size-4 text-muted-foreground' />
+          ) : visibility === 'PUBLIC' ? (
+            <Globe className='size-4 text-muted-foreground' />
           ) : (
             <Icons.lock className='size-4 text-muted-foreground' />
           )}

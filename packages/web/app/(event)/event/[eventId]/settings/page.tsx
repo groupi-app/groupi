@@ -43,6 +43,7 @@ export default function EventSettingsPage(props: {
       title='Event Settings'
       description='Choose a category'
       backHref={`/event/${eventId}`}
+      backLabel='Event'
       showMobileBack={true}
     >
       <nav className='flex flex-col gap-2'>
