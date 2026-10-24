@@ -116,6 +116,8 @@ export function ToastDescription({
 
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
 
-type ToastActionElement = React.ReactElement<typeof ToastAction>;
+type ToastActionElement = React.ReactElement<
+  React.ComponentProps<typeof ToastAction>
+>;
 
 export { ToastProvider, type ToastActionElement, type ToastProps };

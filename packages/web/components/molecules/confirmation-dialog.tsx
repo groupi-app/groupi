@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export interface ConfirmationDialogProps {
   /**
@@ -47,7 +48,7 @@ export interface ConfirmationDialogProps {
    */
   loadingText?: string;
   /**
-   * Callback when the confirm button is clicked
+   * Resolve after success to close; throw on failure to keep the action retryable.
    */
   onConfirm: () => void | Promise<void>;
   /**
@@ -79,12 +80,22 @@ export function ConfirmationDialog({
   confirmVariant,
 }: ConfirmationDialogProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const processing = React.useRef(false);
+  const close = React.useRef<HTMLButtonElement>(null);
 
   const handleConfirm = async () => {
+    if (processing.current || isLoading) return;
+    processing.current = true;
     setIsProcessing(true);
+    setError('');
     try {
       await onConfirm();
+      close.current?.click();
+    } catch {
+      setError('Unable to complete this action. Please try again.');
     } finally {
+      processing.current = false;
       setIsProcessing(false);
     }
   };
@@ -93,12 +104,18 @@ export function ConfirmationDialog({
   const variant = confirmVariant ?? (isDestructive ? 'destructive' : 'default');
 
   return (
-    <DialogContent className={cn(className)}>
+    <DialogContent className={cn(className)} preventClose={loading}>
       <DialogHeader>
         {icon && <div className='flex justify-center mb-2'>{icon}</div>}
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
+      {error && (
+        <Alert variant='destructive'>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <DialogClose ref={close} className='hidden' aria-hidden tabIndex={-1} />
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose asChild>
@@ -106,16 +123,14 @@ export function ConfirmationDialog({
               {cancelText}
             </Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button
-              onClick={handleConfirm}
-              disabled={loading}
-              variant={variant}
-              className='flex-1'
-            >
-              {loading ? loadingText : confirmText}
-            </Button>
-          </DialogClose>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading}
+            variant={variant}
+            className='flex-1'
+          >
+            {loading ? loadingText : confirmText}
+          </Button>
         </div>
       </DialogFooter>
     </DialogContent>
