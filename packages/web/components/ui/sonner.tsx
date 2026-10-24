@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Toaster as Sonner, ToasterProps } from 'sonner';
 
 const Toaster = ({
-  presentation,
+  presentation = 'soft',
   className,
   ...props
 }: ToasterProps & { presentation?: 'soft' }) => {

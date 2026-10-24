@@ -4,13 +4,13 @@ import { cn } from '@/lib/utils';
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  /** Opt-in quiet field treatment for the component gallery. */
+  /** Quiet writable field treatment; presentation is retained for compatibility. */
   presentation?: 'default' | 'soft';
 }
 
 export function Textarea({
   className,
-  presentation = 'default',
+  presentation = 'soft',
   ...props
 }: TextareaProps) {
   return (

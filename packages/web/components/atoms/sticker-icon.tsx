@@ -85,8 +85,14 @@ export function StickerIcon({
   className,
 }: StickerIconProps) {
   const Icon = typeof icon === 'string' ? Icons[icon] : icon;
+  const role = color === 'error' ? 'destructive' : color;
   return (
     <div
+      data-slot='sticker-icon'
+      style={{
+        backgroundColor: `var(--soft-${role}-composited-fill)`,
+        color: `var(--soft-${role}-foreground)`,
+      }}
       className={cn(
         // Base styles - square aspect ratio with flex centering
         'flex-shrink-0 flex items-center justify-center',
@@ -105,7 +111,7 @@ export function StickerIcon({
         className
       )}
     >
-      <Icon className={cn('text-white', iconSizeClasses[size])} />
+      <Icon className={cn(iconSizeClasses[size])} />
     </div>
   );
 }

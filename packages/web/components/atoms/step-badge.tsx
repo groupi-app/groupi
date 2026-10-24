@@ -44,8 +44,14 @@ export function StepBadge({
   color = 'primary',
   className,
 }: StepBadgeProps) {
+  const role = color === 'error' ? 'destructive' : color;
   return (
     <div
+      data-slot='step-badge'
+      style={{
+        backgroundColor: `var(--soft-${role}-composited-fill)`,
+        color: `var(--soft-${role}-foreground)`,
+      }}
       className={cn(
         // Base styles - circular with fixed size
         'size-10 flex-shrink-0',
@@ -53,7 +59,7 @@ export function StepBadge({
         // Circular shape
         'rounded-full',
         // Typography
-        'text-lg font-black text-white',
+        'text-lg font-black',
         // Shadow and border for sticker effect
         'shadow-raised border-[3px] border-white',
         // Color variant

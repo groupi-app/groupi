@@ -15,7 +15,7 @@ export function Card({ className, treatment, ...props }: CardProps) {
       data-treatment={treatment}
       className={cn(
         // Clean elevated surface - sticker effect reserved for accents (buttons, badges, avatars)
-        'rounded-card bg-card text-card-foreground border border-border shadow-raised transition-shadow duration-fast hover:shadow-floating',
+        'rounded-card bg-card text-card-foreground border border-border',
         className
       )}
       {...props}
