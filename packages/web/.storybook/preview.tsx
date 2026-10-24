@@ -9,6 +9,7 @@ import {
 import { ThemeProvider, useGroupiTheme } from '../providers/theme-provider';
 import { generateCompleteCustomThemeCSS } from '../lib/theme-css';
 import '../styles/globals.css';
+import './preview.css';
 
 const bodyFont = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const headingFont = localFont({
@@ -71,7 +72,10 @@ function PreviewTheme({
     }
   }, [themeId, setBaseTheme, setCustomTheme]);
   return (
-    <div className='min-h-screen bg-background font-sans text-foreground antialiased'>
+    <div
+      data-groupi-preview
+      className='min-h-screen bg-background font-sans text-foreground antialiased'
+    >
       {children}
     </div>
   );
