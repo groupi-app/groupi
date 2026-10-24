@@ -562,8 +562,7 @@ export function EventInviteSearch({
       {/* Pending Invites Section */}
       {pendingInvites.length > 0 && (
         <div className='border-t border-border pt-4'>
-          <h4 className='text-sm font-medium mb-3 flex items-center gap-2'>
-            <Icons.clock className='size-4 text-muted-foreground' />
+          <h4 className='font-heading text-sm font-medium mb-3 flex items-center gap-2'>
             Pending Invites
             <Badge variant='secondary'>{pendingInvites.length}</Badge>
           </h4>

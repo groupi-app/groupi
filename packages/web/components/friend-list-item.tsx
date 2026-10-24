@@ -113,7 +113,7 @@ export function FriendListItem({
   };
 
   return (
-    <div className='flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-card bg-card hover:bg-accent/50 transition-colors'>
+    <div className='flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-card border border-border bg-card'>
       {/* Top row: Avatar + User info */}
       <div className='flex items-center gap-3 flex-1 min-w-0'>
         {/* Avatar with online indicator */}
@@ -218,11 +218,10 @@ export function FriendListItem({
             )}
             {onRemove && (
               <Button
-                variant='ghost'
+                variant='destructive-ghost'
                 size='icon'
                 onClick={onRemove}
                 disabled={isLoading}
-                className='hover:bg-destructive hover:text-destructive-foreground'
               >
                 <Icons.close className='size-4' />
               </Button>
@@ -261,13 +260,12 @@ export function FriendListItem({
 
         {variant === 'outgoing' && onCancel && (
           <Button
-            variant='ghost'
+            variant='destructive-ghost'
             size='sm'
             onClick={onCancel}
             disabled={isLoading}
             isLoading={isLoading}
             icon={<Icons.close className='size-4' />}
-            className='hover:bg-destructive hover:text-destructive-foreground'
           >
             Cancel
           </Button>

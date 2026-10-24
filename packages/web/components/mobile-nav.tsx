@@ -94,7 +94,6 @@ export function MobileNav({
                   className='flex items-center gap-2 text-primary dark:text-foreground'
                   href='/'
                 >
-                  <Icons.logo width='32' height='28' viewBox='0 0 197 225' />
                   <span className='text-xl'>{siteConfig.name}</span>
                 </Link>
               </SheetClose>

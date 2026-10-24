@@ -1,5 +1,7 @@
 'use client';
 
+import { Save } from 'lucide-react';
+
 import { useState } from 'react';
 import {
   Dialog,
@@ -148,7 +150,11 @@ function AttachmentEditForm({
           <Button variant='outline' onClick={onCancel} className='flex-1'>
             Cancel
           </Button>
-          <Button onClick={handleSave} className='flex-1'>
+          <Button
+            onClick={handleSave}
+            className='flex-1'
+            icon={<Save className='size-4' />}
+          >
             Save
           </Button>
         </div>

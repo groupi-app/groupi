@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { Move } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -252,15 +253,15 @@ export function EventImageUpload({
                 onClick={() => setFocalPointPickerOpen(true)}
                 disabled={disabled}
               >
-                <Icons.location className='size-4 mr-1' />
+                <Move className='size-4' />
                 Adjust Position
               </Button>
             )}
             <Button
               type='button'
-              variant='ghost'
+              variant='destructive-ghost'
               size='sm'
-              className='text-muted-foreground hover:text-destructive w-fit'
+              className=' w-fit'
               onClick={handleRemove}
               disabled={disabled}
             >

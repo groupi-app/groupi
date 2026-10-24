@@ -1,8 +1,9 @@
+import { Card } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
 
 export function PostCardSkeleton() {
   return (
-    <div className='rounded-card border border-border w-full relative shadow-raised max-w-4xl'>
+    <Card treatment='quiet' className='w-full max-w-4xl'>
       <div className='w-full transition-all pt-4 px-5 pb-2'>
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-2 mb-1'>
@@ -25,7 +26,7 @@ export function PostCardSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

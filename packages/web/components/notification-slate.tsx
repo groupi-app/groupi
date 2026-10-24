@@ -1,4 +1,4 @@
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Doc } from '@/convex/_generated/dataModel';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
@@ -442,8 +442,8 @@ export function NotificationSlate({
         </Button>
       )}
       <Button
-        variant='ghost'
-        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+        variant='destructive-ghost'
+        className='w-full justify-start'
         onClick={() => {
           setSheetOpen(false);
           deleteNotification(notification._id);
@@ -463,7 +463,7 @@ export function NotificationSlate({
           onClick={() => markAsUnread(notification._id)}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.unread className='size-4' />
             <span>Mark as unread</span>
           </div>
@@ -473,20 +473,21 @@ export function NotificationSlate({
           onClick={() => markAsRead(notification._id)}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.read className='size-4' />
             <span>Mark as read</span>
           </div>
         </ContextMenuItem>
       )}
       <ContextMenuItem
+        variant='destructive'
         onSelect={e => {
           e.preventDefault();
           deleteNotification(notification._id);
         }}
-        className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+        className='cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-3'>
           <Icons.delete className='size-4' />
           <span>Delete</span>
         </div>
@@ -515,8 +516,9 @@ export function NotificationSlate({
         </DropdownMenuItem>
       )}
       <DropdownMenuItem
+        variant='destructive'
         onClick={() => deleteNotification(notification._id)}
-        className='focus:bg-destructive focus:text-destructive-foreground cursor-pointer'
+        className='cursor-pointer'
       >
         <Icons.delete className='size-4' />
         <span>Delete</span>
@@ -556,7 +558,7 @@ export function NotificationSlate({
         // Use a button/div for action-based notifications
         <button
           onClick={handleNotificationClick}
-          className='hover:bg-accent/80 hover:shadow-raised flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast w-full text-left rounded-card'
+          className='hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast w-full text-left rounded-card'
         >
           {notificationInner}
         </button>
@@ -565,7 +567,7 @@ export function NotificationSlate({
         <Link
           onClick={handleNotificationClick}
           href={getNotificationLink()}
-          className='hover:bg-accent/80 hover:shadow-raised flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast rounded-card'
+          className='hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast rounded-card'
         >
           {notificationInner}
         </Link>
@@ -575,9 +577,11 @@ export function NotificationSlate({
         label={`Notification actions${event?.title || notification.group?.title ? ` for ${event?.title || notification.group?.title}` : ''}`}
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
-        className={`size-8 absolute right-2 top-0 bottom-0 my-auto ${
-          isMobile ? '' : 'opacity-0 group-hover:opacity-100'
-        }`}
+        className={cn(
+          'size-8 absolute right-2 top-0 bottom-0 my-auto',
+          !isMobile &&
+            'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+        )}
         dropdownContent={dropdownContent}
       >
         <Icons.more />

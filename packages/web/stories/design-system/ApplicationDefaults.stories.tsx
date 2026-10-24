@@ -139,6 +139,10 @@ function ApplicationDefaults() {
           <Button variant='warning'>Maybe</Button>
           <Button variant='info'>Awaiting response</Button>
           <Button variant='destructive-ghost'>Leave event</Button>
+          <Button variant='link'>View all responses</Button>
+        </div>
+        <div className='rounded-card bg-primary p-4'>
+          <Button variant='outline-primary'>Create another event</Button>
         </div>
       </section>
     </main>

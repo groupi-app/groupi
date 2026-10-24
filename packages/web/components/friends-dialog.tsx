@@ -109,7 +109,6 @@ export function FriendsDialog() {
         <DialogContent className='sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col'>
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
-              <Icons.people className='size-5' />
               Friends &amp; Groups
             </DialogTitle>
             <DialogDescription className='sr-only'>
@@ -214,7 +213,7 @@ export function FriendsDialog() {
                   {/* Outgoing requests (shown first) */}
                   {sentRequests.length > 0 && (
                     <div className='space-y-2'>
-                      <h3 className='text-sm font-medium text-muted-foreground px-1'>
+                      <h3 className='font-heading text-sm font-medium text-muted-foreground px-1'>
                         Sent ({sentRequests.length})
                       </h3>
                       {sentRequests.map((request: FriendRequest) => (
@@ -234,7 +233,7 @@ export function FriendsDialog() {
                   {/* Incoming requests */}
                   {pendingRequests.length > 0 && (
                     <div className='space-y-2'>
-                      <h3 className='text-sm font-medium text-muted-foreground px-1'>
+                      <h3 className='font-heading text-sm font-medium text-muted-foreground px-1'>
                         Received ({pendingRequests.length})
                       </h3>
                       {pendingRequests.map((request: FriendRequest) => (
