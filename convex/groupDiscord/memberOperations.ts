@@ -22,21 +22,22 @@ export async function eligibleConnection(
   if (
     !connection ||
     connection.status !== 'active' ||
-    connection.mode !== 'role' ||
-    !connection.roleId
+    (connection.mode === 'role' && !connection.roleId)
   )
-    throw new Error('Active Discord Role access is required.');
+    throw new Error('Active Discord access is required.');
   return connection;
 }
 
 /** Cleanup keeps an immutable provider target even when a later enrollment replaces it. */
-export async function oweRoleCleanup(
+export async function oweAccessCleanup(
   ctx: MutationCtx,
   row: {
     groupId: Id<'groups'>;
     guildId: string;
     discordUserId: string;
-    roleId: string;
+    roleId?: string;
+    mode?: 'role' | 'membership';
+    removal?: 'removed' | 'banned';
     generation: number;
     connectionGeneration?: number;
     personId?: Id<'persons'>;
@@ -55,6 +56,17 @@ export async function oweRoleCleanup(
     .filter(q => q.eq(q.field('groupId'), String(row.groupId)))
     .first();
   if (existingObligation) {
+    if (
+      row.mode === 'membership' &&
+      row.removal === 'banned' &&
+      existingObligation.desired !== 'banned'
+    )
+      await ctx.db.patch(existingObligation._id, {
+        desired: 'banned',
+        status: 'pending',
+        observed: 'unknown',
+        nextAttemptAt: Date.now(),
+      });
     if (existingObligation.status === 'completed')
       await ctx.db.patch(existingObligation._id, {
         status: 'pending',
@@ -73,8 +85,9 @@ export async function oweRoleCleanup(
     enrollmentGeneration: row.generation,
     personId: row.personId ? String(row.personId) : undefined,
     groupId: String(row.groupId),
-    mode: 'role',
-    desired: 'role_removed',
+    mode: row.mode ?? 'role',
+    desired:
+      row.mode === 'membership' ? (row.removal ?? 'removed') : 'role_removed',
     observed: 'unknown',
     status: 'pending',
     attempts: 0,
@@ -197,6 +210,7 @@ export async function beginEnrollment(
     return old;
   if (
     old &&
+    !(old.mode === 'membership' && old.externalException) &&
     (old.discordUserId !== discordUserId ||
       old.connectionGeneration !== connection.generation)
   ) {
@@ -213,7 +227,7 @@ export async function beginEnrollment(
       .filter(q => q.eq(q.field('status'), 'completed'))
       .first();
     if (!completed) {
-      await oweRoleCleanup(ctx, old);
+      await oweAccessCleanup(ctx, old);
       await ctx.db.patch(old._id, {
         desired: 'removed',
         status: 'blocked',
@@ -238,7 +252,8 @@ export async function beginEnrollment(
     personId: personId,
     discordUserId,
     guildId: connection.guildId,
-    roleId: connection.roleId!,
+    mode: connection.mode,
+    roleId: connection.roleId,
     connectionGeneration: connection.generation,
     generation: (old?.generation ?? 0) + 1,
     desired: 'granted' as const,

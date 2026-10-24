@@ -162,3 +162,34 @@ it('explains membership consequences before explicitly saving a discovered serve
   mounted.unmount();
   await client.close();
 });
+
+it('shows membership permission guidance when setup is blocked', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildId: '123',
+      guildName: 'Community',
+      mode: 'membership',
+      generation: 1,
+      status: 'blocked',
+      error: 'Missing moderation permissions.',
+    }),
+  }));
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(screen.getByText(/Setup needs attention/)).toHaveTextContent(
+    'Kick Members and Ban Members'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Save Discord connection' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});

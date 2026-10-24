@@ -38,8 +38,10 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
         )}
         {form.connection.status === 'blocked' && (
           <Text>
-            Setup needs attention. Check that the Groupi bot is installed and
-            can manage the selected role. {form.connection.error}
+            {form.connection.mode === 'membership'
+              ? 'Setup needs attention. Check that the Groupi bot is installed with Kick Members and Ban Members permissions, and its role is above enrolled members.'
+              : 'Setup needs attention. Check that the Groupi bot is installed and can manage the selected role.'}{' '}
+            {form.connection.error}
           </Text>
         )}
         {form.connection.status === 'pending' && (
@@ -99,7 +101,7 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
       <Text>
         {form.mode === 'role'
           ? 'Role mode removes only the dedicated Group role from enrolled members when access ends; server membership remains.'
-          : 'Membership mode may remove or ban enrolled server members when access ends and requires an exclusive server binding.'}{' '}
+          : 'Membership mode may remove or ban enrolled server members when access ends and requires an exclusive server binding. The bot needs Kick Members and Ban Members permissions. Server owners and accounts at or above the bot’s role require Discord staff to manage their access.'}{' '}
         Neither mode purges unenrolled people or grants staff powers. Members
         must explicitly connect later before receiving Discord access.
       </Text>

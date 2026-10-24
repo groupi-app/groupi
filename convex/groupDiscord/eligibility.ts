@@ -4,13 +4,14 @@ import { makeFunctionReference } from 'convex/server';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
-import { oweRoleCleanup } from './memberOperations';
+import { oweAccessCleanup } from './memberOperations';
 
 /** Fence provider work in the same transaction that revokes Group eligibility. */
 export async function invalidateGroupDiscordEnrollment(
   ctx: MutationCtx,
   groupId: Id<'groups'>,
-  personId: Id<'persons'>
+  personId: Id<'persons'>,
+  removal: 'removed' | 'banned' = 'removed'
 ) {
   const row = await ctx.db
     .query('groupDiscordEnrollments')
@@ -18,10 +19,20 @@ export async function invalidateGroupDiscordEnrollment(
       q.eq('groupId', groupId).eq('personId', personId)
     )
     .unique();
-  if (!row || row.desired === 'removed') return;
-  await oweRoleCleanup(ctx, row);
+  if (!row) return;
+  if (
+    row.desired === 'removed' &&
+    (removal !== 'banned' ||
+      row.mode !== 'membership' ||
+      row.cleanupDesired === 'banned')
+  )
+    return;
+  if (!(row.mode === 'membership' && row.externalException))
+    await oweAccessCleanup(ctx, { ...row, removal });
   await ctx.db.patch(row._id, {
     desired: 'removed',
+    cleanupDesired:
+      removal === 'banned' ? 'banned' : (row.cleanupDesired ?? 'removed'),
     status: 'blocked',
     generation: row.generation + 1,
     error: 'Group access changed. Connect again when eligible.',

@@ -1,6 +1,6 @@
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
-import { enrollmentAuthorized, oweRoleCleanup } from './memberOperations';
+import { enrollmentAuthorized, oweAccessCleanup } from './memberOperations';
 
 export const due = internalMutation({
   args: {},
@@ -44,15 +44,27 @@ export const due = internalMutation({
 export const cleanupOutcome = internalMutation({
   args: {
     id: v.id('groupDiscordCleanup'),
+    expectedDesired: v.optional(
+      v.union(
+        v.literal('role_removed'),
+        v.literal('removed'),
+        v.literal('banned')
+      )
+    ),
     error: v.optional(v.string()),
     delay: v.optional(v.number()),
   },
-  handler: async (ctx, { id, error, delay }) => {
+  handler: async (ctx, { id, error, delay, expectedDesired }) => {
     const row = await ctx.db.get(id);
     if (!row) return;
+    if (expectedDesired && row.desired !== expectedDesired) return;
     await ctx.db.patch(id, {
       status: error ? 'pending' : 'completed',
-      observed: error ? 'unknown' : 'absent',
+      observed: error
+        ? 'unknown'
+        : row.desired === 'banned'
+          ? 'banned'
+          : 'absent',
       error,
       attempts: row.attempts + 1,
       nextAttemptAt: Date.now() + (delay ?? 300000),
@@ -86,7 +98,11 @@ export const observe = internalMutation({
       desired: 'granted',
     });
     if (!eligible) {
-      if (args.present !== false) await oweRoleCleanup(ctx, row);
+      if (
+        args.present !== false &&
+        !(row.mode === 'membership' && row.externalException)
+      )
+        await oweAccessCleanup(ctx, { ...row, removal: row.cleanupDesired });
       await ctx.db.patch(row._id, {
         desired: 'removed',
         status: 'blocked',
@@ -172,8 +188,10 @@ export const auditPage = internalMutation({
           continue;
         const removed =
           args.action !== 25 ||
-          event.uncertainRoleChange ||
-          event.removedRoleIds?.includes(row.roleId);
+          (row.mode !== 'membership' && event.uncertainRoleChange) ||
+          (row.mode !== 'membership' &&
+            !!row.roleId &&
+            event.removedRoleIds?.includes(row.roleId));
         if (!removed) continue;
         let own = false;
         if (

@@ -36,6 +36,7 @@ export const connect = action({
         method,
         headers: { Authorization: `Bot ${token}` },
       });
+    let joinAttempted = false;
     const memberPath = `/guilds/${row.guildId}/members/${row.discordUserId}`;
     try {
       const ban = await bot(`/guilds/${row.guildId}/bans/${row.discordUserId}`);
@@ -51,7 +52,8 @@ export const connect = action({
       if (
         row.status === 'connected' &&
         (memberResponse.status === 404 ||
-          (memberResponse.ok &&
+          (row.mode !== 'membership' &&
+            memberResponse.ok &&
             !(await memberResponse.clone().json()).roles.includes(row.roleId)))
       )
         row = await ctx.runMutation(internal.groupDiscord.enrollment.begin, {
@@ -76,6 +78,42 @@ export const connect = action({
           token,
           async () => {
             if (!(await fence())) return false;
+            if (row.mode === 'membership') {
+              const meResponse = await bot('/users/@me');
+              const rolesResponse = await bot(`/guilds/${row.guildId}/roles`);
+              if (!meResponse.ok || !rolesResponse.ok)
+                throw new Error(
+                  'Discord bot capabilities could not be verified before joining.'
+                );
+              const me: { id: string } = await meResponse.json();
+              const botResponse = await bot(
+                `/guilds/${row.guildId}/members/${me.id}`
+              );
+              if (!botResponse.ok)
+                throw new Error(
+                  'Discord bot membership unavailable before joining.'
+                );
+              const botMember: { roles: string[] } = await botResponse.json();
+              const roles: { id: string; permissions: string }[] =
+                await rolesResponse.json();
+              const permissions = roles
+                .filter(
+                  r => r.id === row.guildId || botMember.roles.includes(r.id)
+                )
+                .reduce((bits, r) => bits | BigInt(r.permissions), 0n);
+              if ((permissions & 8n) === 0n && (permissions & 134n) !== 134n)
+                throw new Error(
+                  'Discord bot needs Kick Members, Ban Members and View Audit Log before joining.'
+                );
+            }
+            if (
+              !(await ctx.runMutation(
+                internal.groupDiscord.enrollment.markGrantAttempt,
+                { enrollmentId: row._id, generation: row.generation }
+              ))
+            )
+              return false;
+            joinAttempted = true;
             await ctx.runMutation(
               internal.groupDiscord.enrollment.scheduleGrant,
               {
@@ -109,6 +147,10 @@ export const connect = action({
           status: 200,
         });
       }
+      if (!(await fence()))
+        throw new Error(
+          'Group access changed during Discord membership enrollment.'
+        );
       if (!memberResponse.ok)
         throw new Error('Discord member verification failed.');
       const member: { roles: string[]; pending?: boolean } =
@@ -131,6 +173,19 @@ export const connect = action({
       });
       return {};
     } catch (error) {
+      if (joinAttempted && !(await fence())) {
+        await ctx.runMutation(internal.groupDiscord.enrollment.oweCleanup, {
+          groupId: row.groupId,
+          guildId: row.guildId,
+          discordUserId: row.discordUserId,
+          roleId: row.roleId,
+          mode: row.mode,
+          generation: row.generation,
+          connectionGeneration: row.connectionGeneration,
+          personId: row.personId,
+        });
+        await ctx.runAction(internal.groupDiscord.reconcile.dispatch, {});
+      }
       await ctx.runMutation(internal.groupDiscord.enrollment.finish, {
         enrollmentId: row._id,
         generation: row.generation,

@@ -550,64 +550,72 @@ it('explicit Connect adopts an existing linked member without joining and expose
     )
   ).toBe(false);
 });
-it('missing server membership requires separate guilds.join consent without silently enrolling', async () => {
-  const { owner, groupId } = await setup();
-  await owner.auth.action(api.groupDiscord.actions.configure, {
-    groupId,
-    guildId: '100',
-  });
-  const base = provider.getMockImplementation()!;
-  provider.mockImplementation(async (input, init) => {
-    if (String(input).endsWith('/bans/manager-discord'))
-      return json({ code: 10026 }, 404);
-    if (String(input).endsWith('/members/manager-discord'))
-      return json({ code: 10007 }, 404);
-    if (String(input).endsWith('/oauth2/@me'))
-      return json({
-        application: { id: 'client' },
-        scopes: ['identify', 'guilds'],
-        expires: new Date(Date.now() + 3600000).toISOString(),
-      });
-    return base(input, init);
-  });
-  expect(
+it.each(['role', 'membership'] as const)(
+  'missing server membership requires separate guilds.join consent without silently enrolling (%s)',
+  async mode => {
+    const { owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    const base = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) => {
+      if (String(input).endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (String(input).endsWith('/members/manager-discord'))
+        return json({ code: 10007 }, 404);
+      if (String(input).endsWith('/oauth2/@me'))
+        return json({
+          application: { id: 'client' },
+          scopes: ['identify', 'guilds'],
+          expires: new Date(Date.now() + 3600000).toISOString(),
+        });
+      return base(input, init);
+    });
+    expect(
+      await owner.auth.action(api.groupDiscord.connect.connect, {
+        groupId,
+        consent: true,
+      })
+    ).toEqual({ requiresConsent: true });
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'not_connected', linked: true });
+    expect(provider.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(
+      false
+    );
+  }
+);
+it.each(['role', 'membership'] as const)(
+  'screening remains incomplete and never grants the role (%s)',
+  async mode => {
+    const { owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    const base = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) => {
+      if (String(input).endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (String(input).endsWith('/members/manager-discord'))
+        return json({ roles: [], pending: true });
+      return base(input, init);
+    });
     await owner.auth.action(api.groupDiscord.connect.connect, {
       groupId,
       consent: true,
-    })
-  ).toEqual({ requiresConsent: true });
-  expect(
-    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
-  ).toMatchObject({ status: 'not_connected', linked: true });
-  expect(provider.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(
-    false
-  );
-});
-it('screening remains incomplete and never grants the role', async () => {
-  const { owner, groupId } = await setup();
-  await owner.auth.action(api.groupDiscord.actions.configure, {
-    groupId,
-    guildId: '100',
-  });
-  const base = provider.getMockImplementation()!;
-  provider.mockImplementation(async (input, init) => {
-    if (String(input).endsWith('/bans/manager-discord'))
-      return json({ code: 10026 }, 404);
-    if (String(input).endsWith('/members/manager-discord'))
-      return json({ roles: [], pending: true });
-    return base(input, init);
-  });
-  await owner.auth.action(api.groupDiscord.connect.connect, {
-    groupId,
-    consent: true,
-  });
-  expect(
-    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
-  ).toMatchObject({ status: 'screening' });
-  expect(provider.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(
-    false
-  );
-});
+    });
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'screening' });
+    expect(provider.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(
+      false
+    );
+  }
+);
 it('initial role-grant intent survives a transient provider failure without another Connect', async () => {
   vi.useFakeTimers();
   try {
@@ -645,13 +653,19 @@ it('initial role-grant intent survives a transient provider failure without anot
     vi.useRealTimers();
   }
 });
-it.each([201, 204])(
-  'a separately consented join (%i) uses server credentials and observes screening before role access',
-  async joinStatus => {
+it.each([
+  { joinStatus: 201, mode: 'role' },
+  { joinStatus: 204, mode: 'role' },
+  { joinStatus: 201, mode: 'membership' },
+  { joinStatus: 204, mode: 'membership' },
+] as const)(
+  'a separately consented join (%j) uses server credentials and observes screening before role access',
+  async ({ joinStatus, mode }) => {
     const { owner, groupId } = await setup();
     await owner.auth.action(api.groupDiscord.actions.configure, {
       groupId,
       guildId: '100',
+      mode,
     });
     const base = provider.getMockImplementation()!;
     let joined = false;
@@ -855,37 +869,41 @@ it('required incomplete onboarding denies explicit Connect before any provider o
     await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
   ).toMatchObject({ status: 'not_connected', eligible: false });
 });
-it('Discord bans block enrollment without changing Group admission or unbanning', async () => {
-  const { owner, groupId } = await setup();
-  await owner.auth.action(api.groupDiscord.actions.configure, {
-    groupId,
-    guildId: '100',
-  });
-  const base = provider.getMockImplementation()!;
-  provider.mockImplementation(async (input, init) =>
-    String(input).endsWith('/bans/manager-discord')
-      ? json({ user: { id: 'manager-discord' } })
-      : base(input, init)
-  );
-  provider.mockClear();
-  await expect(
-    owner.auth.action(api.groupDiscord.connect.connect, {
+it.each(['role', 'membership'] as const)(
+  'Discord bans block enrollment without changing Group admission or unbanning (%s)',
+  async mode => {
+    const { owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
       groupId,
-      consent: true,
-    })
-  ).rejects.toThrow('Discord staff have banned');
-  expect(
-    await owner.auth.query(api.groups.queries.getGroup, { groupId })
-  ).toMatchObject({ viewerRole: 'OWNER' });
-  expect(
-    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
-  ).toMatchObject({ status: 'blocked' });
-  expect(
-    provider.mock.calls.some(([, init]) =>
-      ['PUT', 'DELETE'].includes(init?.method ?? '')
-    )
-  ).toBe(false);
-});
+      guildId: '100',
+      mode,
+    });
+    const base = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) =>
+      String(input).endsWith('/bans/manager-discord')
+        ? json({ user: { id: 'manager-discord' } })
+        : base(input, init)
+    );
+    provider.mockClear();
+    await expect(
+      owner.auth.action(api.groupDiscord.connect.connect, {
+        groupId,
+        consent: true,
+      })
+    ).rejects.toThrow('Discord staff have banned');
+    expect(
+      await owner.auth.query(api.groups.queries.getGroup, { groupId })
+    ).toMatchObject({ viewerRole: 'OWNER' });
+    expect(
+      await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+    ).toMatchObject({ status: 'blocked' });
+    expect(
+      provider.mock.calls.some(([, init]) =>
+        ['PUT', 'DELETE'].includes(init?.method ?? '')
+      )
+    ).toBe(false);
+  }
+);
 it.each([
   [
     'wrong application',
@@ -992,13 +1010,20 @@ it('Role access can manage a dedicated lower role for a target with a higher unr
   expect(granted).toBe(true);
 });
 
-it.each([25, 20, 22])(
-  'durable moderation observation (%s) requires fresh Connect after removal reversed between snapshots',
-  async action => {
+it.each([
+  { action: 25, mode: 'role' },
+  { action: 20, mode: 'role' },
+  { action: 22, mode: 'role' },
+  { action: 20, mode: 'membership' },
+  { action: 22, mode: 'membership' },
+] as const)(
+  'durable moderation observation (%j) requires fresh Connect after removal reversed between snapshots',
+  async ({ action, mode }) => {
     const { t, owner, groupId } = await setup();
     await owner.auth.action(api.groupDiscord.actions.configure, {
       groupId,
       guildId: '100',
+      mode,
     });
     const base = provider.getMockImplementation()!;
     let granted = false;
@@ -1046,7 +1071,7 @@ it.each([25, 20, 22])(
       eligible: true,
       error: expect.stringContaining('Connect'),
     });
-    expect(granted).toBe(true);
+    expect(granted).toBe(mode === 'role');
     vi.advanceTimersByTime(2000);
     await owner.auth.action(api.groupDiscord.connect.connect, {
       groupId,
@@ -1124,4 +1149,383 @@ it('persists a bounded audit frontier and freezes grants until the next page is 
   ).toMatchObject({ status: 'connected' });
   expect(granted).toBe(true);
   await t.action(internal.groupDiscord.reconcile.dispatch, {});
+});
+
+it('explicit Connect adopts existing Server membership without granting a role', async () => {
+  const { owner, groupId } = await setup();
+  const fallback = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord'))
+      return json({ roles: [], pending: false });
+    return fallback(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ mode: 'membership', status: 'connected' });
+  expect(
+    provider.mock.calls.filter(([, init]) =>
+      ['PUT', 'DELETE', 'POST'].includes(init?.method ?? '')
+    )
+  ).toEqual([]);
+});
+
+it.each([
+  'remove',
+  'ban',
+  'leave',
+  'exclude',
+  'escalate',
+  'onboarding',
+  'permissionLoss',
+  'restore',
+] as const)(
+  'Server membership %s dispatches the owed provider outcome',
+  async operation => {
+    const { t, owner, groupId } = await setup();
+    const member = await createAuthAccount(t, 'membership-reader');
+    await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: 'account',
+        data: {
+          userId: member.user._id,
+          providerId: 'discord',
+          accountId: 'reader',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+    });
+    await t.run(ctx =>
+      ctx.db.insert('groupMemberships', {
+        groupId,
+        personId: member.personId,
+        role: 'MEMBER',
+        joinedAt: Date.now(),
+      })
+    );
+    let present = true;
+    let banned = false;
+    let canRemove = true;
+    const fallback = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (!canRemove && path.endsWith('/roles'))
+        return json([
+          { id: '100', permissions: '0', position: 0 },
+          { id: 'bot-role', permissions: '128', position: 10 },
+        ]);
+      if (path.endsWith('/bans/reader')) {
+        if (init?.method === 'PUT') {
+          banned = true;
+          present = false;
+          return new Response(null, { status: 204 });
+        }
+        return banned
+          ? json({ user: { id: 'reader' } })
+          : json({ code: 10026 }, 404);
+      }
+      if (path.endsWith('/members/reader')) {
+        if (init?.method === 'DELETE') {
+          if (operation === 'escalate')
+            await owner.auth.mutation(
+              api.groupModeration.mutations.banGroupPerson,
+              { groupId, personId: member.personId }
+            );
+          present = false;
+          return new Response(null, { status: 204 });
+        }
+        return present ? json({ roles: [] }) : json({ code: 10007 }, 404);
+      }
+      return fallback(input, init);
+    });
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode: 'membership',
+    });
+    await member.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    if (operation === 'onboarding') {
+      await owner.auth.mutation(
+        api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+        {
+          groupId,
+          enabled: true,
+          requiredCompletion: true,
+          questions: [
+            {
+              id: 'book',
+              label: 'Favorite book',
+              type: 'SHORT_ANSWER',
+              required: true,
+            },
+          ],
+        }
+      );
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+    } else if (operation === 'leave')
+      await member.auth.mutation(api.groupModeration.mutations.leaveGroup, {
+        groupId,
+      });
+    else if (operation === 'exclude')
+      await owner.auth.mutation(api.groups.expulsions.expel, {
+        groupId,
+        personId: member.personId,
+        operationId: crypto.randomUUID(),
+      });
+    else
+      await owner.auth.mutation(
+        operation === 'ban'
+          ? api.groupModeration.mutations.banGroupPerson
+          : api.groupModeration.mutations.removeGroupMember,
+        { groupId, personId: member.personId }
+      );
+    if (operation === 'permissionLoss') canRemove = false;
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    if (operation === 'permissionLoss') {
+      expect(present).toBe(true);
+      canRemove = true;
+      await vi.advanceTimersByTimeAsync(300000);
+      await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    }
+    if (operation === 'restore') {
+      expect(present).toBe(false);
+      present = true;
+      await vi.advanceTimersByTimeAsync(300000);
+      await t.action(internal.groupDiscord.reconcile.dispatch, {});
+      await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    }
+    if (operation === 'escalate') {
+      await vi.advanceTimersByTimeAsync(60000);
+      await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    }
+    expect({ present, banned }).toEqual({
+      present: false,
+      banned:
+        operation === 'ban' ||
+        operation === 'exclude' ||
+        operation === 'escalate',
+    });
+    expect(
+      provider.mock.calls.some(
+        ([input, init]) =>
+          String(input).includes('/roles/') && init?.method === 'DELETE'
+      )
+    ).toBe(false);
+  }
+);
+
+it.each([
+  { targetRole: '2000', owner: false, exception: false },
+  { targetRole: '500', owner: false, exception: true },
+  { targetRole: '2000', owner: true, exception: true },
+])(
+  'membership Connect reports known owner/hierarchy exceptions with snowflake ties: %j',
+  async scenario => {
+    const { owner, groupId } = await setup();
+    const fallback = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (path.endsWith('/members/manager-discord'))
+        return json({ roles: [scenario.targetRole] });
+      if (path.endsWith('/members/bot')) return json({ roles: ['1000'] });
+      if (path.endsWith('/guilds/100/roles'))
+        return json([
+          { id: '100', permissions: '0', position: 0 },
+          { id: '1000', permissions: '135', position: 10 },
+          { id: scenario.targetRole, permissions: '0', position: 10 },
+        ]);
+      if (path.endsWith('/guilds/100'))
+        return json({ owner_id: scenario.owner ? 'manager-discord' : 'other' });
+      return fallback(input, init);
+    });
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode: 'membership',
+    });
+    await owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    const status = await owner.auth.query(
+      api.groupDiscord.enrollment.getStatus,
+      { groupId }
+    );
+    expect(status?.status).toBe('connected');
+    expect(!!status?.externalException).toBe(scenario.exception);
+  }
+);
+
+it.each([10004, 50001])(
+  'membership Connect treats ban lookup code %i as unavailable rather than unknown ban',
+  async code => {
+    const { owner, groupId } = await setup();
+    const fallback = provider.getMockImplementation()!;
+    provider.mockImplementation(async (input, init) =>
+      String(input).endsWith('/bans/manager-discord')
+        ? json({ code }, 404)
+        : fallback(input, init)
+    );
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode: 'membership',
+    });
+    await expect(
+      owner.auth.action(api.groupDiscord.connect.connect, {
+        groupId,
+        consent: true,
+      })
+    ).rejects.toThrow('ban verification');
+    expect(
+      provider.mock.calls.some(([, init]) =>
+        ['PUT', 'DELETE'].includes(init?.method ?? '')
+      )
+    ).toBe(false);
+  }
+);
+
+it('membership join that loses its connection generation retains and compensates the old server target', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  const fallback = provider.getMockImplementation()!;
+  let present = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/oauth2/@me'))
+      return json({
+        application: { id: 'client' },
+        scopes: ['identify', 'guilds.join'],
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      });
+    if (
+      path.endsWith('/users/@me') &&
+      new Headers(init?.headers).get('Authorization')?.startsWith('Bearer')
+    )
+      return json({ id: 'manager-discord' });
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord')) {
+      if (init?.method === 'PUT') {
+        present = true;
+        await t.run(async ctx => {
+          const connection = await ctx.db
+            .query('groupDiscordConnections')
+            .withIndex('by_group', q => q.eq('groupId', groupId))
+            .unique();
+          await ctx.db.patch(connection!._id, { generation: 2 });
+        });
+        return new Response(null, { status: 204 });
+      }
+      if (init?.method === 'DELETE') {
+        present = false;
+        return new Response(null, { status: 204 });
+      }
+      return present ? json({ roles: [] }) : json({ code: 10007 }, 404);
+    }
+    return fallback(input, init);
+  });
+  await expect(
+    owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    })
+  ).rejects.toThrow('Group access changed');
+  expect(present).toBe(false);
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ status: 'blocked' });
+});
+
+it('membership managers see moderation observation failures', async () => {
+  const { t, owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  const fallback = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) =>
+    String(input).includes('/audit-logs?')
+      ? json({ code: 50013 }, 403)
+      : fallback(input, init)
+  );
+  await expect(
+    t.action(internal.groupDiscord.reconcile.observeGuild, { guildId: '100' })
+  ).rejects.toThrow('View Audit Log');
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({
+    synchronizationError: expect.stringContaining('View Audit Log'),
+  });
+});
+
+it('membership checks current removal capability before joining a screening-pending account', async () => {
+  const { owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  const fallback = provider.getMockImplementation()!;
+  let joined = false;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/roles'))
+      return json([
+        { id: '100', permissions: '0', position: 0 },
+        { id: 'bot-role', permissions: '128', position: 10 },
+      ]);
+    if (path.endsWith('/oauth2/@me'))
+      return json({
+        application: { id: 'client' },
+        scopes: ['guilds.join'],
+        expires: new Date(Date.now() + 3600000).toISOString(),
+      });
+    if (
+      path.endsWith('/users/@me') &&
+      new Headers(init?.headers).get('Authorization')?.startsWith('Bearer')
+    )
+      return json({ id: 'manager-discord' });
+    if (path.endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/manager-discord')) {
+      if (init?.method === 'PUT') {
+        joined = true;
+        return new Response(null, { status: 204 });
+      }
+      return joined
+        ? json({ roles: [], pending: true })
+        : json({ code: 10007 }, 404);
+    }
+    return fallback(input, init);
+  });
+  await expect(
+    owner.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    })
+  ).rejects.toThrow('Kick Members');
+  expect(joined).toBe(false);
 });
