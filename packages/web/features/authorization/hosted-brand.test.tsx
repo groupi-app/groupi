@@ -58,3 +58,46 @@ it('recognizes only a local bound Discord journey for existing hosted sign-in br
   ).toBeNull();
   expect(hostedInteractionId('/oauth/discord?state=one&state=two')).toBeNull();
 });
+
+it('uses compact identity without repeating the app name or adding a page heading', () => {
+  vi.mocked(useQuery).mockReturnValue({
+    appName: 'Community Calendar',
+    providerName: 'Groupi',
+    appearance: { brandName: 'Community Calendar' },
+    expiresAt: Date.now() + 60000,
+  });
+  render(<HostedBrand interactionId='bound' compact />);
+  expect(screen.getAllByText('Community Calendar')).toHaveLength(1);
+  expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  expect(screen.getByText('Sign-in provided by Groupi')).toBeVisible();
+  expect(screen.queryByText(/Developer app:/)).not.toBeInTheDocument();
+});
+it('retains distinct developer identity in compact branded journeys', () => {
+  vi.mocked(useQuery).mockReturnValue({
+    appName: 'Community Calendar',
+    providerName: 'Groupi',
+    appearance: { brandName: 'Reading Circle' },
+    expiresAt: Date.now() + 60000,
+  });
+  render(<HostedBrand interactionId='bound' compact />);
+  expect(screen.getByText('Reading Circle')).toBeVisible();
+  expect(screen.getByText('Developer app: Community Calendar')).toBeVisible();
+});
+it('expires compact identity without a backend update', async () => {
+  vi.useFakeTimers();
+  try {
+    vi.mocked(useQuery).mockReturnValue({
+      appName: 'Community',
+      providerName: 'Groupi',
+      expiresAt: Date.now() + 1000,
+    });
+    render(<HostedBrand interactionId='expiring' compact />);
+    await act(async () => {
+      vi.advanceTimersByTime(1001);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Return to the app');
+    expect(screen.queryByText('Community')).not.toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});
