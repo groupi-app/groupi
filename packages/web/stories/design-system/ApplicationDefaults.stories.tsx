@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -145,6 +152,19 @@ function ApplicationDefaults() {
           <Button variant='outline-primary'>Create another event</Button>
         </div>
       </section>
+      <Card treatment='interactive'>
+        <CardHeader>
+          <CardTitle>
+            <CardAction disabled>Template unavailable</CardAction>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          This template is being updated. You can still review its details.
+        </CardContent>
+        <CardActions className='px-6 pb-6'>
+          <Button variant='outline'>Review template</Button>
+        </CardActions>
+      </Card>
     </main>
   );
 }
