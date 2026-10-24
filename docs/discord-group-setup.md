@@ -179,8 +179,4 @@ state. The legacy Event transport remains unchanged. Group-provider global retry
 pauses coordinate Group bot calls only, not every legacy Event call sharing the
 bot token; this acceptance evidence makes no all-token throttling claim.
 
-Final review fixes and the once-only full repository regression run are pending.
-The existing test bot/application identity, authorized ordinary test identities,
-matching deployed feature source, isolated sessions and observed browser/native
-accessibility remain open live gates. The additional CLI release-note approval is
-still pending; no release or production deployment is authorized.
+Source review fixes, corrected package regression coverage and the approved CLI release note are complete. Controlled live test evidence and remaining ordinary-member/provider checks are recorded in [current integration status](./agents/integration/current-status.md#discord-group-add-on-candidate--2026-10-23). The existing test deployment includes the feature; source checks and owner-only live checks do not establish ordinary-member removal, bans or replacement. No release or production deployment is authorized.
