@@ -31,13 +31,38 @@ const badgeVariants = cva(
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  /** Quiet semantic status treatment; no sticker depth. */
+  presentation?: 'default' | 'soft';
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({
+  className,
+  variant,
+  presentation = 'default',
+  style,
+  ...props
+}: BadgeProps) {
+  const role = variant === 'default' || !variant ? 'primary' : variant;
+  const soft = presentation === 'soft';
   return (
     <div
       data-slot='badge'
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(
+        soft
+          ? 'inline-flex items-center gap-1 rounded-badge border border-current/20 px-2.5 py-1 text-xs font-semibold'
+          : badgeVariants({ variant }),
+        className
+      )}
+      style={
+        soft && role !== 'outline'
+          ? {
+              backgroundColor: `var(--soft-${role}-subtle)`,
+              color: `var(--soft-${role}-subtle-foreground)`,
+              ...style,
+            }
+          : style
+      }
       {...props}
     />
   );
