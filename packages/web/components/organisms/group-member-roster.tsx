@@ -79,7 +79,7 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
       className='flex flex-col gap-3'
       aria-labelledby='group-members-heading'
     >
-      <h2 id='group-members-heading' className='text-xl font-bold'>
+      <h2 id='group-members-heading' className='font-heading text-xl font-bold'>
         Group members
       </h2>
       {members === undefined ? (

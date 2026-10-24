@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 as ActionTrash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authClient, signOut } from '@/lib/auth-client';
@@ -236,10 +237,7 @@ export function PasskeySettings() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Icons.key className='h-5 w-5' />
-            Passkeys
-          </CardTitle>
+          <CardTitle className='flex items-center gap-2'>Passkeys</CardTitle>
           <CardDescription>
             Passwordless sign-in using your device
           </CardDescription>
@@ -259,10 +257,7 @@ export function PasskeySettings() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Icons.key className='h-5 w-5' />
-            Passkeys
-          </CardTitle>
+          <CardTitle className='flex items-center gap-2'>Passkeys</CardTitle>
           <CardDescription>
             Sign in quickly and securely using your device&apos;s biometrics
           </CardDescription>
@@ -335,13 +330,13 @@ export function PasskeySettings() {
                       </div>
                     </div>
                     <Button
-                      variant='ghost'
+                      variant='destructive-ghost'
                       size='icon'
                       onClick={() => {
                         setSelectedPasskeyId(passkey.id);
                         setShowDeleteDialog(true);
                       }}
-                      className='text-destructive hover:text-destructive/90 hover:bg-destructive/10 dark:hover:bg-destructive/20'
+                      className=''
                     >
                       <Icons.trash className='h-4 w-4' />
                     </Button>
@@ -381,6 +376,7 @@ export function PasskeySettings() {
               Cancel
             </Button>
             <Button
+              icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
               variant='destructive'
               onClick={deletePasskey}
               isLoading={isDeleting}

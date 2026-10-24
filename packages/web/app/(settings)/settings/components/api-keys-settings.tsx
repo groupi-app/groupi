@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus as ActionPlus, Trash2 as ActionTrash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
@@ -164,10 +165,7 @@ export function ApiKeysSettings() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Icons.link className='h-5 w-5' />
-            API Keys
-          </CardTitle>
+          <CardTitle className='flex items-center gap-2'>API Keys</CardTitle>
           <CardDescription>
             Manage API keys for programmatic access to your account
           </CardDescription>
@@ -222,13 +220,13 @@ export function ApiKeysSettings() {
                       </div>
                     </div>
                     <Button
-                      variant='ghost'
+                      variant='destructive-ghost'
                       size='icon'
                       onClick={() => {
                         setSelectedKeyId(key.id);
                         setShowDeleteDialog(true);
                       }}
-                      className='text-destructive hover:text-destructive/90 hover:bg-destructive/10 dark:hover:bg-destructive/20'
+                      className=''
                     >
                       <Icons.trash className='h-4 w-4' />
                     </Button>
@@ -290,6 +288,7 @@ export function ApiKeysSettings() {
                   Cancel
                 </Button>
                 <Button
+                  icon={<ActionPlus aria-hidden='true' className='size-4' />}
                   onClick={createKey}
                   disabled={!newKeyName.trim()}
                   isLoading={isCreating}
@@ -347,6 +346,7 @@ export function ApiKeysSettings() {
               Cancel
             </Button>
             <Button
+              icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
               variant='destructive'
               onClick={deleteKey}
               isLoading={isDeleting}

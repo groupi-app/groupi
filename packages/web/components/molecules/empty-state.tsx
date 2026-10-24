@@ -8,7 +8,7 @@ export interface EmptyStateProps {
    * Icon to display above the message
    */
   icon?: React.ReactNode;
-  /** Opt-in gallery treatment. */
+  /** Material presentation; Soft lift is the application default. */
   presentation?: 'default' | 'soft';
   /**
    * Main message to display
@@ -61,7 +61,7 @@ export function EmptyState({
   action,
   size = 'md',
   className,
-  presentation = 'default',
+  presentation = 'soft',
 }: EmptyStateProps) {
   const sizes = sizeClasses[size];
   const soft = presentation === 'soft';

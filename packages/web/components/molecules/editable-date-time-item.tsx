@@ -276,9 +276,9 @@ export function EditableDateTimeItem({
         <Button
           onClick={onDelete}
           type='button'
-          variant='ghost'
+          variant='destructive-ghost'
           size='icon'
-          className='size-8 hover:bg-destructive hover:text-destructive-foreground shrink-0'
+          className='size-8 shrink-0'
           title='Remove option'
           disabled={disabled}
         >

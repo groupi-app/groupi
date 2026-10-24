@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 as ActionTrash2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { InviteListPersonRow } from '@/components/molecules/invite-list-person-row';
@@ -54,6 +55,7 @@ export function InviteListSelectedPeople({
             person={person}
             action={
               <Button
+                icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
                 variant='ghost'
                 disabled={disabled}
                 aria-label={`Remove ${label}`}
@@ -93,7 +95,7 @@ export function InviteListPersonChoices({
       aria-label={search ? 'Search results' : 'Accepted friends'}
       className='flex flex-col gap-2'
     >
-      <h3 className='font-medium'>
+      <h3 className='font-heading font-medium'>
         {search ? 'Search results' : 'Your friends'}
       </h3>
       {selected.length >= 100 && (

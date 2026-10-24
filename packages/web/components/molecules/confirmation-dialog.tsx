@@ -71,7 +71,7 @@ export interface ConfirmationDialogProps {
 
 export function ConfirmationDialog({
   title,
-  presentation,
+  presentation = 'soft',
   description,
   cancelText = 'Cancel',
   confirmText = 'Confirm',

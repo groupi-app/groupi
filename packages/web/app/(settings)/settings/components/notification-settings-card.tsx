@@ -209,7 +209,7 @@ export function NotificationSettingsCard({
             ) : (
               <Icons.bell />
             )}
-            <h3 className='text-lg font-semibold w-full truncate'>
+            <h3 className='font-heading text-lg font-semibold w-full truncate'>
               {cardTitle}
             </h3>
           </div>
@@ -242,8 +242,8 @@ export function NotificationSettingsCard({
             />
             <Button
               type='button'
-              variant='ghost'
-              className='hover:bg-destructive hover:text-destructive-foreground'
+              variant='destructive-ghost'
+              className=''
               size='icon'
               onClick={onRemove}
               aria-label='Remove method'

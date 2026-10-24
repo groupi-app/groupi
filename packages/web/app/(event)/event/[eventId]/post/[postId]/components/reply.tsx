@@ -241,8 +241,8 @@ function ReplyActionMenu({
               </Button>
             )}
             <Button
-              variant='ghost'
-              className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+              variant='destructive-ghost'
+              className='w-full justify-start'
               onClick={() => {
                 setSheetOpen(false);
                 setDeleteDialogOpen(true);
@@ -267,7 +267,7 @@ function ReplyActionMenu({
               onClick={() => setEditMode(true)}
               className='cursor-pointer'
             >
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.edit className='size-4' />
                 <span>Edit</span>
               </div>
@@ -281,20 +281,21 @@ function ReplyActionMenu({
               }}
               className='cursor-pointer'
             >
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.flag className='size-4' />
                 <span>Report Reply</span>
               </div>
             </ContextMenuItem>
           )}
           <ContextMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setDeleteDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.delete className='size-4' />
               <span>Delete</span>
             </div>
@@ -680,7 +681,7 @@ export default function ReplyComponent({
                 onClick={() => setEditMode(true)}
                 className='cursor-pointer'
               >
-                <div className='flex items-center gap-1'>
+                <div className='flex items-center gap-3'>
                   <Icons.edit className='size-4' />
                   <span>Edit</span>
                 </div>
@@ -691,17 +692,18 @@ export default function ReplyComponent({
                 onClick={() => setReportDialogOpen(true)}
                 className='cursor-pointer'
               >
-                <div className='flex items-center gap-1'>
+                <div className='flex items-center gap-3'>
                   <Icons.flag className='size-4' />
                   <span>Report Reply</span>
                 </div>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
+              variant='destructive'
               onClick={() => setDeleteDialogOpen(true)}
-              className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+              className='cursor-pointer'
             >
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.delete className='size-4' />
                 <span>Delete</span>
               </div>

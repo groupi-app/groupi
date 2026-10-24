@@ -366,7 +366,7 @@ export function ColorPicker({
                       'h-6 w-6 rounded-sm border transition-all cursor-pointer',
                       hex.toUpperCase() === color.toUpperCase()
                         ? 'border-primary ring-2 ring-primary ring-offset-2'
-                        : 'border-border hover:scale-110'
+                        : 'border-border '
                     )}
                     style={{ backgroundColor: color }}
                   />

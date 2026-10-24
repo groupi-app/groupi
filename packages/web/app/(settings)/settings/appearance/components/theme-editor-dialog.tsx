@@ -399,7 +399,9 @@ export function ThemeEditorDialog({
         {/* Color Customization */}
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-sm font-semibold'>Color Customization</h3>
+            <h3 className='font-heading text-sm font-semibold'>
+              Color Customization
+            </h3>
             <Button
               variant='ghost'
               size='sm'

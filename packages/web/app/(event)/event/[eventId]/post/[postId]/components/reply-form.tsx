@@ -437,7 +437,7 @@ export default function ReplyForm({
                               'absolute right-2 h-8 w-8 p-0',
                               'bg-primary text-primary-foreground',
                               'hover:bg-primary/90',
-                              'shadow-floating',
+                              '',
                               isMultiline || pendingUploads.length > 0
                                 ? 'bottom-2'
                                 : 'top-1/2 -translate-y-1/2'

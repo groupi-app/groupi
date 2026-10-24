@@ -28,7 +28,7 @@ export function EventCardPreview({
 
   return (
     <PreviewWrapper label='Event page — event card'>
-      <Card className='w-fit rounded-card shadow-raised'>
+      <Card className='w-fit rounded-card'>
         <CardContent className='flex items-center gap-3 p-4'>
           <div className='flex size-10 shrink-0 items-center justify-center rounded-button bg-bg-interactive'>
             <AddonIcon

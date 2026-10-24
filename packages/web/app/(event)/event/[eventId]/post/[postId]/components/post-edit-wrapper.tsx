@@ -39,7 +39,7 @@ export function PostEditWrapper() {
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-error'>Error</h1>
+          <h1 className='font-heading text-2xl font-bold text-error'>Error</h1>
           <p className='mt-2'>You do not have permission to edit this post.</p>
         </div>
       </div>

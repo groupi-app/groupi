@@ -53,11 +53,11 @@ export function AvailabilityCard({
   const note = formAnswers[index]?.note ?? '';
 
   return (
-    <div className='w-full sm:max-w-md border border-border shadow-floating rounded-md py-4 px-4 h-max'>
-      <div className='flex flex-col sm:flex-row  justify-between gap-4 flex-wrap'>
-        <div className='flex flex-col justify-between '>
+    <div className='w-full sm:max-w-md border border-border rounded-card py-4 px-4 h-max'>
+      <div className='flex flex-col sm:flex-row justify-between gap-4 flex-wrap'>
+        <div className='flex flex-col justify-between'>
           <div>
-            <h1>
+            <h1 className='font-heading'>
               {new Date(pdt.dateTime).toLocaleDateString([], {
                 weekday: 'long',
                 year: 'numeric',
@@ -65,7 +65,7 @@ export function AvailabilityCard({
                 day: 'numeric',
               })}
             </h1>
-            <h2 className='text-muted-foreground text-sm'>
+            <h2 className='font-heading text-muted-foreground text-sm'>
               {new Date(pdt.dateTime).toLocaleTimeString([], {
                 timeStyle: 'short',
               })}
@@ -149,7 +149,7 @@ export function AvailabilityCard({
       </div>
       <div
         onClick={() => setListOpen(!listOpen)}
-        className='flex items-center py-1 px-2 hover:bg-accent/80 rounded-md justify-between w-max gap-2 cursor-pointer'
+        className='flex items-center py-1 px-2 hover:bg-accent/80 rounded-card justify-between w-max gap-2 cursor-pointer'
       >
         <div className='flex items-center gap-2 text-xs'>
           <div className='flex items-center gap-1'>

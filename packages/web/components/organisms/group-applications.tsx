@@ -72,7 +72,10 @@ function ApplicationContent({
       className='space-y-4'
       aria-labelledby='group-apply-heading'
     >
-      <h2 id='group-apply-heading' className='text-xl font-semibold'>
+      <h2
+        id='group-apply-heading'
+        className='font-heading text-xl font-semibold'
+      >
         Apply to join this Group
       </h2>
       <p>
@@ -223,7 +226,7 @@ function ApplicationRecords({
           : 'Your Group application history'
       }
     >
-      <h2 className='text-xl font-semibold'>
+      <h2 className='font-heading text-xl font-semibold'>
         {review ? 'Review Group applications' : 'Your application history'}
       </h2>
       {review && (
@@ -324,7 +327,7 @@ function ApplicationRecord({
       className='rounded-card border border-border p-4 space-y-3'
       aria-label={`Application ${application._id}`}
     >
-      <h3 className='font-semibold'>{application.status}</h3>
+      <h3 className='font-heading font-semibold'>{application.status}</h3>
       {review && <p>Applicant: {applicantName ?? application.personId}</p>}
       <dl className='space-y-2'>
         {application.questions.map(q => (

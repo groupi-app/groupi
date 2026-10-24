@@ -50,7 +50,7 @@ export function GroupApplicationSettings({
     >
       <h2
         id='group-application-settings-heading'
-        className='text-xl font-semibold'
+        className='font-heading text-xl font-semibold'
       >
         Group application settings
       </h2>

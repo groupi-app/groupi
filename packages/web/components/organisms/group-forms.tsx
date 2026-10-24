@@ -1,4 +1,5 @@
 'use client';
+import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -54,7 +55,7 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading forms…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1 className='text-2xl font-bold'>Group forms</h1>
+      <h1 className='font-heading text-2xl font-bold'>Group forms</h1>
       <p>
         Independent ongoing forms. They do not change joining requirements or
         enable tools on Events.
@@ -64,7 +65,7 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
           className='rounded-card border border-border p-4 space-y-3'
           aria-label='Form availability policy'
         >
-          <h2>Owner settings</h2>
+          <h2 className='font-heading'>Owner settings</h2>
           <Button
             onClick={async () => {
               try {
@@ -236,7 +237,9 @@ function FormEditor({
   const [busy, setBusy] = useState(false);
   return (
     <main className='p-6 space-y-4'>
-      <h1>{initial ? 'Manage form' : 'Create form'}</h1>
+      <h1 className='font-heading'>
+        {initial ? 'Manage form' : 'Create form'}
+      </h1>
       {!initial && (
         <div aria-label='Reusable form templates'>
           {groupFormTemplates.map(template => (
@@ -394,7 +397,7 @@ function FormInteraction({
   const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
-      <h1>{form.title}</h1>
+      <h1 className='font-heading'>{form.title}</h1>
       <p>{form.description}</p>
       <p>
         {form.resultsVisibility === 'MEMBERS'
@@ -430,7 +433,12 @@ function FormInteraction({
           onChange={setAnswers}
           disabled={busy}
         />
-        <Button disabled={busy}>Save response</Button>
+        <Button
+          icon={<ActionSave aria-hidden='true' className='size-4' />}
+          disabled={busy}
+        >
+          Save response
+        </Button>
       </form>
       {form.savedVersion !== null && (
         <GroupConfirmedAction
@@ -506,7 +514,7 @@ export function GroupFormHistory({ toolId }: { toolId: Id<'groupTools'> }) {
   const remove = useRemoveFormResponse();
   return (
     <section className='p-6 space-y-4'>
-      <h1>My saved form history</h1>
+      <h1 className='font-heading'>My saved form history</h1>
       <p>
         Only your retained answers and original definitions are shown. Current
         private questions are not exposed by this recovery view.
@@ -548,7 +556,7 @@ function GroupFormResults({
   const remove = useRemoveFormResult();
   return (
     <section className='space-y-3'>
-      <h2>Latest responses</h2>
+      <h2 className='font-heading'>Latest responses</h2>
       {results?.page.map(row => (
         <div key={row._id} className='rounded-card border border-border p-4'>
           <p>

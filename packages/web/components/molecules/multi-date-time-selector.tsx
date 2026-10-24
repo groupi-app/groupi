@@ -190,7 +190,7 @@ export function MultiDateTimeSelector({
       <div className='flex items-center md:items-start gap-5 md:gap-0 flex-col md:flex-row md:justify-evenly'>
         {/* Batch add dates section */}
         <div className='flex flex-col gap-4'>
-          <Card className='w-fit overflow-hidden border-border shadow-raised'>
+          <Card className='w-fit overflow-hidden border-border'>
             <CardContent className='p-0'>
               <Calendar
                 mode='multiple'
@@ -313,9 +313,9 @@ export function MultiDateTimeSelector({
                 </h2>
                 <Button
                   size='sm'
-                  variant='ghost'
+                  variant='destructive-ghost'
                   type='button'
-                  className='flex items-center gap-1 text-xs hover:bg-destructive hover:text-destructive-foreground'
+                  className='flex items-center gap-1 text-xs'
                   onClick={clearAllOptions}
                   disabled={dateTimeOptions.length === 0 || disabled}
                 >

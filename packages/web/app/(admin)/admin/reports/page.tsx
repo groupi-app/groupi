@@ -245,7 +245,7 @@ export default function AdminReportsPage() {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-3xl font-bold'>Reports</h1>
+        <h1 className='font-heading text-3xl font-bold'>Reports</h1>
         <p className='text-muted-foreground'>
           Review and manage content reports from users
         </p>
@@ -373,12 +373,13 @@ export default function AdminReportsPage() {
                           {(report.targetType === 'POST' ||
                             report.targetType === 'REPLY') && (
                             <DropdownMenuItem
+                              variant='destructive'
                               onClick={() => {
                                 setActionReport(report);
                                 setActionType('delete_content');
                                 setAdminNote('');
                               }}
-                              className='focus:bg-destructive focus:text-destructive-foreground'
+                              className=''
                             >
                               <Icons.delete className='size-4 mr-2' />
                               Delete Content

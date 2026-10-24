@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { BUILTIN_COMPLETION } from '../../model/completion';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -223,7 +224,7 @@ function BringListEventCard({ eventId, config }: EventCardProps) {
   }, [allData]);
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-3'>
         <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>
           <Icons.listChecks className='size-5' />
@@ -334,6 +335,7 @@ function BringListManageConfig({
                   members.
                 </p>
                 <Button
+                  icon={<ActionSave aria-hidden='true' className='size-4' />}
                   type='button'
                   size='sm'
                   onClick={handleSaveItems}
@@ -545,7 +547,7 @@ function BringListItemRow({
   };
 
   return (
-    <Card className='rounded-card shadow-raised p-4'>
+    <Card className='rounded-card p-4'>
       <div className='flex items-start gap-3'>
         <div className='flex-1 min-w-0'>
           <p className='font-medium'>{item.name}</p>
@@ -601,7 +603,11 @@ function BringListItemRow({
                 className='w-16 h-8 text-sm'
                 autoFocus
               />
-              <Button size='sm' onClick={handleConfirmQty}>
+              <Button
+                icon={<ActionSave aria-hidden='true' className='size-4' />}
+                size='sm'
+                onClick={handleConfirmQty}
+              >
                 Save
               </Button>
               <Button
@@ -702,7 +708,7 @@ function BringListOverview({
   );
 
   return (
-    <Card className='rounded-card shadow-raised p-4'>
+    <Card className='rounded-card p-4'>
       <div className='flex items-center justify-between'>
         <div>
           <p className='font-medium'>Overview</p>

@@ -101,42 +101,40 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
         userMembership.role !== 'ORGANIZER' &&
         (userMembership.rsvpStatus !== 'PENDING' ? (
           <DialogTrigger asChild>
-            <button
+            <Button
               type='button'
-              className={`rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 ${
+              variant={
                 userMembership.rsvpStatus === 'YES'
-                  ? 'bg-success'
+                  ? 'success'
                   : userMembership.rsvpStatus === 'NO'
-                    ? 'bg-error'
-                    : 'bg-warning'
-              }`}
+                    ? 'destructive'
+                    : 'warning'
+              }
+              className='w-fit gap-2.5'
             >
               {userMembership.rsvpStatus === 'YES' ? (
-                <Icons.check className='size-5 text-white' />
+                <Icons.check className='size-5' />
               ) : userMembership.rsvpStatus === 'NO' ? (
-                <Icons.close className='size-5 text-white' />
+                <Icons.close className='size-5' />
               ) : (
-                <span className='size-5 text-white font-bold text-xl leading-5 text-center'>
+                <span className='size-5 font-bold text-xl leading-5 text-center'>
                   ?
                 </span>
               )}
-              <span className='text-white font-semibold'>
+              <span className='font-semibold'>
                 RSVP: {userMembership.rsvpStatus}
               </span>
               {userMembership.rsvpNote && (
-                <Icons.messageSquare className='size-4 text-white/80' />
+                <Icons.messageSquare className='size-4' />
               )}
-            </button>
+            </Button>
           </DialogTrigger>
         ) : (
           <DialogTrigger asChild>
-            <button
-              type='button'
-              className='bg-info rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 animate-wiggle-periodic'
-            >
-              <Icons.party className='size-5 text-white' />
+            <Button type='button' variant='info' className='w-fit gap-2.5'>
+              <Icons.party className='size-5' />
               <span className='text-white font-semibold'>RSVP Pending!</span>
-            </button>
+            </Button>
           </DialogTrigger>
         ))}
       <DialogContent>

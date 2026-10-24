@@ -1,4 +1,9 @@
 'use client';
+import {
+  Copy as ActionCopy,
+  Pencil as ActionPencil,
+  Trash2 as ActionTrash2,
+} from 'lucide-react';
 import { GroupSharedEvents } from './group-shared-events';
 import { GroupEventSharingPolicy } from './group-event-sharing-policy';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
@@ -95,7 +100,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
         </Avatar>
         <div className='min-w-0 flex flex-col gap-2'>
-          <h1 className='break-words text-2xl font-bold sm:text-3xl'>
+          <h1 className='font-heading break-words text-2xl font-bold sm:text-3xl'>
             {group.name}
           </h1>
           <Badge variant='secondary' className='self-start'>
@@ -113,11 +118,12 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         </p>
       )}
       <div className='flex flex-col items-start gap-3 rounded-card border border-border bg-card p-4'>
-        <h2 className='font-semibold'>Unlisted Group page</h2>
+        <h2 className='font-heading font-semibold'>Unlisted Group page</h2>
         <p className='text-sm text-muted-foreground'>
           Share this stable link. Renaming the Group keeps the same link.
         </p>
         <Button
+          icon={<ActionCopy aria-hidden='true' className='size-4' />}
           variant='outline'
           onClick={async () => {
             try {
@@ -149,7 +155,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         className='flex flex-col gap-3'
       >
         <div>
-          <h2 id='group-tools-heading' className='text-xl font-bold'>
+          <h2
+            id='group-tools-heading'
+            className='font-heading text-xl font-bold'
+          >
             Group tools
           </h2>
           <p className='text-sm text-muted-foreground'>
@@ -232,7 +241,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         aria-labelledby='group-settings-heading'
         className='flex flex-col gap-6 border-t border-border pt-6'
       >
-        <h2 id='group-settings-heading' className='text-xl font-bold'>
+        <h2
+          id='group-settings-heading'
+          className='font-heading text-xl font-bold'
+        >
           Group settings
         </h2>
         {group.canLeave ? (
@@ -310,13 +322,18 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
                 }}
               />
             ) : (
-              <Button onClick={() => setEditing(true)}>Edit Group</Button>
+              <Button
+                icon={<ActionPencil aria-hidden='true' className='size-4' />}
+                onClick={() => setEditing(true)}
+              >
+                Edit Group
+              </Button>
             )}
             <div
               id='delete-group'
               className='flex flex-col gap-3 rounded-card border border-border p-4'
             >
-              <h2 className='font-semibold'>Delete Group</h2>
+              <h2 className='font-heading font-semibold'>Delete Group</h2>
               <p className='text-sm text-muted-foreground'>
                 Permanently retire this Group and remove its data and audience
                 grants. Independent Events, invitations, memberships and RSVP
@@ -379,7 +396,11 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
                   </div>
                 </form>
               ) : (
-                <Button variant='destructive' onClick={() => setDeleting(true)}>
+                <Button
+                  icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
+                  variant='destructive'
+                  onClick={() => setDeleting(true)}
+                >
                   Delete Group
                 </Button>
               )}

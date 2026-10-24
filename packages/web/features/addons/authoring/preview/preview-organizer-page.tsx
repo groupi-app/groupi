@@ -78,7 +78,7 @@ export function OrganizerPagePreview({
               return (
                 <Card
                   key={field.id}
-                  className={`rounded-card shadow-raised ${field.type === 'toggle' ? 'w-fit' : ''}`}
+                  className={`rounded-card  ${field.type === 'toggle' ? 'w-fit' : ''}`}
                 >
                   <CardContent className='space-y-1 p-4'>
                     {showLabel && (
@@ -97,7 +97,7 @@ export function OrganizerPagePreview({
           if (section.fields.length === 0) return null;
 
           return (
-            <Card key={section.id} className='rounded-card shadow-raised'>
+            <Card key={section.id} className='rounded-card'>
               <CardContent className='space-y-4 p-4'>
                 <PreviewSection
                   section={section}
@@ -115,7 +115,7 @@ export function OrganizerPagePreview({
         )}
 
         {/* Organizer-only: Export button + mock response table */}
-        <Card className='rounded-card shadow-raised'>
+        <Card className='rounded-card'>
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
             <CardTitle className='text-base'>Responses</CardTitle>
             <Button

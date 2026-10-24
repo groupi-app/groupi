@@ -31,7 +31,10 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
       className='space-y-4'
       aria-labelledby='group-shared-events-heading'
     >
-      <h2 id='group-shared-events-heading' className='text-xl font-semibold'>
+      <h2
+        id='group-shared-events-heading'
+        className='font-heading text-xl font-semibold'
+      >
         Group-shared Events
       </h2>
       <p>
@@ -51,7 +54,7 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                 key={event._id}
                 className='rounded-card border border-border p-4 space-y-3'
               >
-                <h3 className='font-semibold'>{event.title}</h3>
+                <h3 className='font-heading font-semibold'>{event.title}</h3>
                 {event.description && <p>{event.description}</p>}
                 <p>{event.location || 'Location TBD'}</p>
                 <p>

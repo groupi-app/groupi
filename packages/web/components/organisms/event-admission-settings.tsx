@@ -53,7 +53,10 @@ function AdmissionForm({
       className='rounded-card border border-border p-4 space-y-3'
       aria-labelledby='event-admission-heading'
     >
-      <h2 id='event-admission-heading' className='text-lg font-semibold'>
+      <h2
+        id='event-admission-heading'
+        className='font-heading text-lg font-semibold'
+      >
         Event admission
       </h2>
       <p className='text-sm text-muted-foreground'>

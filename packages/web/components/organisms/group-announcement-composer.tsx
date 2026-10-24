@@ -27,7 +27,7 @@ export function GroupAnnouncementComposer({
       className='rounded-card bg-card p-4 space-y-3'
       aria-label='Group announcement'
     >
-      <h2 className='font-semibold'>Announce to Group</h2>
+      <h2 className='font-heading font-semibold'>Announce to Group</h2>
       <p className='text-sm text-muted-foreground'>
         Send deliberately to current permitted members using their notification
         preferences.

@@ -108,7 +108,7 @@ export function AutomationCard({
   );
 
   return (
-    <Card className='rounded-card shadow-raised'>
+    <Card className='rounded-card'>
       <CardHeader className='pb-3'>
         <div className='flex items-center justify-between gap-2'>
           <Input
