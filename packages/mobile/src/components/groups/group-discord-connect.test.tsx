@@ -201,3 +201,70 @@ it('identifies the linked account and disables Connect until required Group onbo
   await act(async () => mounted.unmount());
   await client.close();
 });
+
+it('shows membership screening and server removal consent without automatic enrollment', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildName: 'Community',
+      mode: 'membership',
+      openUrl: 'https://discord.com/channels/123',
+      linked: true,
+      status: 'screening',
+    }),
+  }));
+  const action = vi.spyOn(client, 'action').mockResolvedValue({});
+  let mounted!: Mounted;
+  await act(async () => {
+    mounted = renderer.create(
+      createElement(
+        ConvexProvider,
+        { client },
+        createElement(GroupDiscordConnect, {
+          groupId: 'group-one' as Id<'groups'>,
+        })
+      )
+    );
+  });
+  expect(
+    mounted.root.findAll(
+      n =>
+        n.type === 'Pressable' && n.props.accessibilityLabel === 'Open Discord'
+    )
+  ).toHaveLength(1);
+  expect(
+    mounted.root.findAll(
+      n =>
+        n.type === 'Pressable' &&
+        n.props.accessibilityLabel === 'Connect Discord'
+    )
+  ).toHaveLength(0);
+  expect(
+    mounted.root.findAll(
+      n =>
+        typeof n.props.children === 'string' &&
+        n.props.children.includes('membership screening')
+    ).length
+  ).toBeGreaterThan(0);
+  expect(
+    mounted.root.findAll(
+      n =>
+        Array.isArray(n.props.children) &&
+        n.props.children.join('').includes('remove you from the server')
+    ).length
+  ).toBeGreaterThan(0);
+  expect(action).not.toHaveBeenCalled();
+  expect(
+    mounted.root.findAll(
+      n =>
+        n.type === 'Pressable' &&
+        n.props.accessibilityLabel === 'Check Discord access'
+    )
+  ).toHaveLength(1);
+  await act(async () => mounted.unmount());
+  await client.close();
+});

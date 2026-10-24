@@ -170,3 +170,49 @@ it('identifies the linked account while required Group onboarding prevents Conne
   mounted.unmount();
   await client.close();
 });
+
+it('explains server removal and bans before explicitly enrolling in membership mode', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildName: 'Community',
+      mode: 'membership',
+      openUrl: 'https://discord.com/channels/123',
+      linked: true,
+      status: 'not_connected',
+    }),
+  }));
+  const action = vi.spyOn(client, 'action').mockResolvedValue({});
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordConnect groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(screen.getByText(/remove you from the server/)).toHaveTextContent(
+    'ban'
+  );
+  expect(
+    screen.queryByText(/your server membership remains/i)
+  ).not.toBeInTheDocument();
+  expect(action).not.toHaveBeenCalled();
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Connect Discord' }));
+  await waitFor(() => expect(action).toHaveBeenCalled());
+  expect(getFunctionName(action.mock.calls[0][0])).toBe(
+    'groupDiscord/connect:connect'
+  );
+  expect(action.mock.calls[0][1]).toEqual({
+    groupId: 'group-one',
+    consent: true,
+  });
+  expect(
+    await screen.findByText(/Discord connection requested/)
+  ).toHaveAttribute('role', 'status');
+  mounted.unmount();
+  await client.close();
+});

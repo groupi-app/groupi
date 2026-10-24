@@ -137,7 +137,12 @@ export async function expelForPerson(
   };
   if (existing) await ctx.db.replace(existing._id, record);
   else await ctx.db.insert('communityExclusions', record);
-  await invalidateGroupDiscordEnrollment(ctx, input.groupId, input.personId);
+  await invalidateGroupDiscordEnrollment(
+    ctx,
+    input.groupId,
+    input.personId,
+    'banned'
+  );
   const result = {
     operationId: input.operationId,
     outcome: 'committed' as const,

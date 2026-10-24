@@ -2,6 +2,7 @@
 import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v } from 'convex/values';
+import { roleAbove } from './permissions';
 const BASE = 'https://discord.com/api/v10';
 class ProviderFailure extends Error {
   constructor(
@@ -162,17 +163,117 @@ export const dispatch = internalAction({
       {}
     );
     for (const row of batch.cleanup) {
-      if (row.mode !== 'role' || row.desired !== 'role_removed' || !row.roleId)
-        continue;
       try {
         const path = `/guilds/${row.guildId}/members/${row.discordUserId}`;
+        if (row.mode === 'membership') {
+          const banPath = `/guilds/${row.guildId}/bans/${row.discordUserId}`;
+          const ban = await bot(banPath);
+          if (ban.ok) {
+            await ctx.runMutation(
+              internal.groupDiscord.reconciliation.cleanupOutcome,
+              { id: row._id, expectedDesired: row.desired }
+            );
+            continue;
+          }
+          if (ban.status !== 404 || (await ban.json()).code !== 10026)
+            throw new ProviderFailure(
+              'Discord ban verification unavailable. Check bot permissions.'
+            );
+          const target = await bot(path);
+          let member: { roles: string[] } | undefined;
+          if (target.ok) member = await target.json();
+          else if (
+            target.status !== 404 ||
+            (await target.json()).code !== 10007
+          )
+            throw new ProviderFailure(
+              'Discord membership removal blocked. Target could not be verified.'
+            );
+          if (!member && row.desired !== 'banned') {
+            await ctx.runMutation(
+              internal.groupDiscord.reconciliation.cleanupOutcome,
+              { id: row._id, expectedDesired: row.desired }
+            );
+            continue;
+          }
+          const meResponse = await bot('/users/@me');
+          const rolesResponse = await bot(`/guilds/${row.guildId}/roles`);
+          const guildResponse = await bot(`/guilds/${row.guildId}`);
+          if (!meResponse.ok || !rolesResponse.ok || !guildResponse.ok)
+            throw new ProviderFailure(
+              'Discord membership removal blocked. Bot capabilities unavailable.'
+            );
+          const me: { id: string } = await meResponse.json();
+          const botResponse = await bot(
+            `/guilds/${row.guildId}/members/${me.id}`
+          );
+          if (!botResponse.ok)
+            throw new ProviderFailure('Discord bot membership unavailable.');
+          const botMember: { roles: string[] } = await botResponse.json();
+          const roles: { id: string; position: number; permissions: string }[] =
+            await rolesResponse.json();
+          const guild: { owner_id: string } = await guildResponse.json();
+          const botRoles = roles.filter(
+            r => r.id === row.guildId || botMember.roles.includes(r.id)
+          );
+          const permissions = botRoles.reduce(
+            (p, r) => p | BigInt(r.permissions),
+            0n
+          );
+          const needed = row.desired === 'banned' ? 4n : 2n;
+          if (
+            ((permissions & 8n) === 0n && (permissions & needed) === 0n) ||
+            guild.owner_id === row.discordUserId ||
+            (member &&
+              !botRoles.some(botRole =>
+                roles
+                  .filter(
+                    r => r.id === row.guildId || member!.roles.includes(r.id)
+                  )
+                  .every(targetRole =>
+                    roleAbove(botRole, targetRole, row.guildId)
+                  )
+              ))
+          )
+            throw new ProviderFailure(
+              'Discord membership removal blocked. Check Kick Members, Ban Members and hierarchy.'
+            );
+          const result = await bot(
+            row.desired === 'banned' ? banPath : path,
+            row.desired === 'banned' ? 'PUT' : 'DELETE',
+            `groupi-cleanup:${row._id}`
+          );
+          if (!result.ok)
+            throw new ProviderFailure(
+              'Discord membership removal denied. Retry pending.'
+            );
+          const observed = await bot(row.desired === 'banned' ? banPath : path);
+          if (
+            row.desired === 'banned'
+              ? !observed.ok
+              : !(
+                  observed.status === 404 &&
+                  (await observed.json()).code === 10007
+                )
+          )
+            throw new ProviderFailure(
+              'Discord membership removal not observed. Retry pending.',
+              5000
+            );
+          await ctx.runMutation(
+            internal.groupDiscord.reconciliation.cleanupOutcome,
+            { id: row._id, expectedDesired: row.desired }
+          );
+          continue;
+        }
+        if (row.desired !== 'role_removed' || !row.roleId) continue;
         const before = await bot(path);
         if (before.ok) {
           const member: { roles: string[] } = await before.json();
           if (!member.roles.includes(row.roleId)) {
             await ctx.runMutation(
               internal.groupDiscord.reconciliation.cleanupOutcome,
-              { id: row._id }
+              { id: row._id, expectedDesired: row.desired }
             );
             continue;
           }
@@ -181,7 +282,7 @@ export const dispatch = internalAction({
           if (before.status === 404 && body.code === 10007) {
             await ctx.runMutation(
               internal.groupDiscord.reconciliation.cleanupOutcome,
-              { id: row._id }
+              { id: row._id, expectedDesired: row.desired }
             );
             continue;
           }
@@ -217,7 +318,7 @@ export const dispatch = internalAction({
         if (
           ((permissions & 8n) === 0n && (permissions & 268435456n) === 0n) ||
           (role &&
-            role.position >= Math.max(...botRoles.map(role => role.position)))
+            !botRoles.some(botRole => roleAbove(botRole, role, row.guildId)))
         )
           throw new ProviderFailure(
             'Discord role removal blocked. Check Manage Roles and role hierarchy.'
@@ -252,13 +353,14 @@ export const dispatch = internalAction({
         }
         await ctx.runMutation(
           internal.groupDiscord.reconciliation.cleanupOutcome,
-          { id: row._id }
+          { id: row._id, expectedDesired: row.desired }
         );
       } catch (error) {
         await ctx.runMutation(
           internal.groupDiscord.reconciliation.cleanupOutcome,
           {
             id: row._id,
+            expectedDesired: row.desired,
             error:
               error instanceof Error
                 ? error.message
@@ -294,7 +396,8 @@ export const dispatch = internalAction({
         let present: boolean;
         if (response.ok) {
           const member: { roles: string[] } = await response.json();
-          present = member.roles.includes(row.roleId);
+          present =
+            row.mode === 'membership' || member.roles.includes(row.roleId!);
         } else {
           const body = await response.json();
           if (response.status !== 404 || body.code !== 10007)

@@ -27,19 +27,16 @@ export const getConnection = query({
       )
     );
     const obligation = cleanup.find(row => row !== null);
-    const streams =
-      record.mode === 'role'
-        ? await Promise.all(
-            [20, 22, 25].map(action =>
-              ctx.db
-                .query('groupDiscordAuditStreams')
-                .withIndex('by_guild_action', q =>
-                  q.eq('guildId', record.guildId).eq('action', action)
-                )
-                .unique()
-            )
+    const streams = await Promise.all(
+      [20, 22, 25].map(action =>
+        ctx.db
+          .query('groupDiscordAuditStreams')
+          .withIndex('by_guild_action', q =>
+            q.eq('guildId', record.guildId).eq('action', action)
           )
-        : [];
+          .unique()
+      )
+    );
     return {
       ...data,
       cleanupPending: !!obligation,

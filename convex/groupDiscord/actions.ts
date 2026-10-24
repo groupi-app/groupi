@@ -12,7 +12,7 @@ type Role = {
   position: number;
   managed?: boolean;
 };
-import { MEMBER_PERMISSIONS } from './permissions';
+import { MEMBER_PERMISSIONS, roleAbove } from './permissions';
 const BASE = 'https://discord.com/api/v10';
 export const configure = action({
   args: {
@@ -119,7 +119,7 @@ export const configure = action({
       (!role ||
         role.managed ||
         role.id === args.guildId ||
-        role.position >= highest ||
+        !botRoles.some(botRole => roleAbove(botRole, role!, args.guildId)) ||
         (BigInt(role.permissions) & ~MEMBER_PERMISSIONS) !== 0n)
     )
       throw new Error(
@@ -156,7 +156,7 @@ export const configure = action({
           typeof role.name !== 'string' ||
           role.managed ||
           role.id === args.guildId ||
-          role.position >= highest ||
+          !botRoles.some(botRole => roleAbove(botRole, role!, args.guildId)) ||
           (BigInt(role.permissions) & ~MEMBER_PERMISSIONS) !== 0n)
       )
         throw new Error(

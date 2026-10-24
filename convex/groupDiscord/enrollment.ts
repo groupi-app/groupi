@@ -4,7 +4,7 @@ import { requireAuth } from '../auth';
 import { internal } from '../_generated/api';
 import {
   eligibleConnection,
-  oweRoleCleanup,
+  oweAccessCleanup,
   beginEnrollment,
   enrollmentAuthorized,
   getMemberStatus,
@@ -142,7 +142,7 @@ export const claimGrant = internalMutation({
       return null;
     const current = await enrollmentAuthorized(ctx, row);
     if (!current) {
-      if (row.grantAttemptedAt) await oweRoleCleanup(ctx, row);
+      if (row.grantAttemptedAt) await oweAccessCleanup(ctx, row);
       await ctx.db.patch(row._id, {
         status: 'blocked',
         desired: 'removed',
@@ -164,7 +164,8 @@ export const oweCleanup = internalMutation({
     groupId: v.id('groups'),
     guildId: v.string(),
     discordUserId: v.string(),
-    roleId: v.string(),
+    roleId: v.optional(v.string()),
+    mode: v.optional(v.union(v.literal('role'), v.literal('membership'))),
     generation: v.number(),
     connectionGeneration: v.optional(v.number()),
     personId: v.optional(v.id('persons')),
@@ -189,7 +190,7 @@ export const oweCleanup = internalMutation({
       )
         return null;
     }
-    return oweRoleCleanup(ctx, args);
+    return oweAccessCleanup(ctx, args);
   },
 });
 

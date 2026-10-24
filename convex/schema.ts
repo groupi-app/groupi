@@ -60,7 +60,11 @@ export default defineSchema({
     connectionGeneration: v.number(),
     generation: v.number(),
     guildId: v.string(),
-    roleId: v.string(),
+    mode: v.optional(discordMode),
+    cleanupDesired: v.optional(
+      v.union(v.literal('removed'), v.literal('banned'))
+    ),
+    roleId: v.optional(v.string()),
     desired: v.union(v.literal('granted'), v.literal('removed')),
     status: v.union(
       v.literal('pending'),

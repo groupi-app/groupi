@@ -2,7 +2,7 @@
 import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v } from 'convex/values';
-import { MEMBER_PERMISSIONS } from './permissions';
+import { MEMBER_PERMISSIONS, roleAbove } from './permissions';
 const BASE = 'https://discord.com/api/v10';
 class Retry extends Error {
   constructor(public delay: number) {
@@ -106,6 +106,34 @@ export const run = internalAction({
         0n
       );
       const role = roles.find(r => r.id === row.roleId);
+      if (row.mode === 'membership') {
+        if ((permissions & 8n) === 0n && (permissions & 134n) !== 134n)
+          throw new Error(
+            'Discord bot needs Kick Members, Ban Members and View Audit Log.'
+          );
+        const targetRoles = roles.filter(
+          r => r.id === row.guildId || member.roles.includes(r.id)
+        );
+        const removable = botRoles.some(botRole =>
+          targetRoles.every(targetRole =>
+            roleAbove(botRole, targetRole, row.guildId)
+          )
+        );
+        const externalException =
+          guild.owner_id === row.discordUserId
+            ? 'Discord server owner membership is externally managed. Groupi cannot remove or ban the server owner.'
+            : !removable
+              ? 'Discord role hierarchy prevents removing or banning this member. Membership is externally managed.'
+              : undefined;
+        if (!(await fence()))
+          throw new Error('Group access changed during membership enrollment.');
+        await ctx.runMutation(internal.groupDiscord.enrollment.finish, {
+          ...args,
+          status: 'connected',
+          externalException,
+        });
+        return;
+      }
       if (
         (permissions & 8n) === 0n &&
         (permissions & 268435584n) !== 268435584n
@@ -115,7 +143,7 @@ export const run = internalAction({
         !role ||
         role.managed ||
         role.id === row.guildId ||
-        role.position >= Math.max(...botRoles.map(r => r.position)) ||
+        !botRoles.some(botRole => roleAbove(botRole, role, row.guildId)) ||
         (BigInt(role.permissions) & ~MEMBER_PERMISSIONS) !== 0n
       )
         throw new Error(
@@ -132,7 +160,7 @@ export const run = internalAction({
             : undefined;
       if (!(await fence()))
         throw new Error('Group access changed before role grant.');
-      if (!member.roles.includes(row.roleId)) {
+      if (!member.roles.includes(row.roleId!)) {
         if (
           !(await ctx.runMutation(
             internal.groupDiscord.enrollment.markGrantAttempt,
@@ -160,11 +188,11 @@ export const run = internalAction({
           externalException,
           status: observed.pending
             ? 'screening'
-            : observed.roles.includes(row.roleId)
+            : observed.roles.includes(row.roleId!)
               ? 'connected'
               : 'blocked',
           error:
-            !observed.pending && !observed.roles.includes(row.roleId)
+            !observed.pending && !observed.roles.includes(row.roleId!)
               ? 'Discord role access not observed. Connect again.'
               : undefined,
         }
@@ -181,6 +209,7 @@ export const run = internalAction({
             guildId: row.guildId,
             discordUserId: row.discordUserId,
             roleId: row.roleId,
+            mode: row.mode,
             generation: row.generation,
             connectionGeneration: row.connectionGeneration,
             personId: row.personId,

@@ -100,7 +100,7 @@ export async function ban(
       q.eq('groupId', groupId).eq('personId', personId)
     )
     .unique();
-  await invalidateGroupDiscordEnrollment(ctx, groupId, personId);
+  await invalidateGroupDiscordEnrollment(ctx, groupId, personId, 'banned');
   if (existing?.active) return { banned: true as const };
   const data = {
     actorId,

@@ -25,7 +25,7 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
     return (
       <Text accessibilityLiveRegion='polite'>Loading your Discord access…</Text>
     );
-  if (!status || status.mode !== 'role') return null;
+  if (!status) return null;
   return (
     <View className='gap-3 rounded-card border border-border p-3'>
       <Text accessibilityRole='header'>Your Discord access</Text>
@@ -39,11 +39,10 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
           : 'Connect your Discord account to request access to this Group’s server.'}
       </Text>
       <Text>
-        Connecting lets Groupi join you to this server and manage its dedicated
-        Group role. When Group access ends, Groupi removes that role; your
-        server membership remains. Discord staff control bans and server rules.
-        Other roles and channel permissions can preserve independent Discord
-        access. Complete required Group onboarding before connecting.
+        {status.mode === 'membership'
+          ? 'By selecting Connect Discord, you allow Groupi to join you to this server and manage your server membership. When Group access ends, Groupi can remove you from the server. A Group ban or coordinated exclusion can ban your Discord account from this server. Discord staff must review and remove Discord bans before you can connect again.'
+          : 'Connecting lets Groupi join you to this server and manage its dedicated Group role. When Group access ends, Groupi removes that role; your server membership remains. Discord staff control bans and server rules. Other roles and channel permissions can preserve independent Discord access.'}{' '}
+        Complete required Group onboarding before connecting.
       </Text>
       <Text accessibilityLiveRegion='polite'>
         {status.status === 'not_connected'
@@ -61,6 +60,8 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
         <Text>
           Externally managed access: {status.externalException}. Discord staff
           manage this account’s access.
+          {status.mode === 'membership' &&
+            ' Groupi cannot remove server owners or accounts at or above the bot’s role. This exception does not grant Group membership or management permissions.'}
         </Text>
       )}
       {(status.status === 'not_connected' || status.status === 'blocked') && (
