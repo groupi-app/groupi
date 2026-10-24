@@ -24,7 +24,7 @@ describe('Soft lift button', () => {
   it('keeps a pending slotted link named and blocks its destination', async () => {
     const activate = vi.fn();
     render(
-      <Button presentation='soft' asChild isLoading onClick={activate}>
+      <Button asChild isLoading onClick={activate}>
         <a href='#saved'>Save changes</a>
       </Button>
     );

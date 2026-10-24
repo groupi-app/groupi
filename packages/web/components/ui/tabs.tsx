@@ -30,7 +30,7 @@ interface TabsProps extends React.ComponentProps<typeof TabsPrimitive.Root> {
 
 function Tabs({
   layoutId,
-  presentation = 'default',
+  presentation = 'soft',
   defaultValue,
   value,
   onValueChange,

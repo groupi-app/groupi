@@ -128,6 +128,7 @@ export function LogoSticker({
         `}</style>
       )}
       <svg
+        data-slot='logo-sticker'
         className={cn(sizeClasses[size], className)}
         viewBox={viewBox}
         fill='none'
@@ -174,7 +175,7 @@ export function LogoSticker({
         )}
         {/* Arm - separate group for animation */}
         {showArm && (
-          <g style={armAnimationStyle}>
+          <g data-slot='logo-sticker-arm' style={armAnimationStyle}>
             <path
               d={ARM_PATH}
               className='stroke-white'
