@@ -2,14 +2,8 @@
 import type { ActionCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
 
-export class ProviderFailure extends Error {
-  constructor(
-    message: string,
-    public delay = 300000
-  ) {
-    super(message);
-  }
-}
+import { ProviderFailure } from '../discord/providerFailure';
+export { ProviderFailure } from '../discord/providerFailure';
 
 /** Durable bot-wide and conservative per-guild route-family pauses preserve provider retry windows. */
 export async function discordBot(

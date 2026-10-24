@@ -189,16 +189,6 @@ async function continueConnect(
         );
         return { requiresConsent: true };
       }
-      if (joined.status === 429 || joined.status >= 500)
-        throw new ProviderFailure(
-          'Discord join temporarily unavailable; retry pending.',
-          joined.status === 429
-            ? Math.max(
-                1000,
-                Number(joined.headers.get('Retry-After') ?? 1) * 1000
-              )
-            : 5000
-        );
       if (!joined.ok)
         throw new Error(
           'Discord join failed. Contact Discord staff or try Connect again.'
