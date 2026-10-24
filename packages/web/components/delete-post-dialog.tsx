@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeletePost } from '@/hooks/convex/use-posts';
 import { Id } from '@/convex/_generated/dataModel';
@@ -55,7 +56,11 @@ export function DeletePostDialog({
             <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button onClick={handleDeletePost} variant='destructive'>
+            <Button
+              onClick={handleDeletePost}
+              variant='destructive'
+              icon={<Trash2 className='size-4' />}
+            >
               Delete
             </Button>
           </DialogClose>

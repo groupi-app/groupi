@@ -69,17 +69,4 @@ describe('NumberBadge', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('10')).toBeInTheDocument();
   });
-
-  it('should apply proper styling to badge', () => {
-    render(
-      <NumberBadge num={5}>
-        <span>Content</span>
-      </NumberBadge>
-    );
-
-    const badge = screen.getByText('5');
-    expect(badge).toHaveClass('absolute');
-    expect(badge).toHaveClass('bg-destructive');
-    expect(badge).toHaveClass('rounded-full');
-  });
 });

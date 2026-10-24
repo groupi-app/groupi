@@ -15,7 +15,7 @@ import {
   SearchUserResult,
 } from '@/hooks/convex/use-friends';
 import { Id } from '@/convex/_generated/dataModel';
-import { Search, Users } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface FriendSearchProps {
   onRequestSent?: () => void;
@@ -152,8 +152,7 @@ export function FriendSearch({ onRequestSent }: FriendSearchProps) {
         <div className='space-y-4'>
           {isMutualLoading ? (
             <div className='space-y-2'>
-              <h3 className='text-sm font-medium text-muted-foreground px-1 flex items-center gap-2'>
-                <Users className='size-4' />
+              <h3 className='font-heading text-sm font-medium text-muted-foreground px-1 flex items-center gap-2'>
                 People from your events
               </h3>
               {/* Skeleton loaders matching the card layout */}
@@ -163,8 +162,7 @@ export function FriendSearch({ onRequestSent }: FriendSearchProps) {
             </div>
           ) : hasMutualEventSuggestions ? (
             <div className='space-y-2'>
-              <h3 className='text-sm font-medium text-muted-foreground px-1 flex items-center gap-2'>
-                <Users className='size-4' />
+              <h3 className='font-heading text-sm font-medium text-muted-foreground px-1 flex items-center gap-2'>
                 People from your events
               </h3>
               {mutualEventUsers.map((user: MutualEventUser) => (

@@ -327,8 +327,8 @@ function ActionMenu({
                       )}
                       {member.role === 'MODERATOR' && (
                         <Button
-                          variant='ghost'
-                          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                          variant='destructive-ghost'
+                          className='w-full justify-start'
                           onClick={() => {
                             setDialogAction(MemberAction.DEMOTE);
                             setSheetOpen(false);
@@ -343,8 +343,8 @@ function ActionMenu({
                   )}
                   {canKick && (
                     <Button
-                      variant='ghost'
-                      className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                      variant='destructive-ghost'
+                      className='w-full justify-start'
                       onClick={() => {
                         setDialogAction(MemberAction.KICK);
                         setSheetOpen(false);
@@ -357,8 +357,8 @@ function ActionMenu({
                   )}
                   {canBan && (
                     <Button
-                      variant='ghost'
-                      className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                      variant='destructive-ghost'
+                      className='w-full justify-start'
                       onClick={() => {
                         setDialogAction(MemberAction.BAN);
                         setSheetOpen(false);
@@ -424,7 +424,7 @@ function ActionMenu({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <div className='text-card-foreground'>
                 {formatRoleBadge(role)}
               </div>
@@ -553,7 +553,7 @@ function ActionMenu({
                   className='cursor-pointer'
                 >
                   <DialogTrigger asChild>
-                    <div className='flex items-center gap-1'>
+                    <div className='flex items-center gap-3'>
                       <Icons.shield className='size-4' />
                       <span>Promote</span>
                     </div>
@@ -563,14 +563,15 @@ function ActionMenu({
 
               {member.role === 'MODERATOR' && (
                 <DropdownMenuItem
+                  variant='destructive'
                   onClick={() => {
                     setDialogAction(MemberAction.DEMOTE);
                   }}
                   asChild
-                  className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                  className='cursor-pointer'
                 >
                   <DialogTrigger asChild>
-                    <div className='flex items-center gap-1'>
+                    <div className='flex items-center gap-3'>
                       <Icons.shieldOff className='size-4' />
                       <span>Demote</span>
                     </div>
@@ -581,14 +582,15 @@ function ActionMenu({
           )}
           {canKick && (
             <DropdownMenuItem
+              variant='destructive'
               onClick={() => {
                 setDialogAction(MemberAction.KICK);
               }}
               asChild
-              className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+              className='cursor-pointer'
             >
               <DialogTrigger asChild>
-                <div className='flex items-center gap-1'>
+                <div className='flex items-center gap-3'>
                   <Icons.kick className='size-4' />
                   <span>Kick</span>
                 </div>
@@ -597,14 +599,15 @@ function ActionMenu({
           )}
           {canBan && (
             <DropdownMenuItem
+              variant='destructive'
               onClick={() => {
                 setDialogAction(MemberAction.BAN);
               }}
               asChild
-              className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+              className='cursor-pointer'
             >
               <DialogTrigger asChild>
-                <div className='flex items-center gap-1'>
+                <div className='flex items-center gap-3'>
                   <Icons.ban className='size-4' />
                   <span>Ban</span>
                 </div>

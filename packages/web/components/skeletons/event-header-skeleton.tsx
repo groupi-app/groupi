@@ -7,7 +7,7 @@ export function EventHeaderSkeleton() {
     <header className='flex flex-col md:my-5 max-w-4xl mx-auto gap-3'>
       {/* Title and dropdown menu */}
       <div className='flex justify-between flex-col-reverse gap-3 md:flex-row'>
-        <Skeleton className='h-12 w-96' />
+        <Skeleton className='h-12 w-96 max-w-full' />
         <DropdownMenu>
           <DropdownMenuTrigger className='size-12 hover:bg-accent/80 transition-all rounded-md flex items-center justify-center'>
             <Icons.more className='size-8' />

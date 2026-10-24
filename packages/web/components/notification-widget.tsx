@@ -156,8 +156,9 @@ export function NotificationWidget({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
+                    variant='destructive'
                     onClick={() => setDeleteDialogOpen(true)}
-                    className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                    className='cursor-pointer'
                   >
                     <div className='flex items-center gap-2'>
                       <Icons.delete className='size-4' />
@@ -203,8 +204,8 @@ export function NotificationWidget({
                       </Button>
                     )}
                     <Button
-                      variant='ghost'
-                      className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                      variant='destructive-ghost'
+                      className='w-full justify-start'
                       onClick={() => {
                         setSheetOpen(false);
                         setDeleteDialogOpen(true);
@@ -255,10 +256,7 @@ export function NotificationWidget({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAll}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-            >
+            <AlertDialogAction onClick={handleDeleteAll} variant='destructive'>
               Delete All
             </AlertDialogAction>
           </AlertDialogFooter>

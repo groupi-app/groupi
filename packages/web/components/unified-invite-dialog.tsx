@@ -32,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Icons } from '@/components/icons';
 import { EventPeopleInvite } from '@/components/organisms/event-people-invite';
 import {
   LocalEmailInviteItem,
@@ -65,7 +64,6 @@ import {
   Send,
   Plus,
   Users,
-  FileSpreadsheet,
   Loader2,
 } from 'lucide-react';
 
@@ -309,7 +307,6 @@ export function UnifiedInviteDialog() {
       >
         <DialogHeader className='flex-shrink-0'>
           <DialogTitle className='flex items-center gap-2'>
-            <Icons.invite className='size-5' />
             Invite People
           </DialogTitle>
           <DialogDescription>
@@ -392,8 +389,7 @@ function LinkInviteTab({ eventId }: { eventId: Id<'events'> }) {
   return (
     <div className='space-y-4'>
       <div className='bg-muted/30 rounded-card p-4'>
-        <h4 className='font-medium mb-2 flex items-center gap-2'>
-          <Link2 className='size-4' />
+        <h4 className='font-heading font-medium mb-2 flex items-center gap-2'>
           Create Invite Link
         </h4>
         <p className='text-sm text-muted-foreground'>
@@ -916,8 +912,7 @@ function EmailInviteTab({ eventId }: { eventId: Id<'events'> }) {
         {/* Invitees List */}
         <div className='flex-1 min-h-0 flex flex-col'>
           <div className='flex items-center justify-between mb-2'>
-            <h3 className='text-sm font-medium flex items-center gap-2'>
-              <FileSpreadsheet className='size-4' />
+            <h3 className='font-heading text-sm font-medium flex items-center gap-2'>
               Invitees
               <Badge variant='secondary'>
                 {localInvites.length + emailInvites.length}
