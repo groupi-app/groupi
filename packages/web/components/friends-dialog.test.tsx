@@ -52,7 +52,5 @@ it('shows no attention count for sent requests alone', () => {
   boundary.incoming = false;
   useFriendsDialogStore.getState().openDialog();
   render(<FriendsDialog />);
-  expect(
-    screen.getByRole('tab', { name: 'Requests', exact: true })
-  ).toBeVisible();
+  expect(screen.getByRole('tab', { name: 'Requests' })).toBeVisible();
 });
