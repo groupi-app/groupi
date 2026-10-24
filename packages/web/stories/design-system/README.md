@@ -61,3 +61,19 @@ containing secondary controls inside a link or button.
 Run the dedicated Storybook type check with
 `pnpm --filter @groupi/web exec tsc --noEmit -p .storybook/tsconfig.json`.
 The normal web tsconfig intentionally excludes stories and preview configuration.
+
+## Material iteration
+
+The white cut edge is a component token sourced from the existing white primitive;
+it stays white in dark and custom themes. It belongs to actions, explicit featured
+surfaces, photo stickers, flat cut-out labels and foreground slips/sheets. Quiet
+fields and ordinary information surfaces do not acquire this edge.
+
+The featured card and soft confirmation each show one decorative perforated
+content/action seam. This is a dashed rule, with no implied tearing interaction.
+
+MaterialStudies contains unselected alternatives, scoped to story CSS and actual
+canonical Badge, Tabs and Alert components. None chooses a production default.
+The Overview cut-out badges are one candidate, not final approval of status style.
+Avatar samples include the existing external portrait fixture, a working initials
+fallback, an overlapping stack and unchanged PresenceIndicator status vocabulary.
