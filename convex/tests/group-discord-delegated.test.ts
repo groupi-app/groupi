@@ -7,7 +7,10 @@ import {
   token,
   exchange,
 } from './delegated-protocol.helpers';
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 it('exposes only consented own selected Group Discord status through authenticated REST', async () => {
   const f = await setup();
   const groupId = await f.owner.auth.mutation(

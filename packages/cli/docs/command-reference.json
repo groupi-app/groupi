@@ -484,7 +484,7 @@
     },
     {
       "path": "groupi groups delete",
-      "help": "Usage: groupi groups delete [options] <group-id>\n\nExplicitly retire an owned Group and its data; independent Events remain\n\nOptions:\n  --yes       Confirm Group deletion\n  -h, --help  display help for command\n"
+      "help": "Usage: groupi groups delete [options] <group-id>\n\nExplicitly retire an owned Group and its data; independent Events remain\n\nOptions:\n  --yes                           Confirm Group deletion\n  --acknowledge-discord-handback  Hand retained Discord access to staff; owed removals continue,\n                                  server and bot remain\n  -h, --help                      display help for command\n"
     },
     {
       "path": "groupi groups announce",

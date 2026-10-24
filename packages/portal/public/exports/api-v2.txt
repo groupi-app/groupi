@@ -16653,6 +16653,20 @@ Explicitly delete a Group as owner  Source-generated operation; schemas and per-
       "required": true,
       "name": "groupId",
       "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "description": "Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain."
+      },
+      "required": false,
+      "description": "Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain.",
+      "name": "acknowledgeDiscordHandback",
+      "in": "query"
     }
   ],
   "responses": {
