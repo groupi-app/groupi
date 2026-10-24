@@ -1,4 +1,9 @@
 'use node';
+import {
+  memberCapabilities,
+  hasPermissions,
+  DISCORD_PERMISSIONS,
+} from './permissions';
 import { action } from '../_generated/server';
 import { internal, api } from '../_generated/api';
 import { v, type Infer } from 'convex/values';
@@ -86,23 +91,24 @@ export const configure = action({
       `/guilds/${args.guildId}/members/${me.id}`
     );
     const roles: Role[] = await bot(`/guilds/${args.guildId}/roles`);
-    const botRoles = roles.filter(
-      r => r.id === args.guildId || member.roles.includes(r.id)
+    const { roles: botRoles, permissions } = memberCapabilities(
+      roles,
+      member.roles,
+      args.guildId
     );
-    const permissions = botRoles.reduce(
-      (p, r) => p | BigInt(r.permissions),
-      0n
-    );
-    if ((permissions & 8n) === 0n && (permissions & 128n) === 0n)
+    if (!hasPermissions(permissions, DISCORD_PERMISSIONS.auditLog))
       throw new Error(
         'Bot needs View Audit Log permission to observe Discord moderation.'
       );
-    if ((permissions & 8n) === 0n && (permissions & 1n) === 0n)
+    if (!hasPermissions(permissions, DISCORD_PERMISSIONS.createInvite))
       throw new Error(
         'Bot needs Create Instant Invite permission for explicit member connections.'
       );
-    const required = args.mode === 'membership' ? 6n : 268435456n;
-    if ((permissions & 8n) === 0n && (permissions & required) !== required)
+    const required =
+      args.mode === 'membership'
+        ? DISCORD_PERMISSIONS.kick | DISCORD_PERMISSIONS.ban
+        : DISCORD_PERMISSIONS.manageRoles;
+    if (!hasPermissions(permissions, required))
       throw new Error(
         args.mode === 'membership'
           ? 'Bot needs Kick Members and Ban Members permissions.'

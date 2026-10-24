@@ -114,6 +114,7 @@ export default defineSchema({
     error: v.optional(v.string()),
     externalException: v.optional(v.string()),
     grantAttemptedAt: v.optional(v.number()),
+    connectPending: v.optional(v.boolean()),
     nextObservationAt: v.optional(v.number()),
     observationError: v.optional(v.string()),
     startedAt: v.number(),
@@ -124,6 +125,12 @@ export default defineSchema({
   })
     .index('by_group', ['groupId'])
     .index('by_person', ['personId'])
+    .index('by_person_removed_exception', [
+      'personId',
+      'mode',
+      'desired',
+      'externalException',
+    ])
     .index('by_guild_identity', ['guildId', 'discordUserId'])
     .index('by_observation', ['nextObservationAt'])
     .index('by_group_observationError', [
@@ -195,6 +202,22 @@ export default defineSchema({
     .index('by_group_person', ['groupId', 'personId', 'status'])
     .index('by_person_status', ['personId', 'status'])
     .index('by_target_status', ['guildId', 'discordUserId', 'roleId', 'status'])
+    .index('by_target_group_status', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'groupId',
+      'status',
+    ])
+    .index('by_target_group_enrollment', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+      'groupId',
+    ])
     .index('by_target', [
       'guildId',
       'discordUserId',

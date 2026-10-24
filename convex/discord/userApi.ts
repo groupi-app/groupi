@@ -1,3 +1,4 @@
+import { ProviderFailure } from './providerFailure';
 import type { ActionCtx } from '../_generated/server';
 import { authComponent, createAuth } from '../auth';
 
@@ -24,11 +25,18 @@ export async function joinDiscordGuild(
   accountId: string,
   guildId: string,
   botToken: string,
-  authorize: () => Promise<boolean>
+  authorize: () => Promise<boolean>,
+  verifiedUserId?: string
 ): Promise<Response | null> {
-  const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+  const { auth, headers } = verifiedUserId
+    ? { auth: createAuth(ctx), headers: undefined }
+    : await authComponent.getAuth(createAuth, ctx);
   const tokens = await auth.api.getAccessToken({
-    body: { providerId: 'discord', accountId },
+    body: {
+      providerId: 'discord',
+      accountId,
+      ...(verifiedUserId ? { userId: verifiedUserId } : {}),
+    },
     headers,
   });
   if (!tokens.accessToken) return null;
@@ -37,6 +45,8 @@ export async function joinDiscordGuild(
     fetch('https://discord.com/api/v10/oauth2/@me', { headers: authorization }),
     fetch('https://discord.com/api/v10/users/@me', { headers: authorization }),
   ]);
+  await requireProviderAvailability(infoResponse);
+  await requireProviderAvailability(identityResponse);
   if (!infoResponse.ok || !identityResponse.ok) return null;
   const info: {
     application?: { id: string };
@@ -55,7 +65,7 @@ export async function joinDiscordGuild(
     return null;
   if (!(await authorize()))
     throw new Error('Group access changed before joining Discord.');
-  return fetch(
+  const joined = await fetch(
     `https://discord.com/api/v10/guilds/${guildId}/members/${accountId}`,
     {
       method: 'PUT',
@@ -65,5 +75,30 @@ export async function joinDiscordGuild(
       },
       body: JSON.stringify({ access_token: tokens.accessToken }),
     }
+  );
+  await requireProviderAvailability(joined);
+  return joined;
+}
+
+/** Outages are retryable; only definitive credential/scope refusals need fresh consent. */
+async function requireProviderAvailability(response: Response) {
+  if (response.status !== 429 && response.status < 500) return;
+  const body: { retry_after?: number } | null = await response
+    .clone()
+    .json()
+    .catch(() => null);
+  const seconds = Number(
+    response.headers.get('Retry-After') ??
+      body?.retry_after ??
+      response.headers.get('X-RateLimit-Reset-After') ??
+      1
+  );
+  throw new ProviderFailure(
+    'Discord temporarily unavailable; retry pending.',
+    response.status === 429
+      ? Number.isFinite(seconds)
+        ? Math.max(1000, seconds * 1000)
+        : 300000
+      : 5000
   );
 }

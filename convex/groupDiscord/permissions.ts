@@ -16,3 +16,34 @@ export function roleAbove(
   if (!/^\d+$/.test(left.id) || !/^\d+$/.test(right.id)) return false;
   return BigInt(left.id) < BigInt(right.id);
 }
+
+export const DISCORD_PERMISSIONS = {
+  administrator: 8n,
+  createInvite: 1n,
+  auditLog: 128n,
+  manageRoles: 268435456n,
+  kick: 2n,
+  ban: 4n,
+  membershipEnrollment: 134n,
+  roleEnrollment: 268435584n,
+};
+
+/** Effective guild permissions include @everyone and all assigned roles. */
+export function memberCapabilities<
+  T extends { id: string; permissions: string },
+>(roles: T[], roleIds: string[], guildId: string) {
+  const memberRoles = roles.filter(
+    role => role.id === guildId || roleIds.includes(role.id)
+  );
+  const permissions = memberRoles.reduce(
+    (bits, role) => bits | BigInt(role.permissions),
+    0n
+  );
+  return { roles: memberRoles, permissions };
+}
+export function hasPermissions(permissions: bigint, required: bigint) {
+  return (
+    (permissions & DISCORD_PERMISSIONS.administrator) !== 0n ||
+    (permissions & required) === required
+  );
+}
