@@ -552,17 +552,14 @@ it('uses the app provider despite a distinct shared SDK and explains the owner c
     </AppProvider>
   );
   expect(
-    await screen.findByText(/To leave, transfer ownership/)
+    await screen.findByText(/Owners must transfer ownership before leaving/)
   ).toBeInTheDocument();
   expect(
     screen.queryByRole('button', { name: 'Leave Group' })
   ).not.toBeInTheDocument();
   expect(
-    screen.getByRole('link', { name: 'delete the Group' })
-  ).toHaveAttribute(
-    'href',
-    '/groups/group-one/settings/ownership#delete-group'
-  );
+    screen.getByRole('link', { name: 'Manage ownership' })
+  ).toHaveAttribute('href', '/groups/group-one/settings/ownership');
   expect(
     screen.queryByRole('button', { name: /transfer/i })
   ).not.toBeInTheDocument();
