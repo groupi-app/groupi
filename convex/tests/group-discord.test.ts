@@ -1529,3 +1529,339 @@ it('membership checks current removal capability before joining a screening-pend
   ).rejects.toThrow('Kick Members');
   expect(joined).toBe(false);
 });
+
+it('warns before handback and re-enables with fresh connection authority', async () => {
+  const { owner, groupId } = await setup();
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await expect(
+    owner.auth.mutation(api.groupDiscord.mutations.disable, {
+      groupId,
+      acknowledgeHandback: false,
+    })
+  ).rejects.toThrow('handback');
+  await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+    groupId,
+    acknowledgeHandback: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ status: 'disabled', generation: 2 });
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({ status: 'active', generation: 3 });
+});
+
+it.each(['role', 'membership'] as const)(
+  'deletion preserves owed %s cleanup visibility only for prior managers',
+  async mode => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+      mode,
+    });
+    await t.run(async ctx => {
+      await ctx.db.insert('groupDiscordCleanup', {
+        groupId: String(groupId),
+        generation: 1,
+        guildId: '100',
+        mode,
+        discordUserId: 'departed',
+        roleId: mode === 'role' ? 'created-role' : undefined,
+        desired: mode === 'role' ? 'role_removed' : 'removed',
+        observed: 'unknown',
+        status: 'pending',
+        error: 'Bot permissions unavailable',
+        attempts: 0,
+        nextAttemptAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    await expect(
+      owner.auth.mutation(api.groups.mutations.deleteGroup, { groupId })
+    ).rejects.toThrow('handback');
+    await owner.auth.mutation(api.groups.mutations.deleteGroup, {
+      groupId,
+      acknowledgeDiscordHandback: true,
+    });
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({
+      status: 'disabled',
+      groupDeleted: true,
+      cleanupPending: true,
+      synchronizationError: 'Bot permissions unavailable',
+    });
+    const outsider = await createAuthAccount(t, 'outsider');
+    await expect(
+      outsider.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+    ).rejects.toThrow('unavailable');
+    expect(
+      await outsider.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+        retiredOnly: true,
+      })
+    ).toBeNull();
+    expect(
+      await t.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+        retiredOnly: true,
+      })
+    ).toBeNull();
+    expect(
+      provider.mock.calls.some(([, init]) => init?.method === 'DELETE')
+    ).toBe(false);
+  }
+);
+
+it.each(['disable', 'delete'] as const)(
+  '%s during a provider role grant preserves failed compensation and retries after teardown',
+  async retirement => {
+    const { t, owner, groupId } = await setup();
+    await owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    });
+    const base = provider.getMockImplementation()!;
+    let granted = false;
+    let deny = true;
+    provider.mockImplementation(async (input, init) => {
+      const path = String(input);
+      if (path.endsWith('/bans/manager-discord'))
+        return json({ code: 10026 }, 404);
+      if (path.endsWith('/members/manager-discord'))
+        return json({ roles: granted ? ['created-role'] : [], pending: false });
+      if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+        if (retirement === 'delete')
+          await owner.auth.mutation(api.groups.mutations.deleteGroup, {
+            groupId,
+            acknowledgeDiscordHandback: true,
+          });
+        else
+          await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+            groupId,
+            acknowledgeHandback: true,
+          });
+        await t.action(internal.groupDiscord.reconcile.dispatch, {});
+        expect(
+          await owner.auth.query(api.groupDiscord.queries.getConnection, {
+            groupId,
+          })
+        ).toMatchObject({ cleanupPending: true });
+        granted = true;
+        return new Response(null, { status: 204 });
+      }
+      if (path.endsWith('/roles/created-role') && init?.method === 'DELETE') {
+        if (deny) return json({ message: 'Missing Permissions' }, 403);
+        granted = false;
+        return new Response(null, { status: 204 });
+      }
+      return base(input, init);
+    });
+    await owner.auth
+      .action(api.groupDiscord.connect.connect, { groupId, consent: true })
+      .catch(() => {});
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ status: 'disabled', cleanupPending: true });
+    expect(granted).toBe(true);
+    deny = false;
+    vi.advanceTimersByTime(600000);
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(granted).toBe(false);
+    expect(
+      await owner.auth.query(api.groupDiscord.queries.getConnection, {
+        groupId,
+      })
+    ).toMatchObject({ cleanupPending: false });
+  }
+);
+it('hands retained role access back and requires fresh enrollment after changing mode', async () => {
+  const { owner, groupId } = await setup();
+  const base = provider.getMockImplementation()!;
+  provider.mockImplementation(async (input, init) => {
+    if (String(input).endsWith('/bans/manager-discord'))
+      return json({ code: 10026 }, 404);
+    if (String(input).endsWith('/members/manager-discord'))
+      return json({ roles: ['created-role'], pending: false });
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+    groupId,
+    acknowledgeHandback: true,
+  });
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+    mode: 'membership',
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({ status: 'blocked' });
+  await owner.auth.action(api.groupDiscord.connect.connect, {
+    groupId,
+    consent: true,
+  });
+  expect(
+    await owner.auth.query(api.groupDiscord.enrollment.getStatus, { groupId })
+  ).toMatchObject({
+    status: 'connected',
+    mode: 'membership',
+    cleanupPending: false,
+  });
+  expect(
+    provider.mock.calls.some(([, init]) => init?.method === 'DELETE')
+  ).toBe(false);
+});
+it('late role creation is handed back visibly without activating a replacement epoch', async () => {
+  const { owner, groupId } = await setup();
+  const base = provider.getMockImplementation()!;
+  let first = true;
+  provider.mockImplementation(async (input, init) => {
+    if (String(input).endsWith('/roles') && init?.method === 'POST' && first) {
+      first = false;
+      await owner.auth.mutation(api.groupDiscord.mutations.disable, {
+        groupId,
+        acknowledgeHandback: true,
+      });
+      await owner.auth.action(api.groupDiscord.actions.configure, {
+        groupId,
+        guildId: '100',
+        mode: 'membership',
+      });
+      return json({
+        id: 'late-role',
+        name: 'Old role',
+        permissions: '0',
+        position: 1,
+        managed: false,
+      });
+    }
+    if (String(input).endsWith('/roles') && init?.method !== 'POST') {
+      const response = await base(input, init);
+      const roles = await response.json();
+      return json([
+        ...roles,
+        {
+          id: 'late-role',
+          name: 'Old role',
+          permissions: '0',
+          position: 1,
+          managed: false,
+        },
+      ]);
+    }
+    return base(input, init);
+  });
+  await expect(
+    owner.auth.action(api.groupDiscord.actions.configure, {
+      groupId,
+      guildId: '100',
+    })
+  ).rejects.toThrow('retired');
+  expect(
+    await owner.auth.query(api.groupDiscord.queries.getConnection, { groupId })
+  ).toMatchObject({
+    mode: 'membership',
+    generation: 3,
+    status: 'active',
+    handedBackRoleIds: ['late-role'],
+  });
+});
+it('a fresh Connect after completed removal owes a new real removal in the same connection epoch', async () => {
+  const { t, owner, groupId } = await setup();
+  const member = await createAuthAccount(t, 'repeat-reader');
+  await t.mutation(components.betterAuth.adapter.create, {
+    input: {
+      model: 'account',
+      data: {
+        userId: member.user._id,
+        providerId: 'discord',
+        accountId: 'repeat-reader',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    },
+  });
+  await t.run(ctx =>
+    ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: member.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    })
+  );
+  const base = provider.getMockImplementation()!;
+  let granted = false;
+  let removals = 0;
+  provider.mockImplementation(async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/bans/repeat-reader')) return json({ code: 10026 }, 404);
+    if (path.endsWith('/members/repeat-reader'))
+      return json({ roles: granted ? ['created-role'] : [], pending: false });
+    if (path.endsWith('/roles/created-role') && init?.method === 'PUT') {
+      granted = true;
+      return new Response(null, { status: 204 });
+    }
+    if (path.endsWith('/roles/created-role') && init?.method === 'DELETE') {
+      granted = false;
+      removals++;
+      return new Response(null, { status: 204 });
+    }
+    return base(input, init);
+  });
+  await owner.auth.action(api.groupDiscord.actions.configure, {
+    groupId,
+    guildId: '100',
+  });
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await member.auth.action(api.groupDiscord.connect.connect, {
+      groupId,
+      consent: true,
+    });
+    expect(
+      await member.auth.query(api.groupDiscord.enrollment.getStatus, {
+        groupId,
+      })
+    ).toMatchObject({ status: 'connected' });
+    await owner.auth.mutation(
+      api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+      {
+        groupId,
+        enabled: true,
+        requiredCompletion: true,
+        questions: [
+          { id: 'book', label: 'Book', type: 'SHORT_ANSWER', required: true },
+        ],
+      }
+    );
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+    await t.action(internal.groupDiscord.reconcile.dispatch, {});
+    expect(granted).toBe(false);
+    expect(removals).toBe(cycle + 1);
+    await owner.auth.mutation(
+      api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+      { groupId, enabled: false, requiredCompletion: false, questions: [] }
+    );
+  }
+});

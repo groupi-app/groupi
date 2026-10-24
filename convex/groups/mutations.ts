@@ -16,10 +16,18 @@ export const updateGroup = mutation({
     model.update(ctx, (await requireAuth(ctx)).person._id, args),
 });
 export const deleteGroup = mutation({
-  args: { groupId: v.id('groups') },
+  args: {
+    groupId: v.id('groups'),
+    acknowledgeDiscordHandback: v.optional(v.boolean()),
+  },
   returns: v.null(),
   handler: async (ctx, args) =>
-    model.remove(ctx, (await requireAuth(ctx)).person._id, args.groupId),
+    model.remove(
+      ctx,
+      (await requireAuth(ctx)).person._id,
+      args.groupId,
+      args.acknowledgeDiscordHandback
+    ),
 });
 
 import { policy } from '../groupInvites/model';

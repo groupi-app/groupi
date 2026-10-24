@@ -2,6 +2,7 @@ vi.mock('./group-discord-connect', () => ({
   GroupDiscordConnect: 'GroupDiscordConnect',
 }));
 vi.mock('./group-discord-settings', () => ({
+  GroupDiscordRetiredStatus: () => null,
   GroupDiscordSettings: 'GroupDiscordSettings',
 }));
 vi.mock('./group-event-sharing-policy', () => ({
@@ -138,7 +139,10 @@ describe('Native Group screens', () => {
     (button(tree, 'Delete Group')?.props.onPress as () => void)();
     expect(mocks.deleteGroup).not.toHaveBeenCalled();
     await mocks.confirm.mock.calls[0][0].onConfirm();
-    expect(mocks.deleteGroup).toHaveBeenCalledWith({ groupId: 'group-123' });
+    expect(mocks.deleteGroup).toHaveBeenCalledWith({
+      groupId: 'group-123',
+      acknowledgeDiscordHandback: true,
+    });
     expect(mocks.replace).toHaveBeenCalledWith('/g/group-123');
   });
 });

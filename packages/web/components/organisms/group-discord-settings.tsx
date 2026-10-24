@@ -1,13 +1,16 @@
 'use client';
 import type { Id } from '@/convex/_generated/dataModel';
-import { useGroupDiscordSettings } from '@/hooks/convex/use-group-discord';
+import {
+  useGroupDiscordSettings,
+  useGroupDiscordConnection,
+} from '@/hooks/convex/use-group-discord';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
   const form = useGroupDiscordSettings({ groupId });
   if (form.connection === undefined)
     return <p role='status'>Loading Discord connection…</p>;
-  if (form.connection)
+  if (form.connection && form.connection.status !== 'disabled')
     return (
       <section className='rounded-card border border-border p-4 space-y-4'>
         <p className='text-xl font-semibold'>Group Discord connection</p>
@@ -22,6 +25,12 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
             : 'Server membership only'}
           .
         </p>
+        {form.connection.handedBackRoleIds?.length ? (
+          <p>
+            Roles created during retired setup are now managed by Discord staff:{' '}
+            {form.connection.handedBackRoleIds.join(', ')}.
+          </p>
+        ) : null}
         {form.connection.roleId && (
           <p>
             Dedicated role: {form.connection.roleName ?? 'Group role'} (
@@ -46,8 +55,25 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
           <p role='status'>Discord setup is in progress.</p>
         )}
         <p>
-          Changing or removing an existing connection is not available here.
+          Disabling hands retained roles and server membership to Discord staff.
+          Pending removals still run. No server or bot is deleted. To change
+          server or mode, disable first; members must freshly Connect afterward.
         </p>
+        <label>
+          <input
+            type='checkbox'
+            checked={form.handbackConfirmed}
+            onChange={event => form.setHandbackConfirmed(event.target.checked)}
+          />
+          I understand Discord handback
+        </label>
+        <Button
+          disabled={form.busy || !form.handbackConfirmed}
+          onClick={() => void form.disable()}
+        >
+          Disable Discord connection
+        </Button>
+        {form.error && <p role='alert'>{form.error}</p>}
       </section>
     );
   return (
@@ -62,6 +88,15 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
       <h2 id='group-discord-heading' className='text-xl font-semibold'>
         Group Discord connection
       </h2>
+      {form.connection?.handedBackRoleIds?.length ? (
+        <p>
+          Roles created during retired setup are now managed by Discord staff:{' '}
+          {form.connection.handedBackRoleIds.join(', ')}.
+        </p>
+      ) : null}
+      {form.connection?.synchronizationError && (
+        <p role='status'>{form.connection.synchronizationError}</p>
+      )}
       <p>
         Connect a server you manage where the Groupi bot is installed. Setup
         does not change channel permissions or grant staff roles. Discord role
@@ -163,5 +198,35 @@ export function GroupDiscordSettings({ groupId }: { groupId: Id<'groups'> }) {
         </p>
       )}
     </form>
+  );
+}
+
+export function GroupDiscordRetiredStatus({
+  groupId,
+}: {
+  groupId: Id<'groups'>;
+}) {
+  const connection = useGroupDiscordConnection({ groupId, retiredOnly: true });
+  if (!connection) return null;
+  return (
+    <section
+      aria-label='Retired Discord connection'
+      className='space-y-2 rounded-card border border-border p-4'
+    >
+      <h2>Discord handback</h2>
+      <p>
+        Retained roles and server membership are managed by Discord staff. The
+        server and bot remain.
+      </p>
+      <p role='status'>
+        {connection.cleanupPending
+          ? (connection.synchronizationError ??
+            'Discord removal is pending. Removal has not been confirmed.')
+          : 'No Discord removals remain pending. Handback does not remove retained access.'}
+      </p>
+      {connection.handedBackRoleIds?.length ? (
+        <p>Retired setup roles: {connection.handedBackRoleIds.join(', ')}.</p>
+      ) : null}
+    </section>
   );
 }

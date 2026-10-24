@@ -1,5 +1,12 @@
 # Current Integration Status
 
+## Discord handback and teardown — source evidence as of 2026-10-23
+
+- Source branch `codex/discord-group-410`, based on integration `272c8eefc3b5c2083bb18c243a76640882b7b63a`. Shared transactional handback stops new grants, retains roles/membership under Discord staff, and preserves owed cleanup and in-flight compensation across disable, reconfiguration and deletion. Connection epochs never reset on re-enable; setup completion also requires its exact reservation epoch.
+- Native settings and deletion confirmations explain handback. Group-owner deletion accepts explicit acknowledgement through authenticated native and REST query interfaces; the CLI forwards an explicit acknowledgement flag. Existing owner/cascade/exclusion restrictions remain enforced. Recorded managers/deleting actors see the retired cleanup summary on the old Group link in web and mobile without a live Group. The optional retired-only query returns null for signed-out/unrelated viewers; ordinary unavailable views remain unchanged.
+- Deterministic authenticated/provider tests cover warning, monotonic re-enable, retained access/fresh Connect after mode change, deleted-Group status authorization, partial grant retirement and cleanup retry. Native web/mobile tests exercise explicit acknowledgement. Runtime/browser/device/VoiceOver and controlled Discord checks remain unverified: no matching deployed feature/session/provider credentials were established and no runtime/build/deployment or live guild mutation was performed.
+- Identity integration (#409), shared recovery/notifications/audit-gap hardening (#411), delegated integration (#412), and live nonproduction acceptance remain rollout gates. See [warned handback](../../discord-group-setup.md#warned-handback-and-deletion).
+
 ## Discord Server membership — source evidence as of 2026-10-23
 
 - Source branch `codex/discord-group-408`, based on integration checkpoint `02701b30a6a2032e305a77acfe25774e7e44acde`. Server membership uses the existing shared enrollment, grant fencing, immutable cleanup, audit and snapshot dispatcher. Explicit consent adopts or joins eligible members; setup excludes every other Group binding without purging the guild population.

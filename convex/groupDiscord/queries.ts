@@ -1,17 +1,30 @@
 import { query, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth } from '../auth';
+import { requireAuth, getCurrentPerson } from '../auth';
 import { requireManager } from '../groups/policy';
 import { connection } from './contracts';
 export const getConnection = query({
-  args: { groupId: v.id('groups') },
+  args: { groupId: v.id('groups'), retiredOnly: v.optional(v.boolean()) },
   returns: v.union(connection, v.null()),
-  handler: async (ctx, { groupId }) => {
-    await requireManager(ctx, groupId, (await requireAuth(ctx)).person._id);
+  handler: async (ctx, { groupId, retiredOnly }) => {
+    const person = retiredOnly
+      ? await getCurrentPerson(ctx)
+      : (await requireAuth(ctx)).person;
+    if (!person) return null;
     const record = await ctx.db
       .query('groupDiscordConnections')
       .withIndex('by_group', q => q.eq('groupId', groupId))
       .unique();
+    if (await ctx.db.get(groupId)) {
+      if (retiredOnly) return null;
+      await requireManager(ctx, groupId, person._id);
+    } else if (
+      !record?.groupDeleted ||
+      !record.cleanupViewerIds?.includes(person._id)
+    ) {
+      if (retiredOnly) return null;
+      throw new Error('Group cleanup status unavailable.');
+    }
     if (!record) return null;
     const { _id, _creationTime, ...data } = record;
     void _id;

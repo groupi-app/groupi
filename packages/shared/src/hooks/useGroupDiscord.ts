@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import type { useQuery, useAction } from 'convex/react';
+import type { useQuery, useAction, useMutation } from 'convex/react';
 import type { FunctionArgs, FunctionReference } from 'convex/server';
 interface GroupDiscordApi {
   discord: { actions: { getAvailableGuilds: FunctionReference<'action'> } };
   groupDiscord: {
     queries: { getConnection: FunctionReference<'query'> };
+    mutations: { disable: FunctionReference<'mutation'> };
     actions: { configure: FunctionReference<'action'> };
     enrollment: { getStatus: FunctionReference<'query'> };
     connect: { connect: FunctionReference<'action'> };
@@ -12,7 +13,11 @@ interface GroupDiscordApi {
 }
 export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
   api: Api,
-  hooks: { useQuery: typeof useQuery; useAction: typeof useAction }
+  hooks: {
+    useQuery: typeof useQuery;
+    useAction: typeof useAction;
+    useMutation: typeof useMutation;
+  }
 ) {
   function useGroupDiscordConnection(
     args: FunctionArgs<Api['groupDiscord']['queries']['getConnection']> | 'skip'
@@ -32,6 +37,27 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
   ) {
     const connection = useGroupDiscordConnection(args);
     const configure = useConfigureGroupDiscord();
+    const disableMutation = hooks.useMutation<
+      Api['groupDiscord']['mutations']['disable']
+    >(api.groupDiscord.mutations.disable);
+    const [handbackConfirmed, setHandbackConfirmed] = useState(false);
+    async function disable() {
+      setBusy(true);
+      setError('');
+      try {
+        await disableMutation({
+          ...args,
+          acknowledgeHandback: handbackConfirmed,
+        });
+        setHandbackConfirmed(false);
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : 'Unable to disable Discord.'
+        );
+      } finally {
+        setBusy(false);
+      }
+    }
     const discover = hooks.useAction<
       Api['discord']['actions']['getAvailableGuilds']
     >(api.discord.actions.getAvailableGuilds);
@@ -63,12 +89,14 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
     const [message, setMessage] = useState('');
     const guildId = guildDraft ?? connection?.guildId ?? '';
     const mode = modeDraft ?? connection?.mode ?? 'role';
-    const roleId = roleDraft ?? connection?.roleId ?? '';
+    const roleId =
+      roleDraft ??
+      (connection?.status === 'disabled' ? '' : (connection?.roleId ?? ''));
     const landingChannelId = channelDraft ?? connection?.landingChannelId ?? '';
     async function save() {
       setError('');
       setMessage('');
-      if (connection) {
+      if (connection && connection.status !== 'disabled') {
         setError(
           'This Group already has a Discord connection. Contact a Group owner to resolve setup issues.'
         );
@@ -104,6 +132,9 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
     }
     return {
       connection,
+      disable,
+      handbackConfirmed,
+      setHandbackConfirmed,
       guilds,
       loadingGuilds,
       loadGuilds,
