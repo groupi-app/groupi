@@ -10,6 +10,7 @@ The specification owns requirements; this record tracks evidence and open gates.
 - [Validation and Release Notes](#validation-and-release-notes)
 - [Current Audit Disposition](#current-audit-disposition)
 - [Rendered Gallery Checkpoint](#rendered-gallery-checkpoint)
+- [Sticker-book Review Iteration](#sticker-book-review-iteration)
 
 ## Source and Task Graph
 
@@ -155,3 +156,49 @@ authenticated application, native, or observed screen-reader acceptance.
 changes application defaults/usages. Native parity and Groups structural review
 remain behind web readiness. The integration PR stays draft; foundation/gallery
 release-note selection belongs to the next agreed batch before release readiness.
+
+## Sticker-book Review Iteration
+
+User feedback on October 24 requested more of Groupi's artsy sticker-book
+identity, persistent white cut edges in dark themes, subtle perforated paper,
+and an explicit design-language rationale for each component. The user also
+required selective, obvious icon/text pairings and **no icons in headings**.
+The [material review](design-language-material-review.md) records each component's
+role and the choices that remain open.
+
+Integrated implementation through `1e17841b` restores white sticker edges across
+all palettes, introduces a decorative PaperDivider seam, and refines staged
+avatars, empty-state cues, compact labels, menus, dialogs and result toasts.
+Inputs and ordinary reading surfaces retain their quiet role. Save, Remove,
+Edit, Location and Time receive explicit familiar icons; generic labels and
+headings do not. No label-string inference or automatic icon placement exists.
+
+The actual `design-system-soft-lift--material-studies` story compares three
+**unselected** proposals: status stamp/cut-out label, attached index/underline tabs,
+and annotation-strip/attached-note alerts. It uses canonical components with
+exploratory styles scoped to the story. The normal navigation comparison has
+three destinations; a disclosure reveals the long-label stress sample.
+
+Verification in isolated Chromium contexts with measured CSS viewport sizes:
+
+- All 12 bundled and three custom examples retain true white action cut edges
+  and the consistent background-color treatment from the earlier hover fix.
+- Dark-mode avatar, menu, dialog and toast edges are white; icon actions are at
+  least 44 px wide. The perforated seam is dashed and hidden from assistive
+  technology by default.
+- Overview, Material Studies and the dialog have zero SVGs inside headings.
+  Save and Location retain their visible text and explicit icons. Keyboard tab
+  selection and visible toast delivery still work.
+- Material Studies and its expanded long-label example reflow at 390/320 px,
+  including 200% root text. Light, dark and alpha-theme checks show no horizontal
+  overflow. Reduced motion still removes spatial feedback and transitions.
+- The existing dark-mode gallery error message measured 3.83:1; readable message
+  ink now measures 16.71:1 while its red glyph and invalid frame remain.
+- Full `pnpm check`, dedicated Storybook types and focused component regressions
+  pass for the material iteration. The final one-row message-contrast correction
+  passes targeted lint, formatting and Storybook types. Token lint retains the
+  existing 30 warnings. Focused API/default-behavior review found no actionable
+  regressions; legacy defaults and story-only comparison boundaries are preserved.
+
+The three design choices and #426 gallery approval remain open. These refinements
+do not start application-wide migration or the Groups structural phase.
