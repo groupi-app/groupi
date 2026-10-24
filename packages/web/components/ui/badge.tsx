@@ -1,72 +1,45 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  // Sticker journal aesthetic - pill badges with white border
-  'inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-semibold',
+  'inline-flex w-fit max-w-full items-center gap-1 rounded-badge border-2 border-soft-sticker-color px-2.5 py-1 text-xs font-semibold',
   {
     variants: {
       variant: {
-        default:
-          'bg-primary text-primary-foreground border-2 border-white shadow-raised',
+        default: 'bg-soft-primary-subtle text-soft-primary-subtle-foreground',
         secondary:
-          'bg-secondary text-secondary-foreground border-2 border-white shadow-raised',
+          'bg-soft-secondary-subtle text-soft-secondary-subtle-foreground',
         destructive:
-          'bg-destructive text-destructive-foreground border-2 border-white shadow-raised',
-        outline: 'text-foreground border border-border',
-        success:
-          'bg-bg-success text-text-on-primary border-2 border-white shadow-raised',
-        warning:
-          'bg-bg-warning text-text-primary border-2 border-white shadow-raised',
-        info: 'bg-bg-info text-text-on-primary border-2 border-white shadow-raised',
+          'bg-soft-destructive-subtle text-soft-destructive-subtle-foreground',
+        success: 'bg-soft-success-subtle text-soft-success-subtle-foreground',
+        warning: 'bg-soft-warning-subtle text-soft-warning-subtle-foreground',
+        info: 'bg-soft-info-subtle text-soft-info-subtle-foreground',
+        outline: 'text-foreground',
       },
     },
-    defaultVariants: {
-      variant: 'default',
-    },
+    defaultVariants: { variant: 'default' },
   }
 );
-
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
-  /** Flat semantic sticker label with a paper cut edge and no backing depth. */
+  /** Compatibility alias: both values use the canonical cut-out treatment. */
   presentation?: 'default' | 'soft';
 }
-
 function Badge({
   className,
   variant,
-  presentation = 'default',
-  style,
+  presentation = 'soft',
   ...props
 }: BadgeProps) {
-  const role = variant === 'default' || !variant ? 'primary' : variant;
-  const soft = presentation === 'soft';
   return (
     <div
       data-slot='badge'
-      data-presentation={presentation}
-      className={cn(
-        soft
-          ? 'inline-flex w-fit max-w-full items-center gap-1 rounded-badge px-2.5 py-1 text-xs font-semibold'
-          : badgeVariants({ variant }),
-        className
-      )}
-      style={
-        soft && role !== 'outline'
-          ? {
-              backgroundColor: `var(--soft-${role}-subtle)`,
-              color: `var(--soft-${role}-subtle-foreground)`,
-              ...style,
-            }
-          : style
-      }
+      data-presentation={presentation === 'default' ? 'soft' : presentation}
+      className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
   );
 }
-
 export { Badge, badgeVariants };

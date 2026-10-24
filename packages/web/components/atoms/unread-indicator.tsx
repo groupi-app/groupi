@@ -52,6 +52,7 @@ export function UnreadIndicator({
   return (
     <span
       data-slot='unread-indicator'
+      data-count={count}
       className={cn(
         // Sticker journal aesthetic - count badge with white border
         'inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-badge text-xs font-semibold bg-destructive text-destructive-foreground border-2 border-white shadow-raised',

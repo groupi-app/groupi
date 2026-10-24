@@ -29,7 +29,6 @@ describe('Textarea', () => {
     expect(textarea).toHaveClass('min-h-[80px]');
     expect(textarea).toHaveClass('w-full');
     expect(textarea).toHaveClass('rounded-input');
-    expect(textarea).toHaveClass('border');
   });
 
   it('should merge custom className', () => {

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 export function Progress({
   className,
-  presentation,
+  presentation = 'soft',
   value,
   max = 100,
   ...props

@@ -4,13 +4,13 @@ import { cn } from '@/lib/utils';
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  /** Opt-in quiet field treatment for the component gallery. */
+  /** Quiet writable field treatment; presentation is retained for compatibility. */
   presentation?: 'default' | 'soft';
 }
 
 export function Input({
   className,
-  presentation = 'default',
+  presentation = 'soft',
   type,
   suppressHydrationWarning,
   ...props
