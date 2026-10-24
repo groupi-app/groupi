@@ -9,7 +9,7 @@ import { ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
 import { expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
-import { GroupDetail } from './group-detail';
+import { GroupOwnershipSettings } from '@/features/groups';
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import type { Id } from '@/convex/_generated/dataModel';
 vi.unmock('convex/react');
@@ -158,7 +158,7 @@ function mount(detail = false) {
   return render(
     <ConvexClientProvider>
       {detail ? (
-        <GroupDetail groupId={groupId} />
+        <GroupOwnershipSettings groupId={groupId} />
       ) : (
         <GroupOwnershipTransfer groupId={groupId} />
       )}

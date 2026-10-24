@@ -105,6 +105,22 @@ describe('NotificationSlate', () => {
     vi.clearAllMocks();
   });
 
+  test('keeps deleted Group Discord alerts on the stable cleanup view', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          type: 'GROUP_DISCORD_SYNC_BLOCKED',
+          groupId: 'group-123' as TestId<'groups'>,
+          group: undefined,
+        }}
+      />
+    );
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123'
+    );
+  });
   test('opens Group Discord status from a blocked synchronization alert', () => {
     render(
       <NotificationSlate
@@ -119,7 +135,7 @@ describe('NotificationSlate', () => {
     expect(screen.getByText(/check permissions and retry/)).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute(
       'href',
-      '/groups/group-123'
+      '/groups/group-123/settings/discord#group-discord-heading'
     );
   });
 

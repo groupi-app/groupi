@@ -75,9 +75,11 @@ export function NotificationSlate({
 
   const getNotificationLink = (): string => {
     if (type === 'GROUP_DISCORD_SYNC_BLOCKED')
-      return notification.groupId || notification.group?.id
-        ? `/groups/${notification.group?.id ?? notification.groupId}`
-        : '/events';
+      return notification.group
+        ? `/groups/${notification.group.id}/settings/discord#group-discord-heading`
+        : notification.groupId
+          ? `/groups/${notification.groupId}`
+          : '/events';
     if (type === 'GROUP_ONBOARDING_REQUIRED')
       return notification.group
         ? `/groups/${notification.group.id}/questionnaire`
