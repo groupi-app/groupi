@@ -78,7 +78,9 @@ Custom templates with mixed interactions remain whole rather than splitting
 shared responses or conditions across Forms/Lists/Polls. Native retains its
 existing clearly named browser handoff for the full custom renderer; this placement
 change does not build a second renderer for all custom field types. Built-in
-participant flows remain native. Disabled configurations are not offered as active
+participant flows remain native. The native access gate retains its existing
+availability/questionnaire scope; generic custom mandatory-completion gating
+remains a web capability. Disabled configurations are not offered as active
 participant actions, but remain visible to managers where applicable.
 
 Required questionnaire exemptions and legacy paths are preserved: web
@@ -88,7 +90,7 @@ or disabling that can clear questionnaire responses/Bring List claims require
 explicit confirmation; cancellation and failures retain edits. Unknown saved
 configuration is never passed through a guessed editor.
 
-PR435 head `b2da51eb` is locally integrated to preserve its settings/navigation
+Latest test `f28087b6`, including PR435 and its shared loading shell, is locally integrated to preserve its settings/navigation
 fixes. This is a local source merge, not a merge of either remote pull request.
 The user approved the amended minor release note covering this participant-feature
 placement and Event Settings management scope.

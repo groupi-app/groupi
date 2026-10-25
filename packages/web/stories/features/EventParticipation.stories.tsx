@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { getFunctionName, type FunctionReference } from 'convex/server';
@@ -113,6 +114,13 @@ Object.defineProperty(client, 'mutation', {
 });
 
 const meta: Meta = {
+  decorators: [
+    Story => (
+      <TooltipProvider>
+        <Story />
+      </TooltipProvider>
+    ),
+  ],
   title: 'Features/Event participation',
   parameters: { layout: 'fullscreen' },
 };

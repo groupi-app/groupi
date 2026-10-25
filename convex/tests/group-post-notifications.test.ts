@@ -248,6 +248,70 @@ describe('canonical Group discussion notifications', () => {
     );
     expect(postNotice).toMatchObject({ group: null, post: null, author: null });
   });
+  it('retains the Group inbox row under DND without scheduling external channels', async () => {
+    const { t, owner, member, groupId, postId } = await fixture();
+    await member.auth.mutation(api.pushNotifications.mutations.registerDevice, {
+      token: 'ExpoPushToken[group-dnd-fixture]',
+      deviceId: 'group-dnd',
+      platform: 'ios',
+      projectId: 'project-a',
+      appId: 'gg.groupi.mobile',
+    });
+    await t.run(async ctx => {
+      await ctx.db.patch(member.personId, { status: 'DO_NOT_DISTURB' });
+      const settings = await ctx.db
+        .query('personSettings')
+        .withIndex('by_person', q => q.eq('personId', member.personId))
+        .unique();
+      if (!settings)
+        throw new Error('Fixture push registration must establish settings');
+      await ctx.db.insert('notificationMethods', {
+        settingsId: settings._id,
+        type: 'EMAIL',
+        enabled: true,
+        value: 'dnd-fixture@example.invalid',
+        name: 'Fixture only',
+      });
+    });
+    const scheduledBefore = await t.run(ctx =>
+      ctx.db.system.query('_scheduled_functions').collect()
+    );
+    const result = await t.run(ctx =>
+      notifyDiscussionMembers(ctx, {
+        groupId,
+        postId,
+        type: 'NEW_POST',
+        authorId: owner.personId,
+      })
+    );
+    expect(result.sent).toHaveLength(1);
+    const notification = await t.run(ctx => ctx.db.get(result.sent[0]));
+    expect(notification).toMatchObject({
+      personId: member.personId,
+      groupId,
+      postId,
+      type: 'NEW_POST',
+      read: false,
+    });
+    expect(
+      notification &&
+        (await t.run(ctx => canDeliverGroupDiscussion(ctx, notification)))
+    ).toBe(false);
+    expect(
+      await t.run(ctx => ctx.db.query('pushDeliveries').collect())
+    ).toEqual([]);
+    expect(
+      await t.run(ctx => ctx.db.system.query('_scheduled_functions').collect())
+    ).toEqual(scheduledBefore);
+    const projected = await member.auth.query(
+      api.notifications.queries.fetchNotificationsForPerson,
+      {}
+    );
+    expect(projected.notifications[0]).toMatchObject({
+      group: { title: 'Private group' },
+      post: { title: 'Private post' },
+    });
+  });
   it('respects canonical thread muting and replies only notify current participants', async () => {
     const { t, owner, member, groupId, postId } = await fixture();
     await t.run(ctx =>

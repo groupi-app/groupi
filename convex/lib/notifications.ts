@@ -69,7 +69,7 @@ export async function shouldSkipNotificationDueToMute(
 
 /**
  * Check if a person has Do Not Disturb status enabled
- * DND suppresses all in-app notifications
+ * DND suppresses external delivery; inbox records remain available
  */
 export async function isPersonInDndMode(
   ctx: MutationCtx | QueryCtx,
@@ -1800,7 +1800,15 @@ async function notifyGroupDiscussionRecipients(
   const context = await fetchMessageContext(ctx, data);
   for (const personId of new Set(recipients)) {
     if (personId === data.authorId) continue;
-    if (!(await canDeliverGroupDiscussion(ctx, { ...data, personId }))) {
+    if (
+      !(await canReadGroupDiscussion(ctx, { ...data, personId })) ||
+      (await shouldSkipNotificationDueToMute(
+        ctx,
+        personId,
+        undefined,
+        data.postId
+      ))
+    ) {
       skippedMuted++;
       continue;
     }
@@ -2066,11 +2074,7 @@ export async function notifyPerson(
     return { notificationId: null, skippedMuted: false };
   }
 
-  if (
-    data.groupId &&
-    data.postId &&
-    !(await canDeliverGroupDiscussion(ctx, data))
-  )
+  if (data.groupId && data.postId && !(await canReadGroupDiscussion(ctx, data)))
     return { notificationId: null, skippedMuted: true };
   // Check if user has muted this event or post
   const shouldSkip = await shouldSkipNotificationDueToMute(

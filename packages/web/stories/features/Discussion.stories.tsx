@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
@@ -38,6 +39,13 @@ const members = [
 const content =
   '<h2>Our next community picnic</h2><p>Bring your ideas, <span class="mention" data-id="preview-person">@alex</span>.</p><ul><li><strong>Meet at noon</strong></li><li>Share a dish and a story</li></ul><blockquote>Everyone is welcome.</blockquote>';
 const meta: Meta = {
+  decorators: [
+    Story => (
+      <TooltipProvider>
+        <Story />
+      </TooltipProvider>
+    ),
+  ],
   title: 'Features/Shared discussion',
   parameters: { layout: 'fullscreen', nextjs: { appDirectory: true } },
 };

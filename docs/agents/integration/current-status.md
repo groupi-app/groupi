@@ -249,25 +249,39 @@ runtimes and an isolated signed-in session remain unverified.
 
 ## Shared content creation — 2026-10-25
 
-Isolated branch `codex/shared-content-creation` starts at test `8fdbc932`.
-[Implementation and compatibility decisions](../../shared-content-creation.md)
-cover Event/Group Posts, Forms, Lists, Polls, shared creation menus, and preserved
-Bring List data. No backend deployment or one-time migration was performed.
+Isolated branch `codex/shared-content-creation` starts at test `8fdbc932` and now
+integrates test `f28087b6`, preserving PR435's settings/navigation and shared Event
+loading shell. [Feature disposition and compatibility](../../shared-content-creation.md)
+and [review-only schema rollout plan](../../shared-content-schema-review.md)
+describe canonical Event/Group Posts, reused Forms/Lists/Polls, contextual Event
+participation, and Settings-owned add-on management.
 
-Source verification: full offline backend suite 138 files / 1,308 tests; full
-web suite 137 files / 1,432 tests; native suite 89 files / 629 tests. Backend
-codegen remains blocked by absent `CONVEX_DEPLOYMENT`; generated module
-imports/declarations were updated without configuring an environment. The root
-test command therefore stops before backend tests; the offline backend command
-passed separately. Remaining package suites passed separately as well.
+`posts` and `replies` are the canonical storage; existing Event IDs, attachments,
+URLs and clients remain compatible. Group-facing APIs are scoped adapters.
+Bring List configuration, quantities, claims and original links are preserved.
+No backend deployment, live notification, data deletion or migration was run.
 
-The component gallery builds and browser fixtures verify desktop dropdown and
-390-pixel drawer choices/dismissal/policy availability. These fixtures contain no
-real data. Matching authenticated frontend/backend, physical native acceptance
-and VoiceOver observations remain open. Full `pnpm build:web` was rejected by
-automatic approval review under the AGENTS build prohibition; no retry occurred.
+Final source verification passed: `pnpm check` (830 API contracts), local frontend
+build with fixture-only configuration, backend 141 files / 1,325 tests, web 152
+files / 1,512 tests, native 93 files / 655 tests, shared 17 files / 466 tests, and
+unchanged coverage thresholds. Web coverage: 49.86% statements, 48.44% branches,
+49.34% functions, 50.49% lines. Native coverage: 49.13%, 46.51%, 45.20%, 50.04%.
+Shared coverage: 65.84%, 57.92%, 73.18%, 67.51%. Remaining package suites passed
+separately. Reports are under `/tmp`; tracked report artifacts remain unchanged.
 
-Publication is pending a branch-only deployment guard decision because Vercel's
-existing branch build configures/deploys Convex. Automatic approval review
-rejected that persistent `vercel.json` edit as requiring explicit authorization;
-the edit did not execute. Changeset summary approval is pending separately.
+The approved exact minor note covers convex/shared/web/mobile. The approved
+`vercel.json` deployment guard is scoped only to this feature branch, preventing
+its publication from invoking the existing Convex deployment workflow. Neither
+remote PR merge nor backend deployment is authorized.
+
+Backend codegen remains blocked by absent `CONVEX_DEPLOYMENT`; API module
+declarations were updated without configuring an environment. The root test
+command therefore stops at its existing codegen prerequisite; the full offline
+backend suite passed separately. Real codegen, matching authenticated backend/
+frontend acceptance, physical native testing and observed VoiceOver behavior
+remain open gates. Native custom templates use the existing browser handoff;
+native mention autocomplete remains absent in both Event and Group editors.
+
+Browser fixtures use local transports and no real application data. Creation
+menus, rich discussion composition and contextual participant features are the
+scoped fixture acceptance surfaces; they do not establish live backend acceptance.
