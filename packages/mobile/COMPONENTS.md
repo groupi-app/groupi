@@ -2,9 +2,17 @@
 
 Guide for building and maintaining UI components in the Groupi mobile app.
 
+## Table of Contents
+
+- [Component Library](#component-library)
+- [Design System Customization](#design-system-customization)
+- [Customization Checklist](#customization-checklist)
+- [Theming](#theming)
+- [File Organization](#file-organization)
+
 ## Component Library
 
-The mobile app uses [React Native Reusables](https://reactnativereusables.com) — the shadcn/ui equivalent for React Native. Components are located in `src/components/ui/` and follow the same patterns as the web app's shadcn components.
+The mobile app uses [React Native Reusables](https://reactnativereusables.com), which follows shadcn/ui patterns for React Native. Components are located in `src/components/ui/` and follow the same patterns as the web app's shadcn components.
 
 ### Adding New Components
 
@@ -66,19 +74,23 @@ Use semantic radius tokens instead of default Tailwind values:
 
 | Default     | Groupi Token      | Usage           |
 | ----------- | ----------------- | --------------- |
-| `shadow-sm` | `shadow-raised`   | Cards, buttons  |
+| `shadow-sm` | `shadow-raised`   | Filled actions  |
 | `shadow-md` | `shadow-floating` | Dropdowns       |
 | `shadow-lg` | `shadow-overlay`  | Modals, dialogs |
 
+Ordinary `Card` surfaces use `shadow-none`. Apply raised or overlay treatments
+only to the interaction or surface that calls for them.
+
 ### Status Colors
 
-Extend badge/status components with these variants:
+Use the existing badge variants, which pair a subtle status background with a
+semantic foreground rather than assuming white text works in every theme:
 
-```tsx
-success: 'bg-success text-white',
-warning: 'bg-warning text-white',
-error: 'bg-error text-white',
-```
+| Variant   | Background             | Text                |
+| --------- | ---------------------- | ------------------- |
+| `success` | `bg-bg-success-subtle` | `text-text-success` |
+| `warning` | `bg-bg-warning-subtle` | `text-text-warning` |
+| `error`   | `bg-bg-error-subtle`   | `text-text-error`   |
 
 ### Third-Party Components
 
@@ -91,7 +103,7 @@ import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context';
 export const SafeAreaView = withUniwind(RNSafeAreaView);
 ```
 
-Core React Native components (`View`, `Text`, `Pressable`, `ScrollView`, etc.) already support `className` natively — do NOT wrap them with `withUniwind`.
+Core React Native components (`View`, `Text`, `Pressable`, `ScrollView`, etc.) already support `className` through the configured Uniwind integration. Do not wrap them with `withUniwind`.
 
 ## Customization Checklist
 
@@ -99,7 +111,7 @@ When adding a new RN Reusables component:
 
 1. Install: `pnpm dlx @react-native-reusables/cli@latest add <name>`
 2. Replace default `rounded-*` classes with Groupi tokens (`rounded-button`, `rounded-card`, etc.)
-3. Replace default `shadow-*` classes with Groupi tokens (`shadow-raised`, `shadow-overlay`, etc.)
+3. Choose the appropriate shadow treatment: quiet cards use `shadow-none`, filled actions use `shadow-raised`, and overlays use `shadow-overlay`.
 4. Add Groupi-specific variants if needed (success, warning, error for badges/alerts)
 5. Export from `src/components/ui/index.ts`
 6. Use `cn()` from `@/lib/utils` for class merging (already set up in RN Reusables components)
@@ -118,7 +130,7 @@ const primaryColor = useCSSVariable('--color-primary') as string;
 
 ## File Organization
 
-```
+```text
 src/components/
   ui/           # Base components (RN Reusables + custom)
   atoms/        # Smallest elements (logo, indicators)

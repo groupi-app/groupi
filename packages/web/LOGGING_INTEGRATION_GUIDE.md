@@ -1,273 +1,110 @@
-# 🚀 **UPDATED LOGGING & ERROR TRACKING INTEGRATION GUIDE**
+# Logging and error tracking
 
-This document outlines the optimized approach for logging and error tracking with Convex, based on official Convex documentation and best practices.
+Groupi uses a console logger in the web app and Sentry instrumentation for web
+errors and traces. Convex functions log through the Convex runtime. This guide
+describes source configuration; it does not establish that a deployed instance
+is receiving logs or alerts.
 
-## 🎯 **STRATEGY OVERVIEW**
+## Table of Contents
 
-### **Two-Tier Logging Architecture**
+- [Web logging](#web-logging)
+- [Sentry configuration](#sentry-configuration)
+- [Convex logs](#convex-logs)
+- [Debugging and privacy](#debugging-and-privacy)
+- [Validation](#validation)
 
-| Layer       | Tool                              | Purpose                    | History                      | Real-time    |
-| ----------- | --------------------------------- | -------------------------- | ---------------------------- | ------------ |
-| **Next.js** | Pino + Loki Transport             | Server actions, API routes | ✅ Long-term                 | ⚠️ Batched   |
-| **Convex**  | Simple console.\* + Optional Loki | Function execution         | ✅ Dashboard + Optional Loki | ✅ Real-time |
+## Web logging
 
-### **Error Tracking**
+[`lib/logger.ts`](./lib/logger.ts) wraps `console.info`, `console.warn`,
+`console.error`, and `console.debug`. It JSON-serializes extra data and optionally
+prefixes messages with a trace ID. `createLogger(component)` adds a component
+prefix; `createPerformanceTimer(label).end()` logs elapsed milliseconds.
 
-| Component   | Method                    | Pro Feature          |
-| ----------- | ------------------------- | -------------------- |
-| **Next.js** | Existing Sentry setup     | ✅ Continues working |
-| **Convex**  | Native Sentry integration | ✅ Pro plan required |
+```typescript
+import { createLogger } from '@/lib/logger';
 
----
+const logger = createLogger('event-list');
+logger.info('Events loaded', { count: events.length });
+```
 
-## 🔧 **SETUP INSTRUCTIONS**
+The logger does not filter debug output by environment. Choose messages and
+fields accordingly. `setTraceId` and `clearTraceId` control module-level state;
+there is no automatic request-scoped propagation from middleware to React or
+Convex. Pass correlation fields explicitly only where the target function's
+validator accepts them.
 
-### **1. Convex Pro Plan Setup**
+Pino and Loki transports were removed from this logger. `LOKI_*` entries in the
+environment template do not enable a transport in the current implementation.
+Adding remote log delivery requires an explicit implementation and verification.
 
-1. **Upgrade to Convex Pro** (required for Sentry integration)
-2. **Navigate to Dashboard** → Deployment Settings → Integrations
-3. **Configure Sentry** with your DSN: `https://90d0f3dd02d7a97c2fafca08eacf6d14@o4509634965602304.ingest.us.sentry.io/4509634981068800`
+## Sentry configuration
 
-### **2. Environment Variables**
+The web app reads `NEXT_PUBLIC_SENTRY_DSN` from its environment:
 
-Add to your `.env.local`:
+```env
+NEXT_PUBLIC_SENTRY_DSN=https://your-public-key@your-sentry-host/your-project-id
+```
+
+Configure your instance's project rather than copying another project's DSN.
+The public DSN identifies the ingestion destination; build authentication tokens
+are separate secrets.
+
+Source files:
+
+- [`instrumentation-client.ts`](./instrumentation-client.ts) initializes browser
+  reporting. It disables Sentry in development, samples production traces at
+  20%, and lazy-loads Replay after page load. Replay sampling is 10% of sessions
+  and 100% on error.
+- [`instrumentation.ts`](./instrumentation.ts) loads the Node or edge configuration
+  and exports `captureRequestError`.
+- [`sentry.server.config.ts`](./sentry.server.config.ts) and
+  [`sentry.edge.config.ts`](./sentry.edge.config.ts) disable reporting in
+  development, sample traces at 100%, and filter `ResponseAborted` errors.
+
+Browser trace propagation targets Convex cloud endpoints and non-auth API routes.
+Authentication routes are excluded to avoid large tracing headers. These settings
+are configuration, not delivery or retention guarantees. Verify the deployed DSN,
+sampling, alert rules, and data retention in the owning Sentry project.
+
+## Convex logs
+
+Use the Convex dashboard to inspect function logs and failures. Functions in this
+repository use `console` directly; the previously documented
+`convex/lib/logging.ts` and `convex/lib/error-handling.ts` helpers do not exist.
+Do not copy examples importing them.
+
+Use validated arguments and the domain's authorization helpers in queries and
+mutations. Expected failures may use `ConvexError`; do not replace authorization
+errors with a successful response. External network work belongs in an action,
+not a mutation.
+
+Any dashboard-managed Convex log streaming or Sentry integration is separate from
+web Sentry instrumentation. Check the deployment's dashboard and current service
+requirements before relying on one. This repository does not prove an integration
+is enabled, its plan eligibility, retention, or delivery status.
+
+## Debugging and privacy
+
+1. Record the approximate time, affected route or function, and instance.
+2. Inspect browser or Convex logs for the relevant failure.
+3. If configured, inspect the corresponding Sentry event and permitted correlation
+   fields. Do not assume a web trace ID was forwarded to Convex.
+4. Reproduce with an isolated test identity and record what was observed.
+
+Keep tokens, sign-in links, OTPs, passwords, API keys, and private event content
+out of logs and reports. The console logger serializes supplied extra data without
+redaction. Review Sentry payloads and Replay privacy settings before enabling
+capture for an instance; reporting configuration does not establish consent or
+prove that sensitive data is excluded.
+
+## Validation
+
+From the repository root:
 
 ```bash
-# Convex (existing)
-NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=http://localhost:3000
-
-# Loki (existing)
-LOKI_ENABLED=true
-LOKI_INSTANCE_ID=your-instance-id
-LOKI_TOKEN=your-loki-token
-LOKI_URL=https://logs-prod-036.grafana.net/loki/api/v1/push
-
-# Sentry (existing - continues to work)
-NEXT_PUBLIC_SENTRY_DSN=https://90d0f3dd02d7a97c2fafca08eacf6d14@o4509634965602304.ingest.us.sentry.io/4509634981068800
+pnpm --filter @groupi/web exec vitest run lib/logger.test.ts
+pnpm check
 ```
 
-### **3. Update Convex Functions with Logging**
-
-Use the new simplified logging patterns:
-
-```typescript
-import { createLoggingContext, extractTraceId } from '../lib/logging';
-import { withErrorHandling } from '../lib/error-handling';
-
-export const createPost = mutation({
-  args: {
-    title: v.string(),
-    content: v.string(),
-    eventId: v.id('events'),
-    _traceId: v.optional(v.string()), // For request correlation
-  },
-  handler: async (ctx, { title, content, eventId, _traceId }) => {
-    return withErrorHandling(
-      async () => {
-        const traceId = extractTraceId({ _traceId });
-        const logger = createLoggingContext('posts', traceId);
-
-        logger.info('Creating post', { title: title.slice(0, 50), eventId });
-
-        // Your business logic here...
-
-        logger.info('Post created successfully', { postId });
-        return result;
-      },
-      { module: 'posts', traceId, operation: 'createPost' }
-    );
-  },
-});
-```
-
-### **4. Frontend: Pass Trace ID to Convex**
-
-Update your React components to pass trace IDs:
-
-```typescript
-// hooks/use-trace-id.ts
-import { headers } from 'next/headers';
-
-export function useTraceId() {
-  // In server components
-  if (typeof window === 'undefined') {
-    const headersList = headers();
-    return headersList.get('x-trace-id') || undefined;
-  }
-
-  // In client components, get from a context or generate
-  return undefined;
-}
-
-// Component usage
-export function CreatePostForm() {
-  const traceId = useTraceId();
-  const createPost = useMutation(api.posts.mutations.createPost);
-
-  const handleSubmit = async data => {
-    await createPost({
-      ...data,
-      _traceId: traceId, // Pass to Convex
-    });
-  };
-}
-```
-
----
-
-## 📊 **LOGGING OUTPUTS**
-
-### **Convex Dashboard Logs**
-
-```
-🔍 [DEBUG] Starting operation | { module: "posts", traceId: "abc123", operation: "createPost" }
-ℹ️ [INFO] Creating post | { module: "posts", traceId: "abc123", title: "Hello World", eventId: "k1..." }
-⚠️ [WARN] Slow query detected | { module: "posts", traceId: "abc123", duration: 1200 }
-❌ [ERROR] Post creation failed | { module: "posts", traceId: "abc123", error: {...} }
-```
-
-### **Loki (Optional Streaming)**
-
-Query in Grafana:
-
-```logql
-{service="groupi", source="convex"} | json | traceId="abc123"
-```
-
-Sample log entry:
-
-```json
-{
-  "timestamp": 1703123456789,
-  "level": "info",
-  "module": "posts",
-  "traceId": "abc123",
-  "message": "Post created successfully",
-  "postId": "k1b2c3d4"
-}
-```
-
-### **Sentry (Automatic via Convex Pro)**
-
-Convex automatically adds these tags to errors:
-
-- `func`: Function name ("posts/mutations:createPost")
-- `func_type`: "mutation"
-- `environment`: "dev"/"prod"
-- `request_id`: Convex request ID
-- `user`: Auth token identifier
-
----
-
-## 🔄 **TRACE CORRELATION**
-
-### **Request Flow**
-
-```
-1. Next.js Middleware → x-trace-id: abc123
-2. React Component → passes _traceId: abc123
-3. Convex Function → logs with traceId: abc123
-4. Loki Logs → filterable by traceId
-5. Sentry Errors → includes request context
-```
-
-### **Debugging Workflow**
-
-1. **User reports issue** → Get approximate timestamp
-2. **Check Convex Dashboard** → Filter by time, function name
-3. **Find trace ID** → Copy from log entry
-4. **Query Loki** → `{service="groupi"} | json | traceId="abc123"`
-5. **Check Sentry** → Look for corresponding errors
-
----
-
-## 📈 **PERFORMANCE & COSTS**
-
-### **Logging Volume Estimates**
-
-| Source               | Logs/Day       | Cost Impact               |
-| -------------------- | -------------- | ------------------------- |
-| **Convex Dashboard** | All            | ✅ Free (short retention) |
-| **Loki Streaming**   | Important only | 💰 Grafana Cloud rates    |
-| **Sentry Errors**    | Errors only    | 💰 Sentry error budget    |
-
-### **Optimization Tips**
-
-1. **Debug logs**: Only in development
-2. **Info logs**: Key business events
-3. **Warn logs**: Performance issues
-4. **Error logs**: Always captured
-
----
-
-## 🚨 **ERROR HANDLING PATTERNS**
-
-### **Expected Errors (ConvexError)**
-
-```typescript
-import { createPermissionError } from '../lib/error-handling';
-
-if (membership.role !== 'ORGANIZER') {
-  throw createPermissionError(
-    'Only organizers can delete events',
-    { module: 'events', traceId, operation: 'deleteEvent' },
-    { requiredRole: 'ORGANIZER', userRole: membership.role }
-  );
-}
-```
-
-### **Unexpected Errors (Auto-handled)**
-
-```typescript
-import { withErrorHandling } from '../lib/error-handling';
-
-export const riskyOperation = mutation({
-  handler: async (ctx, args) => {
-    return withErrorHandling(
-      async () => {
-        // Any thrown error automatically becomes ConvexError
-        await externalApiCall(); // If this fails, auto-handled
-        return result;
-      },
-      { module: 'external', traceId, operation: 'riskyOperation' }
-    );
-  },
-});
-```
-
----
-
-## 🎯 **MIGRATION CHECKLIST**
-
-- ✅ **Keep existing Pino + Loki** in Next.js layer
-- ✅ **Keep existing Sentry** setup in Next.js
-- ✅ **Use simplified console logging** in Convex functions
-- ✅ **Pass trace IDs** from frontend to Convex
-- ✅ **Enable Convex Pro** for native Sentry integration
-- ✅ **Optional Loki streaming** for important Convex events
-- ✅ **Unified error patterns** with ConvexError
-
----
-
-## 🏆 **BENEFITS ACHIEVED**
-
-### **Simplified Architecture**
-
-- ❌ No Pino overhead in Convex functions
-- ✅ Native Convex logging (fast, built-in)
-- ✅ Consistent error handling patterns
-
-### **Better Developer Experience**
-
-- ✅ Beautiful logs in Convex dashboard
-- ✅ Automatic Sentry tagging
-- ✅ Request correlation with trace IDs
-
-### **Production Ready**
-
-- ✅ Long-term retention via Loki
-- ✅ Error alerting via Sentry
-- ✅ Performance monitoring via both
-
-This setup gives you the best of both worlds: simple, fast logging in Convex functions with optional integration to your existing observability stack.
+These checks validate source behavior. Confirming ingestion, alerting, or retention
+requires access to the matching deployed instance and observability project.

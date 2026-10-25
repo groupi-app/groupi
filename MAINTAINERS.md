@@ -1,6 +1,6 @@
 # Maintainers
 
-This document lists the maintainers of the Groupi project.
+Project maintainers and review responsibilities.
 
 ## Core Maintainers
 
@@ -10,7 +10,7 @@ This document lists the maintainers of the Groupi project.
 
 ## How to Become a Maintainer
 
-We welcome new maintainers! To be considered:
+To become a maintainer:
 
 1. Make consistent, quality contributions
 2. Help review pull requests

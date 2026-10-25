@@ -7,7 +7,7 @@ Source availability does not establish hosted deployment or registry publication
 ## Current availability
 Canonical passage: /v2/api-sdk-evolution#current-availability
 
-The unpublished REST v2 SDK candidates cover 238 operations with specific TypeScript declarations and Python TypedDict models, bounded retries, pagination and delegated sessions. Realtime modules, subscription credential exchange, durable change feeds, general integration webhooks and complete runtime response validation are not implemented. Static types and runtime-importable Python models do not validate arbitrary server responses. Planned browser support does not change today's Node-only TypeScript SDK support or delegated-client profiles.
+The unpublished REST v2 SDK candidates cover the operations recorded in `packages/sdk/type-audit.json` with specific TypeScript declarations and Python TypedDict models, bounded retries, pagination and delegated sessions. Realtime modules, subscription credential exchange, durable change feeds, general integration webhooks and complete runtime response validation are not implemented. Static types and runtime-importable Python models do not validate arbitrary server responses. Planned browser support does not change today's Node-only TypeScript SDK support or delegated-client profiles.
 
 ## Selected architecture
 Canonical passage: /v2/api-sdk-evolution#selected-architecture

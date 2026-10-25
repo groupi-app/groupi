@@ -1,181 +1,77 @@
 # @groupi/web
 
-The Next.js web application for Groupi, providing the user interface for event planning and group coordination.
+Groupi's Next.js App Router application uses Convex for application data and
+Better Auth for authentication.
 
-## Overview
+## Table of Contents
 
-This is the main web application built with Next.js 16 App Router. It's a **client-only** application that uses Convex for real-time data synchronization and Better Auth for authentication.
+- [Structure](#structure)
+- [Development](#development)
+- [Data and authentication](#data-and-authentication)
+- [UI and providers](#ui-and-providers)
 
-## Architecture
+## Structure
 
-### Application Structure
+| Location                    | Purpose                                                         |
+| --------------------------- | --------------------------------------------------------------- |
+| `app/`                      | Route groups, pages, layouts, auth proxy, and API docs redirect |
+| `features/`                 | Feature-owned UI, hooks, supporting logic, and tests            |
+| `components/`               | Reusable UI, atoms, molecules, organisms, and templates         |
+| `providers/`, `context/`    | Theme, Convex, visibility, and user contexts                    |
+| `hooks/`, `lib/`, `stores/` | Shared web hooks, utilities, and local UI state                 |
 
-```
-packages/web/
-├── app/                    # Next.js App Router pages and layouts
-│   ├── (auth)/            # Authentication routes
-│   ├── (main)/            # Main application routes
-│   └── ...
-├── components/             # React components
-│   ├── atoms/             # Smallest UI elements
-│   ├── molecules/         # Simple component combinations
-│   ├── organisms/         # Complex feature components
-│   ├── templates/         # Page layout templates
-│   ├── ui/                # shadcn/ui base components
-│   └── providers/         # React context providers
-├── hooks/                  # Custom React hooks
-│   └── convex/            # Convex-specific hooks
-├── lib/                    # Utility functions and setup
-├── stores/                 # Zustand state stores
-└── context/               # React contexts
-```
-
-### Key Principles
-
-1. **Client-Only**: No SSR, no API routes, no server actions
-2. **Real-Time First**: All data via Convex subscriptions (`useQuery`/`useMutation`)
-3. **Cross-Platform**: Uses shared hooks from `@groupi/shared`
-4. **Type-Safe**: Full TypeScript with Convex type inference
-
-### Data Flow
-
-```
-User Interaction
-    ↓
-React Component (packages/web)
-    ↓
-Convex Hook (useQuery/useMutation)
-    ↓
-Convex Backend (convex/)
-    ↓
-Real-time sync back to UI
-```
+Routes compose public feature entry points. Convex owns application data and
+transactions; local stores hold UI state. See [Architecture](../../docs/architecture.md)
+and the [feature ownership decision](../../docs/adr/0002-feature-owned-application-modules.md).
 
 ## Development
 
-### Running Locally
+Follow [Getting started](../../docs/getting-started.md) for runtime versions,
+root environment configuration, and Convex setup. From the repository root:
 
 ```bash
-# From root directory
-pnpm dev
-
-# Or specifically
-pnpm --filter @groupi/web dev
+pnpm dev          # Web and Convex
+pnpm dev:web      # Web only, with an existing backend
+pnpm check        # Lint, types, contracts, and formatting
+pnpm test:web     # Web tests once
+pnpm lint:tokens  # Web and portal token checks
 ```
 
-The app runs on http://localhost:3000
+The web app normally listens at <http://localhost:3000>. Agents follow the
+[script policy](../../.agents/rules/scripts.md) before starting runtimes.
 
-### Validation
+## Data and authentication
 
-```bash
-pnpm check              # Lint + type-check + format
-pnpm test:web           # Run web tests
-pnpm lint:tokens        # Check design token usage
-```
-
-### Environment Variables
-
-Required environment variables are defined in the root `.env.example`. Copy to `.env.local` and fill in your values.
-
-## Key Features
-
-### Real-Time Data
-
-All data operations use Convex for automatic real-time synchronization:
+Use generated Convex functions rather than hand-maintained transport types:
 
 ```typescript
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
-// Data automatically updates when it changes
-const events = useQuery(api.events.queries.list);
-
-// Mutations with optimistic updates
-const createEvent = useMutation(api.events.mutations.create);
+const events = useQuery(api.events.queries.getUserEvents);
 ```
 
-### Authentication
+Handle `undefined` as loading and enforce authorization in backend functions.
+The web app uses client components for interactive application data. It also
+provides a Better Auth proxy at `app/api/auth/[...all]/route.ts` and a Convex API
+docs redirect at `app/api/docs/route.ts`. Versioned REST APIs live in `convex/api/`.
 
-Authentication is handled by Better Auth with Convex integration:
+Authentication supports configured Google/Discord providers, email magic links,
+and passkeys. Password support on the backend does not imply a complete password
+sign-in or reset UI. See [Authentication](../../docs/auth-architecture.md) for
+provider configuration, account linking, API keys, and limitations.
 
-- OAuth providers (Google, Discord)
-- Email/password authentication
-- Session management
-- Protected routes
+## UI and providers
 
-### Design System
+Use semantic design tokens and reusable UI components. The current Soft lift
+treatment and interaction checks are documented in the
+[Storybook guide](stories/design-system/README.md) and
+[UI design system](../../docs/ui-design-system.md).
 
-Uses a Duolingo-inspired design with semantic tokens:
+The root `app/layout.tsx` composes `ThemeProvider`, `ConvexClientProvider`,
+`VisibilityProvider`, and `GlobalUserProvider`, alongside tooltip and navigation
+guards. Providers live in `providers/` and `context/`; other app-level feedback
+lives in `components/app-providers.tsx`.
 
-- **Atoms**: StatusDot, PresenceIndicator
-- **Molecules**: UserInfoCard, RsvpStatus
-- **Organisms**: PostCard, MemberIcon
-- **Templates**: DetailPageTemplate, ListPageTemplate
-
-See the [UI Design System documentation](../../docs/ui-design-system.md) for details.
-
-### Presence System
-
-Real-time presence tracking for users:
-
-- Online/offline status
-- Typing indicators
-- Room-based presence (who's viewing what)
-
-## Component Patterns
-
-### Using Convex Hooks
-
-```typescript
-'use client';
-
-import { useQuery, useMutation } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-
-export function EventList() {
-  const events = useQuery(api.events.queries.list);
-
-  if (events === undefined) {
-    return <LoadingSkeleton />;
-  }
-
-  return (
-    <ul>
-      {events.map(event => (
-        <EventCard key={event._id} event={event} />
-      ))}
-    </ul>
-  );
-}
-```
-
-### Using Shared Hooks
-
-```typescript
-import { useGlobalUser } from '@/context/global-user-context';
-
-export function ProfileSection() {
-  const { person, isLoading } = useGlobalUser();
-
-  if (isLoading) return <LoadingSkeleton />;
-  if (!person) return <SignInPrompt />;
-
-  return <ProfileCard person={person} />;
-}
-```
-
-## Provider Architecture
-
-The app uses a provider hierarchy in `components/providers/`:
-
-- `ConvexClientProvider` - Convex connection and auth
-- `ThemeProvider` - Dark/light mode
-- `GlobalUserProvider` - Current user context
-- `VisibilityProvider` - Tab visibility tracking
-
-## Related Documentation
-
-- [Architecture Rules](../../.agents/rules/architecture.md)
-- [UI Design System](../../.agents/rules/ui-design-system.md)
-- [Presence System](../../.agents/rules/presence.md)
-- [Testing Guide](../../.agents/rules/testing.md)
+Presence includes online status, typing indicators, and room participation. See
+[Presence](../../docs/presence.md) and [Testing](../../docs/testing.md).

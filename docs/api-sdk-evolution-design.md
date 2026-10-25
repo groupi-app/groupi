@@ -35,7 +35,8 @@ not a claim that these packages, endpoints or capabilities are available.
 
 ## Current availability
 
-The unpublished REST v2 SDK candidates cover 238 operations with specific
+The unpublished REST v2 SDK candidates cover the operations recorded in
+`packages/sdk/type-audit.json` with specific
 TypeScript declarations and Python TypedDict models, bounded retries, pagination
 and delegated sessions. Realtime modules, subscription credential exchange,
 durable change feeds, general integration webhooks and complete runtime response
