@@ -28,6 +28,28 @@ const constants = Constants as unknown as MutableConstants;
 const platform = Platform as { OS: string };
 
 describe('push notification routing', () => {
+  it('routes canonical Group posts while rejecting malformed Group identifiers', () => {
+    expect(
+      getPushNotificationDestination({
+        destination: 'groupPost',
+        groupId: 'group-1',
+        postId: 'post-1',
+      })
+    ).toBe('/groups/group-1/posts/post-1');
+    expect(
+      getPushNotificationDestination({
+        destination: 'groupPost',
+        groupId: '../group',
+        postId: 'post-1',
+      })
+    ).toBeNull();
+    expect(
+      getPushNotificationDestination({
+        destination: 'groupPost',
+        groupId: 'group-1',
+      })
+    ).toBeNull();
+  });
   it('opens only safe private application and reviewer routes', () => {
     expect(
       getPushNotificationDestination({

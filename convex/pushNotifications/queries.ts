@@ -1,3 +1,4 @@
+import { canDeliverGroupDiscussion } from '../lib/notifications';
 import { canDeliverAnnouncement } from '../groupAnnouncements/model';
 import {
   needsCurrentOnboarding,
@@ -72,7 +73,8 @@ const deliveryJobValidator = v.object({
     v.literal('event'),
     v.literal('eventApplications'),
     v.literal('eventApplication'),
-    v.literal('post')
+    v.literal('post'),
+    v.literal('groupPost')
   ),
   groupId: v.optional(v.id('groups')),
   eventId: v.optional(v.id('events')),
@@ -149,6 +151,14 @@ export const resolveDeliveryJobs = internalQuery({
           cancelled.push({ deliveryId, attempts: delivery.attempts });
           continue;
         }
+      }
+      if (
+        notification.groupId &&
+        notification.postId &&
+        !(await canDeliverGroupDiscussion(ctx, notification))
+      ) {
+        cancelled.push({ deliveryId, attempts: delivery.attempts });
+        continue;
       }
       ready.push({
         deliveryId,

@@ -1,3 +1,4 @@
+import { requireEventPost } from '../lib/discussionAccess';
 import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import { canViewAttendance, privateNote } from '../events/attendance';
@@ -47,7 +48,8 @@ export const getPostDetail = query({
     const { person: currentPerson, user: currentUser } = await requireAuth(ctx);
 
     // Get the post - return null if not found (e.g., after deletion)
-    const post = await ctx.db.get(postId);
+    const storedPost = await ctx.db.get(postId);
+    const post = storedPost ? requireEventPost(storedPost) : null;
     if (!post) {
       return null;
     }
@@ -269,7 +271,8 @@ export const getEventPostFeed = query({
     }
 
     // Build posts with authors using the map
-    const postsWithAuthors = posts.map(post => {
+    const postsWithAuthors = posts.map(storedPost => {
+      const post = requireEventPost(storedPost);
       const authorData = personMap.get(post.authorId as string);
       const replies = postRepliesMap.get(post._id) || [];
 
@@ -418,7 +421,8 @@ export const getEventPostFeedPage = query({
 
     return {
       ...result,
-      page: result.page.map(post => {
+      page: result.page.map(storedPost => {
+        const post = requireEventPost(storedPost);
         const author = authorMap.get(post.authorId);
         return {
           ...post,
@@ -444,7 +448,8 @@ export const getPost = query({
   },
   handler: async (ctx, { postId }) => {
     const { person: currentPerson } = await requireAuth(ctx);
-    const post = await ctx.db.get(postId);
+    const storedPost = await ctx.db.get(postId);
+    const post = storedPost ? requireEventPost(storedPost) : null;
     if (!post) {
       throw new Error('Post not found');
     }
@@ -477,7 +482,8 @@ export const getPostReplies = query({
   handler: async (ctx, { postId }) => {
     const { person: currentPerson } = await requireAuth(ctx);
     // Verify access to the post
-    const post = await ctx.db.get(postId);
+    const storedPost = await ctx.db.get(postId);
+    const post = storedPost ? requireEventPost(storedPost) : null;
     if (!post) {
       throw new Error('Post not found');
     }

@@ -253,7 +253,7 @@ export const getReportsAdmin = query({
                     role: null,
                   }
               : null;
-            const event = await ctx.db.get(post.eventId);
+            const event = post.eventId ? await ctx.db.get(post.eventId) : null;
             targetPreview = {
               label: post.title,
               content: post.content.slice(0, 200),
@@ -277,7 +277,7 @@ export const getReportsAdmin = query({
                   }
               : null;
             const post = await ctx.db.get(reply.postId);
-            const event = post ? await ctx.db.get(post.eventId) : null;
+            const event = post?.eventId ? await ctx.db.get(post.eventId) : null;
             targetPreview = {
               label: 'Reply',
               content: reply.text.slice(0, 200),

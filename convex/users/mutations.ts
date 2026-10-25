@@ -1,3 +1,5 @@
+import { purgePost } from '../posts/writes';
+import { purgeReply } from '../replies/writes';
 import { retireDiscordIdentity } from '../groupDiscord/identity';
 import { deletePersonParticipationRevisions } from '../events/participationRevision';
 import { parseWebhookHeaders } from '../notifications/contracts';
@@ -586,7 +588,7 @@ export async function deleteResolvedAccount(
   }
 
   for (const id of replyIdsToDelete) {
-    await ctx.db.delete(id);
+    await purgeReply(ctx, id);
   }
 
   // Deduplicate notification IDs
@@ -622,7 +624,7 @@ export async function deleteResolvedAccount(
   }
 
   for (const post of authoredPosts) {
-    await ctx.db.delete(post._id);
+    await purgePost(ctx, post._id);
   }
 
   // Phase 5: Delete person settings and notification methods

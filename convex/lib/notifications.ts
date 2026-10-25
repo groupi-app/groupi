@@ -1,3 +1,4 @@
+import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import { safeDiscussionContent } from '../../packages/shared/src/utils/discussion-content';
 import { checkIsBlocked } from './privacy';
 import { Id } from '../_generated/dataModel';
@@ -189,10 +190,11 @@ async function fetchMessageContext(
     rsvp?: RsvpStatus;
   }
 ): Promise<PreFetchedMessageContext> {
-  const [event, post, authorPerson] = await Promise.all([
+  const [event, post, authorPerson, group] = await Promise.all([
     data.eventId ? ctx.db.get(data.eventId) : undefined,
     data.postId ? ctx.db.get(data.postId) : undefined,
     data.authorId ? ctx.db.get(data.authorId) : undefined,
+    data.groupId ? ctx.db.get(data.groupId) : undefined,
   ]);
 
   let authorName: string | undefined;
@@ -202,7 +204,10 @@ async function fetchMessageContext(
         ctx,
         authorPerson.userId as AuthUserId
       );
-      authorName = authorUser?.name || authorUser?.email || undefined;
+      authorName =
+        authorUser?.name ||
+        (data.groupId ? authorUser?.username : authorUser?.email) ||
+        undefined;
     } catch {
       // Auth component may not be registered in test environments
     }
@@ -211,11 +216,13 @@ async function fetchMessageContext(
   const notificationUrl = buildNotificationUrl(
     data.type,
     data.eventId as string | undefined,
-    data.postId as string | undefined
+    data.postId as string | undefined,
+    data.groupId as string | undefined
   );
 
   return {
-    eventTitle: event?.title,
+    eventTitle: event?.title ?? group?.name,
+    groupTitle: group?.name,
     postTitle: post?.title,
     authorName,
     notificationUrl,
@@ -282,10 +289,24 @@ export async function notifyMentionedUsers(
   data: {
     content: string;
     authorId: Id<'persons'>;
-    eventId: Id<'events'>;
+    eventId?: Id<'events'>;
+    groupId?: Id<'groups'>;
     postId: Id<'posts'>;
   }
 ): Promise<{ sent: number; skipped: number }> {
+  if (data.groupId) {
+    const ids = extractMentionedPersonIds(data.content)
+      .map(id => ctx.db.normalizeId('persons', id))
+      .filter((id): id is Id<'persons'> => id !== null);
+    const result = await notifyGroupDiscussionRecipients(
+      ctx,
+      { ...data, groupId: data.groupId, type: 'USER_MENTIONED' },
+      ids
+    );
+    return { sent: result.sent.length, skipped: result.skippedMuted };
+  }
+  const eventId = data.eventId;
+  if (!eventId) return { sent: 0, skipped: 0 };
   const mentionedPersonIds = extractMentionedPersonIds(data.content);
 
   const filteredIds = mentionedPersonIds.filter(
@@ -312,17 +333,17 @@ export async function notifyMentionedUsers(
         ctx.db
           .query('memberships')
           .withIndex('by_person_event', q =>
-            q.eq('personId', id).eq('eventId', data.eventId)
+            q.eq('personId', id).eq('eventId', eventId)
           )
           .first()
       )
     ),
-    batchGetMutedEventPersonIds(ctx, data.eventId),
+    batchGetMutedEventPersonIds(ctx, eventId),
     batchGetMutedPostPersonIds(ctx, data.postId),
     fetchMessageContext(ctx, {
       type: 'USER_MENTIONED',
       authorId: data.authorId,
-      eventId: data.eventId,
+      eventId: eventId,
       postId: data.postId,
     }),
   ]);
@@ -356,7 +377,7 @@ export async function notifyMentionedUsers(
         personId,
         type: 'USER_MENTIONED',
         authorId: data.authorId,
-        eventId: data.eventId,
+        eventId: eventId,
         postId: data.postId,
       },
       { messageContext: messageCtx }
@@ -459,6 +480,8 @@ export function getNotificationEmailSubject(
   const { type, eventTitle, authorName, postTitle, groupTitle } = ctx;
   const prefix = eventTitle ? `[${eventTitle}] ` : '';
 
+  if (type === 'EVENT_EDITED' && ctx.groupTitle && postTitle)
+    return `${authorName || 'Someone'} updated the post "${postTitle}"`;
   switch (type) {
     case 'NEW_POST':
       return postTitle
@@ -558,6 +581,8 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
   const event = eventTitle ? `<strong>${eventTitle}</strong>` : 'an event';
   const post = postTitle ? `<strong>${postTitle}</strong>` : 'a post';
 
+  if (type === 'EVENT_EDITED' && ctx.groupTitle && postTitle)
+    return `${authorName || 'Someone'} updated “${postTitle}” in ${ctx.groupTitle}`;
   switch (type) {
     case 'NEW_POST':
       return postTitle
@@ -655,6 +680,8 @@ function getNotificationMessageMarkdown(
   const event = eventTitle ? `**${eventTitle}**` : 'an event';
   const post = postTitle ? `**${postTitle}**` : 'a post';
 
+  if (type === 'EVENT_EDITED' && ctx.groupTitle && postTitle)
+    return `${authorName || 'Someone'} updated “${postTitle}” in ${ctx.groupTitle}`;
   switch (type) {
     case 'NEW_POST':
       return postTitle
@@ -751,6 +778,8 @@ export function getNotificationMessagePlain(
   const event = eventTitle || 'an event';
   const post = postTitle || 'a post';
 
+  if (type === 'EVENT_EDITED' && ctx.groupTitle && postTitle)
+    return `${authorName || 'Someone'} updated “${postTitle}” in ${ctx.groupTitle}`;
   switch (type) {
     case 'NEW_POST':
       return postTitle
@@ -876,10 +905,12 @@ function getNotificationEmailHtml(ctx: NotificationMessageContext): string {
 function buildNotificationUrl(
   type: NotificationType,
   eventId?: string,
-  postId?: string
+  postId?: string,
+  groupId?: string
 ): string {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
 
+  if (groupId && postId) return `${siteUrl}/groups/${groupId}/posts/${postId}`;
   if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
     return `${siteUrl}/event/${eventId}/settings/applications`;
   if (
@@ -942,6 +973,28 @@ export async function collectEmailData(
   },
   preFetchedCtx?: PreFetchedMessageContext
 ): Promise<Array<{ to: string; subject: string; html: string }>> {
+  if (data.groupId && data.postId && !preFetchedCtx)
+    preFetchedCtx = await fetchMessageContext(ctx, data);
+  const rawSubjectContext =
+    data.groupId && data.postId && preFetchedCtx
+      ? { ...preFetchedCtx, type: data.type }
+      : undefined;
+  if (data.groupId && data.postId && preFetchedCtx) {
+    const escape = (text: string | undefined) =>
+      text
+        ?.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    preFetchedCtx = {
+      ...preFetchedCtx,
+      eventTitle: escape(preFetchedCtx.eventTitle),
+      groupTitle: escape(preFetchedCtx.groupTitle),
+      postTitle: escape(preFetchedCtx.postTitle),
+      authorName: escape(preFetchedCtx.authorName),
+    };
+  }
   const emails = await getEnabledEmailsForNotification(
     ctx,
     data.personId,
@@ -987,7 +1040,10 @@ export async function collectEmailData(
           ctx,
           authorPerson.userId as AuthUserId
         );
-        authorName = authorUser?.name || authorUser?.email || undefined;
+        authorName =
+          authorUser?.name ||
+          (data.groupId ? authorUser?.username : authorUser?.email) ||
+          undefined;
       }
     }
 
@@ -1007,7 +1063,9 @@ export async function collectEmailData(
     };
   }
 
-  const subject = getNotificationEmailSubject(messageContext);
+  const subject = getNotificationEmailSubject(
+    rawSubjectContext ?? messageContext
+  );
   const html = getNotificationEmailHtml(messageContext);
 
   return emails.map(email => ({
@@ -1228,6 +1286,8 @@ export async function collectWebhookData(
     headers?: Record<string, string>;
   }>
 > {
+  if (data.groupId && data.postId && !preFetchedCtx)
+    preFetchedCtx = await fetchMessageContext(ctx, data);
   const webhooks = await getEnabledWebhooksForNotification(
     ctx,
     data.personId,
@@ -1273,7 +1333,10 @@ export async function collectWebhookData(
           ctx,
           authorPerson.userId as AuthUserId
         );
-        authorName = authorUser?.name || authorUser?.email || undefined;
+        authorName =
+          authorUser?.name ||
+          (data.groupId ? authorUser?.username : authorUser?.email) ||
+          undefined;
       }
     }
 
@@ -1325,6 +1388,7 @@ function getPushDestination(
     | 'friends'
     | 'event'
     | 'post'
+    | 'groupPost'
     | 'group'
     | 'groupApplication'
     | 'groupApplications'
@@ -1333,6 +1397,7 @@ function getPushDestination(
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
 } {
+  if (groupId && postId) return { destination: 'groupPost', groupId, postId };
   if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
     return { destination: 'eventApplications', eventId };
   if (
@@ -1401,10 +1466,11 @@ async function resolveNotificationMessageContext(
     };
   }
 
-  const [event, post, authorPerson] = await Promise.all([
+  const [event, post, authorPerson, group] = await Promise.all([
     data.eventId ? ctx.db.get(data.eventId) : undefined,
     data.postId ? ctx.db.get(data.postId) : undefined,
     data.authorId ? ctx.db.get(data.authorId) : undefined,
+    data.groupId ? ctx.db.get(data.groupId) : undefined,
   ]);
 
   let authorName: string | undefined;
@@ -1414,7 +1480,10 @@ async function resolveNotificationMessageContext(
         ctx,
         authorPerson.userId as AuthUserId
       );
-      authorName = authorUser?.name || authorUser?.email || undefined;
+      authorName =
+        authorUser?.name ||
+        (data.groupId ? authorUser?.username : authorUser?.email) ||
+        undefined;
     } catch {
       // The Better Auth component is intentionally absent in convex-test.
     }
@@ -1422,14 +1491,16 @@ async function resolveNotificationMessageContext(
 
   return {
     type: data.type,
-    eventTitle: event?.title,
+    eventTitle: event?.title ?? group?.name,
+    groupTitle: group?.name,
     postTitle: post?.title,
     authorName,
     rsvp: data.rsvp,
     notificationUrl: buildNotificationUrl(
       data.type,
       data.eventId as string | undefined,
-      data.postId as string | undefined
+      data.postId as string | undefined,
+      data.groupId as string | undefined
     ),
   };
 }
@@ -1621,6 +1692,18 @@ export async function createNotification(
       );
     return notificationId;
   }
+  if (data.groupId && data.postId) {
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<
+        'action',
+        { notificationId: Id<'notifications'> },
+        null
+      >('notifications/actions:sendDiscussionNotification'),
+      { notificationId }
+    );
+    return notificationId;
+  }
   const decisionEmail =
     data.type === 'GROUP_APPLICATION_APPROVED' ||
     data.type === 'GROUP_APPLICATION_DECLINED';
@@ -1658,10 +1741,141 @@ export async function createNotification(
   return notificationId;
 }
 
-/**
- * Create notifications for all members of an event (except the author)
- * Respects mute settings - skips users who have muted the event or post
- */
+/** Group post access is rechecked at dispatch and projection, never inferred from stale notifications. */
+export async function canReadGroupDiscussion(
+  ctx: MutationCtx | QueryCtx,
+  data: {
+    groupId?: Id<'groups'>;
+    postId?: Id<'posts'>;
+    personId: Id<'persons'>;
+    authorId?: Id<'persons'>;
+  }
+) {
+  if (!data.groupId || !data.postId) return false;
+  const post = await ctx.db.get(data.postId);
+  return (
+    !!post &&
+    post.groupId === data.groupId &&
+    !post.eventId &&
+    (await canAccessGroupMemberContent(ctx, data.groupId, data.personId)) &&
+    !(
+      data.authorId && (await checkIsBlocked(ctx, data.authorId, data.personId))
+    )
+  );
+}
+export async function canDeliverGroupDiscussion(
+  ctx: MutationCtx | QueryCtx,
+  data: {
+    groupId?: Id<'groups'>;
+    postId?: Id<'posts'>;
+    personId: Id<'persons'>;
+    authorId?: Id<'persons'>;
+  }
+) {
+  return (
+    (await canReadGroupDiscussion(ctx, data)) &&
+    !(await isPersonInDndMode(ctx, data.personId)) &&
+    !(await shouldSkipNotificationDueToMute(
+      ctx,
+      data.personId,
+      undefined,
+      data.postId
+    ))
+  );
+}
+async function notifyGroupDiscussionRecipients(
+  ctx: MutationCtx,
+  data: {
+    groupId: Id<'groups'>;
+    postId: Id<'posts'>;
+    authorId?: Id<'persons'>;
+    type: NotificationType;
+  },
+  recipients: Id<'persons'>[],
+  skipPresent = false
+) {
+  const sent: Id<'notifications'>[] = [];
+  let skippedMuted = 0,
+    skippedPresent = 0;
+  const context = await fetchMessageContext(ctx, data);
+  for (const personId of new Set(recipients)) {
+    if (personId === data.authorId) continue;
+    if (!(await canDeliverGroupDiscussion(ctx, { ...data, personId }))) {
+      skippedMuted++;
+      continue;
+    }
+    if (
+      skipPresent &&
+      (await isUserPresentInPost(ctx, data.postId, personId))
+    ) {
+      skippedPresent++;
+      continue;
+    }
+    sent.push(
+      await createNotification(
+        ctx,
+        { ...data, personId },
+        { messageContext: context }
+      )
+    );
+  }
+  return { sent, skippedMuted, skippedPresent };
+}
+/** Canonical parent adapter; existing Event callers and notification contracts stay unchanged. */
+export async function notifyDiscussionMembers(
+  ctx: MutationCtx,
+  data: {
+    eventId?: Id<'events'>;
+    groupId?: Id<'groups'>;
+    type: 'NEW_POST';
+    authorId?: Id<'persons'>;
+    postId: Id<'posts'>;
+  }
+) {
+  if (data.eventId)
+    return notifyEventMembers(ctx, { ...data, eventId: data.eventId });
+  if (!data.groupId) return { sent: [], skippedMuted: 0 };
+  return notifyGroupDiscussionMembersPage(
+    ctx,
+    { ...data, groupId: data.groupId },
+    null
+  );
+}
+/** Bound Group fanout so persistent communities do not exceed one transaction's read/write budget. */
+export async function notifyGroupDiscussionMembersPage(
+  ctx: MutationCtx,
+  data: {
+    groupId: Id<'groups'>;
+    postId: Id<'posts'>;
+    authorId?: Id<'persons'>;
+    type: 'NEW_POST';
+  },
+  cursor: string | null
+) {
+  const post = await ctx.db.get(data.postId);
+  if (!post || post.groupId !== data.groupId || post.eventId)
+    return { sent: [], skippedMuted: 0 };
+  const memberships = await ctx.db
+    .query('groupMemberships')
+    .withIndex('by_groupId', q => q.eq('groupId', data.groupId))
+    .paginate({ numItems: 50, cursor });
+  const result = await notifyGroupDiscussionRecipients(
+    ctx,
+    data,
+    memberships.page.map(m => m.personId)
+  );
+  if (!memberships.isDone)
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<'mutation', typeof data & { cursor: string }, null>(
+        'notifications/discussionDispatch:fanout'
+      ),
+      { ...data, cursor: memberships.continueCursor }
+    );
+  return result;
+}
+
+/** Existing Event fanout adapter preserves its native/API behavior. */
 export async function notifyEventMembers(
   ctx: MutationCtx,
   data: {
@@ -1852,6 +2066,12 @@ export async function notifyPerson(
     return { notificationId: null, skippedMuted: false };
   }
 
+  if (
+    data.groupId &&
+    data.postId &&
+    !(await canDeliverGroupDiscussion(ctx, data))
+  )
+    return { notificationId: null, skippedMuted: true };
   // Check if user has muted this event or post
   const shouldSkip = await shouldSkipNotificationDueToMute(
     ctx,
@@ -1904,11 +2124,42 @@ export async function notifyThreadParticipants(
   ctx: MutationCtx,
   data: {
     postId: Id<'posts'>;
-    eventId: Id<'events'>;
+    eventId?: Id<'events'>;
+    groupId?: Id<'groups'>;
     postAuthorId?: Id<'persons'>;
     replyAuthorId: Id<'persons'>;
   }
 ): Promise<{ sent: number; skippedPresent: number; skippedMuted: number }> {
+  if (data.groupId) {
+    const replies = await ctx.db
+      .query('replies')
+      .withIndex('by_post', q => q.eq('postId', data.postId))
+      .collect();
+    const ids = new Set<Id<'persons'>>();
+    if (data.postAuthorId) ids.add(data.postAuthorId);
+    for (const reply of replies) {
+      const id = ctx.db.normalizeId('persons', reply.authorId);
+      if (id) ids.add(id);
+    }
+    const result = await notifyGroupDiscussionRecipients(
+      ctx,
+      {
+        groupId: data.groupId,
+        postId: data.postId,
+        authorId: data.replyAuthorId,
+        type: 'NEW_REPLY',
+      },
+      [...ids],
+      true
+    );
+    return {
+      sent: result.sent.length,
+      skippedPresent: result.skippedPresent,
+      skippedMuted: result.skippedMuted,
+    };
+  }
+  const eventId = data.eventId;
+  if (!eventId) return { sent: 0, skippedPresent: 0, skippedMuted: 0 };
   let sent = 0;
   let skippedPresent = 0;
   let skippedMuted = 0;
@@ -1950,13 +2201,13 @@ export async function notifyThreadParticipants(
 
   const [mutedEventPersonIds, mutedPostPersonIds, dndStatusMap, messageCtx] =
     await Promise.all([
-      batchGetMutedEventPersonIds(ctx, data.eventId),
+      batchGetMutedEventPersonIds(ctx, eventId),
       batchGetMutedPostPersonIds(ctx, data.postId),
       batchGetPersonDndStatus(ctx, participantIdArray),
       fetchMessageContext(ctx, {
         type: 'NEW_REPLY',
         authorId: data.replyAuthorId,
-        eventId: data.eventId,
+        eventId: eventId,
         postId: data.postId,
       }),
     ]);
@@ -1980,7 +2231,7 @@ export async function notifyThreadParticipants(
         personId: pidStr as Id<'persons'>,
         type: 'NEW_REPLY',
         authorId: data.replyAuthorId,
-        eventId: data.eventId,
+        eventId: eventId,
         postId: data.postId,
       },
       { isDnd, messageContext: messageCtx }

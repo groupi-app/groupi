@@ -9,11 +9,7 @@ export default function Screen() {
     groupId: string;
     postId: string;
   }>();
-  return (
-    <DetailScreenTemplate title='Group posts'>
-      <GroupPostEditor groupId={groupId as Id<'groups'>} />
-    </DetailScreenTemplate>
-  );
+  return <GroupPostEditor groupId={groupId as Id<'groups'>} />;
 }
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (

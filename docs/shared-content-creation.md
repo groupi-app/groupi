@@ -1,86 +1,99 @@
 # Shared content creation
 
-This feature is based on `test` at `8fdbc93288fb5050cd3a133959850d97602cd2e3`.
+This feature starts at `test` commit
+`8fdbc93288fb5050cd3a133959850d97602cd2e3`. The local implementation checkpoint
+`f25c28b2` was subsequently extended to the user-approved canonical Post model.
 
-## Current model and implementation order
+## Model and implementation decisions
 
-The initial audit found independent persistent Group forms, lists and polls,
-Event-only posts/replies, and a separate Bring List add-on. Group tool rows carry
-Group ownership; their models enforce onboarding, exclusions, per-kind owner
-policy, revision history and person-owned recovery. Bring List stores configured
-quantities and per-person claim maps, which ordinary community list entries do
-not represent.
+The initial audit found persistent Group forms, lists and polls, Event-only
+posts/replies, and a separate Bring List add-on. The feature follows these
+incremental compatibility boundaries:
 
-The implementation therefore proceeds incrementally:
-
-1. Add an optional Event owner alongside the existing Group owner on tool rows,
-   configurations and contributions. New writes require exactly one owner.
-   Keep the existing table names, Group indexes, API paths and saved records.
-2. Adapt the existing tool models through `groupTools/context.ts`. Existing
-   Group access and policies remain intact. Events use exclusion-aware Event
-   membership, `createPosts` permission and organizer/moderator management.
-   New Event create/list endpoints wrap the same models. Existing Group REST
-   endpoints retain their Group-only wire contracts and reject Event tools.
-3. Reuse the existing web/native tool screens through explicit Event scope
-   adapters and new routes. Detail and management routes check the stored owner.
-4. Add Group posts/replies with an additive model, shared hook factory, and
-   web/native lifecycle routes. Leave existing Event discussion contracts intact.
-5. Add the shared `+ New` menu, content discovery, regression tests and gallery
-   fixtures, then run aggregate source checks and browser fixture verification.
+1. Existing Group tool tables, revisions, histories and policies remain in place.
+   Tool records may have an Event or Group owner; writes require exactly one.
+   Event wrappers reuse the existing models and both platforms' screens. Group
+   onboarding and owner policies remain intact. Events use exclusion-aware
+   membership, existing `createPosts` permission and organizer/moderator management.
+2. **`posts` is the canonical Post table.** Each Post has exactly one `eventId`
+   or `groupId`. Existing Event rows, IDs, indexes and URLs remain valid without
+   rewriting data. `replies`, attachments, muted posts, notifications and presence
+   continue to reference the same canonical Post IDs. The Group-facing
+   `groupPosts` module is a scoped API adapter, not separate storage.
+3. Native create/update/delete and content helpers derive authorization from the
+   stored parent. Group access includes current membership, onboarding and
+   exclusions. Existing Event-only REST/integration adapters explicitly reject
+   Group parents and retain their prior wire contracts and installed-client paths.
+4. Web and native Post composition reuse existing rich editors, upload/attachment
+   components, shared content limits and sanitization. Group mention suggestions
+   expose eligible profile names rather than private email addresses. Web supports
+   mention authoring; the existing native editor has no mention autocomplete in
+   either context and renders mention content authored on web.
+5. Group Post/reply/mention notifications reuse the existing generic preferences
+   and delivery channels. Current eligible members receive Post notifications;
+   eligible thread participants receive replies. Author, block, DND, mute and
+   current content-access rules apply. Queued Group deliveries carry identifiers
+   and recheck access before resolving private destinations/content. Existing Group
+   announcement subscriptions remain separate.
+6. Thread muting, unread marking, post presence, typing and unsaved-edit protection
+   use canonical Post IDs in both contexts. New presence tokens are bound to rooms
+   so Group access can be checked again after revocation. Unmapped legacy tokens
+   retain their existing behavior for backward compatibility.
+7. A shared `+ New` menu presents Post, Form, List and Poll, using a desktop
+   dropdown, narrow-screen drawer and native action sheet. Discovery uses the
+   existing Group policies and Event permissions; backend checks remain decisive.
 
 ## Feature disposition
 
-| Feature    | Events                                                                               | Groups                                                                  |
-| ---------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| + New      | Desktop dropdown, narrow drawer, native action sheet; current posting permission     | Same choices; per-kind tool policies determine availability             |
-| Posts      | Existing rich discussion preserved                                                   | New paginated posts/replies, author/manager edit and confirmed deletion |
-| Forms      | Reused form creation, responses, management, results and own history                 | Existing saved forms and policy behavior preserved                      |
-| Lists      | Reused list creation, entries, management and own recovery                           | Existing saved lists and policy behavior preserved                      |
-| Polls      | Reused voting, results, management and own history                                   | Existing saved polls and policy behavior preserved                      |
-| Bring List | Existing add-on remains available through its original route and an Event Lists link | Not applicable                                                          |
+| Feature           | Events                                                                         | Groups                                                          |
+| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| + New             | Dropdown/drawer/native sheet; existing posting permission                      | Same choices; existing per-kind tool policies                   |
+| Posts and replies | Existing canonical IDs, rich text, attachments, notification and URL contracts | Same canonical storage and capabilities through scoped adapters |
+| Forms             | Existing form model, responses, management, results and history reused         | Existing saved forms and policies preserved                     |
+| Lists             | Existing list model, entries, management and own recovery reused               | Existing saved lists and policies preserved                     |
+| Polls             | Existing voting, results, management and history reused                        | Existing saved polls and policies preserved                     |
+| Bring List        | Original add-on and routes retained; discoverable from Event Lists             | Not applicable                                                  |
 
-Group posts currently use plain text and do not support attachments or post/reply
-notification delivery. Existing Event post attachments, rich text, notifications
-and routes remain unchanged. Event tool REST/CLI authoring is not added; the
-existing Group REST/CLI endpoints remain Group-scoped.
+No Event tool REST/CLI authoring is added. Existing Group tool REST/CLI endpoints
+remain Group-scoped. Destructive actions retain confirmation.
 
-## Data and permission compatibility
+## Data and schema evolution
 
-No one-time migration, deletion, credential change or backend deployment is
-needed to prepare this source change. Existing Group rows satisfy the widened
-validators. Event tool contributions retain their owner and use existing
-revision/idempotency/privacy mechanisms. Event and Group deletion use owner
-indexes to clean up their own content; person cleanup preserves the existing
-history/anonymization conventions.
+Existing Event posts already satisfy the canonical parent invariant. Their
+`eventId`, Post/reply IDs, attachment parent IDs, URLs and saved mute/notification
+references require no migration. Old Group tool records also satisfy their
+widened validators. Optional added fields keep saved notifications compatible.
 
-Bring List is deliberately coexistent. Nothing automatically disables,
-reconfigures, copies or deletes its add-on configuration, claim maps or links.
-Replacing its quantity/claim model requires a separate explicit decision and a
-compatible migration design. Its existing confirmed management behavior remains
-unchanged.
+The separate `groupPosts`/`groupPostReplies` tables in the unpublished local
+checkpoint were never pushed or deployed by this task. They are absent from the
+final canonical schema; no live table removal or data deletion was performed.
+See [the review-only schema rollout plan](shared-content-schema-review.md) before
+any deployment. A deployment inspection finding historical rows in those
+checkpoint tables changes the plan and must stop schema removal for explicit
+migration review.
 
-Destructive post/reply/tool actions retain explicit confirmation. Backend
-permissions are checked from stored ownership during each transaction; a menu
-or route guard is not authorization.
+Bring List stores configured quantities and per-person claim maps, which ordinary
+community list entries do not represent. It remains coexistent: nothing
+automatically disables, reconfigures, copies or deletes its configuration,
+quantities, claims or links. A regression snapshots its legacy API data, exercises
+new Event List operations, then verifies exact preservation. Replacing its model
+requires a separate explicit migration decision.
 
-## Verification and open gates
+## Verification boundaries
 
-Source tests and component fixtures do not prove live backend/device acceptance.
-The isolated worktree has no configured Convex deployment. `pnpm generate` and
-root `pnpm test:run` stop at the existing codegen prerequisite. Minimal generated
-API module declarations were updated without provisioning a deployment; a real
-codegen run remains required against an approved matching environment.
+Source tests and component fixtures do not establish live backend/device
+acceptance. This worktree has no configured Convex deployment. Codegen is blocked
+by missing `CONVEX_DEPLOYMENT`; generated API module declarations are maintained
+locally and a real generation run remains an approved-environment acceptance gate.
+The offline backend test command bypasses only that configuration prerequisite.
 
-The backend can be fully tested offline with `pnpm --filter @groupi/convex
-test:no-codegen`. Browser fixtures use a locally built Storybook and contain no
-real app data. Full authenticated browser flows, actual native device behavior,
-and VoiceOver announcements require a matching approved backend/frontend build
-and an isolated signed-in identity.
+The user approved the minor changeset, a local frontend build with fixture-only
+configuration, and a `vercel.json` guard disabling automatic deployment solely for
+`codex/shared-content-creation`. The guard prevents publishing this draft branch
+from invoking the existing automatic Convex deployment workflow. No merge,
+backend deployment, credentials, one-time migration or live notification/data
+operation is authorized.
 
-Publishing also needs a deployment decision: `scripts/vercel-build.sh`
-automatically deploys/configures a Convex preview for branch builds. Automatic
-approval review rejected a proposed branch-only `git.deploymentEnabled` guard
-in `vercel.json` because that persistent deployment-policy edit requires explicit
-approval. The edit did not execute. No push or backend deployment should occur
-until that decision is resolved. Changeset summary approval is also pending under
-`docs/agents/workflow.md`.
+Browser gallery fixtures use no real app data. Matching authenticated frontend
+and backend builds, physical native acceptance and observed VoiceOver behavior
+remain separate open gates.

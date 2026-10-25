@@ -1,4 +1,3 @@
-import { removeForPerson as removePostsForPerson } from '../groupPosts/model';
 import { handBackConnection } from '../groupDiscord/teardown';
 import { isGroupExcludedForPerson } from './exclusions';
 import { anonymizeAudienceActor } from '../groupEventAudiences/cleanup';
@@ -247,7 +246,6 @@ export async function removeGroupMembershipsForPerson(
 ) {
   await assertNoOwnedGroups(ctx, personId);
   await removeToolsForPerson(ctx, personId);
-  await removePostsForPerson(ctx, personId);
   await removeTransfersForPerson(ctx, personId);
   await anonymizeAudienceActor(ctx, personId);
   await removeAnnouncementsForPerson(ctx, personId);

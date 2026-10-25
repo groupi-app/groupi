@@ -84,7 +84,7 @@ async function discussionSummary(
   const author = await getDiscussionActorWithUser(ctx, row.authorId);
   const attachments = includeFiles
     ? await (
-        'eventId' in row
+        'title' in row
           ? ctx.db
               .query('attachments')
               .withIndex('by_post', q => q.eq('postId', row._id))
@@ -96,7 +96,7 @@ async function discussionSummary(
   return {
     id: row._id,
     createdAt: row._creationTime,
-    ...('eventId' in row
+    ...('title' in row
       ? {
           eventId: row.eventId,
           title: row.title,
@@ -183,6 +183,7 @@ export const execute = internalMutation({
     const reply = input.replyId ? await ctx.db.get(input.replyId) : null;
     if (reply) post = await ctx.db.get(reply.postId);
     if (post) {
+      if (!post.eventId || post.groupId) throw denied();
       if (eventId !== undefined && eventId !== post.eventId) throw denied();
       eventId = post.eventId;
     }
@@ -415,7 +416,7 @@ export const execute = internalMutation({
         if (!row) throw denied();
         const result = await discussionSummary(ctx, row, includeFiles);
         data =
-          'eventId' in row
+          'title' in row
             ? {
                 ...result,
                 replies: await Promise.all(

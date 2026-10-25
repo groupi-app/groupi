@@ -798,6 +798,11 @@ export default defineSchema({
     ),
   }).index('by_user_id', ['userId']),
 
+  // New room tokens bind to canonical content access; legacy tokens stay compatible.
+  presenceRoomAccess: defineTable({
+    roomToken: v.string(),
+    roomId: v.string(),
+  }).index('by_roomToken', ['roomToken']),
   personPresence: defineTable({
     personId: v.id('persons'),
     lastSeen: v.number(),
@@ -1007,27 +1012,6 @@ export default defineSchema({
     .index('by_potential_date', ['potentialDateTimeId'])
     .index('by_membership_date', ['membershipId', 'potentialDateTimeId']),
 
-  groupPostReplies: defineTable({
-    groupId: v.id('groups'),
-    postId: v.id('groupPosts'),
-    authorId: v.optional(v.id('persons')),
-    content: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index('by_postId', ['postId'])
-    .index('by_groupId', ['groupId'])
-    .index('by_authorId', ['authorId']),
-  groupPosts: defineTable({
-    groupId: v.id('groups'),
-    authorId: v.optional(v.id('persons')),
-    title: v.string(),
-    content: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index('by_groupId', ['groupId'])
-    .index('by_authorId', ['authorId']),
   posts: defineTable({
     title: v.string(),
     content: v.string(),
@@ -1035,10 +1019,12 @@ export default defineSchema({
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
     authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
-    eventId: v.id('events'),
+    eventId: v.optional(v.id('events')),
+    groupId: v.optional(v.id('groups')),
     updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
     .index('by_event', ['eventId'])
+    .index('by_groupId', ['groupId'])
     .index('by_author', ['authorId'])
     .index('by_membership', ['membershipId']),
 
@@ -1077,6 +1063,7 @@ export default defineSchema({
     .index('by_event_email', ['eventId', 'email']),
 
   notifications: defineTable({
+    discussionDispatched: v.optional(v.boolean()),
     personId: v.id('persons'),
     authorId: v.optional(v.id('persons')),
     type: v.union(
@@ -1246,7 +1233,8 @@ export default defineSchema({
       v.literal('event'),
       v.literal('eventApplications'),
       v.literal('eventApplication'),
-      v.literal('post')
+      v.literal('post'),
+      v.literal('groupPost')
     ),
     groupId: v.optional(v.id('groups')),
     eventId: v.optional(v.id('events')),

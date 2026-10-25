@@ -394,6 +394,7 @@ import type * as muting_model from "../muting/model.js";
 import type * as muting_mutations from "../muting/mutations.js";
 import type * as muting_queries from "../muting/queries.js";
 import type * as muting_rest from "../muting/rest.js";
+import type * as notifications_discussionDispatch from "../notifications/discussionDispatch.js";
 import type * as notifications_actions from "../notifications/actions.js";
 import type * as notifications_contracts from "../notifications/contracts.js";
 import type * as notifications_model from "../notifications/model.js";
@@ -834,6 +835,7 @@ declare const fullApi: ApiFromModules<{
   "muting/mutations": typeof muting_mutations;
   "muting/queries": typeof muting_queries;
   "muting/rest": typeof muting_rest;
+  "notifications/discussionDispatch": typeof notifications_discussionDispatch;
   "notifications/actions": typeof notifications_actions;
   "notifications/contracts": typeof notifications_contracts;
   "notifications/model": typeof notifications_model;

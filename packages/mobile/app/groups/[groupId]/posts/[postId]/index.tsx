@@ -10,12 +10,10 @@ export default function Screen() {
     postId: string;
   }>();
   return (
-    <DetailScreenTemplate title='Group posts'>
-      <GroupPostDetail
-        groupId={groupId as Id<'groups'>}
-        postId={postId as Id<'groupPosts'>}
-      />
-    </DetailScreenTemplate>
+    <GroupPostDetail
+      groupId={groupId as Id<'groups'>}
+      postId={postId as Id<'posts'>}
+    />
   );
 }
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {

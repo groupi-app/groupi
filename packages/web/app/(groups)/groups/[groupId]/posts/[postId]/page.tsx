@@ -7,7 +7,7 @@ export default function Page() {
   return (
     <GroupPostDetail
       groupId={groupId as Id<'groups'>}
-      postId={postId as Id<'groupPosts'>}
+      postId={postId as Id<'posts'>}
     />
   );
 }

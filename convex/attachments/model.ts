@@ -2,7 +2,7 @@ import { type Infer, v, ConvexError } from 'convex/values';
 
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
-import { requireDiscussionRole } from '../lib/discussionAccess';
+import { requireDiscussionParent } from '../lib/discussionAccess';
 import { claimUpload } from '../files/uploads';
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -121,7 +121,7 @@ export async function requireAttachmentParentAccess(
         message: 'Attachment parent not found',
       });
 
-    await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
+    await requireDiscussionParent(ctx, post, personId);
     if (requireParentAuthor && post.authorId !== personId) {
       throw new ConvexError({
         code: 'FORBIDDEN',
@@ -145,7 +145,7 @@ export async function requireAttachmentParentAccess(
       message: 'Attachment parent not found',
     });
 
-  await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
+  await requireDiscussionParent(ctx, post, personId);
   if (requireParentAuthor && reply.authorId !== personId) {
     throw new ConvexError({
       code: 'FORBIDDEN',

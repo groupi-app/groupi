@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-09-10T20:03:31.797Z
+ * Generated: 2026-10-25T17:12:13.879Z
  */
 
 export interface ChangelogEntry {

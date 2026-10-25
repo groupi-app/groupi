@@ -1,20 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { GroupConfirmedAction } from '@/components/organisms/group-confirmed-action';
+import { AttachmentGallery } from '@/components/attachments';
+import { TypingIndicator } from '@/components/typing-indicator';
+import { DiscussionComposer } from '@/features/discussion/composer';
+import { DiscussionContent } from '@/features/discussion/content';
 import { useGroup } from '@/hooks/convex/use-groups';
+import { useIsActive } from '@/providers/visibility-provider';
+import {
+  useCurrentUserPostPresence,
+  useCurrentUserTypingState,
+  useTypingIndicators,
+} from '@/hooks/convex/use-presence';
 import * as hooks from '@/hooks/convex/use-group-posts';
-function failure(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : 'Unable to save this post. Please try again.';
-}
+
 export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
   const group = useGroup(groupId);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
           {posts.page.map(post => (
             <article
               key={post._id}
-              className='space-y-2 rounded-card border border-border p-4'
+              className='space-y-3 rounded-card border border-border p-4'
             >
               <Link
                 className='font-heading text-lg font-semibold text-primary underline'
@@ -55,8 +60,18 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
               <p className='text-sm text-muted-foreground'>
                 {post.authorName} · {new Date(post.createdAt).toLocaleString()}
               </p>
-              <p className='line-clamp-3 whitespace-pre-wrap break-words'>
-                {post.content}
+              <DiscussionContent content={post.content} preview />
+              <AttachmentGallery attachments={post.attachments} />
+              {post.unreadCount > 0 && (
+                <p
+                  className='text-sm font-semibold text-primary'
+                  aria-label={`${post.unreadCount} unread notifications`}
+                >
+                  Unread
+                </p>
+              )}
+              <p className='text-sm text-muted-foreground'>
+                {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
               </p>
             </article>
           ))}
@@ -83,14 +98,38 @@ export function GroupPostDetail({
   postId,
 }: {
   groupId: Id<'groups'>;
-  postId: Id<'groupPosts'>;
+  postId: Id<'posts'>;
 }) {
   const post = hooks.useGroupPost({ postId });
-  const remove = hooks.useDeleteGroupPost();
-  const router = useRouter();
   if (post === undefined) return <p role='status'>Loading post…</p>;
   if (!post || post.groupId !== groupId)
     return <p role='alert'>Post unavailable.</p>;
+  return <PostThread key={postId} post={post} />;
+}
+function PostThread({
+  post,
+}: {
+  post: NonNullable<ReturnType<typeof hooks.useGroupPost>>;
+}) {
+  const { groupId, _id: postId } = post;
+  const remove = hooks.useDeleteGroupPost();
+  const router = useRouter();
+  const members = useQuery(api.groupPosts.queries.mentionMembers, { groupId });
+  const muted = useQuery(api.muting.queries.isPostMuted, { postId });
+  const toggleMute = useMutation(api.muting.mutations.togglePostMute);
+  const markRead = useMutation(
+    api.notifications.mutations.markPostNotificationsAsRead
+  );
+  const { roomToken } = useCurrentUserPostPresence(postId);
+  const typing = useTypingIndicators(roomToken ?? undefined).filter(
+    user => user.personId !== post.viewerPersonId
+  );
+  const [error, setError] = useState('');
+  const isActive = useIsActive();
+  useEffect(() => {
+    if (!isActive) return;
+    void markRead({ postId }).catch(() => {});
+  }, [isActive, markRead, postId, post.replyCount]);
   return (
     <main className='mx-auto max-w-3xl space-y-5 p-6'>
       <Button variant='ghost' asChild>
@@ -102,26 +141,40 @@ export function GroupPostDetail({
       <p className='text-sm text-muted-foreground'>
         {post.authorName} · {new Date(post.createdAt).toLocaleString()}
       </p>
-      <p className='whitespace-pre-wrap break-words'>{post.content}</p>
-      {post.canEdit && (
-        <Button variant='outline' asChild>
-          <Link href={`/groups/${groupId}/posts/${postId}/edit`}>
-            Edit post
-          </Link>
-        </Button>
-      )}
-      {post.canDelete && (
-        <GroupConfirmedAction
-          label='Delete post'
-          confirmation='Confirm deleting post'
-          explanation='This permanently deletes this Group post.'
-          onConfirm={async () => {
-            await remove({ postId });
-            router.push(`/groups/${groupId}`);
+      <DiscussionContent content={post.content} members={members} />
+      <AttachmentGallery attachments={post.attachments} />
+      <div className='flex flex-wrap gap-2'>
+        <Button
+          variant='outline'
+          disabled={muted === undefined}
+          onClick={() => {
+            void toggleMute({ postId }).catch(cause => setError(String(cause)));
           }}
-        />
-      )}
-      <PostReplies postId={postId} />
+        >
+          {muted?.isMuted ? 'Unmute thread' : 'Mute thread'}
+        </Button>
+        {post.canEdit && (
+          <Button variant='outline' asChild>
+            <Link href={`/groups/${groupId}/posts/${postId}/edit`}>
+              Edit post
+            </Link>
+          </Button>
+        )}
+        {post.canDelete && (
+          <GroupConfirmedAction
+            label='Delete post'
+            confirmation='Confirm deleting post'
+            explanation='This permanently deletes this post, replies, and attachments.'
+            onConfirm={async () => {
+              await remove({ postId });
+              router.push(`/groups/${groupId}`);
+            }}
+          />
+        )}
+      </div>
+      {error && <p role='alert'>{error}</p>}
+      <TypingIndicator typingUsers={typing} />
+      <PostReplies groupId={groupId} postId={postId} />
     </main>
   );
 }
@@ -130,7 +183,7 @@ export function GroupPostEditor({
   postId,
 }: {
   groupId: Id<'groups'>;
-  postId?: Id<'groupPosts'>;
+  postId?: Id<'posts'>;
 }) {
   const group = useGroup(groupId);
   const post = hooks.useGroupPost(postId ? { postId } : 'skip');
@@ -143,109 +196,78 @@ export function GroupPostEditor({
   )
     return <p role='alert'>Post creation or editing is unavailable.</p>;
   return (
-    <PostForm
-      key={postId ?? 'new'}
+    <PostEditorForm
+      key={postId ?? groupId}
       groupId={groupId}
-      postId={postId}
-      initialTitle={post?.title ?? ''}
-      initialContent={post?.content ?? ''}
+      post={postId ? post : undefined}
     />
   );
 }
-function PostForm({
+function PostEditorForm({
   groupId,
-  postId,
-  initialTitle,
-  initialContent,
+  post,
 }: {
   groupId: Id<'groups'>;
-  postId?: Id<'groupPosts'>;
-  initialTitle: string;
-  initialContent: string;
+  post: ReturnType<typeof hooks.useGroupPost>;
 }) {
-  const [title, setTitle] = useState(initialTitle);
-  const [content, setContent] = useState(initialContent);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
+  const members = useQuery(api.groupPosts.queries.mentionMembers, { groupId });
   const create = hooks.useCreateGroupPost();
   const update = hooks.useUpdateGroupPost();
   const router = useRouter();
   return (
     <main className='mx-auto max-w-3xl space-y-5 p-6'>
       <h1 className='font-heading text-2xl font-bold'>
-        {postId ? 'Edit post' : 'New post'}
+        {post ? 'Edit post' : 'New post'}
       </h1>
-      <form
-        className='space-y-4'
-        onSubmit={async e => {
-          e.preventDefault();
-          setPending(true);
-          setError('');
-          try {
-            const id = postId
-              ? (await update({ postId, title, content }), postId)
-              : await create({ groupId, title, content });
-            router.push(`/groups/${groupId}/posts/${id}`);
-          } catch (e) {
-            setError(failure(e));
-          } finally {
-            setPending(false);
-          }
+      <DiscussionComposer
+        initialTitle={post?.title}
+        initialContent={post?.content}
+        existingAttachments={post?.attachments}
+        mentionMembers={members}
+        submitLabel={post ? 'Save post' : 'Publish post'}
+        onCancel={() => router.back()}
+        onSave={async ({
+          title,
+          content,
+          attachments,
+          attachmentIdsToDelete,
+        }) => {
+          const postId = post
+            ? (await update({
+                postId: post._id,
+                title,
+                content,
+                attachmentsToAdd: attachments,
+                attachmentIdsToDelete,
+              }),
+              post._id)
+            : await create({ groupId, title, content, attachments });
+          router.push(`/groups/${groupId}/posts/${postId}`);
         }}
-      >
-        <div className='space-y-2'>
-          <Label htmlFor='group-post-title'>Title</Label>
-          <Input
-            id='group-post-title'
-            value={title}
-            maxLength={200}
-            required
-            onChange={e => setTitle(e.target.value)}
-          />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='group-post-content'>Post</Label>
-          <Textarea
-            id='group-post-content'
-            value={content}
-            maxLength={50000}
-            required
-            rows={10}
-            onChange={e => setContent(e.target.value)}
-          />
-        </div>
-        <div className='flex flex-wrap gap-3'>
-          <Button
-            disabled={pending || !title.trim() || !content.trim()}
-            type='submit'
-          >
-            {pending ? 'Saving…' : postId ? 'Save post' : 'Publish post'}
-          </Button>
-          <Button
-            variant='outline'
-            type='button'
-            disabled={pending}
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-        </div>
-        {error && <p role='alert'>{error}</p>}
-      </form>
+      />
     </main>
   );
 }
-
-function PostReplies({ postId }: { postId: Id<'groupPosts'> }) {
+function PostReplies({
+  groupId,
+  postId,
+}: {
+  groupId: Id<'groups'>;
+  postId: Id<'posts'>;
+}) {
   const [cursor, setCursor] = useState<string | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<Id<'replies'> | null>(
+    null
+  );
+  const [newDraftDirty, setNewDraftDirty] = useState(false);
+  const [newDraftVersion, setNewDraftVersion] = useState(0);
   const replies = hooks.useGroupPostReplies({
     postId,
     paginationOpts: { numItems: 20, cursor },
   });
+  const members = useQuery(api.groupPosts.queries.mentionMembers, { groupId });
   const create = hooks.useCreateGroupPostReply();
-  const [content, setContent] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
+  const { setTyping } = useCurrentUserTypingState(postId);
   return (
     <section
       aria-labelledby='group-post-replies-heading'
@@ -265,141 +287,130 @@ function PostReplies({ postId }: { postId: Id<'groupPosts'> }) {
           {replies.page.map(reply => (
             <Reply
               key={reply._id}
-              replyId={reply._id}
-              content={reply.content}
-              authorName={reply.authorName}
-              canEdit={reply.canEdit}
+              reply={reply}
+              groupId={groupId}
+              editing={editingReplyId === reply._id}
+              onEditingChange={editing =>
+                setEditingReplyId(editing ? reply._id : null)
+              }
+              editDisabled={
+                newDraftDirty ||
+                (editingReplyId !== null && editingReplyId !== reply._id)
+              }
             />
           ))}
           {!replies.isDone && (
             <Button
               variant='outline'
+              disabled={editingReplyId !== null}
               onClick={() => setCursor(replies.continueCursor)}
             >
               Next replies
             </Button>
           )}
           {cursor && (
-            <Button variant='ghost' onClick={() => setCursor(null)}>
+            <Button
+              variant='ghost'
+              disabled={editingReplyId !== null}
+              onClick={() => setCursor(null)}
+            >
               First replies
             </Button>
           )}
         </>
       )}
-      <form
-        className='space-y-2'
-        onSubmit={async e => {
-          e.preventDefault();
-          setPending(true);
-          setError('');
-          try {
-            await create({ postId, content });
-            setContent('');
-          } catch (e) {
-            setError(failure(e));
-          } finally {
-            setPending(false);
-          }
-        }}
-      >
-        <Label htmlFor='group-post-reply'>Reply</Label>
-        <Textarea
-          id='group-post-reply'
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          maxLength={50000}
-          required
+      {newDraftDirty && (
+        <p className='text-sm text-muted-foreground'>
+          Save or cancel your reply draft before editing another reply.
+        </p>
+      )}
+      <div hidden={editingReplyId !== null}>
+        <DiscussionComposer
+          key={newDraftVersion}
+          reply
+          mentionMembers={members}
+          onDraftChange={setNewDraftDirty}
+          onCancel={() => setNewDraftVersion(value => value + 1)}
+          submitLabel='Send reply'
+          onContentChange={content => setTyping(content.length > 0)}
+          onSave={async ({ content, attachments }) => {
+            await create({ postId, content, attachments });
+            setTyping(false);
+          }}
         />
-        <Button type='submit' disabled={pending || !content.trim()}>
-          {pending ? 'Sending…' : 'Send reply'}
-        </Button>
-        {error && <p role='alert'>{error}</p>}
-      </form>
+      </div>
     </section>
   );
 }
 function Reply({
-  replyId,
-  content,
-  authorName,
-  canEdit,
+  reply,
+  groupId,
+  editing,
+  onEditingChange,
+  editDisabled,
 }: {
-  replyId: Id<'groupPostReplies'>;
-  content: string;
-  authorName: string;
-  canEdit: boolean;
+  reply: NonNullable<
+    ReturnType<typeof hooks.useGroupPostReplies>
+  >['page'][number];
+  groupId: Id<'groups'>;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
+  editDisabled: boolean;
 }) {
   const update = hooks.useUpdateGroupPostReply();
   const remove = hooks.useDeleteGroupPostReply();
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(content);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
+  const members = useQuery(api.groupPosts.queries.mentionMembers, { groupId });
   return (
-    <article className='space-y-2 rounded-card border border-border p-4'>
-      <p className='text-sm text-muted-foreground'>{authorName}</p>
+    <article className='space-y-3 rounded-card border border-border p-4'>
+      <p className='text-sm text-muted-foreground'>
+        {reply.authorName} · {new Date(reply.createdAt).toLocaleString()}
+      </p>
       {editing ? (
-        <form
-          className='space-y-2'
-          onSubmit={async e => {
-            e.preventDefault();
-            setPending(true);
-            setError('');
-            try {
-              await update({ replyId, content: text });
-              setEditing(false);
-            } catch (e) {
-              setError(failure(e));
-            } finally {
-              setPending(false);
-            }
+        <DiscussionComposer
+          reply
+          initialContent={reply.content}
+          existingAttachments={reply.attachments}
+          mentionMembers={members}
+          submitLabel='Save reply'
+          onCancel={() => onEditingChange(false)}
+          onSave={async ({ content, attachments, attachmentIdsToDelete }) => {
+            await update({
+              replyId: reply._id,
+              content,
+              attachmentsToAdd: attachments,
+              attachmentIdsToDelete,
+            });
+            onEditingChange(false);
           }}
-        >
-          <Label htmlFor={`reply-${replyId}`}>Edit reply</Label>
-          <Textarea
-            id={`reply-${replyId}`}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            maxLength={50000}
-            required
-          />
-          <div className='flex gap-2'>
-            <Button disabled={pending || !text.trim()} type='submit'>
-              Save reply
-            </Button>
-            <Button
-              disabled={pending}
-              type='button'
-              variant='outline'
-              onClick={() => setEditing(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
+        />
       ) : (
-        <p className='whitespace-pre-wrap break-words'>{content}</p>
+        <>
+          <DiscussionContent content={reply.content} members={members} />
+          <AttachmentGallery attachments={reply.attachments} />
+        </>
       )}
-      {canEdit && (
-        <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-wrap gap-2'>
+        {reply.canEdit && !editing && (
           <Button
             variant='outline'
-            onClick={() => {
-              setText(content);
-              setEditing(true);
-            }}
+            disabled={editDisabled}
+            onClick={() => onEditingChange(true)}
           >
             Edit reply
           </Button>
+        )}
+        {reply.canDelete && (
           <GroupConfirmedAction
             label='Delete reply'
             confirmation='Confirm deleting reply'
-            explanation='This permanently deletes this reply.'
-            onConfirm={() => remove({ replyId })}
+            explanation='This permanently deletes this reply and its attachments.'
+            onConfirm={async () => {
+              await remove({ replyId: reply._id });
+              if (editing) onEditingChange(false);
+            }}
           />
-        </div>
-      )}
-      {error && <p role='alert'>{error}</p>}
+        )}
+      </div>
     </article>
   );
 }

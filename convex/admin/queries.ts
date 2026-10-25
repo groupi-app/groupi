@@ -252,7 +252,7 @@ export const getPostsAdmin = query({
                   role: null,
                 }
             : null;
-          const event = await ctx.db.get(post.eventId);
+          const event = post.eventId ? await ctx.db.get(post.eventId) : null;
 
           const replyCount = await ctx.db
             .query('replies')
@@ -314,7 +314,7 @@ export const getPostsAdmin = query({
                 role: null,
               }
           : null;
-        const event = await ctx.db.get(post.eventId);
+        const event = post.eventId ? await ctx.db.get(post.eventId) : null;
 
         const replyCount = await ctx.db
           .query('replies')
@@ -399,7 +399,7 @@ export const getRepliesAdmin = query({
                 }
             : null;
           const post = await ctx.db.get(reply.postId);
-          const event = post ? await ctx.db.get(post.eventId) : null;
+          const event = post?.eventId ? await ctx.db.get(post.eventId) : null;
 
           return {
             id: reply._id,
@@ -458,7 +458,7 @@ export const getRepliesAdmin = query({
               }
           : null;
         const post = await ctx.db.get(reply.postId);
-        const event = post ? await ctx.db.get(post.eventId) : null;
+        const event = post?.eventId ? await ctx.db.get(post.eventId) : null;
 
         return {
           id: reply._id,

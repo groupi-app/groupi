@@ -1,12 +1,18 @@
+import { purgeReply } from '../replies/writes';
 import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
 import type { Id } from '../_generated/dataModel';
 import { validateContent, validateTitle } from '../lib/discussionContent';
-import { requireDiscussionRole } from '../lib/discussionAccess';
+import {
+  discussionParent,
+  discussionPermissions,
+  requireDiscussionParent,
+  requireDiscussionRole,
+} from '../lib/discussionAccess';
 import { resolveEventPermissions } from '../auth';
 import { type MutationCtx } from '../_generated/server';
 import { ConvexError } from 'convex/values';
 import {
-  notifyEventMembers,
+  notifyDiscussionMembers,
   notifyPerson,
   notifyMentionedUsers,
 } from '../lib/notifications';
@@ -22,38 +28,35 @@ export async function createPostForPerson(
   personId: Id<'persons'>,
   {
     eventId,
+    groupId,
     title,
     content,
     attachments = [],
   }: {
-    eventId: Id<'events'>;
+    eventId?: Id<'events'>;
+    groupId?: Id<'groups'>;
     title: string;
     content: string;
     attachments?: AttachmentInput[];
   }
 ) {
   const person = { _id: personId };
-  const membership = await requireDiscussionRole(
-    ctx,
-    eventId,
-    personId,
-    'ATTENDEE'
-  );
-  const event = await ctx.db.get(eventId);
-  await requireDiscussionRole(
-    ctx,
-    eventId,
-    personId,
-    resolveEventPermissions(event!).createPosts === 'EVERYONE'
-      ? 'ATTENDEE'
-      : (resolveEventPermissions(event!).createPosts as
-          | 'ORGANIZER'
-          | 'MODERATOR')
-  );
+  const parent = discussionParent({ eventId, groupId });
+  const membership = await requireDiscussionParent(ctx, parent, personId);
+  if (parent.eventId) {
+    const event = await ctx.db.get(parent.eventId);
+    const permission = resolveEventPermissions(event!).createPosts;
+    await requireDiscussionRole(
+      ctx,
+      parent.eventId,
+      personId,
+      permission === 'EVERYONE' ? 'ATTENDEE' : permission
+    );
+  }
 
   // Validate input
   title = validateTitle(title);
-  content = await validateContent(ctx, personId, eventId, content, 3000);
+  content = await validateContent(ctx, personId, parent, content, 3000);
   if (!hasDiscussionText(content) && !attachments.length)
     throw new ConvexError({
       code: 'VALIDATION_ERROR',
@@ -67,8 +70,8 @@ export async function createPostForPerson(
     title: title.trim(),
     content: content.trim(),
     authorId: person._id,
-    eventId: eventId,
-    membershipId: membership._id,
+    ...parent,
+    membershipId: membership?._id,
   });
 
   if (attachments.length > 0) {
@@ -83,8 +86,8 @@ export async function createPostForPerson(
   const post = await ctx.db.get(postId);
 
   // Notify all event members about the new post
-  await notifyEventMembers(ctx, {
-    eventId,
+  await notifyDiscussionMembers(ctx, {
+    ...parent,
     type: 'NEW_POST',
     authorId: person._id,
     postId,
@@ -94,7 +97,7 @@ export async function createPostForPerson(
   await notifyMentionedUsers(ctx, {
     content,
     authorId: person._id,
-    eventId,
+    ...parent,
     postId,
   });
 
@@ -129,9 +132,8 @@ export async function updatePostForPerson(
   // Check if user can edit this post
   // User can edit if they are the author OR have moderator/organizer role in the event
   const isAuthor = post.authorId === person._id;
-  const hasModeratorRole =
-    (await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE'))
-      .role !== 'ATTENDEE';
+  const hasModeratorRole = (await discussionPermissions(ctx, post, personId))
+    .canManage;
 
   if (!isAuthor && !hasModeratorRole) {
     throw new ConvexError({
@@ -161,7 +163,7 @@ export async function updatePostForPerson(
     updateData.content = await validateContent(
       ctx,
       personId,
-      post.eventId,
+      post,
       content,
       3000,
       post.content
@@ -208,7 +210,7 @@ export async function updatePostForPerson(
       personId: humanAuthorId,
       type: 'EVENT_EDITED', // Reusing EVENT_EDITED for post edits by moderators
       authorId: person._id,
-      eventId: post.eventId,
+      ...discussionParent(post),
       postId,
     });
   }
@@ -232,9 +234,8 @@ export async function deletePostForPerson(
   // Check if user can delete this post
   // User can delete if they are the author OR have moderator/organizer role in the event
   const isAuthor = post.authorId === person._id;
-  const hasModeratorRole =
-    (await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE'))
-      .role !== 'ATTENDEE';
+  const hasModeratorRole = (await discussionPermissions(ctx, post, personId))
+    .canManage;
 
   if (!isAuthor && !hasModeratorRole) {
     throw new ConvexError({
@@ -243,26 +244,19 @@ export async function deletePostForPerson(
     });
   }
 
+  await purgePost(ctx, postId);
+  return { success: true };
+}
+
+/** Parent retirement shares the same attachment and notification cleanup. */
+export async function purgePost(ctx: MutationCtx, postId: Id<'posts'>) {
   // Delete all replies and their attachments first
   const replies = await ctx.db
     .query('replies')
     .withIndex('by_post', q => q.eq('postId', postId))
     .collect();
 
-  for (const reply of replies) {
-    // Delete reply attachments and storage files
-    const replyAttachments = await ctx.db
-      .query('attachments')
-      .withIndex('by_reply', q => q.eq('replyId', reply._id))
-      .collect();
-
-    for (const attachment of replyAttachments) {
-      await ctx.storage.delete(attachment.storageId);
-      await ctx.db.delete(attachment._id);
-    }
-
-    await ctx.db.delete(reply._id);
-  }
+  for (const reply of replies) await purgeReply(ctx, reply._id);
 
   // Delete post attachments and storage files
   const postAttachments = await ctx.db
@@ -282,8 +276,18 @@ export async function deletePostForPerson(
     .collect();
 
   for (const notification of notifications) {
+    for await (const delivery of ctx.db
+      .query('pushDeliveries')
+      .withIndex('by_notification', q =>
+        q.eq('notificationId', notification._id)
+      ))
+      await ctx.db.delete(delivery._id);
     await ctx.db.delete(notification._id);
   }
+  for await (const mute of ctx.db
+    .query('mutedPosts')
+    .withIndex('by_post', q => q.eq('postId', postId)))
+    await ctx.db.delete(mute._id);
 
   // Delete the post
   await ctx.db.delete(postId);

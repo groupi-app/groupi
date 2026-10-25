@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api } from '../_generated/api';
+import { api, internal } from '../_generated/api';
 import { createTestInstance as baseTestInstance } from './test_helpers';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
-import { removeForPerson } from '../groupPosts/model';
 const instances: ReturnType<typeof baseTestInstance>[] = [];
 function createTestInstance() {
   const t = baseTestInstance();
@@ -156,7 +155,7 @@ describe('Group posts', () => {
       member.auth.mutation(api.groupPosts.mutations.deletePost, { postId })
     ).rejects.toThrow();
   });
-  it('validates text and keeps group discussion separate from existing event posts', async () => {
+  it('validates rich content and stores Group discussion in canonical posts', async () => {
     const { t, owner, groupId } = await fixture('post-validation');
     await expect(
       owner.auth.mutation(api.groupPosts.mutations.createPost, {
@@ -171,34 +170,58 @@ describe('Group posts', () => {
         title: 'Title',
         content: 'x'.repeat(50001),
       })
-    ).rejects.toThrow('post text');
-    await owner.auth.mutation(api.groupPosts.mutations.createPost, {
+    ).rejects.toThrow();
+    await expect(
+      owner.auth.mutation(api.groupPosts.mutations.createPost, {
+        groupId,
+        title: 'Sanitized',
+        content: '<script>alert(1)</script>',
+      })
+    ).rejects.toThrow();
+    const postId = await owner.auth.mutation(
+      api.groupPosts.mutations.createPost,
+      {
+        groupId,
+        title: 'Rich content',
+        content: '<p><strong>Safe</strong> discussion</p>',
+      }
+    );
+    expect(await t.run(ctx => ctx.db.get(postId))).toMatchObject({
       groupId,
-      title: '<img src=x>',
-      content: '<script>alert(1)</script>',
+      content: '<p><strong>Safe</strong> discussion</p>',
     });
-    expect(await t.run(ctx => ctx.db.query('posts').collect())).toHaveLength(0);
+    expect(await t.run(ctx => ctx.db.query('posts').collect())).toHaveLength(1);
     expect(
       (
         await owner.auth.query(api.groupPosts.queries.listPosts, {
           groupId,
           paginationOpts,
         })
-      ).page[0].content
-    ).toBe('<script>alert(1)</script>');
+      ).page[0]
+    ).toMatchObject({
+      _id: postId,
+      groupId,
+      author: { user: { email: null }, person: { user: { email: null } } },
+    });
   });
-  it('anonymizes deleted authors and removes posts during confirmed Group deletion', async () => {
+  it('uses canonical account deletion cleanup and removes posts during confirmed Group deletion', async () => {
     const { t, owner, member, groupId } = await fixture('post-cleanup');
     const postId = await member.auth.mutation(
       api.groupPosts.mutations.createPost,
       { groupId, title: 'Persistent', content: 'Former member' }
     );
-    await t.run(ctx => removeForPerson(ctx, member.personId));
+    await member.auth.mutation(api.users.mutations.deleteUserAccount, {
+      confirmation: 'post-cleanup-member',
+    });
     expect(
       await owner.auth.query(api.groupPosts.queries.getPost, { postId })
-    ).toMatchObject({ authorName: 'Former member', canEdit: true });
+    ).toBeNull();
+    const ownedPost = await owner.auth.mutation(
+      api.groupPosts.mutations.createPost,
+      { groupId, title: 'Owned', content: 'Owner contribution' }
+    );
     await owner.auth.mutation(api.groups.mutations.deleteGroup, { groupId });
-    expect(await t.run(ctx => ctx.db.get(postId))).toBeNull();
+    expect(await t.run(ctx => ctx.db.get(ownedPost))).toBeNull();
   });
   it('keeps replies under parent post access and manager moderation, and cascades post deletion', async () => {
     const { t, owner, member, outsider, groupId } =
@@ -262,5 +285,108 @@ describe('Group posts', () => {
     );
     await owner.auth.mutation(api.groupPosts.mutations.deletePost, { postId });
     expect(await t.run(ctx => ctx.db.get(second))).toBeNull();
+  });
+  it('uses canonical attachment-backed writes and rejects mentions outside the stored Group', async () => {
+    const { t, owner, member, outsider, groupId } = await fixture(
+      'post-canonical-media'
+    );
+    const upload = await t.run(async ctx => {
+      const file = new Blob(['notes'], { type: 'text/plain' });
+      const storageId = await ctx.storage.store(file);
+      await ctx.db.insert('uploads', {
+        storageId,
+        personId: member.personId,
+        purpose: 'attachment',
+        mimeType: 'text/plain',
+        size: file.size,
+        createdAt: Date.now(),
+        claimed: false,
+      });
+      return {
+        storageId,
+        filename: 'notes.txt',
+        mimeType: 'text/plain',
+        size: file.size,
+      };
+    });
+    const postId = await member.auth.mutation(
+      api.groupPosts.mutations.createPost,
+      { groupId, title: 'Media', content: '', attachments: [upload] }
+    );
+    const saved = await owner.auth.query(api.groupPosts.queries.getPost, {
+      postId,
+    });
+    expect(saved).toMatchObject({
+      _id: postId,
+      groupId,
+      viewerPersonId: owner.personId,
+      canModerate: true,
+      attachments: [
+        { postId, storageId: upload.storageId, filename: 'notes.txt' },
+      ],
+    });
+    const replyId = (
+      await member.auth.mutation(api.replies.mutations.createReply, {
+        postId,
+        text: `<span data-type="mention" data-id="${owner.personId}">@owner</span>`,
+      })
+    ).replyId;
+    expect(await t.run(ctx => ctx.db.get(replyId))).toMatchObject({
+      postId,
+      authorId: member.personId,
+    });
+    await expect(
+      member.auth.mutation(api.posts.mutations.updatePost, {
+        postId,
+        content: `<span data-type="mention" data-id="${outsider.personId}">@outsider</span>`,
+      })
+    ).rejects.toThrow('accessible member');
+    await owner.auth.mutation(api.replies.mutations.updateReply, {
+      replyId,
+      text: 'Moderated canonically',
+    });
+    expect(
+      (
+        await member.auth.query(api.groupPosts.queries.listReplies, {
+          postId,
+          paginationOpts,
+        })
+      ).page[0]
+    ).toMatchObject({
+      _id: replyId,
+      text: 'Moderated canonically',
+      content: 'Moderated canonically',
+    });
+    await expect(
+      t.mutation(internal.posts.rest.updatePost, {
+        postId,
+        personId: owner.personId,
+        title: 'Wrong transport',
+      })
+    ).rejects.toThrow('Event post');
+    await expect(
+      t.mutation(internal.replies.rest.updateReply, {
+        replyId,
+        personId: owner.personId,
+        text: 'Wrong transport',
+      })
+    ).rejects.toThrow('Event post');
+    expect(
+      (
+        await member.auth.query(api.groupPosts.queries.mentionMembers, {
+          groupId,
+        })
+      ).map(x => x.personId)
+    ).toContain(owner.personId);
+    await owner.auth.mutation(api.posts.mutations.deletePost, { postId });
+    expect(await t.run(ctx => ctx.db.get(replyId))).toBeNull();
+    expect(
+      await t.run(ctx =>
+        ctx.db
+          .query('attachments')
+          .withIndex('by_post', q => q.eq('postId', postId))
+          .collect()
+      )
+    ).toEqual([]);
   });
 });

@@ -345,7 +345,7 @@ export const getUserPostsAcrossEvents = query({
 
     const postsWithDetails = await Promise.all(
       page.map(async post => {
-        const event = await ctx.db.get(post.eventId);
+        const event = post.eventId ? await ctx.db.get(post.eventId) : null;
         const replyCount = await ctx.db
           .query('replies')
           .withIndex('by_post', q => q.eq('postId', post._id))
@@ -474,7 +474,7 @@ export const getPostWithRelations = query({
     // Get author and event info
     const [author, event] = await Promise.all([
       ctx.db.get(post.authorId),
-      ctx.db.get(post.eventId),
+      post.eventId ? ctx.db.get(post.eventId) : null,
     ]);
 
     const authorUser = author

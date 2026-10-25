@@ -270,7 +270,7 @@ export const canModifyPost = internalQuery({
   },
   handler: async (ctx, { postId, personId }) => {
     const post = await ctx.db.get(postId as Id<'posts'>);
-    if (!post) {
+    if (!post?.eventId || post.groupId) {
       return false;
     }
 
@@ -279,11 +279,13 @@ export const canModifyPost = internalQuery({
       return true;
     }
 
+    // This preflight belongs to legacy Event-scoped REST clients.
+    const eventId = post.eventId;
     // Check if user has moderator+ role in the event
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
-        q.eq('personId', personId as Id<'persons'>).eq('eventId', post.eventId)
+        q.eq('personId', personId as Id<'persons'>).eq('eventId', eventId)
       )
       .first();
 
@@ -309,22 +311,24 @@ export const canModifyReply = internalQuery({
       return false;
     }
 
+    // Get the post to find the event
+    const post = await ctx.db.get(reply.postId);
+    if (!post?.eventId || post.groupId) {
+      return false;
+    }
+
     // Check if user is the author
     if (reply.authorId === personId) {
       return true;
     }
 
-    // Get the post to find the event
-    const post = await ctx.db.get(reply.postId);
-    if (!post) {
-      return false;
-    }
-
+    // This preflight belongs to legacy Event-scoped REST clients.
+    const eventId = post.eventId;
     // Check if user has moderator+ role in the event
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
-        q.eq('personId', personId as Id<'persons'>).eq('eventId', post.eventId)
+        q.eq('personId', personId as Id<'persons'>).eq('eventId', eventId)
       )
       .first();
 

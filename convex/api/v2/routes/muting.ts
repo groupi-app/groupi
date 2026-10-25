@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import {
   OpenAPIHono,
   createRoute,
@@ -148,6 +149,7 @@ export function createMutingRoutes() {
 
       return c.json({ message }, 200);
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to mute event';
       const code = message.includes('not a member') ? 'FORBIDDEN' : 'NOT_FOUND';
@@ -209,6 +211,7 @@ export function createMutingRoutes() {
 
       return c.body(null, 204);
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Event is not muted';
       return c.json(
@@ -285,6 +288,7 @@ export function createMutingRoutes() {
 
       return c.json({ message }, 200);
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to mute post';
       const code = message.includes('not a member') ? 'FORBIDDEN' : 'NOT_FOUND';
@@ -346,6 +350,7 @@ export function createMutingRoutes() {
 
       return c.body(null, 204);
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Post is not muted';
       return c.json(
@@ -409,6 +414,7 @@ export function createMutingRoutes() {
               });
         return c.json(result, 200);
       } catch (error) {
+        if (error instanceof ConvexError) throw error;
         const forbidden =
           error instanceof Error && error.message.includes('not a member');
         return c.json(

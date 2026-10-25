@@ -1,3 +1,4 @@
+import { requireEventPost } from '../lib/discussionAccess';
 import {
   internalQuery,
   internalMutation,
@@ -38,7 +39,8 @@ async function readPostSummary(ctx: QueryCtx, post: Doc<'posts'>) {
     author: await readDiscussionAuthor(ctx, post.authorId),
   };
 }
-async function readPostDetail(ctx: QueryCtx, post: Doc<'posts'>) {
+async function readPostDetail(ctx: QueryCtx, storedPost: Doc<'posts'>) {
+  const post = requireEventPost(storedPost);
   const replies = await ctx.db
     .query('replies')
     .withIndex('by_post', q => q.eq('postId', post._id))
@@ -97,6 +99,8 @@ export const getPostDetail = internalQuery({
     const post = await ctx.db.get(postId as Id<'posts'>);
     if (
       !post ||
+      !post.eventId ||
+      post.groupId ||
       !(await getEventMembershipForPerson(
         ctx,
         post.eventId,
@@ -135,6 +139,10 @@ export const updatePost = internalMutation({
   },
   returns: postDetail,
   handler: async (ctx, { postId, personId, ...updates }) => {
+    const existing = await ctx.db.get(postId as Id<'posts'>);
+    if (!existing)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(existing);
     const { post } = await updatePostForPerson(ctx, personId as Id<'persons'>, {
       postId: postId as Id<'posts'>,
       ...updates,
@@ -146,8 +154,13 @@ export const updatePost = internalMutation({
 export const deletePost = internalMutation({
   args: { postId: v.string(), personId: v.string() },
   returns: v.object({ success: v.boolean() }),
-  handler: async (ctx, { postId, personId }) =>
-    deletePostForPerson(ctx, personId as Id<'persons'>, {
-      postId: postId as Id<'posts'>,
-    }),
+  handler: async (ctx, { postId, personId }) => {
+    const existing = await ctx.db.get(postId as Id<'posts'>);
+    if (!existing)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(existing);
+    return deletePostForPerson(ctx, personId as Id<'persons'>, {
+      postId: existing._id,
+    });
+  },
 });
