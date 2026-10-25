@@ -65,11 +65,11 @@ acceptance. Matching frontend/backend/session, real-device and observed VoiceOve
 checks remain open. No login, credentials, backend deployment or real data writes
 were performed. The shared Post/Form/List/Poll feature is outside this candidate.
 
-The exact `@groupi/web` patch changeset summary is awaiting user approval. Automatic
-approval review denied the branch push before execution because that prerequisite
-is pending; no remote branch or draft PR has been created. Resume the changeset,
-normal push and draft PR targeting `test` after the requested approval. No merge
-or deployment is authorized.
+The user approved the exact `@groupi/web` patch summary on 2026-10-25;
+`.changeset/quiet-stickers-connected-navigation.md` records it. The earlier push
+was denied before execution while approval was pending; its remote-state check
+confirmed no branch existed. Normal push and a draft PR targeting `test` resume
+with that new approval. No merge or deployment is authorized.
 
 ## Design-language merge integration — 2026-10-25
 
