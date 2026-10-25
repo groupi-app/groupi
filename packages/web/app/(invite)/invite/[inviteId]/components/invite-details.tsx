@@ -107,7 +107,9 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
         </CardHeader>
         <CardContent className='space-y-4'>
           <div>
-            <h3 className='font-semibold text-lg'>{event.title}</h3>
+            <h3 className='font-heading font-semibold text-lg'>
+              {event.title}
+            </h3>
             {event.description && (
               <p className='text-muted-foreground mt-1'>{event.description}</p>
             )}

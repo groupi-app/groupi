@@ -45,6 +45,8 @@ export interface SettingsPageTemplateProps {
    * Defaults to '/settings' for settings subpages.
    */
   backHref?: string | null;
+  /** Destination label for the mobile back link. */
+  backLabel?: string;
   /**
    * Whether to show back button on mobile (defaults to true for settings pages)
    */
@@ -67,6 +69,7 @@ export function SettingsPageTemplate({
   maxWidth = 'sm',
   className,
   backHref = '/settings',
+  backLabel = 'Settings',
   showMobileBack = true,
 }: SettingsPageTemplateProps) {
   return (
@@ -85,13 +88,13 @@ export function SettingsPageTemplate({
             className='md:hidden flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mb-3 -ml-1'
           >
             <Icons.back className='h-5 w-5' />
-            <span className='text-sm'>Settings</span>
+            <span className='text-sm'>{backLabel}</span>
           </Link>
         )}
-        <h1 className='text-3xl font-heading font-medium flex items-center gap-2'>
-          {title}
+        <div className='flex flex-wrap items-center gap-2'>
+          <h1 className='text-3xl font-heading font-medium'>{title}</h1>
           {titleBadge}
-        </h1>
+        </div>
         {description && (
           <p className='text-muted-foreground mt-1'>{description}</p>
         )}

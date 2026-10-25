@@ -178,6 +178,8 @@ vi.mock('lucide-react-native', () => ({
 }));
 vi.mock('react-native-screens', () => ({ FullWindowOverlay: 'View' }));
 vi.mock('react-native-reanimated', () => ({
+  useReducedMotion: () => false,
+  cancelAnimation: vi.fn(),
   default: { View: 'View' },
   FadeIn: {},
   FadeOut: {},

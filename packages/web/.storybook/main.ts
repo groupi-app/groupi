@@ -7,7 +7,7 @@ const config: StorybookConfig = {
     '../components/**/*.stories.@(js|jsx|mjs|ts|tsx)',
   ],
   addons: [
-    '@storybook/addon-essentials',
+    '@storybook/addon-docs',
     '@storybook/addon-a11y',
     '@storybook/addon-themes',
   ],
@@ -15,7 +15,10 @@ const config: StorybookConfig = {
     name: '@storybook/nextjs',
     options: {},
   },
-  staticDirs: ['../public'],
+  staticDirs: [
+    '../public',
+    { from: '../../../assets/fonts', to: '/assets/fonts' },
+  ],
   typescript: {
     reactDocgen: 'react-docgen-typescript',
   },

@@ -5,6 +5,7 @@
 @source './app';
 
 @theme {
+  --font-heading: 'Geologica';
   /* Border Radius - Component Tokens */
   --radius-button: 1rem;
   --radius-card: 1.25rem;
@@ -29,6 +30,39 @@
 @layer theme {
   :root {
     @variant light {
+      --color-sticker-edge: #ffffff;
+      --color-primary-pressed: var(--color-primary);
+      --color-primary-backing: var(--color-primary);
+      --color-primary-subtle: var(--color-primary);
+      --color-secondary-pressed: var(--color-secondary);
+      --color-secondary-backing: var(--color-secondary);
+      --color-secondary-subtle: var(--color-secondary);
+      --color-accent-pressed: var(--color-accent);
+      --color-accent-backing: var(--color-accent);
+      --color-accent-subtle: var(--color-accent);
+      --color-destructive-pressed: var(--color-destructive);
+      --color-destructive-backing: var(--color-destructive);
+      --color-destructive-subtle: var(--color-destructive);
+      --color-success-pressed: var(--color-success);
+      --color-success-backing: var(--color-success);
+      --color-success-subtle: var(--color-success);
+      --color-warning-pressed: var(--color-warning);
+      --color-warning-backing: var(--color-warning);
+      --color-warning-subtle: var(--color-warning);
+      --color-info-pressed: var(--color-info);
+      --color-info-backing: var(--color-info);
+      --color-info-subtle: var(--color-info);
+      --color-primary-subtle-foreground: var(--color-foreground);
+      --color-secondary-subtle-foreground: var(--color-foreground);
+      --color-accent-subtle-foreground: var(--color-foreground);
+      --color-destructive-subtle-foreground: var(--color-foreground);
+      --color-success-subtle-foreground: var(--color-foreground);
+      --color-warning-subtle-foreground: var(--color-foreground);
+      --color-info-subtle-foreground: var(--color-foreground);
+      --color-success-foreground: var(--color-foreground);
+      --color-warning-foreground: var(--color-foreground);
+      --color-info-foreground: var(--color-foreground);
+
       /* Brand */
       --color-primary: hsl(285, 100%, 34%);
       --color-primary-hover: hsl(285, 100%, 28%);
@@ -92,6 +126,39 @@
     }
 
     @variant dark {
+      --color-sticker-edge: #ffffff;
+      --color-primary-pressed: var(--color-primary);
+      --color-primary-backing: var(--color-primary);
+      --color-primary-subtle: var(--color-primary);
+      --color-secondary-pressed: var(--color-secondary);
+      --color-secondary-backing: var(--color-secondary);
+      --color-secondary-subtle: var(--color-secondary);
+      --color-accent-pressed: var(--color-accent);
+      --color-accent-backing: var(--color-accent);
+      --color-accent-subtle: var(--color-accent);
+      --color-destructive-pressed: var(--color-destructive);
+      --color-destructive-backing: var(--color-destructive);
+      --color-destructive-subtle: var(--color-destructive);
+      --color-success-pressed: var(--color-success);
+      --color-success-backing: var(--color-success);
+      --color-success-subtle: var(--color-success);
+      --color-warning-pressed: var(--color-warning);
+      --color-warning-backing: var(--color-warning);
+      --color-warning-subtle: var(--color-warning);
+      --color-info-pressed: var(--color-info);
+      --color-info-backing: var(--color-info);
+      --color-info-subtle: var(--color-info);
+      --color-primary-subtle-foreground: var(--color-foreground);
+      --color-secondary-subtle-foreground: var(--color-foreground);
+      --color-accent-subtle-foreground: var(--color-foreground);
+      --color-destructive-subtle-foreground: var(--color-foreground);
+      --color-success-subtle-foreground: var(--color-foreground);
+      --color-warning-subtle-foreground: var(--color-foreground);
+      --color-info-subtle-foreground: var(--color-foreground);
+      --color-success-foreground: var(--color-foreground);
+      --color-warning-foreground: var(--color-foreground);
+      --color-info-foreground: var(--color-foreground);
+
       /* Brand */
       --color-primary: hsl(280, 85%, 60%);
       --color-primary-hover: hsl(280, 85%, 68%);

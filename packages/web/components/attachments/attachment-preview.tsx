@@ -105,7 +105,7 @@ export function AttachmentPreview({
                 onClick={() => handleImageClick(item)}
                 className={cn(
                   'size-16 rounded-lg overflow-hidden bg-muted',
-                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 )}
               >
                 {item.preview ? (
@@ -144,7 +144,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-raised',
+                  'bg-background border border-border',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -163,7 +163,7 @@ export function AttachmentPreview({
                 className={cn(
                   'size-16 rounded-lg overflow-hidden bg-muted border border-border',
                   'flex flex-col items-center justify-center gap-1',
-                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 )}
               >
                 {item.preview ? (
@@ -192,7 +192,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-raised',
+                  'bg-background border border-border',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -211,7 +211,7 @@ export function AttachmentPreview({
                 className={cn(
                   'size-16 rounded-lg overflow-hidden bg-muted border border-border',
                   'flex flex-col items-center justify-center gap-1',
-                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 )}
               >
                 <Icons.fileAudio className='h-5 w-5 text-muted-foreground' />
@@ -232,7 +232,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-raised',
+                  'bg-background border border-border',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -251,7 +251,7 @@ export function AttachmentPreview({
                 className={cn(
                   'size-16 rounded-lg overflow-hidden bg-muted border border-border',
                   'flex flex-col items-center justify-center gap-1',
-                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 )}
               >
                 <FileIcon
@@ -275,7 +275,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-raised',
+                  'bg-background border border-border',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -522,7 +522,7 @@ export function AttachmentPreview({
                   <button
                     type='button'
                     onClick={() => handleImageClick(item)}
-                    className='w-full h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                    className='w-full h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   >
                     {item.preview ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -530,9 +530,8 @@ export function AttachmentPreview({
                         src={item.preview}
                         alt={item.filename}
                         className={cn(
-                          'w-full h-full object-cover transition-all',
-                          showSpoilerOverlay && 'blur-xl scale-110',
-                          !showSpoilerOverlay && 'group-hover:scale-105'
+                          'w-full h-full object-cover',
+                          showSpoilerOverlay && 'blur-xl scale-110'
                         )}
                       />
                     ) : (
@@ -575,7 +574,7 @@ export function AttachmentPreview({
                             'p-1.5 rounded-md',
                             'bg-black/70 hover:bg-black/90 text-white',
                             'transition-colors',
-                            'focus:outline-none focus:ring-1 focus:ring-white'
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                           )}
                           aria-label={
                             item.isSpoiler
@@ -607,7 +606,7 @@ export function AttachmentPreview({
                             'p-1.5 rounded-md',
                             'bg-black/70 hover:bg-black/90 text-white',
                             'transition-colors',
-                            'focus:outline-none focus:ring-1 focus:ring-white'
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                           )}
                           aria-label={`Edit ${item.filename}`}
                         >
@@ -631,7 +630,7 @@ export function AttachmentPreview({
                             'p-1.5 rounded-md',
                             'bg-black/70 hover:bg-destructive text-white',
                             'transition-colors',
-                            'focus:outline-none focus:ring-1 focus:ring-white'
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                           )}
                           aria-label={`Remove ${item.filename}`}
                         >
@@ -680,7 +679,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => setEditingItem(item)}
-                        className='p-1 rounded hover:bg-accent/80 transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                         aria-label={`Edit ${item.filename}`}
                       >
                         <Icons.edit className='h-3.5 w-3.5' />
@@ -695,7 +694,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => onRemove(item.id)}
-                        className='p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground transition-colors focus:outline-none'
+                        className='p-1 rounded text-destructive hover:bg-bg-error-subtle hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                         aria-label={`Remove ${item.filename}`}
                       >
                         <Icons.delete className='h-3.5 w-3.5' />
@@ -728,7 +727,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => setEditingItem(item)}
-                        className='p-1 rounded hover:bg-accent/80 transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                         aria-label={`Edit ${item.filename}`}
                       >
                         <Icons.edit className='h-3.5 w-3.5' />
@@ -743,7 +742,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => onRemove(item.id)}
-                        className='p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground transition-colors focus:outline-none'
+                        className='p-1 rounded text-destructive hover:bg-bg-error-subtle hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                         aria-label={`Remove ${item.filename}`}
                       >
                         <Icons.delete className='h-3.5 w-3.5' />
@@ -799,7 +798,7 @@ export function AttachmentPreview({
                       className={cn(
                         'p-1 rounded hover:bg-accent/80 flex-shrink-0',
                         'transition-colors',
-                        'focus:outline-none'
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                       )}
                       aria-label={`Edit ${item.filename}`}
                     >
@@ -815,9 +814,9 @@ export function AttachmentPreview({
                       type='button'
                       onClick={() => onRemove(item.id)}
                       className={cn(
-                        'p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground flex-shrink-0',
+                        'p-1 rounded text-destructive hover:bg-bg-error-subtle hover:text-destructive flex-shrink-0',
                         'transition-colors',
-                        'focus:outline-none'
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                       )}
                       aria-label={`Remove ${item.filename}`}
                     >

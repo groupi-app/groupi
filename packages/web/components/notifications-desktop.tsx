@@ -17,7 +17,12 @@ export function NotificationsDesktop() {
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <Button size='icon' variant='ghost' className='rounded-full relative'>
+        <Button
+          size='icon'
+          variant='ghost'
+          className='rounded-full relative'
+          aria-label='Notifications'
+        >
           <Icons.bell className='size-5' />
           <NotificationCount />
         </Button>

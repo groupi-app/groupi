@@ -1,3 +1,4 @@
+vi.unmock('@groupi/shared/design/themes');
 import type { ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

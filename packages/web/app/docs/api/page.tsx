@@ -97,7 +97,7 @@ function Section({
 }) {
   return (
     <section id={id} className='mb-8 scroll-mt-20'>
-      <h2 className='text-lg font-semibold mb-3'>{title}</h2>
+      <h2 className='font-heading text-lg font-semibold mb-3'>{title}</h2>
       <div className='space-y-2'>{children}</div>
     </section>
   );
@@ -145,7 +145,9 @@ export default function APIReferencePage() {
       </nav>
       <div>
         <div className='mb-8'>
-          <h1 className='text-2xl font-bold mb-2'>API Reference</h1>
+          <h1 className='font-heading text-2xl font-bold mb-2'>
+            API Reference
+          </h1>
           <p className='text-muted-foreground'>
             The Groupi REST API v2. All endpoints require an API key via the{' '}
             <code className='text-sm'>x-api-key</code> header.
@@ -153,7 +155,9 @@ export default function APIReferencePage() {
         </div>
 
         <section id='versions' className='mb-8 scroll-mt-20'>
-          <h2 className='text-lg font-semibold mb-3'>Versions & Migration</h2>
+          <h2 className='font-heading text-lg font-semibold mb-3'>
+            Versions & Migration
+          </h2>
           <div className='rounded-card bg-card p-4 text-sm space-y-3'>
             <p>
               <strong>v2 is recommended for new integrations.</strong> It
@@ -194,7 +198,9 @@ v1: https://api.groupi.gg/api/v1`}
         </section>
 
         <section id='auth' className='mb-8 scroll-mt-20'>
-          <h2 className='text-lg font-semibold mb-3'>Authentication</h2>
+          <h2 className='font-heading text-lg font-semibold mb-3'>
+            Authentication
+          </h2>
           <div className='rounded-card bg-card p-4 text-sm space-y-2'>
             <p>
               Include your API key in the{' '}
@@ -670,7 +676,9 @@ v1: https://api.groupi.gg/api/v1`}
         </Section>
 
         <section id='responses' className='mb-8 scroll-mt-20'>
-          <h2 className='text-lg font-semibold mb-3'>Response Format (v2)</h2>
+          <h2 className='font-heading text-lg font-semibold mb-3'>
+            Response Format (v2)
+          </h2>
           <div className='rounded-card bg-card p-4 text-sm space-y-3'>
             <div>
               <p className='font-medium mb-1'>Success</p>

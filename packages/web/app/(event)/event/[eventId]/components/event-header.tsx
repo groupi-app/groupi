@@ -7,6 +7,7 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { StickerIcon } from '@/components/atoms';
 import Link from 'next/link';
@@ -278,8 +279,8 @@ export function EventHeader({ data }: EventHeaderProps) {
           </Button>
         </Link>
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setDrawerOpen(false);
             setDeleteDialogOpen(true);
@@ -320,8 +321,8 @@ export function EventHeader({ data }: EventHeaderProps) {
           Report Event
         </Button>
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setDrawerOpen(false);
             setLeaveDialogOpen(true);
@@ -348,7 +349,7 @@ export function EventHeader({ data }: EventHeaderProps) {
             <img
               src={event.imageUrl}
               alt={`Cover image for ${title}`}
-              className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+              className='w-full h-full object-cover transition-transform duration-300'
               style={
                 coverObjectPosition
                   ? { objectPosition: coverObjectPosition }
@@ -443,10 +444,11 @@ export function EventHeader({ data }: EventHeaderProps) {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem
-                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                      variant='destructive'
+                      className='cursor-pointer'
                       onClick={() => setDeleteDialogOpen(true)}
                     >
-                      <div className='flex items-center gap-1'>
+                      <div className='flex items-center gap-3'>
                         <Icons.delete className='size-4' />
                         <span>Delete Event</span>
                       </div>
@@ -458,16 +460,17 @@ export function EventHeader({ data }: EventHeaderProps) {
                       className='cursor-pointer'
                       onClick={() => setReportDialogOpen(true)}
                     >
-                      <div className='flex items-center gap-1'>
+                      <div className='flex items-center gap-3'>
                         <Icons.flag className='size-4' />
                         <span>Report Event</span>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                      variant='destructive'
+                      className='cursor-pointer'
                       onClick={() => setLeaveDialogOpen(true)}
                     >
-                      <div className='flex items-center gap-1'>
+                      <div className='flex items-center gap-3'>
                         <Icons.leave className='size-4' />
                         <span>Leave Event</span>
                       </div>
@@ -514,6 +517,8 @@ export function EventHeader({ data }: EventHeaderProps) {
           <div className='flex items-center gap-2.5'>
             {visibility === 'FRIENDS' ? (
               <Icons.people className='size-4 text-muted-foreground/70' />
+            ) : visibility === 'PUBLIC' ? (
+              <Globe className='size-4 text-muted-foreground/70' />
             ) : (
               <Icons.lock className='size-4 text-muted-foreground/70' />
             )}

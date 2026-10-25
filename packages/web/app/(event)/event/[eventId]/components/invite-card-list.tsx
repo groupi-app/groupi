@@ -73,7 +73,7 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
 
         {/* Valid section header */}
         <div className='flex items-center gap-2 ml-2 mt-4'>
-          <Skeleton className='size-6 rounded-md' />
+          <Skeleton className='size-6 rounded-card' />
           <div className='flex items-center gap-1'>
             <h1 className='font-heading text-2xl text-muted-foreground'>
               Valid
@@ -91,7 +91,7 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
 
         {/* Expired section header */}
         <div className='flex items-center gap-2 ml-2 mt-4'>
-          <Skeleton className='size-6 rounded-md' />
+          <Skeleton className='size-6 rounded-card' />
           <div className='flex items-center gap-1'>
             <h1 className='font-heading text-2xl text-muted-foreground'>
               Expired
@@ -165,7 +165,7 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
         >
           <div>
             <div className='flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground'>
-              <h1 className='font-heading text-2xl '>Valid ({valid.length})</h1>
+              <h1 className='font-heading text-2xl'>Valid ({valid.length})</h1>
               <div className='size-6'>
                 {showValid ? (
                   <Icons.up className='w-full h-full' />
@@ -236,7 +236,7 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
         >
           <div>
             <div className='flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground'>
-              <h1 className='font-heading text-2xl '>
+              <h1 className='font-heading text-2xl'>
                 Expired ({expired.length})
               </h1>
               <div className='size-6'>
@@ -319,10 +319,10 @@ function InviteCardSkeleton() {
   return (
     <div className='relative max-w-3xl'>
       {/* Checkbox placeholder */}
-      <Skeleton className='size-6 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto rounded-md' />
+      <Skeleton className='size-6 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto rounded-card' />
 
       {/* Card body */}
-      <div className='border border-border shadow-floating rounded-lg py-3 px-6 bg-card'>
+      <div className='border border-border rounded-card py-3 px-6 bg-card'>
         <div className='flex items-center md:pl-8'>
           <div className='flex md:items-center gap-2 md:gap-8 flex-col md:flex-row w-full'>
             {/* Name and created date */}
@@ -429,11 +429,12 @@ function PendingInternalInviteCard({
 
             {/* Cancel button */}
             <Button
-              variant='ghost'
+              variant='destructive-ghost'
               size='icon'
+              aria-label='Cancel invite'
               onClick={handleCancel}
               disabled={isCancelling}
-              className='size-9 text-muted-foreground hover:text-error hover:bg-bg-error-subtle'
+              className='size-9'
             >
               {isCancelling ? (
                 <Icons.spinner className='size-4 animate-spin' />

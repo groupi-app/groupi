@@ -14,7 +14,7 @@ export function GroupQuestionnaireRecords({
     return <p role='status'>Checking your questionnaire access…</p>;
   return (
     <main className='mx-auto max-w-2xl p-6 space-y-4'>
-      <h1 className='text-2xl font-semibold'>
+      <h1 className='font-heading text-2xl font-semibold'>
         Your Group questionnaire records
       </h1>
       <Link className='text-primary underline' href={`/g/${groupId}`}>

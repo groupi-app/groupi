@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -36,7 +37,7 @@ export function GroupInvitationManagement({
     >
       <h2
         id='group-invitation-management-heading'
-        className='text-lg font-semibold'
+        className='font-heading text-lg font-semibold'
       >
         Group invitations
       </h2>
@@ -53,7 +54,7 @@ export function GroupInvitationManagement({
           New invitations are disabled for this Group.
         </p>
       )}
-      <h3 className='font-semibold'>Invitation history</h3>
+      <h3 className='font-heading font-semibold'>Invitation history</h3>
       {invitations === undefined ? (
         <p role='status'>Loading invitation history…</p>
       ) : (
@@ -135,7 +136,10 @@ function GroupInvitationPolicy({
       <p className='text-sm text-muted-foreground'>
         Sharing a Group link does not invite or admit anyone.
       </p>
-      <Button disabled={pending || enabled === invitationsEnabled}>
+      <Button
+        icon={<ActionSave aria-hidden='true' className='size-4' />}
+        disabled={pending || enabled === invitationsEnabled}
+      >
         Save invitation settings
       </Button>
       {error && (

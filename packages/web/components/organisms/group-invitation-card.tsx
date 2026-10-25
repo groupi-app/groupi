@@ -60,7 +60,7 @@ export function GroupInvitationCard({
       className='rounded-card border border-border p-4 space-y-2'
       aria-label={`${invitation.group.name} invitation`}
     >
-      <h3 className='font-semibold'>{invitation.group.name}</h3>
+      <h3 className='font-heading font-semibold'>{invitation.group.name}</h3>
       <p className='text-sm text-muted-foreground'>
         {manager ? 'Invited' : 'Invited by'} {personName}
         {person.username ? ` (@${person.username})` : ''}

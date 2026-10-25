@@ -14,6 +14,7 @@ export default function EventSettingsDateMultiPage(props: {
     <SettingsPageTemplate
       title='Poll Attendees'
       backHref={`/event/${eventId}/settings/date`}
+      backLabel='Date settings'
       maxWidth='md'
     >
       <EditEventMultiDate

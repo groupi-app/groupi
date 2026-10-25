@@ -81,7 +81,7 @@ export function AttendeesContent() {
           </Link>
         </div>
         <div className='py-4'>
-          <h1 className='text-2xl font-bold mb-4'>Attendees</h1>
+          <h1 className='font-heading text-2xl font-bold mb-4'>Attendees</h1>
           <AttendeeListSkeleton />
         </div>
       </div>
@@ -93,7 +93,9 @@ export function AttendeesContent() {
     return (
       <div className='container max-w-4xl py-4'>
         <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-error'>Event not found</h1>
+          <h1 className='font-heading text-2xl font-bold text-error'>
+            Event not found
+          </h1>
         </div>
       </div>
     );
@@ -111,7 +113,7 @@ export function AttendeesContent() {
         </Link>
       </div>
       <div className='py-4'>
-        <h1 className='text-2xl font-bold mb-4'>Attendees</h1>
+        <h1 className='font-heading text-2xl font-bold mb-4'>Attendees</h1>
         <Attendees data={membersData} />
       </div>
     </div>

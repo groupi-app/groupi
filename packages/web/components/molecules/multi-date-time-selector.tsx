@@ -58,6 +58,7 @@ export function MultiDateTimeSelector({
 
   // Batch add form state
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [addError, setAddError] = useState<string | null>(null);
   const [time, setTime] = useState(currentTime);
   const [hasEndTime, setHasEndTime] = useState(false);
   const [endTime, setEndTime] = useState(addOneHour(currentTime));
@@ -86,15 +87,22 @@ export function MultiDateTimeSelector({
     if (selectedDates.length === 0) return;
 
     // Validate time format
-    if (!TIME_REGEX.test(time)) return;
-    if (hasEndTime && !TIME_REGEX.test(endTime)) return;
+    if (!TIME_REGEX.test(time)) {
+      setAddError('Enter a valid start time.');
+      return;
+    }
+    if (hasEndTime && !TIME_REGEX.test(endTime)) {
+      setAddError('Enter a valid end time.');
+      return;
+    }
 
     // Validate end time is after start time if enabled
     if (hasEndTime) {
       const [startH, startM] = parseTimeString(time);
       const [endH, endM] = parseTimeString(endTime);
       if (endH * 60 + endM <= startH * 60 + startM) {
-        return; // Invalid - end must be after start for same-day
+        setAddError('Choose an end time after the start time.');
+        return;
       }
     }
 
@@ -124,13 +132,15 @@ export function MultiDateTimeSelector({
     }
 
     if (newOptions.length === 0) {
-      return; // All selected dates were in the past
+      setAddError('Choose a date and time in the future.');
+      return;
     }
 
     setDateTimeOptions(prev => mergeDateTimeOptions(prev, newOptions));
 
-    // Clear selection
+    // Clear selection and validation after a successful addition.
     setSelectedDates([]);
+    setAddError(null);
   }, [selectedDates, time, hasEndTime, endTime]);
 
   // Update a specific option
@@ -180,7 +190,7 @@ export function MultiDateTimeSelector({
       <div className='flex items-center md:items-start gap-5 md:gap-0 flex-col md:flex-row md:justify-evenly'>
         {/* Batch add dates section */}
         <div className='flex flex-col gap-4'>
-          <Card className='w-fit overflow-hidden border-border shadow-raised'>
+          <Card className='w-fit overflow-hidden border-border'>
             <CardContent className='p-0'>
               <Calendar
                 mode='multiple'
@@ -270,6 +280,12 @@ export function MultiDateTimeSelector({
                 </span>
               </div>
 
+              {addError && (
+                <p role='alert' className='text-sm text-error'>
+                  {addError}
+                </p>
+              )}
+
               {/* Add Button */}
               <Button
                 disabled={selectedDates.length < 1 || disabled}
@@ -297,9 +313,9 @@ export function MultiDateTimeSelector({
                 </h2>
                 <Button
                   size='sm'
-                  variant='ghost'
+                  variant='destructive-ghost'
                   type='button'
-                  className='flex items-center gap-1 text-xs hover:bg-destructive hover:text-destructive-foreground'
+                  className='flex items-center gap-1 text-xs'
                   onClick={clearAllOptions}
                   disabled={dateTimeOptions.length === 0 || disabled}
                 >

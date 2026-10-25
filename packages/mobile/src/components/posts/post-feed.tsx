@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   View,
   type ListRenderItem,
 } from 'react-native';
@@ -144,19 +144,19 @@ export function PostFeed({
       />
 
       {showNewPost ? (
-        <Pressable
+        <Button
           onPress={() => router.push(`/event/${eventId}/new-post`)}
           accessibilityRole='button'
           accessibilityLabel='Create new post'
           accessibilityHint='Opens the new post composer'
           hitSlop={4}
-          className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-primary-foreground bg-primary px-5 py-3 shadow-floating active:scale-95 active:bg-primary-hover'
+          className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-sticker-edge bg-primary px-5 py-3 shadow-floating active:bg-primary-pressed'
         >
           <Ionicons name='add' size={20} color={primaryForegroundColor} />
           <Text className='font-semibold text-primary-foreground'>
             New Post
           </Text>
-        </Pressable>
+        </Button>
       ) : null}
     </View>
   );

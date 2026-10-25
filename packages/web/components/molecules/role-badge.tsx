@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 
 export type MemberRole = 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
@@ -21,6 +22,7 @@ const roleConfig: Record<
     icon: React.ReactNode;
     label: string;
     abbreviation: string;
+    variant: 'warning' | 'info' | 'secondary';
     colorClass: string;
   }
 > = {
@@ -28,22 +30,22 @@ const roleConfig: Record<
     icon: <Icons.crown className='size-3.5' />,
     label: 'Organizer',
     abbreviation: 'ORG',
-    colorClass:
-      'bg-warning text-white border-2 border-white shadow-raised hover:opacity-90',
+    variant: 'warning',
+    colorClass: 'text-warning',
   },
   MODERATOR: {
     icon: <Icons.shield className='size-3.5' />,
     label: 'Moderator',
     abbreviation: 'MOD',
-    colorClass:
-      'bg-info text-white border-2 border-white shadow-raised hover:opacity-90',
+    variant: 'info',
+    colorClass: 'text-info',
   },
   ATTENDEE: {
     icon: <Icons.user className='size-3.5' />,
     label: 'Attendee',
     abbreviation: 'ATT',
-    colorClass:
-      'bg-muted text-muted-foreground border-2 border-white shadow-raised',
+    variant: 'secondary',
+    colorClass: 'text-muted-foreground',
   },
 };
 
@@ -77,9 +79,7 @@ export function RoleBadge({
         className={cn('inline-flex items-center', className)}
         aria-label={config.label}
       >
-        <span
-          className={cn('flex items-center', config.colorClass.split(' ')[0])}
-        >
+        <span className={cn('flex items-center', config.colorClass)}>
           {config.icon}
         </span>
       </span>
@@ -88,19 +88,19 @@ export function RoleBadge({
 
   const text = variant === 'abbreviated' ? config.abbreviation : config.label;
 
-  // Sticker journal aesthetic - use solid badges instead of outline
+  // Roles are passive cut-out labels, using the canonical semantic treatment.
   return (
-    <span
+    <Badge
       data-slot='role-badge'
+      variant={config.variant}
       className={cn(
-        'inline-flex items-center gap-1 font-medium rounded-badge',
+        'inline-flex items-center gap-1 font-medium',
         sizeClass,
-        config.colorClass,
         className
       )}
     >
       {config.icon}
       <span>{text}</span>
-    </span>
+    </Badge>
   );
 }

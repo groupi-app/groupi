@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitialsFromName } from '@/lib/utils';
-import { Loader2, Camera, X } from 'lucide-react';
+import { Loader2, Camera, X, Save } from 'lucide-react';
 import { ImageCropModal } from '@/components/image-crop-modal';
 import { createLogger } from '@/lib/logger';
 import { useUpdateUserProfile } from '@/hooks/convex/use-users';
@@ -347,10 +347,10 @@ export function ProfileEditDialog({
                     userInfo.image) && (
                     <Button
                       type='button'
-                      variant='ghost'
+                      variant='destructive-ghost'
                       size='sm'
                       onClick={handleClearAvatar}
-                      className='text-xs text-muted-foreground hover:text-destructive'
+                      className='text-xs'
                     >
                       <X className='h-3 w-3 mr-1' />
                       Remove
@@ -431,6 +431,7 @@ export function ProfileEditDialog({
                 className='flex-1'
                 isLoading={isUploading || isPending || isSubmitting}
                 loadingText={isUploading ? 'Uploading...' : 'Saving...'}
+                icon={<Save className='size-4' />}
               >
                 Save
               </Button>

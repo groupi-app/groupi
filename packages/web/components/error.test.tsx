@@ -98,3 +98,10 @@ describe('ErrorPage', () => {
     expect(button).toBeInTheDocument();
   });
 });
+
+it('provides one My Events destination without nesting a second interactive control', () => {
+  render(<ErrorPage message='Error' />);
+  const destination = screen.getByRole('link', { name: 'My Events' });
+  expect(destination).toHaveAttribute('href', '/events');
+  expect(destination.querySelector('button')).toBeNull();
+});

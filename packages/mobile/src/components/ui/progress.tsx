@@ -2,21 +2,27 @@ import { cn } from '@/lib/utils';
 import * as ProgressPrimitive from '@rn-primitives/progress';
 import { Platform, View } from 'react-native';
 import Animated, {
-  Extrapolation,
-  interpolate,
   useAnimatedStyle,
   useDerivedValue,
   withSpring,
+  useReducedMotion,
 } from 'react-native-reanimated';
 
 function Progress({
   className,
   value,
+  max = 100,
   indicatorClassName,
   ...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root> & {
   indicatorClassName?: string;
 }) {
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 100;
+  const safeValue =
+    value == null
+      ? value
+      : Math.max(0, Math.min(safeMax, Number.isFinite(value) ? value : 0));
+  const percentage = ((safeValue ?? 0) / safeMax) * 100;
   return (
     <ProgressPrimitive.Root
       className={cn(
@@ -24,8 +30,10 @@ function Progress({
         className
       )}
       {...props}
+      value={safeValue}
+      max={safeMax}
     >
-      <Indicator value={value} className={indicatorClassName} />
+      <Indicator value={percentage} className={indicatorClassName} />
     </ProgressPrimitive.Root>
   );
 }
@@ -62,16 +70,16 @@ function WebIndicator({ value, className }: IndicatorProps) {
 }
 
 function NativeIndicator({ value, className }: IndicatorProps) {
+  const reducedMotion = useReducedMotion();
   const progress = useDerivedValue(() => value ?? 0);
 
   const indicator = useAnimatedStyle(() => {
     return {
-      width: withSpring(
-        `${interpolate(progress.value, [0, 100], [1, 100], Extrapolation.CLAMP)}%`,
-        { overshootClamping: true }
-      ),
+      width: reducedMotion
+        ? `${progress.value}%`
+        : withSpring(`${progress.value}%`, { overshootClamping: true }),
     };
-  }, [value]);
+  }, [value, reducedMotion]);
 
   if (Platform.OS === 'web') {
     return null;
@@ -81,7 +89,7 @@ function NativeIndicator({ value, className }: IndicatorProps) {
     <ProgressPrimitive.Indicator asChild>
       <Animated.View
         style={indicator}
-        className={cn('bg-foreground h-full', className)}
+        className={cn('bg-primary h-full', className)}
       />
     </ProgressPrimitive.Indicator>
   );

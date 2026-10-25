@@ -1,6 +1,7 @@
 'use client';
 import { AccountFormWithGuard } from './account-form-with-guard';
 
+import { Trash2 as ActionTrash2 } from 'lucide-react';
 import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
 import { LinkedAccountsList } from './linked-accounts-list';
@@ -77,6 +78,7 @@ export function AccountSettingsContent({
               certain.
             </p>
             <Button
+              icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
               type='button'
               variant='destructive'
               onClick={() => setDeleteModalOpen(true)}

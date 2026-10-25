@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useState, useCallback } from 'react';
 import {
   View,
@@ -312,14 +313,14 @@ function RequestsList({
             </View>
           </Pressable>
           <View className='flex-row gap-2'>
-            <Pressable
+            <Button
               onPress={() => onAccept(item.friendshipId)}
               className='rounded-button bg-primary px-3 py-1.5'
             >
               <Text className='text-sm font-medium text-primary-foreground'>
                 Accept
               </Text>
-            </Pressable>
+            </Button>
             <Pressable
               onPress={() => onDecline(item.friendshipId)}
               className='rounded-button border border-border px-3 py-1.5'
@@ -495,14 +496,14 @@ function SearchResults({
                   </View>
                 </Pressable>
                 {canAdd ? (
-                  <Pressable
+                  <Button
                     onPress={() => onSendRequest(item.personId)}
                     className='rounded-button bg-primary px-3 py-1.5'
                   >
                     <Text className='text-sm font-medium text-primary-foreground'>
                       Add
                     </Text>
-                  </Pressable>
+                  </Button>
                 ) : null}
               </View>
             );
@@ -572,14 +573,14 @@ function SearchResults({
               </View>
             </Pressable>
             {canAdd ? (
-              <Pressable
+              <Button
                 onPress={() => onSendRequest(item.personId)}
                 className='rounded-button bg-primary px-3 py-1.5'
               >
                 <Text className='text-sm font-medium text-primary-foreground'>
                   Add
                 </Text>
-              </Pressable>
+              </Button>
             ) : statusLabel ? (
               <View className='rounded-button border border-border px-3 py-1.5'>
                 <Text className='text-sm text-muted-foreground'>

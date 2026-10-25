@@ -22,7 +22,7 @@ export function CreateEventCard({ className }: CreateEventCardProps) {
         'bg-transparent cursor-pointer',
         'text-muted-foreground hover:text-foreground hover:bg-accent/50',
         'transition-all duration-fast ease-bounce',
-        'hover:scale-[1.02] active:scale-[0.98]',
+        ' ',
         className
       )}
     >

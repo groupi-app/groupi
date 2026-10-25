@@ -1,4 +1,5 @@
 'use client';
+import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,14 +34,14 @@ export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading lists…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1>Community lists</h1>
+      <h1 className='font-heading'>Community lists</h1>
       <p>
         Ongoing community contributions, independent of Invite Lists and Event
         Bring Lists. Marking complete is a list status only.
       </p>
       {policy.canConfigure && (
         <section className='space-y-3' aria-label='List owner policy'>
-          <h2>Owner policy</h2>
+          <h2 className='font-heading'>Owner policy</h2>
           <Button
             onClick={async () => {
               try {
@@ -189,7 +190,7 @@ function ListEditor({
   const [error, setError] = useState('');
   return (
     <main className='p-6 space-y-4'>
-      <h1>{list ? 'Manage list' : 'Create list'}</h1>
+      <h1 className='font-heading'>{list ? 'Manage list' : 'Create list'}</h1>
       {!list && (
         <div aria-label='Reusable list templates'>
           {groupListTemplates.map(template => (
@@ -351,7 +352,7 @@ function ListInteraction({
   const [message, setMessage] = useState('');
   return (
     <section className='space-y-4'>
-      <h1>{list.title}</h1>
+      <h1 className='font-heading'>{list.title}</h1>
       <p>{list.description}</p>
       <p>
         {list.resultsVisibility === 'MEMBERS'
@@ -453,7 +454,7 @@ function GroupListEntries({
   });
   return (
     <section className='space-y-3'>
-      <h2>Current entries</h2>
+      <h2 className='font-heading'>Current entries</h2>
       {entries?.page.map(entry => (
         <EntryEditor
           key={`${entry._id}:${entry.revision}:${version}`}
@@ -528,7 +529,12 @@ function EntryEditor({
             />
             Completed
           </label>
-          <Button disabled={busy}>Save entry</Button>
+          <Button
+            icon={<ActionSave aria-hidden='true' className='size-4' />}
+            disabled={busy}
+          >
+            Save entry
+          </Button>
         </form>
       ) : (
         <p>
@@ -558,7 +564,7 @@ export function GroupListOwnEntries({ toolId }: { toolId: Id<'groupTools'> }) {
   const remove = hooks.useRemoveListEntry();
   return (
     <main className='p-6 space-y-3'>
-      <h1>My saved list entries</h1>
+      <h1 className='font-heading'>My saved list entries</h1>
       <p>
         Your own retained contributions and their original list title. Current
         private list settings are not loaded.
@@ -568,7 +574,7 @@ export function GroupListOwnEntries({ toolId }: { toolId: Id<'groupTools'> }) {
           key={entry._id}
           className='rounded-card border border-border p-4'
         >
-          <h2>{entry.listTitle}</h2>
+          <h2 className='font-heading'>{entry.listTitle}</h2>
           <p>
             {entry.text} · {entry.completed ? 'Completed' : 'Open'}
           </p>

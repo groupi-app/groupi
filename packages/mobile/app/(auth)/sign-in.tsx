@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -419,7 +420,7 @@ export default function SignInScreen() {
               </View>
 
               {/* Verify button */}
-              <Pressable
+              <Button
                 className='items-center rounded-button bg-primary py-3.5'
                 onPress={handleVerifyCode}
                 disabled={anyLoading || otpCode.length !== 6}
@@ -431,7 +432,7 @@ export default function SignInScreen() {
                     Verify code
                   </Text>
                 )}
-              </Pressable>
+              </Button>
             </>
           ) : (
             <>
@@ -440,7 +441,7 @@ export default function SignInScreen() {
               ) : null}
 
               {/* Send code button */}
-              <Pressable
+              <Button
                 className='items-center rounded-button bg-primary py-3.5'
                 onPress={handleSendCode}
                 disabled={anyLoading || cooldownSeconds > 0}
@@ -452,7 +453,7 @@ export default function SignInScreen() {
                     Continue with email
                   </Text>
                 )}
-              </Pressable>
+              </Button>
             </>
           )}
 

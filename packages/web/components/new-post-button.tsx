@@ -21,12 +21,12 @@ export function NewPostButton({ permissions, userRole }: NewPostButtonProps) {
 
   return (
     <div className='fixed right-4 bottom-24 lg:right-24 xl:right-48 2xl:right-1/4 z-sticky'>
-      <Link data-test='new-post-button' href={`${pathname}/new-post`}>
-        <Button className='rounded-full flex items-center gap-1'>
+      <Button asChild>
+        <Link data-test='new-post-button' href={`${pathname}/new-post`}>
           <Icons.plus />
           <span>New Post</span>
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     </div>
   );
 }

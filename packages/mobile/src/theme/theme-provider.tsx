@@ -12,12 +12,15 @@ import type { FunctionArgs, FunctionReturnType } from 'convex/server';
 import { Uniwind } from 'uniwind';
 
 import { api } from 'convex/_generated/api';
+import { components } from '@groupi/shared/design';
 import type { Id } from 'convex/_generated/dataModel';
 import {
   type ThemeTokens,
   type ThemeTokenOverrides,
   baseThemeRegistry,
   DEFAULT_LIGHT_THEME_ID,
+  resolveThemePresentation,
+  type BaseTheme,
 } from '@groupi/shared/design/themes';
 import { normalizeMobileThemePreference } from './theme-preference';
 
@@ -46,11 +49,13 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function tokensToCssVars(
-  tokens: ThemeTokens,
+export function tokensToCssVars(
+  base: BaseTheme,
   overrides?: ThemeTokenOverrides
 ): Record<string, string> {
-  return {
+  const presentation = resolveThemePresentation(base, overrides);
+  const { tokens } = presentation;
+  const vars: Record<string, string> = {
     '--color-primary': overrides?.brand?.primary ?? tokens.brand.primary,
     '--color-primary-hover': tokens.brand.primaryHover,
     '--color-primary-foreground': tokens.text.onPrimary ?? 'hsl(0, 0%, 100%)',
@@ -106,19 +111,30 @@ function tokensToCssVars(
     '--color-input': tokens.border.default,
     '--color-ring': tokens.border.focus ?? tokens.brand.primary,
   };
+  vars['--color-sticker-edge'] = components.sticker.edgeColor;
+  for (const [name, action] of Object.entries(presentation.actions)) {
+    const token = name === 'destructive' ? 'destructive' : name;
+    vars[`--color-${token}`] = action.compositedFill;
+    vars[`--color-${token}-foreground`] = action.foreground;
+    vars[`--color-${token}-pressed`] = action.pressed;
+    vars[`--color-${token}-backing`] = action.backing;
+    vars[`--color-${token}-subtle`] = action.subtle;
+    vars[`--color-${token}-subtle-foreground`] = action.subtleForeground;
+  }
+  return vars;
 }
 
-function applyTheme(tokens: ThemeTokens, mode: 'light' | 'dark') {
-  Uniwind.updateCSSVariables(mode, tokensToCssVars(tokens));
+function applyTheme(base: BaseTheme, mode: 'light' | 'dark') {
+  Uniwind.updateCSSVariables(mode, tokensToCssVars(base));
   Uniwind.setTheme(mode);
 }
 
 function applyCustomTheme(
-  tokens: ThemeTokens,
+  base: BaseTheme,
   overrides: ThemeTokenOverrides,
   mode: 'light' | 'dark'
 ) {
-  Uniwind.updateCSSVariables(mode, tokensToCssVars(tokens, overrides));
+  Uniwind.updateCSSVariables(mode, tokensToCssVars(base, overrides));
   Uniwind.setTheme(mode);
 }
 
@@ -180,13 +196,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (selectedCustomTheme) {
       applyCustomTheme(
-        activeTheme.tokens,
+        activeTheme,
         selectedCustomTheme.tokenOverrides,
         selectedCustomTheme.mode
       );
       return;
     }
-    applyTheme(activeTheme.tokens, activeTheme.mode);
+    applyTheme(activeTheme, activeTheme.mode);
   }, [activeTheme, selectedCustomTheme]);
 
   useEffect(() => {
@@ -237,7 +253,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       selectedThemeType: preference.selectedThemeType,
       selectedCustomThemeId: preference.selectedCustomThemeId,
       customThemes,
-      tokens: activeTheme.tokens,
+      tokens: resolveThemePresentation(
+        activeTheme,
+        selectedCustomTheme?.tokenOverrides
+      ).tokens,
       isDark: activeTheme.mode === 'dark',
       isLoading:
         isAuthLoading ||
@@ -256,6 +275,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       preference,
       resolvedThemeId,
       savedPreference,
+      selectedCustomTheme,
       setTheme,
     ]
   );

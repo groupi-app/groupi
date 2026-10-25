@@ -512,6 +512,10 @@ export const semantic = {
 // =============================================================================
 
 export const components = {
+  // A cut sticker keeps its white paper edge in every palette, including dark.
+  sticker: {
+    edgeColor: primitives.colors.white,
+  },
   button: {
     radius: semantic.radius.component.button,
     paddingX: semantic.spacing.inset.md,

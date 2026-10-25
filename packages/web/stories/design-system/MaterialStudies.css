@@ -1,0 +1,4 @@
+/* Layout for the avatar-stack fixture only. Selected materials live in canonical components. */
+.material-avatar-stack > * + * {
+  margin-inline-start: -0.75rem;
+}

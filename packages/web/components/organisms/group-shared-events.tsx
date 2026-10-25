@@ -51,7 +51,9 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                 key={event._id}
                 className='flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-5'
               >
-                <h3 className='break-words font-semibold'>{event.title}</h3>
+                <h3 className='font-heading break-words font-semibold'>
+                  {event.title}
+                </h3>
                 {event.description && (
                   <p className='whitespace-pre-wrap break-words text-sm text-muted-foreground'>
                     {event.description}

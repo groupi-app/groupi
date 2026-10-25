@@ -128,7 +128,7 @@ function DeleteAccountContents({
               void handleDelete();
             }}
             disabled={!usernameMatches || deleting || !readiness?.canDelete}
-            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            variant='destructive'
           >
             {deleting && <Icons.spinner className='size-4 animate-spin' />}
             {deleting ? 'Deleting...' : 'Delete Account'}

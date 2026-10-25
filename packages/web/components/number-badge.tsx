@@ -1,4 +1,5 @@
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
 
 export function NumberBadge({
   num,
@@ -10,9 +11,12 @@ export function NumberBadge({
   return (
     <span className='relative inline-block'>
       {children}
-      <span className='absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-destructive-foreground transform translate-x-1/2 -translate-y-1/2 bg-destructive rounded-full'>
+      <Badge
+        variant='destructive'
+        className='absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 px-2 py-1 font-bold leading-none'
+      >
         {num}
-      </span>
+      </Badge>
     </span>
   );
 }

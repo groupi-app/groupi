@@ -68,7 +68,6 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.mail className='h-5 w-5' />
               Email Verification
             </CardTitle>
           </CardHeader>
@@ -95,7 +94,6 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.mail className='h-5 w-5' />
               Email Verification
             </CardTitle>
           </CardHeader>
@@ -116,7 +114,6 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.x className='h-5 w-5 text-destructive' />
               Invalid Link
             </CardTitle>
           </CardHeader>
@@ -143,7 +140,6 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.clock className='h-5 w-5 text-warning' />
               Link Expired
             </CardTitle>
           </CardHeader>
@@ -175,12 +171,12 @@ function VerifyEmailContent() {
       <div className='min-h-screen flex items-center justify-center p-4'>
         <Card className='max-w-md w-full'>
           <CardHeader>
+            {isSuccess ? (
+              <Icons.check className='h-5 w-5 text-success' />
+            ) : (
+              <Icons.x className='h-5 w-5 text-destructive' />
+            )}
             <CardTitle className='flex items-center gap-2'>
-              {isSuccess ? (
-                <Icons.check className='h-5 w-5 text-success' />
-              ) : (
-                <Icons.x className='h-5 w-5 text-destructive' />
-              )}
               {isSuccess ? 'Email Verified!' : 'Verification Failed'}
             </CardTitle>
           </CardHeader>
@@ -228,7 +224,6 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.mail className='h-5 w-5' />
               Verifying Email
             </CardTitle>
           </CardHeader>
@@ -253,7 +248,6 @@ function VerifyEmailContent() {
       <Card className='max-w-md w-full'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Icons.mail className='h-5 w-5' />
             Email Verification
           </CardTitle>
         </CardHeader>
@@ -277,7 +271,6 @@ function VerifyEmailFallback() {
       <Card className='max-w-md w-full'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Icons.mail className='h-5 w-5' />
             Email Verification
           </CardTitle>
         </CardHeader>

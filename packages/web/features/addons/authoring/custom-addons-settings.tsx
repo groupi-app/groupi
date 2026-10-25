@@ -66,7 +66,7 @@ function LoadingSkeleton() {
   return (
     <div className='grid gap-4 sm:grid-cols-2'>
       {[1, 2, 3].map(i => (
-        <Card key={i} className='rounded-card shadow-raised p-4'>
+        <Card key={i} className='rounded-card p-4'>
           <div className='flex items-center gap-3'>
             <div className='size-10 animate-pulse rounded-button bg-muted' />
             <div className='space-y-2'>

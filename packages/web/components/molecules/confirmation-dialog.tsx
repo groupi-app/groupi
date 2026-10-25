@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Trash2 } from 'lucide-react';
 import {
   DialogClose,
   DialogContent,
@@ -9,10 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PaperDivider } from '@/components/atoms/paper-divider';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export interface ConfirmationDialogProps {
+  presentation?: 'soft';
   /**
    * Dialog title displayed in the header
    */
@@ -47,7 +51,7 @@ export interface ConfirmationDialogProps {
    */
   loadingText?: string;
   /**
-   * Callback when the confirm button is clicked
+   * Resolve after success to close; throw on failure to keep the action retryable.
    */
   onConfirm: () => void | Promise<void>;
   /**
@@ -67,6 +71,7 @@ export interface ConfirmationDialogProps {
 
 export function ConfirmationDialog({
   title,
+  presentation = 'soft',
   description,
   cancelText = 'Cancel',
   confirmText = 'Confirm',
@@ -79,12 +84,22 @@ export function ConfirmationDialog({
   confirmVariant,
 }: ConfirmationDialogProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const processing = React.useRef(false);
+  const close = React.useRef<HTMLButtonElement>(null);
 
   const handleConfirm = async () => {
+    if (processing.current || isLoading) return;
+    processing.current = true;
     setIsProcessing(true);
+    setError('');
     try {
       await onConfirm();
+      close.current?.click();
+    } catch {
+      setError('Unable to complete this action. Please try again.');
     } finally {
+      processing.current = false;
       setIsProcessing(false);
     }
   };
@@ -93,29 +108,53 @@ export function ConfirmationDialog({
   const variant = confirmVariant ?? (isDestructive ? 'destructive' : 'default');
 
   return (
-    <DialogContent className={cn(className)}>
+    <DialogContent
+      presentation={presentation}
+      className={cn(className)}
+      preventClose={loading}
+    >
       <DialogHeader>
         {icon && <div className='flex justify-center mb-2'>{icon}</div>}
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
+      {error && (
+        <Alert variant='destructive'>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <DialogClose ref={close} className='hidden' aria-hidden tabIndex={-1} />
+      {presentation === 'soft' && <PaperDivider treatment='perforated' />}
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost' disabled={loading} className='flex-1'>
+            <Button
+              presentation={presentation}
+              variant='ghost'
+              disabled={loading}
+              className='flex-1'
+            >
               {cancelText}
             </Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button
-              onClick={handleConfirm}
-              disabled={loading}
-              variant={variant}
-              className='flex-1'
-            >
-              {loading ? loadingText : confirmText}
-            </Button>
-          </DialogClose>
+          <Button
+            presentation={presentation}
+            icon={
+              presentation === 'soft' &&
+              isDestructive &&
+              (!confirmVariant || confirmVariant === 'destructive') ? (
+                <Trash2 aria-hidden='true' className='size-4' />
+              ) : undefined
+            }
+            isLoading={presentation === 'soft' && loading}
+            loadingText={loadingText}
+            onClick={handleConfirm}
+            disabled={loading}
+            variant={variant}
+            className='flex-1'
+          >
+            {loading ? loadingText : confirmText}
+          </Button>
         </div>
       </DialogFooter>
     </DialogContent>

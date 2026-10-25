@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import type { AddonParticipantData } from '../../model/types';
 
 import { BUILTIN_COMPLETION } from '../../model/completion';
@@ -321,7 +322,7 @@ function QuestionnaireEventCard({ eventId }: EventCardProps) {
     : 0;
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-3'>
         <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>
           <Icons.listOrdered className='size-5' />
@@ -436,6 +437,7 @@ function QuestionnaireManageConfig({
                   members.
                 </p>
                 <Button
+                  icon={<ActionSave aria-hidden='true' className='size-4' />}
                   type='button'
                   size='sm'
                   onClick={handleSaveQuestions}

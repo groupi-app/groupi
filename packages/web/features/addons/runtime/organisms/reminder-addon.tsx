@@ -178,7 +178,7 @@ function ReminderEventCard({
   };
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-4'>
         <div className='flex items-center gap-3'>
           <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>

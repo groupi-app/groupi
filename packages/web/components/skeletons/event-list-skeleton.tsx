@@ -60,7 +60,7 @@ export function EventListSkeleton() {
  */
 export function VisualEventCardSkeleton() {
   return (
-    <div className='flex flex-col overflow-hidden rounded-card shadow-raised bg-card'>
+    <div className='flex flex-col overflow-hidden rounded-card border border-border bg-card'>
       {/* Cover image area - 16:9 aspect ratio */}
       <Skeleton className='aspect-[16/9] w-full rounded-none' />
 
@@ -101,7 +101,7 @@ export function VisualEventCardSkeleton() {
  */
 export function EventCardSkeleton() {
   return (
-    <div className='flex flex-col gap-2 border border-border shadow-raised p-4 px-6 rounded-card'>
+    <div className='flex flex-col gap-2 border border-border p-4 px-6 rounded-card'>
       <div className='flex flex-col md:flex-row gap-2 md:gap-8'>
         {/* Title and description */}
         <div className='flex flex-col grow gap-2 md:w-1/2'>

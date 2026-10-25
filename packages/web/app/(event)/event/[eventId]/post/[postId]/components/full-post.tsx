@@ -163,8 +163,8 @@ export function FullPost({ data, postRef }: FullPostProps) {
                             </Link>
                           )}
                           <Button
-                            variant='ghost'
-                            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                            variant='destructive-ghost'
+                            className='w-full justify-start'
                             onClick={() => {
                               setDrawerOpen(false);
                               setDeleteDialogOpen(true);
@@ -202,7 +202,7 @@ export function FullPost({ data, postRef }: FullPostProps) {
                         </DropdownMenuItem>
                       )}
                       <DialogTrigger asChild>
-                        <DropdownMenuItem className='text-destructive'>
+                        <DropdownMenuItem variant='destructive' className=''>
                           <Icons.delete className='mr-2 h-4 w-4' />
                           Delete Post
                         </DropdownMenuItem>
@@ -263,7 +263,7 @@ export function FullPost({ data, postRef }: FullPostProps) {
           </div>
           <div className=''>
             <div className='flex items-center gap-2 mb-3'>
-              <h1 className='text-2xl font-bold'>{post.title}</h1>
+              <h1 className='font-heading text-2xl font-bold'>{post.title}</h1>
               {isMuted && (
                 <Icons.bellOff className='size-5 text-muted-foreground flex-shrink-0' />
               )}

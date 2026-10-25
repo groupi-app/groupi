@@ -49,7 +49,7 @@ export function EventOwnershipTransfer({
       aria-labelledby='event-ownership-heading'
       className='rounded-card bg-card p-4 space-y-3'
     >
-      <h2 id='event-ownership-heading' className='font-semibold'>
+      <h2 id='event-ownership-heading' className='font-heading font-semibold'>
         Event ownership
       </h2>
       <p>{status.explanation}</p>

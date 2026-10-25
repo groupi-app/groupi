@@ -74,7 +74,9 @@ function ApplicationContent({
     );
   return (
     <section className='space-y-6'>
-      <h1 className='text-2xl font-semibold'>Apply for approval</h1>
+      <h1 className='font-heading text-2xl font-semibold'>
+        Apply for approval
+      </h1>
       <p>
         Your answers are private to you and authorized Event reviewers. Approval
         admits you as an Attendee with a Pending RSVP; no second acceptance is
@@ -214,7 +216,7 @@ function ApplicationRecords({
         review ? 'Application review queue' : 'Your application history'
       }
     >
-      <h2 className='text-xl font-semibold'>
+      <h2 className='font-heading text-xl font-semibold'>
         {review ? 'Review applications' : 'Your application history'}
       </h2>
       {review && (
@@ -302,7 +304,7 @@ function ApplicationRecord({
           : 'Your application'
       }
     >
-      <h3 className='font-semibold'>{application.status}</h3>
+      <h3 className='font-heading font-semibold'>{application.status}</h3>
       {review && (
         <p>
           Applicant:{' '}

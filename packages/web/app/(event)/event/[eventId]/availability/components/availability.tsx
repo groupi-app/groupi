@@ -55,7 +55,7 @@ export function Availability({ eventId }: AvailabilityProps) {
   if (!potentialDateTimes || potentialDateTimes.length === 0) {
     return (
       <div className='text-center py-8'>
-        <h2 className='text-xl font-bold'>No Date Options</h2>
+        <h2 className='font-heading text-xl font-bold'>No Date Options</h2>
         <p className='mt-2'>Voting is not enabled for this event</p>
       </div>
     );
@@ -64,7 +64,7 @@ export function Availability({ eventId }: AvailabilityProps) {
   if (userRole === 'ORGANIZER') {
     return (
       <div className='text-center py-8'>
-        <h2 className='text-xl font-bold'>Access Restricted</h2>
+        <h2 className='font-heading text-xl font-bold'>Access Restricted</h2>
         <p className='mt-2'>Organizers cannot vote on availabilities</p>
       </div>
     );
@@ -127,7 +127,7 @@ export function Availability({ eventId }: AvailabilityProps) {
  */
 function AvailabilityCardSkeleton() {
   return (
-    <div className='w-full sm:max-w-md border border-border shadow-floating rounded-md py-4 px-4 bg-card'>
+    <div className='w-full sm:max-w-md border border-border rounded-card py-4 px-4 bg-card'>
       <div className='flex flex-col sm:flex-row justify-between gap-4 flex-wrap'>
         {/* Date and time */}
         <div className='flex flex-col justify-between'>

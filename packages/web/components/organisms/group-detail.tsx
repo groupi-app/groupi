@@ -138,7 +138,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
       </header>
       <div className='flex flex-col gap-3 rounded-card bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6'>
         <div className='min-w-0 space-y-1'>
-          <h2 className='font-semibold'>Unlisted Group page</h2>
+          <h2 className='font-heading font-semibold'>Unlisted Group page</h2>
           <p className='text-sm text-muted-foreground'>
             Share an introduction to your Group.
           </p>
@@ -239,7 +239,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
                   className='mt-0.5 size-5 shrink-0 text-primary'
                 />
                 <div className='min-w-0 space-y-1'>
-                  <h3 className='font-semibold group-hover:text-primary'>
+                  <h3 className='font-heading font-semibold group-hover:text-primary'>
                     {tool.title}
                   </h3>
                   <p className='text-sm leading-relaxed text-muted-foreground'>

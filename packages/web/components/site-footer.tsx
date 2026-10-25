@@ -45,6 +45,18 @@ export function SiteFooter() {
             </a>
           )}
           <Link
+            href='/privacy'
+            className='underline hover:text-primary-foreground/80'
+          >
+            Privacy policy
+          </Link>
+          <Link
+            href='/support'
+            className='underline hover:text-primary-foreground/80'
+          >
+            Help and support
+          </Link>
+          <Link
             href={siteConfig.links.github}
             target='_blank'
             rel='noopener noreferrer'

@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus as ActionPlus, Trash2 as ActionTrash2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { InviteListPersonRow } from './invite-list-people';
@@ -101,6 +102,7 @@ function ListPicker({
   return (
     <div className='flex flex-col gap-3'>
       <Button
+        icon={<ActionPlus aria-hidden='true' className='size-4' />}
         variant='outline'
         disabled={lists.items.length >= 100}
         onClick={create}
@@ -233,6 +235,7 @@ function RecipientReview({
             )}
           </div>
           <Button
+            icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
             variant='ghost'
             disabled={sending || uncertain}
             aria-label={`Remove ${person.available ? (person.name ?? person.username) : 'unavailable person'}`}

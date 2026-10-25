@@ -6,6 +6,7 @@ import { ChevronRight, Plus, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/molecules/empty-state';
+import { Card, CardAction } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCreateGroup, useGroups } from '@/hooks/convex/use-groups';
 import { GroupInvitationInbox } from './group-invitation-inbox';
@@ -83,37 +84,43 @@ export function GroupsPanel({
               className='rounded-card border border-dashed border-border px-4'
             />
           )}
-          <ul className='divide-y divide-border'>
+          <ul className='grid gap-3'>
             {groups.page.map(group => (
               <li key={group._id}>
-                <Link
-                  href={`/groups/${group._id}`}
-                  onClick={event => {
-                    event.preventDefault();
-                    onOpenGroup(group._id);
-                  }}
-                  aria-label={group.name}
-                  className='flex items-center gap-4 rounded-input px-2 py-4 transition-colors duration-fast hover:bg-muted motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
-                >
-                  <Avatar className='size-12 shrink-0'>
-                    <AvatarImage src={group.image} alt='' />
-                    <AvatarFallback>{group.name.slice(0, 1)}</AvatarFallback>
-                  </Avatar>
-                  <div className='min-w-0 flex-1'>
-                    <span className='block break-words font-semibold'>
-                      {group.name}
-                    </span>
-                    {group.description && (
-                      <p className='break-words text-sm text-muted-foreground line-clamp-2'>
-                        {group.description}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight
-                    aria-hidden='true'
-                    className='size-4 shrink-0 text-muted-foreground'
-                  />
-                </Link>
+                <Card treatment='interactive'>
+                  <CardAction asChild>
+                    <Link
+                      href={`/groups/${group._id}`}
+                      onClick={event => {
+                        event.preventDefault();
+                        onOpenGroup(group._id);
+                      }}
+                      aria-label={group.name}
+                      className='flex items-center gap-3 p-4'
+                    >
+                      <Avatar className='size-12 shrink-0'>
+                        <AvatarImage src={group.image} alt='' />
+                        <AvatarFallback>
+                          {group.name.slice(0, 1)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0 flex-1'>
+                        <span className='block break-words font-semibold'>
+                          {group.name}
+                        </span>
+                        {group.description && (
+                          <p className='break-words text-sm text-muted-foreground line-clamp-2'>
+                            {group.description}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight
+                        aria-hidden='true'
+                        className='size-4 shrink-0 text-muted-foreground'
+                      />
+                    </Link>
+                  </CardAction>
+                </Card>
               </li>
             ))}
           </ul>

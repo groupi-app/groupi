@@ -18,19 +18,19 @@ const STATUS_CONFIG: Record<
   YES: {
     icon: 'checkmark-circle',
     label: 'Available',
-    activeBg: 'bg-bg-success-subtle border border-border-success shadow-raised',
+    activeBg: 'bg-bg-success-subtle border-2 border-sticker-edge',
     activeText: 'text-text-success',
   },
   MAYBE: {
     icon: 'help-circle',
     label: 'Maybe',
-    activeBg: 'bg-bg-warning-subtle border border-border shadow-raised',
+    activeBg: 'bg-bg-warning-subtle border border-border',
     activeText: 'text-text-warning',
   },
   NO: {
     icon: 'close-circle',
     label: 'Unavailable',
-    activeBg: 'bg-bg-error-subtle border border-border-error shadow-raised',
+    activeBg: 'bg-bg-error-subtle border-2 border-sticker-edge',
     activeText: 'text-text-error',
   },
 };

@@ -4,6 +4,8 @@ Current feature evidence and historical integration checkpoints. Source verifica
 
 ## Table of Contents
 
+- [Design-language merge integration — 2026-10-25](#design-language-merge-integration--2026-10-25)
+- [Design-language implementation — 2026-10-24](#design-language-implementation--2026-10-24)
 - [Hosted Discord and Group pages — 2026-10-24](#hosted-discord-and-group-pages--2026-10-24)
 - [Discord Group add-on candidate — 2026-10-23](#discord-group-add-on-candidate--2026-10-23)
 - [Groups web design refinement — source evidence as of 2026-10-23](#groups-web-design-refinement--source-evidence-as-of-2026-10-23)
@@ -17,6 +19,23 @@ Current feature evidence and historical integration checkpoints. Source verifica
 - [Verification and open gates](#verification-and-open-gates)
 - [Evidence and maintenance](#evidence-and-maintenance)
 - [Architecture integration candidate — 2026-10-11](#architecture-integration-candidate--2026-10-11)
+
+## Design-language merge integration — 2026-10-25
+
+- PR #431 combines design source `017fffbf102303e3ce4348aac7e2d96fc079a0a0` with `test` at `621f2dd8f809d8dd121b62e8099a733ba232b1c2`. Their common ancestor is `da5ccb462f8b0ead9a4a32ea405641d5eddd5624`; independent UI and integration work caused conflicts in 15 files.
+- Resolutions retain the newer Groups edit/settings routes, decision-email retries, integration post attribution and strict add-on types alongside the design branch’s typography and independent card actions. Both branches’ dependency entries and dated integration evidence are retained.
+- This source integration does not establish authenticated migrated-page or native device/screen-reader acceptance. Earlier runtime evidence below remains tied to its original source. No backend deployment or production data mutation is part of conflict resolution.
+
+## Design-language implementation — 2026-10-24
+
+- [Draft PR #431](https://github.com/groupi-app/groupi/pull/431) tracks specification #420 on `codex/design-language-integration`, based on main `13c02494`. Controls and localized usability corrections are integrated; the initial functional-fix patch changeset has explicit user approval.
+- Functional corrections, derived theme treatment, and the actual-component gallery are integrated through source `6edd4c27`. Required checks and focused regressions pass. Chromium verification covers all 12 bundled themes, three custom examples, fonts, hover/press, independent card actions, checkbox glyphs, keyboard/menu focus, feedback/retry, narrow layouts, enlarged text and reduced motion. See [execution evidence and task graph](../../design-language-execution.md#rendered-gallery-checkpoint).
+- The explicitly authorized local Storybook is running from the integration checkout at `http://127.0.0.1:6006/?path=/story/design-system-soft-lift--overview`, using the production theme adapter. This validates the isolated gallery, not authenticated app/backend behavior.
+- The user approved the actual gallery on October 24 and authorized docs-first migration of all components, from primitives through page-specific UI, prioritizing web. #426 is closed and #427 is active. Migrated-screen validation gates the Groups structural review; native parity follows web validation.
+- The October 24 sticker-book iteration is integrated through `1e17841b`: white cut edges persist in dark/custom themes, meaningful paper seams and staged people/overlay accents are present, and icons remain selective with none in headings. The user selected flat cut-out labels, attached index tabs, and annotation-strip alerts; these are now canonical opt-in soft treatments. Source `d1e74958` also adds interactive card tint, 12px menu icon spacing, and semantic toast-icon colors. [Material rationale and selected choices](../../design-language-material-review.md) and [runtime evidence](../../design-language-execution.md#sticker-book-review-iteration) supplement the earlier checkpoint; gallery approval is recorded; application migration is in progress.
+- Runtime discovery: `test.groupi.gg` exposes preview commit `621f2dd8f809d8dd121b62e8099a733ba232b1c2` and public backend `zany-rooster-824.convex.cloud`; it is signed out in the connected browser and does not contain this migration. No local app server is listening. The repository script guard rejected the authorized Next dev launch; actual local-page validation awaits a user-started runtime.
+- Web source migration is integrated at `48a6b6ac`: canonical defaults plus the complete higher-component ledger. `pnpm check`, all web (1,295) and shared (464) tests pass; actual default-component browser checks pass. See [coverage](../../design-language-web-migration.md). Native source parity is integrated through `7a79677e`; final web/shared/mobile suites pass (1,296/464/605 tests), with full checks and Storybook types passing. All reported source findings are corrected. [Native coverage](../../design-language-native-migration.md) records the 220-file scan and runtime limits. Application/device acceptance stays open.
+- Source-matched authenticated app runtime, backend binding, isolated test session, native build/device, and observed VoiceOver/TalkBack remain unverified for this source. No backend deployment or production data changes were made. No inherited October 15 runtime result is claimed for this branch.
 
 ## Hosted Discord and Group pages — 2026-10-24
 

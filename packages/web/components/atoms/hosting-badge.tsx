@@ -29,10 +29,15 @@ const iconSizeClasses = {
 export function HostingBadge({ size = 'md', className }: HostingBadgeProps) {
   return (
     <span
+      data-slot='hosting-badge'
+      style={{
+        backgroundColor: 'var(--soft-primary-composited-fill)',
+        color: 'var(--soft-primary-foreground)',
+      }}
       className={cn(
         // Sticker journal aesthetic - hosting badge with white border
         'inline-flex items-center justify-center rounded-full',
-        'bg-primary text-primary-foreground shadow-raised border-2 border-white',
+        'bg-primary text-primary-foreground border-2 border-white',
         sizeClasses[size],
         className
       )}

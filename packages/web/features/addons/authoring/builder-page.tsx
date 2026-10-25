@@ -76,7 +76,7 @@ function BuilderPageInner({ templateId, isPublished }: BuilderPageInnerProps) {
             <Icons.arrowLeft className='size-5' />
           </Button>
           <div>
-            <h1 className='text-xl font-bold'>
+            <h1 className='font-heading text-xl font-bold'>
               {templateId ? 'Edit Add-on' : 'New Add-on'}
             </h1>
             {templateId && (

@@ -2,6 +2,7 @@
 
 import { formatDate, formatDateTimeRangeShort } from '@/lib/utils';
 import Link from 'next/link';
+import { Card, CardAction, CardActions } from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 import { useState } from 'react';
 import { ContextMenuItem } from '@/components/ui/context-menu';
@@ -106,8 +107,8 @@ export function EventCard({
             </Link>
           </Button>
           <Button
-            variant='ghost'
-            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+            variant='destructive-ghost'
+            className='w-full justify-start'
             onClick={() => {
               setSheetOpen(false);
               setDeleteDialogOpen(true);
@@ -119,8 +120,8 @@ export function EventCard({
         </>
       ) : (
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setSheetOpen(false);
             setLeaveDialogOpen(true);
@@ -161,7 +162,7 @@ export function EventCard({
         <>
           <ContextMenuItem className='cursor-pointer' asChild>
             <Link href={`/event/${eventId}/edit`}>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.edit className='size-4' />
                 <span>Edit Details</span>
               </div>
@@ -176,13 +177,14 @@ export function EventCard({
             </Link>
           </ContextMenuItem>
           <ContextMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setDeleteDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.delete className='size-4' />
               <span>Delete Event</span>
             </div>
@@ -190,13 +192,14 @@ export function EventCard({
         </>
       ) : (
         <ContextMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setLeaveDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.leave className='size-4' />
             <span>Leave Event</span>
           </div>
@@ -233,7 +236,7 @@ export function EventCard({
         <>
           <DropdownMenuItem className='cursor-pointer' asChild>
             <Link href={`/event/${eventId}/edit`}>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.edit className='size-4' />
                 <span>Edit Details</span>
               </div>
@@ -248,13 +251,14 @@ export function EventCard({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setDeleteDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.delete className='size-4' />
               <span>Delete Event</span>
             </div>
@@ -262,13 +266,14 @@ export function EventCard({
         </>
       ) : (
         <DropdownMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setLeaveDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.leave className='size-4' />
             <span>Leave Event</span>
           </div>
@@ -278,86 +283,97 @@ export function EventCard({
   );
 
   const cardContent = (
-    <div className='relative group'>
-      <ActionMenuButton
-        onClick={handleMoreClick}
-        onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
-        dropdownContent={dropdownContent}
-      >
-        <Icons.more className='size-4' />
-      </ActionMenuButton>
-      <Link href={`/event/${id}`}>
-        <div className='flex flex-col gap-2 border border-border bg-card shadow-floating p-4 px-6 hover:bg-accent/80 transition-all cursor-pointer rounded-card'>
-          <div className='flex flex-col md:flex-row gap-2 md:gap-8'>
-            <div className='flex flex-col grow gap-2 md:w-1/2'>
-              <div className='flex items-center gap-2'>
-                <h1 className='font-heading text-2xl'>{title}</h1>
-                {isMuted && (
-                  <Icons.bellOff className='size-5 text-muted-foreground' />
-                )}
-              </div>
-              {organizer && (
+    <Card treatment='interactive' className='relative group'>
+      <CardActions className='absolute top-2 right-2'>
+        <ActionMenuButton
+          label={`Actions for event ${title}`}
+          onClick={handleMoreClick}
+          onContextMenu={handleContextMenu}
+          className='size-8 transition-all rounded-md flex items-center justify-center'
+          dropdownContent={dropdownContent}
+        >
+          <Icons.more className='size-4' />
+        </ActionMenuButton>
+      </CardActions>
+      <CardAction asChild>
+        <Link href={`/event/${id}`}>
+          <div className='flex flex-col gap-2 p-4 px-6 transition-all cursor-pointer rounded-card'>
+            <div className='flex flex-col md:flex-row gap-2 md:gap-8'>
+              <div className='flex flex-col grow gap-2 md:w-1/2'>
                 <div className='flex items-center gap-2'>
-                  <Avatar className='size-6'>
-                    <AvatarImage
-                      src={organizer.user.image || undefined}
-                      alt={organizer.user.name || organizer.user.email}
-                    />
-                    <AvatarFallback className='text-xs'>
-                      {(organizer.user.name || organizer.user.email)
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className='text-sm text-muted-foreground'>
-                    {organizer.user.name || organizer.user.email}
-                  </span>
-                </div>
-              )}
-              <p className='text-muted-foreground line-clamp-3'>
-                {description}
-              </p>
-            </div>
-            <div className='flex flex-col md:w-1/2 justify-between gap-2'>
-              <div className='flex flex-col gap-2'>
-                {location && (
-                  <div className='flex items-center gap-1 '>
-                    <Icons.location className='size-6 text-primary' />
-                    <span>{location}</span>
-                  </div>
-                )}
-                <div className='flex items-center gap-1 '>
-                  <Icons.date className='size-6 text-primary' />
-                  {chosenDateTime != null ? (
-                    <span>
-                      {formatDateTimeRangeShort(
-                        chosenDateTime,
-                        event.chosenEndDateTime
-                      )}
-                    </span>
-                  ) : (
-                    <span>TBD</span>
+                  <h1 className='font-heading text-2xl'>{title}</h1>
+                  {isMuted && (
+                    <Icons.bellOff className='size-5 text-muted-foreground' />
                   )}
                 </div>
+                {organizer && (
+                  <div className='flex items-center gap-2'>
+                    <Avatar className='size-6'>
+                      <AvatarImage
+                        src={organizer.user.image || undefined}
+                        alt={organizer.user.name || organizer.user.email}
+                      />
+                      <AvatarFallback className='text-xs'>
+                        {(organizer.user.name || organizer.user.email)
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className='text-sm text-muted-foreground'>
+                      {organizer.user.name || organizer.user.email}
+                    </span>
+                  </div>
+                )}
+                <p className='text-muted-foreground line-clamp-3'>
+                  {description}
+                </p>
               </div>
-              <div className='flex flex-col'>
-                <div className='flex items-center gap-1 '>
-                  <span className='text-muted-foreground'>
-                    Created {formatDate(new Date(createdAt))}
-                  </span>
+              <div className='flex flex-col md:w-1/2 justify-between gap-2'>
+                <div className='flex flex-col gap-2'>
+                  {location && (
+                    <div className='flex items-center gap-1'>
+                      <Icons.location className='size-6 text-primary' />
+                      <span>{location}</span>
+                    </div>
+                  )}
+                  <div className='flex items-center gap-1'>
+                    <Icons.date className='size-6 text-primary' />
+                    {chosenDateTime != null ? (
+                      <span>
+                        {formatDateTimeRangeShort(
+                          chosenDateTime,
+                          event.chosenEndDateTime
+                        )}
+                      </span>
+                    ) : (
+                      <span>TBD</span>
+                    )}
+                  </div>
                 </div>
-                <div className='flex items-center gap-1 '>
-                  <span className='text-muted-foreground'>
-                    Last activity {formatDate(new Date(updatedAt))}
-                  </span>
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-1'>
+                    <span className='text-muted-foreground'>
+                      Created {formatDate(new Date(createdAt))}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <span className='text-muted-foreground'>
+                      Last activity {formatDate(new Date(updatedAt))}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </Link>
-    </div>
+          <span
+            aria-hidden='true'
+            className='absolute bottom-4 right-4 text-muted-foreground'
+          >
+            <Icons.forward className='size-4' />
+          </span>
+        </Link>
+      </CardAction>
+    </Card>
   );
 
   return (

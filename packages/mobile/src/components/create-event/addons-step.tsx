@@ -394,7 +394,7 @@ function ReminderConfig({
               className={cn(
                 'rounded-badge px-3 py-1.5',
                 isActive
-                  ? 'border-2 border-primary-foreground bg-primary shadow-raised'
+                  ? 'min-h-11 border-2 border-sticker-edge bg-primary shadow-none'
                   : 'bg-muted'
               )}
             >
@@ -629,7 +629,7 @@ function QuestionnaireConfig({
                     className={cn(
                       'rounded-badge px-2.5 py-1',
                       isActive
-                        ? 'border-2 border-primary-foreground bg-primary shadow-raised'
+                        ? 'min-h-11 border-2 border-sticker-edge bg-primary shadow-none'
                         : 'bg-muted'
                     )}
                   >

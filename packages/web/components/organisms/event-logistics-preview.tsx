@@ -23,7 +23,9 @@ class LogisticsBoundary extends Component<
     if (this.state.unavailable)
       return (
         <main className='mx-auto max-w-2xl p-6 space-y-4'>
-          <h1 className='text-2xl font-semibold'>Event unavailable</h1>
+          <h1 className='font-heading text-2xl font-semibold'>
+            Event unavailable
+          </h1>
           <p role='alert'>
             This event is unavailable or you do not have permission to view it.
           </p>
@@ -85,7 +87,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
           }
         />
       )}
-      <h1 className='text-3xl font-bold'>{event.title}</h1>
+      <h1 className='font-heading text-3xl font-bold'>{event.title}</h1>
       <div className='flex items-center gap-3'>
         <Avatar>
           <AvatarImage src={organizer?.image ?? undefined} alt='' />
@@ -104,11 +106,11 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
         aria-label='Event logistics'
       >
         <div>
-          <h2 className='font-semibold'>Location</h2>
+          <h2 className='font-heading font-semibold'>Location</h2>
           <p>{event.location || 'Location TBD'}</p>
         </div>
         <div>
-          <h2 className='font-semibold'>Dates</h2>
+          <h2 className='font-heading font-semibold'>Dates</h2>
           <p className='text-sm text-muted-foreground'>{event.timezone}</p>
           {event.chosenDateTime !== null ? (
             <p>{formatRange(event.chosenDateTime, event.chosenEndDateTime)}</p>
@@ -141,13 +143,13 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
       >
         {entryAction === 'INVITATION_ONLY' && (
           <>
-            <h2 className='font-semibold'>Invitation only</h2>
+            <h2 className='font-heading font-semibold'>Invitation only</h2>
             <p>You need an invitation to join this event.</p>
           </>
         )}
         {entryAction === 'UNAVAILABLE' && (
           <>
-            <h2 className='font-semibold'>Joining unavailable</h2>
+            <h2 className='font-heading font-semibold'>Joining unavailable</h2>
             <p>You cannot join this event at this time.</p>
           </>
         )}

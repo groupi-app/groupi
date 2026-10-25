@@ -37,7 +37,7 @@ export function MenuItemContent({
   return (
     <div
       data-slot='menu-item-content'
-      className={cn('flex items-center gap-2 w-full', className)}
+      className={cn('flex items-center gap-3 w-full', className)}
     >
       {icon && (
         <span

@@ -177,11 +177,10 @@ export function FriendRequestButton({
               {variant !== 'icon' && 'Accept'}
             </Button>
             <Button
-              variant='ghost'
+              variant='destructive-ghost'
               size={variant === 'sm' ? 'sm' : 'icon'}
               onClick={handleDeclineRequest}
               disabled={isActioning}
-              className='hover:bg-destructive hover:text-destructive-foreground'
             >
               <Icons.close className='size-4' />
             </Button>
@@ -228,7 +227,7 @@ export function FriendRequestButton({
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleRemoveFriend}
-                    className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                    variant='destructive'
                   >
                     Remove
                   </AlertDialogAction>

@@ -100,6 +100,9 @@ export function SmartDateInput({
   onDatesAdded,
   referenceDate,
 }: SmartDateInputProps) {
+  const selectedGlyph = String(
+    useCSSVariable('--color-primary-foreground') ?? ''
+  );
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -286,7 +289,7 @@ export function SmartDateInput({
                 <Ionicons
                   name={hasDirectPreview ? 'add' : 'sparkles'}
                   size={20}
-                  color={hasDirectPreview ? '#ffffff' : primaryColor}
+                  color={hasDirectPreview ? selectedGlyph : primaryColor}
                 />
               )}
             </Button>
@@ -387,7 +390,11 @@ export function SmartDateInput({
                   }
                 >
                   {date.selected ? (
-                    <Ionicons name='checkmark' size={14} color='#ffffff' />
+                    <Ionicons
+                      name='checkmark'
+                      size={14}
+                      color={selectedGlyph}
+                    />
                   ) : null}
                 </View>
                 <View className='flex-1 gap-1'>

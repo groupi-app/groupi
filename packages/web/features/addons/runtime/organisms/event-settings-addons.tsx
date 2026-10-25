@@ -72,6 +72,7 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
       title='Add-ons'
       description='Enable or disable optional features for your event.'
       backHref={`/event/${eventId}/settings`}
+      backLabel='Event settings'
       maxWidth='md'
     >
       {!event ? (

@@ -84,6 +84,7 @@ export default function EventSettingsPermissionsPage(props: {
       title='Permissions'
       description='Control what members can do in this event.'
       backHref={`/event/${eventId}/settings`}
+      backLabel='Event settings'
       maxWidth='md'
     >
       {isLoading || !permissions ? (

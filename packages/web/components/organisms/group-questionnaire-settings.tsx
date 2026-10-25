@@ -63,7 +63,9 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
         }
       }}
     >
-      <h3 className='font-semibold'>Joining questionnaire settings</h3>
+      <h3 className='font-heading font-semibold'>
+        Joining questionnaire settings
+      </h3>
       <p className='text-sm text-muted-foreground'>
         Members have already been admitted. Previous answers are preserved when
         you edit or disable questions.

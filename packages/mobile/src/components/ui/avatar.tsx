@@ -8,7 +8,7 @@ function Avatar({
   return (
     <AvatarPrimitive.Root
       className={cn(
-        'relative flex size-8 shrink-0 overflow-hidden rounded-full',
+        'relative flex size-8 shrink-0 overflow-hidden rounded-full border-2 border-sticker-edge',
         className
       )}
       {...props}

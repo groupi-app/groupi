@@ -447,6 +447,24 @@ describe('Groups directory navigation', () => {
       .click(screen.getByRole('link', { name: 'Neighbors' }));
     expect(groupNavigation.push).toHaveBeenCalledWith('/groups/group-one');
   });
+  it('keeps card destinations keyboard-operable and creation at the page heading level', async () => {
+    setQueryResult({ page: [group], isDone: true, continueCursor: '' });
+    const user = userEvent.setup();
+    render(<GroupsPage />);
+    const destination = screen.getByRole('link', { name: 'Neighbors' });
+    destination.focus();
+    expect(destination).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(groupNavigation.push).toHaveBeenCalledWith('/groups/group-one');
+    expect(groupNavigation.push).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Create Group' }));
+    expect(
+      screen.getByRole('heading', { name: 'Create a Group', level: 1 })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Your Groups' })
+    ).not.toBeInTheDocument();
+  });
   it('offers creation and the invitation inbox in the empty directory', () => {
     setQueryResult({ page: [], isDone: true, continueCursor: '' });
     render(<GroupsPage />);
