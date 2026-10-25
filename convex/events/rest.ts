@@ -1,3 +1,4 @@
+import { removeToolsForEvent } from '../groupTools/cleanup';
 import { removeEventMailForEvent } from '../groupAnnouncements/eventMailCleanup';
 import { deleteEventParticipationRevisions } from '../events/participationRevision';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
@@ -279,6 +280,7 @@ export const deleteEvent = internalMutation({
     }
 
     await removeEventMailForEvent(ctx, eventId);
+    await removeToolsForEvent(ctx, eventId);
     await deleteEventTransfers(ctx, eventId);
     await removeAudiencesForEvent(ctx, eventId);
 

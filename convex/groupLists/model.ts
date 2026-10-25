@@ -4,14 +4,17 @@ import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { requirePerson } from '../groups/model';
-import { membershipFor, requireManager } from '../groups/policy';
+import { requireManager } from '../groups/policy';
 import { requireGroupMemberContent } from '../groups/contentAccess';
-import {
-  getPolicy,
-  requireToolCreation,
-  requireToolInteraction,
-} from '../groupTools/policy';
+import { getPolicy } from '../groupTools/policy';
 import { hash, requestExpiry } from '../lib/requestId';
+import {
+  contentContext,
+  contentCapabilities,
+  requireContentCreation,
+  requireContentInteraction,
+  requireContentManager,
+} from '../groupTools/context';
 type ReadCtx = MutationCtx | QueryCtx;
 function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
@@ -65,17 +68,18 @@ export async function create(
   ctx: MutationCtx,
   personId: Id<'persons'>,
   input: {
-    groupId: Id<'groups'>;
+    groupId?: Id<'groups'>;
+    eventId?: Id<'events'>;
     title: string;
     description?: string;
     resultsVisibility: 'MANAGERS' | 'MEMBERS';
   }
 ) {
-  await requireToolCreation(ctx, personId, input.groupId, 'LIST');
+  await requireContentCreation(ctx, personId, input, 'LIST');
   const data = config(input),
     now = Date.now();
   const toolId = await ctx.db.insert('groupTools', {
-    groupId: input.groupId,
+    ...contentContext(input),
     kind: 'LIST',
     ...data,
     resultsVisibility: input.resultsVisibility,
@@ -85,7 +89,7 @@ export async function create(
   });
   await ctx.db.insert('groupLists', {
     toolId,
-    groupId: input.groupId,
+    ...contentContext(input),
     version: 1,
     updatedAt: now,
   });
@@ -99,14 +103,13 @@ export async function get(
 ) {
   const { tool, state } = await instance(ctx, toolId);
   if (management) {
-    await requireGroupMemberContent(ctx, tool.groupId, personId);
-    await requireManager(ctx, tool.groupId, personId);
-  } else await requireToolInteraction(ctx, personId, tool.groupId, 'LIST');
-  const member = await membershipFor(ctx, tool.groupId, personId);
+    await requireContentManager(ctx, personId, tool);
+  } else await requireContentInteraction(ctx, personId, tool, 'LIST');
+  const { canManage } = await contentCapabilities(ctx, personId, tool);
   return {
     ...tool,
     version: state.version,
-    canManage: member?.role !== 'MEMBER',
+    canManage: canManage,
   };
 }
 export async function list(
@@ -143,8 +146,7 @@ export async function configure(
   }
 ) {
   const { tool, state } = await instance(ctx, input.toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   version(state.version, input.version);
   await ctx.db.patch(tool._id, { ...config(input), updatedAt: Date.now() });
   await ctx.db.patch(state._id, {
@@ -165,9 +167,8 @@ export async function entries(
   let manager = false;
   if (!ownRecovery) {
     const { tool } = await instance(ctx, toolId);
-    await requireToolInteraction(ctx, personId, tool.groupId, 'LIST');
-    const role = (await membershipFor(ctx, tool.groupId, personId))?.role;
-    manager = role === 'OWNER' || role === 'MODERATOR';
+    await requireContentInteraction(ctx, personId, tool, 'LIST');
+    manager = (await contentCapabilities(ctx, personId, tool)).canManage;
     ownOnly = tool.resultsVisibility === 'MANAGERS' && !manager;
   }
   const query = ownOnly
@@ -204,7 +205,7 @@ export async function add(
   }
 ) {
   const { tool, state } = await instance(ctx, input.toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'LIST');
+  await requireContentInteraction(ctx, personId, tool, 'LIST');
   const expiresAt = requestExpiry(
     input.requestId,
     'Inspect your list entries before starting a new request.'
@@ -239,7 +240,7 @@ export async function add(
   const now = Date.now();
   const entryId = await ctx.db.insert('groupListEntries', {
     toolId: tool._id,
-    groupId: tool.groupId,
+    ...contentContext(tool),
     personId,
     actorId: personId,
     listTitle: tool.title,
@@ -251,7 +252,7 @@ export async function add(
   });
   const id = await ctx.db.insert('groupListRequests', {
     toolId: tool._id,
-    groupId: tool.groupId,
+    ...contentContext(tool),
     personId,
     requestId: input.requestId,
     fingerprint,
@@ -280,9 +281,9 @@ export async function edit(
   const row = await ctx.db.get(input.entryId);
   if (!row) fail('NOT_FOUND', 'List entry not found.');
   const { tool, state } = await instance(ctx, row.toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'LIST');
+  await requireContentInteraction(ctx, personId, tool, 'LIST');
   if (row.personId !== personId)
-    await requireManager(ctx, tool.groupId, personId);
+    await requireContentManager(ctx, personId, tool);
   version(state.version, input.version);
   if (!Number.isInteger(input.expectedRevision) || input.expectedRevision < 1)
     fail('VALIDATION_ERROR', 'Entry revision must be a positive integer.');
@@ -310,8 +311,9 @@ export async function removeEntry(
   const row = await ctx.db.get(entryId);
   if (!row) return null;
   if (row.personId !== personId) {
-    await requireToolInteraction(ctx, personId, row.groupId, 'LIST');
-    await requireManager(ctx, row.groupId, personId);
+    const { tool } = await instance(ctx, row.toolId);
+    await requireContentInteraction(ctx, personId, tool, 'LIST');
+    await requireContentManager(ctx, personId, tool);
   }
   if (!Number.isInteger(expectedRevision) || expectedRevision < 1)
     fail('VALIDATION_ERROR', 'Entry revision must be a positive integer.');
@@ -326,8 +328,7 @@ export async function remove(
   toolId: Id<'groupTools'>
 ) {
   const { tool } = await instance(ctx, toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   await purge(ctx, toolId);
   return null;
 }

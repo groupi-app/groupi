@@ -5,6 +5,7 @@ import { EventAddons } from '@/features/addons/runtime';
 import { EventHeader } from './components/event-header';
 import { MemberList } from './components/member-list';
 import { PostFeed } from './components/post-feed';
+import { ContentNavigation } from '@/features/content';
 import { NewPostButton } from '@/components/new-post-button';
 import { useEventData } from './context';
 import { EventPageSkeleton } from '@/components/skeletons';
@@ -34,8 +35,14 @@ export default function EventPage() {
               />
             </>
           )}
+          <ContentNavigation
+            context='event'
+            basePath={`/event/${headerData.event._id}`}
+          />
           <EventAddons data={headerData} />
-          <PostFeed data={postFeedData} />
+          <section id='posts' aria-label='Posts'>
+            <PostFeed data={postFeedData} />
+          </section>
         </div>
       </div>
       <NewPostButton permissions={permissions} userRole={userRole} />

@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import { groupListTemplates, listEntryRequestId } from '@groupi/shared/utils';
-import { useGroup } from '@/hooks/convex/use-groups';
+import {
+  useToolOwner as useGroup,
+  useContentBase,
+  type ContentOwnerId,
+} from '@/features/content/tool-scope';
 import * as hooks from '@/hooks/convex/use-group-lists';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +20,8 @@ function failure(error: unknown) {
     ? error.message
     : 'Unable to save. Inspect current state before retrying.';
 }
-export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
+export function GroupLists({ groupId }: { groupId: ContentOwnerId }) {
+  const base = useContentBase(groupId);
   const group = useGroup(groupId);
   const policy = hooks.useListPolicy({ groupId });
   const configure = hooks.useConfigureListPolicy();
@@ -34,11 +39,21 @@ export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading lists…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1 className='font-heading'>Community lists</h1>
+      <h1 className='font-heading'>
+        {base.startsWith('/event/') ? 'Event lists' : 'Community lists'}
+      </h1>
       <p>
-        Ongoing community contributions, independent of Invite Lists and Event
-        Bring Lists. Marking complete is a list status only.
+        Keep shared plans and contributions together. Marking complete is a list
+        status only.
       </p>
+      {base.startsWith('/event/') && (
+        <Link
+          className='text-primary underline'
+          href={`${base}/addon/bring-list`}
+        >
+          Open existing Bring List and item claims
+        </Link>
+      )}
       {policy.canConfigure && (
         <section className='space-y-3' aria-label='List owner policy'>
           <h2 className='font-heading'>Owner policy</h2>
@@ -92,14 +107,16 @@ export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
               settings.
             </p>
           )}
-          {policy.enabled && (manager || policy.creation === 'MEMBERS') && (
-            <Link
-              className='text-primary underline'
-              href={`/groups/${groupId}/lists/new`}
-            >
-              Create list
-            </Link>
-          )}
+          {policy.enabled &&
+            policy.canCreate !== false &&
+            (manager || policy.creation === 'MEMBERS') && (
+              <Link
+                className='text-primary underline'
+                href={`${base}/lists/new`}
+              >
+                Create list
+              </Link>
+            )}
           {lists?.page.map(list => (
             <div
               className='rounded-card border border-border p-4'
@@ -107,7 +124,7 @@ export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
             >
               <Link
                 className='text-primary underline'
-                href={`/groups/${groupId}/lists/${list._id}${policy.enabled ? '' : '/settings'}`}
+                href={`${base}/lists/${list._id}${policy.enabled ? '' : '/settings'}`}
               >
                 {policy.enabled ? list.title : `Manage ${list.title}`}
               </Link>
@@ -115,7 +132,7 @@ export function GroupLists({ groupId }: { groupId: Id<'groups'> }) {
               {manager && policy.enabled && (
                 <Link
                   className='text-primary underline'
-                  href={`/groups/${groupId}/lists/${list._id}/settings`}
+                  href={`${base}/lists/${list._id}/settings`}
                 >
                   Manage {list.title}
                 </Link>
@@ -137,7 +154,7 @@ export function GroupListEditor({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId?: Id<'groupTools'>;
 }) {
   const group = useGroup(groupId);
@@ -155,7 +172,9 @@ export function GroupListEditor({
     !eligible ||
     (toolId && !manager) ||
     (!toolId &&
-      (!policy.enabled || (policy.creation === 'MANAGERS' && !manager)))
+      (policy.canCreate === false ||
+        !policy.enabled ||
+        (policy.creation === 'MANAGERS' && !manager)))
   )
     return (
       <p role='alert'>
@@ -164,8 +183,8 @@ export function GroupListEditor({
       </p>
     );
   if (toolId && !list) return <p role='status'>Loading preserved list…</p>;
-  if (list && list.groupId !== groupId)
-    return <p role='alert'>List unavailable in this Group.</p>;
+  if (list && (list.groupId ?? list.eventId) !== groupId)
+    return <p role='alert'>List unavailable in this context.</p>;
   return (
     <ListEditor key={list?.version ?? 'new'} groupId={groupId} list={list} />
   );
@@ -174,14 +193,15 @@ function ListEditor({
   groupId,
   list,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   list: ReturnType<typeof hooks.useListManagement>;
 }) {
+  const base = useContentBase(groupId);
   const create = hooks.useCreateList();
   const configure = hooks.useConfigureList();
   const remove = hooks.useDeleteList();
   const router = useRouter();
-  const [title, setTitle] = useState(list?.title ?? 'New community list');
+  const [title, setTitle] = useState(list?.title ?? 'New list');
   const [description, setDescription] = useState(list?.description ?? '');
   const [visibility, setVisibility] = useState<'MANAGERS' | 'MEMBERS'>(
     list?.resultsVisibility ?? 'MEMBERS'
@@ -220,7 +240,7 @@ function ListEditor({
                 title,
                 description,
               });
-              router.push(`/groups/${groupId}/lists`);
+              router.push(`${base}/lists`);
             } else {
               const id = await create({
                 groupId,
@@ -228,7 +248,7 @@ function ListEditor({
                 description,
                 resultsVisibility: visibility,
               });
-              router.push(`/groups/${groupId}/lists/${id}`);
+              router.push(`${base}/lists/${id}`);
             }
           } catch (e) {
             setError(
@@ -293,7 +313,7 @@ function ListEditor({
           explanation='All list configuration, entries and retry records are permanently removed.'
           onConfirm={async () => {
             await remove({ toolId: list._id });
-            router.push(`/groups/${groupId}/lists`);
+            router.push(`${base}/lists`);
           }}
         />
       )}
@@ -305,9 +325,10 @@ export function GroupListInteraction({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
 }) {
+  const base = useContentBase(groupId);
   const group = useGroup(groupId);
   const policy = hooks.useListPolicy({ groupId });
   const eligible =
@@ -317,7 +338,7 @@ export function GroupListInteraction({
     <main className='p-6 space-y-4'>
       <Link
         className='text-primary underline'
-        href={`/groups/${groupId}/lists/${toolId}/own`}
+        href={`${base}/lists/${toolId}/own`}
       >
         My saved list entries
       </Link>
@@ -328,8 +349,8 @@ export function GroupListInteraction({
         </p>
       ) : !list ? (
         <p role='status'>Loading list…</p>
-      ) : list.groupId !== groupId ? (
-        <p role='alert'>List unavailable in this Group.</p>
+      ) : (list.groupId ?? list.eventId) !== groupId ? (
+        <p role='alert'>List unavailable in this context.</p>
       ) : (
         <ListInteraction groupId={groupId} list={list} />
       )}
@@ -340,9 +361,10 @@ function ListInteraction({
   groupId,
   list,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   list: NonNullable<ReturnType<typeof hooks.useList>>;
 }) {
+  const base = useContentBase(groupId);
   const add = hooks.useAddListEntry();
   const [text, setText] = useState('');
   const [attempt, setAttempt] = useState<Parameters<typeof add>[0] | null>(
@@ -431,7 +453,7 @@ function ListInteraction({
       {list.canManage && (
         <Link
           className='text-primary underline'
-          href={`/groups/${groupId}/lists/${list._id}/settings`}
+          href={`${base}/lists/${list._id}/settings`}
         >
           Manage list settings
         </Link>

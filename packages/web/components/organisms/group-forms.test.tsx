@@ -1,3 +1,4 @@
+import { EventToolScope } from '@/features/content';
 import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -541,3 +542,117 @@ it.each([
     await client.close();
   }
 );
+
+it('creates an Event form through the shared editor without writing Group policy', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, mutation, watch, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: true,
+      canManage: false,
+    },
+  });
+  mutation.mockResolvedValue(toolId);
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(
+    screen.getByRole('button', { name: 'Use feedback template' })
+  );
+  await user.click(screen.getByRole('button', { name: 'Create form' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'eventContent/mutations:createForm'
+  );
+  expect(mutation.mock.calls[0][1]).toMatchObject({ eventId });
+  expect(mutation.mock.calls[0][1]).not.toHaveProperty('groupId');
+  expect(push).toHaveBeenCalledWith('/event/event-one/forms/tool-one');
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groups/queries:getGroup'
+  );
+  mounted.unmount();
+  await client.close();
+});
+it('keeps Event form discovery available when creation is restricted', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: false,
+    },
+    'eventContent/queries:listForms': {
+      ...emptyPage,
+      page: [{ ...form, groupId: undefined, eventId }],
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupForms groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('link', { name: 'Book feedback' })).toHaveAttribute(
+    'href',
+    '/event/event-one/forms/tool-one'
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Disable forms' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+it('rejects a Group-owned form reached under an Event URL', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture();
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormInteraction groupId={eventId} toolId={toolId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form unavailable in this context.'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Save response' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('denies Event moderator creation when only organizers may create content', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: true,
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form creation is unavailable'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});

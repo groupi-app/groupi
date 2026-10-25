@@ -251,12 +251,15 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind']),
   groupTools: defineTable(toolFields)
+    .index('by_eventId', ['eventId'])
+    .index('by_eventId_and_kind', ['eventId', 'kind'])
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind'])
     .index('by_creatorId', ['creatorId']),
   groupLists: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     updatedAt: v.number(),
   })
@@ -270,7 +273,8 @@ export default defineSchema({
     .index('by_toolId_and_personId', ['toolId', 'personId']),
   groupListRequests: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     personId: v.id('persons'),
     requestId: v.string(),
     fingerprint: v.string(),
@@ -287,7 +291,8 @@ export default defineSchema({
     ]),
   groupForms: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     questions: v.array(questionValidator),
     updatedAt: v.number(),
@@ -307,7 +312,8 @@ export default defineSchema({
 
   groupPolls: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     semanticVersion: v.number(),
     mode: pollMode,
@@ -1001,6 +1007,27 @@ export default defineSchema({
     .index('by_potential_date', ['potentialDateTimeId'])
     .index('by_membership_date', ['membershipId', 'potentialDateTimeId']),
 
+  groupPostReplies: defineTable({
+    groupId: v.id('groups'),
+    postId: v.id('groupPosts'),
+    authorId: v.optional(v.id('persons')),
+    content: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_postId', ['postId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_authorId', ['authorId']),
+  groupPosts: defineTable({
+    groupId: v.id('groups'),
+    authorId: v.optional(v.id('persons')),
+    title: v.string(),
+    content: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_authorId', ['authorId']),
   posts: defineTable({
     title: v.string(),
     content: v.string(),

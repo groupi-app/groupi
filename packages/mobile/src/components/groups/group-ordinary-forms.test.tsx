@@ -311,7 +311,7 @@ it('submits all seven native answer types through the actual provider with revis
     'Question 6: No',
   ])
     await press(mounted, label);
-  await press(mounted, 'Save Group form answers');
+  await press(mounted, 'Save form answers');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupForms/mutations:submitResponse',
     {
@@ -333,7 +333,7 @@ it('submits all seven native answer types through the actual provider with revis
 it('never mounts current content queries while onboarding is required but permits policy recovery', async () => {
   network.requiredOnboarding = true;
   const mounted = await mount(FormScreen);
-  expect(control(mounted, 'Save Group form answers')).toBeUndefined();
+  expect(control(mounted, 'Save form answers')).toBeUndefined();
   expect(
     network.watches.mock.calls.some(
       ([name]) => name === 'groupForms/queries:getForm'
@@ -365,7 +365,7 @@ it('creates a shared form from a reusable template with fixed visibility', async
   const mounted = await mount(CreateScreen);
   await press(mounted, 'Use form template Feedback');
   await press(mounted, 'Form results MEMBERS');
-  await press(mounted, 'Save Group form');
+  await press(mounted, 'Save form');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupForms/mutations:createForm',
     expect.objectContaining({
@@ -415,7 +415,7 @@ it('drops drafts on a realtime form version change and displays conflicts access
   });
   expect(control(mounted, 'Question 0', 'TextInput').props.value).toBe('');
   network.mutation.mockRejectedValueOnce(new Error('Stale response revision'));
-  await press(mounted, 'Save Group form answers');
+  await press(mounted, 'Save form answers');
   expect(
     mounted.root.findAll(n => n.props.accessibilityRole === 'alert').length
   ).toBeGreaterThan(0);
@@ -444,12 +444,12 @@ it('removes own history through narrow recovery without loading current content'
 });
 it('unmounts answer controls when owner policy disables ordinary forms in realtime', async () => {
   const mounted = await mount(FormScreen);
-  expect(control(mounted, 'Save Group form answers')).toBeDefined();
+  expect(control(mounted, 'Save form answers')).toBeDefined();
   await act(async () => {
     network.enabled = false;
     network.subscribers.forEach(fn => fn());
   });
-  expect(control(mounted, 'Save Group form answers')).toBeUndefined();
+  expect(control(mounted, 'Save form answers')).toBeUndefined();
   expect(control(mounted, 'My form response history')).toBeDefined();
 });
 it('keeps policy owner-only even when a moderator manages form content', async () => {
@@ -469,7 +469,7 @@ it('manager edits reuse the controlled question editor and preserve fixed result
     )('Red\nBlue');
   });
   await press(mounted, 'Form question 1 answer required when completing');
-  await press(mounted, 'Save Group form');
+  await press(mounted, 'Save form');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupForms/mutations:configureForm',
     expect.objectContaining({
@@ -492,7 +492,7 @@ it('manager edits reuse the controlled question editor and preserve fixed result
 it('deletion is confirmed before calling the production deletion mutation', async () => {
   const alert = vi.spyOn(Alert, 'alert');
   const mounted = await mount(ManageScreen);
-  await press(mounted, 'Delete Group form');
+  await press(mounted, 'Delete form');
   expect(network.mutation).not.toHaveBeenCalled();
   await act(async () => {
     alert.mock.calls.at(-1)?.[2]?.[1].onPress?.();
@@ -508,8 +508,8 @@ it('current moderator reaches preserved form settings and deletion while forms a
   network.moderator = true;
   network.enabled = false;
   const mounted = await mount(ManageScreen);
-  expect(control(mounted, 'Save Group form')).toBeDefined();
-  await press(mounted, 'Save Group form');
+  expect(control(mounted, 'Save form')).toBeDefined();
+  await press(mounted, 'Save form');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupForms/mutations:configureForm',
     expect.objectContaining({ toolId: 'tool-123' })
@@ -520,7 +520,7 @@ it('disabled moderator list links directly to preserved settings without enablin
   network.moderator = true;
   network.enabled = false;
   const mounted = await mount(HubScreen);
-  expect(control(mounted, 'Create Group form')).toBeUndefined();
+  expect(control(mounted, 'Create form')).toBeUndefined();
   await press(mounted, 'Manage form Feedback');
   expect(network.push).toHaveBeenCalledWith(
     '/groups/group-123/forms/tool-123/manage'
@@ -536,8 +536,8 @@ it.each([
     network.requiredOnboarding = required;
     network.enabled = false;
     const mounted = await mount(ManageScreen);
-    expect(control(mounted, 'Save Group form')).toBeUndefined();
-    expect(control(mounted, 'Delete Group form')).toBeUndefined();
+    expect(control(mounted, 'Save form')).toBeUndefined();
+    expect(control(mounted, 'Delete form')).toBeUndefined();
     expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
       'groupForms/queries:getFormForManagement'
     );
@@ -548,7 +548,7 @@ it('disabled moderator confirms deletion directly from preserved settings', asyn
   network.enabled = false;
   const alert = vi.spyOn(Alert, 'alert');
   const mounted = await mount(ManageScreen);
-  await press(mounted, 'Delete Group form');
+  await press(mounted, 'Delete form');
   expect(network.mutation).not.toHaveBeenCalled();
   await act(async () => {
     alert.mock.calls.at(-1)?.[2]?.[1].onPress?.();

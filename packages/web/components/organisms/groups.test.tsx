@@ -29,6 +29,14 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupTools: {
+      queries: {
+        getFormPolicy: 'toolPolicy',
+        getListPolicy: 'toolPolicy',
+        getPollPolicy: 'toolPolicy',
+      },
+    },
+    eventContent: { queries: { getContext: 'eventContext' } },
     groupTransfers: {
       queries: { status: 'transferStatus' },
       mutations: {
@@ -121,6 +129,8 @@ function setQueryResult(result: unknown) {
   vi.mocked(useQuery).mockImplementation((...[query]) => {
     if (String(query) === 'members' || String(query) === 'inbox')
       return { page: [], isDone: true, continueCursor: '' };
+    if (String(query) === 'toolPolicy')
+      return { enabled: true, creation: 'MANAGERS', canConfigure: false };
     if (String(query) === 'transferStatus') return null;
     if (String(query) === 'applicationForm')
       return {

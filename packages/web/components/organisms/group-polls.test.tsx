@@ -393,7 +393,7 @@ it('results show only current or historical snapshots and moderate with current 
   expect(
     screen.getByText('Historical vote: no longer counts under the current rule')
   ).toBeInTheDocument();
-  expect(screen.getByText(/not a Group-wide total/)).toBeInTheDocument();
+  expect(screen.getByText(/not an overall total/)).toBeInTheDocument();
   const u = userEvent.setup();
   await u.click(screen.getByRole('button', { name: 'Remove vote' }));
   await u.click(

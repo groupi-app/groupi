@@ -1,6 +1,8 @@
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
@@ -105,6 +107,31 @@ export default function EventDetailScreen() {
                 )}
               />
             ) : null}
+
+            <View className='gap-2 p-4'>
+              <Text
+                accessibilityRole='header'
+                className='text-lg font-semibold text-foreground'
+              >
+                Event content
+              </Text>
+              <View className='flex-row flex-wrap gap-2'>
+                {(['forms', 'lists', 'polls'] as const).map(kind => (
+                  <Button
+                    key={kind}
+                    variant='outline'
+                    accessibilityLabel={`Event ${kind}`}
+                    onPress={() => router.push(`/event/${eventId}/${kind}`)}
+                  >
+                    {kind === 'forms'
+                      ? 'Forms'
+                      : kind === 'lists'
+                        ? 'Lists'
+                        : 'Polls'}
+                  </Button>
+                ))}
+              </View>
+            </View>
 
             <EventOwnershipTransfer
               eventId={typedEventId}

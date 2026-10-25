@@ -56,3 +56,17 @@ export async function removeToolsForPerson(
     .withIndex('by_creatorId', q => q.eq('creatorId', personId)))
     await ctx.db.patch(tool._id, { creatorId: undefined });
 }
+
+/** Event tools share their interaction lifecycle without changing legacy Bring List. */
+export async function removeToolsForEvent(
+  ctx: MutationCtx,
+  eventId: Id<'events'>
+) {
+  for await (const tool of ctx.db
+    .query('groupTools')
+    .withIndex('by_eventId', q => q.eq('eventId', eventId))) {
+    if (tool.kind === 'FORM') await purgeTool(ctx, tool._id);
+    else if (tool.kind === 'POLL') await purgePoll(ctx, tool._id);
+    else await purgeList(ctx, tool._id);
+  }
+}

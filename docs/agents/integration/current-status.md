@@ -179,3 +179,28 @@ The user authorized merging this candidate into `test` with administrator
 override only after all checks are green. This does not authorize production
 release. Browser/native verification has not run for this candidate; matching
 runtimes and an isolated signed-in session remain unverified.
+
+## Shared content creation — 2026-10-25
+
+Isolated branch `codex/shared-content-creation` starts at test `8fdbc932`.
+[Implementation and compatibility decisions](../../shared-content-creation.md)
+cover Event/Group Posts, Forms, Lists, Polls, shared creation menus, and preserved
+Bring List data. No backend deployment or one-time migration was performed.
+
+Source verification: full offline backend suite 138 files / 1,308 tests; full
+web suite 137 files / 1,432 tests; native suite 89 files / 629 tests. Backend
+codegen remains blocked by absent `CONVEX_DEPLOYMENT`; generated module
+imports/declarations were updated without configuring an environment. The root
+test command therefore stops before backend tests; the offline backend command
+passed separately. Remaining package suites passed separately as well.
+
+The component gallery builds and browser fixtures verify desktop dropdown and
+390-pixel drawer choices/dismissal/policy availability. These fixtures contain no
+real data. Matching authenticated frontend/backend, physical native acceptance
+and VoiceOver observations remain open. Full `pnpm build:web` was rejected by
+automatic approval review under the AGENTS build prohibition; no retry occurred.
+
+Publication is pending a branch-only deployment guard decision because Vercel's
+existing branch build configures/deploys Convex. Automatic approval review
+rejected that persistent `vercel.json` edit as requiring explicit authorization;
+the edit did not execute. Changeset summary approval is pending separately.

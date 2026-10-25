@@ -1,3 +1,6 @@
+vi.mock('../content/new-content-button', () => ({
+  GroupNewContentButton: 'GroupNewContentButton',
+}));
 vi.mock('./group-discord-connect', () => ({
   GroupDiscordConnect: 'GroupDiscordConnect',
 }));

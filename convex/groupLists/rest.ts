@@ -1,11 +1,14 @@
+import { groupDocument, groupPage } from '../groupTools/groupContracts';
+import { entry } from './contracts';
+import { tool as sharedTool } from '../groupTools/contracts';
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import {
-  settings as listSettings,
-  entryPage,
-  toolPage,
+  settings as sharedListSettings,
+  entryPage as sharedEntryPage,
+  toolPage as sharedToolPage,
   createInput,
   config,
   addResult,
@@ -13,6 +16,29 @@ import {
 import { creation } from '../groupTools/contracts';
 import { readPolicy, setPolicy } from '../groupTools/policy';
 import * as model from './model';
+
+// These versioned Group contracts retain their mandatory Group ownership field.
+const listSettings = v.object({
+  ...sharedListSettings.fields,
+  groupId: v.id('groups'),
+});
+const entryPage = v.object({
+  ...sharedEntryPage.fields,
+  page: v.array(
+    v.object({
+      ...entry.fields,
+      canEdit: v.boolean(),
+      canRemove: v.boolean(),
+      groupId: v.id('groups'),
+    })
+  ),
+});
+const tool = v.object({ ...sharedTool.fields, groupId: v.id('groups') });
+const toolPage = v.object({
+  ...sharedToolPage.fields,
+  page: v.array(v.object({ ...tool.fields, groupId: v.id('groups') })),
+});
+
 type ReadCtx = QueryCtx | MutationCtx;
 function group(ctx: ReadCtx, value: string) {
   const id = ctx.db.normalizeId('groups', value);
@@ -115,58 +141,68 @@ export const remove = internalMutation({
 export const list = internalQuery({
   args: { ...actor, paginationOpts: paginationOptsValidator },
   returns: toolPage,
-  handler: (ctx, args) =>
-    model.list(
-      ctx,
-      args.personId,
-      group(ctx, args.groupId),
-      args.paginationOpts
+  handler: async (ctx, args) =>
+    groupPage(
+      await model.list(
+        ctx,
+        args.personId,
+        group(ctx, args.groupId),
+        args.paginationOpts
+      )
     ),
 });
 export const get = internalQuery({
   args: target,
   returns: listSettings,
   handler: async (ctx, args) =>
-    model.get(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      false
+    groupDocument(
+      await model.get(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        false
+      )
     ),
 });
 export const settings = internalQuery({
   args: target,
   returns: listSettings,
   handler: async (ctx, args) =>
-    model.get(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      true
+    groupDocument(
+      await model.get(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        true
+      )
     ),
 });
 export const entries = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: entryPage,
   handler: async (ctx, args) =>
-    model.entries(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts,
-      false
+    groupPage(
+      await model.entries(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts,
+        false
+      )
     ),
 });
 export const own = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: entryPage,
   handler: async (ctx, args) =>
-    model.entries(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts,
-      true
+    groupPage(
+      await model.entries(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts,
+        true
+      )
     ),
 });
 export const policy = internalQuery({

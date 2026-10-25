@@ -1,18 +1,23 @@
 import { useState, type ReactNode } from 'react';
 import { View, TextInput } from 'react-native';
-import { router } from 'expo-router';
+import {
+  useToolRouter,
+  useToolCommunity as useGroup,
+  useEventToolScope,
+  belongsToOwner,
+  type ContentOwnerId,
+} from '../content/event-tool-scope';
 import type { Id } from 'convex/_generated/dataModel';
 import { groupFormTemplates } from '@groupi/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useGroup } from '@/hooks/use-groups';
 import * as hooks from '@/hooks/use-group-forms';
 import { GroupQuestionEditor } from './group-question-editor';
 import { GroupQuestionField } from './group-questionnaire';
 import { GroupPageControls } from './group-page-controls';
 type Form = NonNullable<ReturnType<typeof hooks.useForm>>;
-type GroupId = Id<'groups'>;
+type GroupId = ContentOwnerId;
 type ToolId = Id<'groupTools'>;
 function valueText(value: Form['answers'][string] | undefined) {
   return value === undefined
@@ -34,6 +39,7 @@ export function OrdinaryFormGate({
   children: ReactNode;
   management?: boolean;
 }) {
+  const router = useToolRouter();
   const group = useGroup(groupId);
   const policy = hooks.useFormPolicy(group ? { groupId } : 'skip');
   if (group === undefined) return <Text>Loading Group…</Text>;
@@ -61,14 +67,18 @@ export function OrdinaryFormGate({
   return <>{children}</>;
 }
 export function GroupFormsHub({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
+  const eventId = useEventToolScope();
   return (
     <View className='gap-3'>
-      <Button
-        accessibilityLabel='Group form policy'
-        onPress={() => router.push(`/groups/${groupId}/forms/policy`)}
-      >
-        Forms policy
-      </Button>
+      {!eventId && (
+        <Button
+          accessibilityLabel='Group form policy'
+          onPress={() => router.push(`/groups/${groupId}/forms/policy`)}
+        >
+          Forms policy
+        </Button>
+      )}
       <OrdinaryFormGate groupId={groupId} management>
         <FormsList groupId={groupId} />
       </OrdinaryFormGate>
@@ -76,6 +86,7 @@ export function GroupFormsHub({ groupId }: { groupId: GroupId }) {
   );
 }
 function FormsList({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
   const [cursor, setCursor] = useState<string | null>(null);
   const page = hooks.useForms({
     groupId,
@@ -92,9 +103,10 @@ function FormsList({ groupId }: { groupId: GroupId }) {
         </Text>
       )}
       {policy?.enabled &&
+      policy.canCreate !== false &&
       (policy.creation === 'MEMBERS' || group?.canManageMembers) ? (
         <Button
-          accessibilityLabel='Create Group form'
+          accessibilityLabel='Create form'
           onPress={() => router.push(`/groups/${groupId}/forms/create`)}
         >
           Create form
@@ -215,11 +227,17 @@ function EditorLoader({
   const policy = hooks.useFormPolicy({ groupId });
   if (toolId && group && !group.canManageMembers)
     return <Text>Current eligible managers can manage this form.</Text>;
+  if (!toolId && policy?.canCreate === false)
+    return (
+      <Text>
+        Creating content is unavailable under current Event permissions.
+      </Text>
+    );
   if (!toolId && policy && !policy.enabled)
     return <Text>Form creation is unavailable while forms are disabled.</Text>;
   if (toolId && !form) return <Text>Loading form…</Text>;
-  if (form && form.groupId !== groupId)
-    return <Text>Form belongs to another Group.</Text>;
+  if (form && !belongsToOwner(form, groupId))
+    return <Text>Form belongs to another context.</Text>;
   if (
     form
       ? !form.canManage
@@ -237,6 +255,7 @@ function FormEditor({
   groupId: GroupId;
   form?: NonNullable<ReturnType<typeof hooks.useFormManagement>>;
 }) {
+  const router = useToolRouter();
   const create = hooks.useCreateForm();
   const configure = hooks.useConfigureForm();
   const remove = hooks.useDeleteForm();
@@ -336,7 +355,7 @@ function FormEditor({
         disabled={busy}
       />
       <Button
-        accessibilityLabel='Save Group form'
+        accessibilityLabel='Save form'
         disabled={busy}
         accessibilityState={{ busy, disabled: busy }}
         onPress={save}
@@ -345,7 +364,7 @@ function FormEditor({
       </Button>
       {form ? (
         <Button
-          accessibilityLabel='Delete Group form'
+          accessibilityLabel='Delete form'
           disabled={busy}
           onPress={() =>
             showConfirmDialog({
@@ -383,6 +402,7 @@ export function GroupOrdinaryForm({
   groupId: GroupId;
   toolId: ToolId;
 }) {
+  const router = useToolRouter();
   return (
     <View className='gap-3'>
       <Button
@@ -408,8 +428,8 @@ function AnswerLoader({
 }) {
   const form = hooks.useForm({ toolId });
   if (!form) return <Text>Loading form…</Text>;
-  if (form.groupId !== groupId)
-    return <Text>Form belongs to another Group.</Text>;
+  if (!belongsToOwner(form, groupId))
+    return <Text>Form belongs to another context.</Text>;
   return (
     <FormAnswers
       key={`${form.version}-${form.responseRevision}`}
@@ -419,6 +439,7 @@ function AnswerLoader({
   );
 }
 function FormAnswers({ groupId, form }: { groupId: GroupId; form: Form }) {
+  const router = useToolRouter();
   const submit = hooks.useSubmitFormResponse();
   const remove = hooks.useRemoveFormResponse();
   const [answers, setAnswers] = useState(form.answers);
@@ -443,8 +464,8 @@ function FormAnswers({ groupId, form }: { groupId: GroupId; form: Form }) {
       <Text>{form.description}</Text>
       <Text>
         {form.resultsVisibility === 'MANAGERS'
-          ? 'Private answers are visible to managers and are purged when you leave or are removed from this Group, or delete your account.'
-          : 'Shared answers are visible to eligible members. After leaving, removal, or account deletion they persist anonymously; membership identity is removed.'}
+          ? 'Private answers are visible to you and current managers. Your saved response history remains available through its direct link if you leave. You can remove your response and history.'
+          : 'Shared answers are visible to eligible members. Leaving retains your saved response. Account deletion preserves shared answers anonymously; your private revision history is removed.'}
       </Text>
       {form.questions.map(q => (
         <GroupQuestionField
@@ -461,7 +482,7 @@ function FormAnswers({ groupId, form }: { groupId: GroupId; form: Form }) {
         />
       ))}
       <Button
-        accessibilityLabel='Save Group form answers'
+        accessibilityLabel='Save form answers'
         disabled={busy}
         accessibilityState={{ busy, disabled: busy }}
         onPress={() =>
@@ -509,7 +530,7 @@ function FormAnswers({ groupId, form }: { groupId: GroupId; form: Form }) {
       ) : null}
       {form.canManage ? (
         <Button
-          accessibilityLabel='Manage Group form'
+          accessibilityLabel='Manage form'
           onPress={() =>
             router.push(`/groups/${groupId}/forms/${form._id}/manage`)
           }
@@ -519,7 +540,7 @@ function FormAnswers({ groupId, form }: { groupId: GroupId; form: Form }) {
       ) : null}
       {form.canReview ? (
         <Button
-          accessibilityLabel='View Group form results'
+          accessibilityLabel='View form results'
           onPress={() =>
             router.push(`/groups/${groupId}/forms/${form._id}/results`)
           }
@@ -553,8 +574,8 @@ function ResultsLoader({
 }) {
   const form = hooks.useForm({ toolId });
   if (!form) return <Text>Loading result permissions…</Text>;
-  if (form.groupId !== groupId || !form.canReview)
-    return <Text>Results are private to Group managers.</Text>;
+  if (!belongsToOwner(form, groupId) || !form.canReview)
+    return <Text>Results are private to current managers.</Text>;
   return <ResponseRecords toolId={toolId} canManage={form.canManage} />;
 }
 export function GroupOrdinaryFormHistory({ toolId }: { toolId: ToolId }) {
