@@ -6,7 +6,6 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
-import { useToast } from '@/components/ui/use-toast';
 import { useIsActive } from '@/providers/visibility-provider';
 import { canViewAttendeeList } from '@/lib/event-permissions';
 
@@ -160,11 +159,10 @@ interface FocalPoint {
 }
 
 /**
- * Create a new event with availability polling
+ * Create a new event with availability polling. The calling form owns feedback.
  */
 export function useCreateEvent() {
   const createEvent = useMutation(eventMutations.createEvent);
-  const { toast } = useToast();
 
   return useCallback(
     async (data: {
@@ -186,39 +184,23 @@ export function useCreateEvent() {
         viewAttendeeList?: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
       };
     }) => {
-      try {
-        const result = await createEvent({
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          imageStorageId: data.imageStorageId as Id<'_storage'> | undefined,
-          imageFocalPoint: data.imageFocalPoint,
-          potentialDateTimes: data.potentialDateTimes,
-          potentialDateTimeOptions: data.potentialDateTimeOptions,
-          chosenDateTime: data.chosenDateTime,
-          chosenEndDateTime: data.chosenEndDateTime,
-          reminderOffset: data.reminderOffset,
-          addons: data.addons,
-          visibility: data.visibility,
-          permissions: data.permissions,
-        });
-
-        toast({
-          title: 'Success',
-          description: 'Event created successfully!',
-        });
-
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to create event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
+      return await createEvent({
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        imageStorageId: data.imageStorageId as Id<'_storage'> | undefined,
+        imageFocalPoint: data.imageFocalPoint,
+        potentialDateTimes: data.potentialDateTimes,
+        potentialDateTimeOptions: data.potentialDateTimeOptions,
+        chosenDateTime: data.chosenDateTime,
+        chosenEndDateTime: data.chosenEndDateTime,
+        reminderOffset: data.reminderOffset,
+        addons: data.addons,
+        visibility: data.visibility,
+        permissions: data.permissions,
+      });
     },
-    [createEvent, toast]
+    [createEvent]
   );
 }
 
@@ -227,7 +209,6 @@ export function useCreateEvent() {
  */
 export function useUpdateEvent() {
   const updateEvent = useMutation(eventMutations.updateEvent);
-  const { toast } = useToast();
 
   return useCallback(
     async (data: {
@@ -239,36 +220,22 @@ export function useUpdateEvent() {
       imageFocalPoint?: FocalPoint | null; // Optional focal point (null to clear)
       visibility?: 'PRIVATE' | 'FRIENDS' | 'PUBLIC' | null;
     }) => {
-      try {
-        const result = await updateEvent({
-          eventId: data.eventId,
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          imageStorageId:
-            data.imageStorageId === null
-              ? null
-              : (data.imageStorageId as Id<'_storage'> | undefined),
-          imageFocalPoint: data.imageFocalPoint,
-          visibility: data.visibility,
-        });
+      const result = await updateEvent({
+        eventId: data.eventId,
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        imageStorageId:
+          data.imageStorageId === null
+            ? null
+            : (data.imageStorageId as Id<'_storage'> | undefined),
+        imageFocalPoint: data.imageFocalPoint,
+        visibility: data.visibility,
+      });
 
-        toast({
-          title: 'Success',
-          description: 'Event updated successfully!',
-        });
-
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to update event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
+      return result;
     },
-    [updateEvent, toast]
+    [updateEvent]
   );
 }
 
@@ -277,7 +244,6 @@ export function useUpdateEvent() {
  */
 export function useDeleteEvent() {
   const baseMutation = useMutation(eventMutations.deleteEvent);
-  const { toast } = useToast();
 
   // Create mutation with optimistic update
   const deleteEvent = useMemo(() => {
@@ -299,21 +265,11 @@ export function useDeleteEvent() {
 
   return useCallback(
     async (eventId: Id<'events'>) => {
-      try {
-        const result = await deleteEvent({ eventId });
+      const result = await deleteEvent({ eventId });
 
-        // No success toast here - the dialog handles it
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to delete event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
+      return result;
     },
-    [deleteEvent, toast]
+    [deleteEvent]
   );
 }
 
@@ -322,29 +278,14 @@ export function useDeleteEvent() {
  */
 export function useLeaveEvent() {
   const leaveEvent = useMutation(eventMutations.leaveEvent);
-  const { toast } = useToast();
 
   return useCallback(
     async (eventId: Id<'events'>) => {
-      try {
-        const result = await leaveEvent({ eventId });
+      const result = await leaveEvent({ eventId });
 
-        toast({
-          title: 'Success',
-          description: 'Left event successfully!',
-        });
-
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to leave event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
+      return result;
     },
-    [leaveEvent, toast]
+    [leaveEvent]
   );
 }
 

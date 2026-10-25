@@ -1,6 +1,5 @@
 'use client';
 
-import { EventOwnershipTransfer } from '@/components/organisms/event-ownership-transfer';
 import { EventAddons } from '@/features/addons/runtime';
 import { EventHeader } from './components/event-header';
 import { MemberList } from './components/member-list';
@@ -8,37 +7,37 @@ import { PostFeed } from './components/post-feed';
 import { NewPostButton } from '@/components/new-post-button';
 import { useEventData } from './context';
 import { EventPageSkeleton } from '@/components/skeletons';
+import { DetailPageTemplate } from '@/components/templates/detail-page-template';
 
 export default function EventPage() {
   const { headerData, membersData, postFeedData, isLoading } = useEventData();
 
-  if (isLoading || !headerData || membersData === undefined || !postFeedData) {
+  // The parent owns resolved not-found/nonmember redirection.
+  if (headerData === null || postFeedData === null) return null;
+
+  if (
+    isLoading ||
+    headerData === undefined ||
+    membersData === undefined ||
+    postFeedData === undefined
+  ) {
     return <EventPageSkeleton />;
   }
-
   const permissions = headerData.permissions;
   const userRole = headerData.userMembership?.role;
 
   return (
-    <>
-      <div className='container pt-6 pb-24 space-y-5'>
-        <EventHeader data={headerData} />
-        <div className='max-w-4xl mx-auto flex flex-col gap-4'>
-          {membersData && (
-            <>
-              <MemberList data={membersData} permissions={permissions} />
-              <EventOwnershipTransfer
-                eventId={headerData.event._id}
-                personId={headerData.userMembership.person._id}
-                members={membersData.event.memberships}
-              />
-            </>
-          )}
-          <EventAddons data={headerData} />
-          <PostFeed data={postFeedData} />
-        </div>
-      </div>
-      <NewPostButton permissions={permissions} userRole={userRole} />
-    </>
+    <DetailPageTemplate
+      header={<EventHeader data={headerData} />}
+      floatingAction={
+        <NewPostButton permissions={permissions} userRole={userRole} />
+      }
+    >
+      {membersData && (
+        <MemberList data={membersData} permissions={permissions} />
+      )}
+      <EventAddons data={headerData} />
+      <PostFeed data={postFeedData} />
+    </DetailPageTemplate>
   );
 }

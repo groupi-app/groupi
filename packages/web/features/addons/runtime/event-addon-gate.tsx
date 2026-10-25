@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useAddonGating } from './use-addon-gating';
+import { EventPageSkeleton } from '@/components/skeletons/event-page-skeleton';
 
 /** Match route segments relative to this event, never substrings in a post ID. */
 function isExemptRoute(pathname: string, eventId: string) {
@@ -35,7 +36,7 @@ export function EventAddonGate({
   }, [shouldRedirect, redirectTo, router]);
 
   if (!isExempt && (isLoading || shouldRedirect)) {
-    return <p role='status'>Loading event…</p>;
+    return <EventPageSkeleton />;
   }
   return <>{children}</>;
 }

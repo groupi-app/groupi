@@ -1,6 +1,13 @@
 import type { StorybookConfig } from '@storybook/nextjs';
 
 const config: StorybookConfig = {
+  // Component fixtures import the app's dormant Convex singleton through auth
+  // helpers. Give Storybook a placeholder address; fixtures provide their own
+  // local transport and must never inherit a real application deployment.
+  env: config => ({
+    ...config,
+    NEXT_PUBLIC_CONVEX_URL: 'https://fixture.convex.cloud',
+  }),
   stories: [
     '../stories/**/*.mdx',
     '../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)',

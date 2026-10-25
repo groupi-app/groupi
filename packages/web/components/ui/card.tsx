@@ -6,13 +6,16 @@ import { cn } from '@/lib/utils';
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Staged surface language. Interactive cards require a CardAction child. */
   treatment?: 'quiet' | 'featured' | 'interactive';
+  /** Quiet edge for content cards that still have a primary action. */
+  edge?: 'none';
 }
 
-export function Card({ className, treatment, ...props }: CardProps) {
+export function Card({ className, treatment, edge, ...props }: CardProps) {
   return (
     <div
       data-slot='card'
       data-treatment={treatment}
+      data-edge={edge}
       className={cn(
         // Clean elevated surface - sticker effect reserved for accents (buttons, badges, avatars)
         'rounded-card bg-card text-card-foreground border border-border',

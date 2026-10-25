@@ -3,7 +3,8 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface DetailPageTemplateProps {
+export interface DetailPageTemplateProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Header component (event header, post header, etc.)
    */
@@ -53,10 +54,12 @@ export function DetailPageTemplate({
   maxWidth = 'lg',
   spacing = 'md',
   className,
+  ...props
 }: DetailPageTemplateProps) {
   return (
     <div
       className={cn('container pt-6 pb-24', spacingClasses[spacing], className)}
+      {...props}
     >
       {header}
       <div
