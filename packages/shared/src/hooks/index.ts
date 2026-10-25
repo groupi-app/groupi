@@ -70,3 +70,9 @@ export { groupFormTemplates } from '../utils/group-form-templates';
 
 export { createGroupPollHooks } from './useGroupPolls';
 export { createGroupListHooks } from './useGroupLists';
+
+export { createAuthorizationHooks } from './useAuthorization';
+export { authorizationActionLabel } from './useAuthorization';
+export { createConnectedAppHooks } from './useConnectedApps';
+export { createEventLifecycleHooks } from './useEventLifecycle';
+export { createGroupDiscordHooks } from './useGroupDiscord';

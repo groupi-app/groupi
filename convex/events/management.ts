@@ -1,3 +1,8 @@
+import { nextParticipationRevision } from '../events/participationRevision';
+import {
+  requireNoEventExclusion,
+  isEventExcludedForPerson,
+} from '../groups/exclusions';
 import { resolveAdmissionPolicy, eventAdmissionAccess } from './admission';
 import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import { requirePerson } from '../groups/model';
@@ -207,7 +212,7 @@ export async function leaveEventForPerson(
 
     if (organizers.length <= 1) {
       throw new ConvexError({
-        code: 'FORBIDDEN',
+        code: 'PROTECTED_ORGANIZER',
         message:
           'Cannot leave event as the last organizer. Transfer ownership first.',
       });
@@ -365,6 +370,8 @@ export async function canDiscoverEventForPerson(
   event: Doc<'events'>,
   now: number
 ) {
+  if (await isEventExcludedForPerson(ctx, event._id, personId, now))
+    return false;
   if (event.chosenDateTime !== undefined && event.chosenDateTime < now)
     return false;
   if (await checkIsBlocked(ctx, personId, event.creatorId)) return false;
@@ -393,6 +400,7 @@ export async function admitAttendeeForPerson(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const existing = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>
@@ -406,6 +414,11 @@ export async function admitAttendeeForPerson(
 
   const now = Date.now();
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      eventId,
+      personId
+    ),
     personId: personId,
     eventId: eventId,
     role: 'ATTENDEE',

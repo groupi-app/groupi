@@ -70,7 +70,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: { guildName: 'Test' },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with empty guildId', async () => {
@@ -85,7 +85,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: { guildId: '', guildName: 'Test' },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with missing guildName', async () => {
@@ -99,7 +99,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: { guildId: '123456789' },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with empty guildName', async () => {
@@ -113,7 +113,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: { guildId: '123456789', guildName: '' },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject non-object config', async () => {
@@ -127,7 +127,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: 'not an object',
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject null config', async () => {
@@ -141,7 +141,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: null,
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
   });
 
@@ -266,7 +266,7 @@ describe('Discord Add-on', () => {
           addonType: 'discord',
           config: { guildId: '', guildName: '' },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
   });
 

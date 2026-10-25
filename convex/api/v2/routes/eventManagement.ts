@@ -6,7 +6,12 @@ import type { Id } from '../../../_generated/dataModel';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import { EventListQuerySchema } from '../schemas/events';
-type Variables = { ctx: ActionCtx; personId: string; userId: string };
+type Variables = {
+  ctx: ActionCtx;
+  personId: string;
+  userId: string;
+  credential: import('../../middleware/auth').CredentialContext;
+};
 const level = z.enum(['EVERYONE', 'MODERATOR', 'ORGANIZER']);
 const visibility = z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']);
 const permissions = z.object({
@@ -234,6 +239,7 @@ export function createEventManagementRoutes() {
       request: {
         params: EventIdParamSchema,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z
@@ -263,6 +269,114 @@ export function createEventManagementRoutes() {
             personId: c.get('personId') as Id<'persons'>,
             eventId: c.req.valid('param').eventId as Id<'events'>,
             body: c.req.valid('json'),
+          }),
+        200
+      )
+  );
+  const lifecycle = z.object({
+    audienceConflicts: z.array(
+      z.object({ groupId: z.string(), name: z.string() })
+    ),
+    revision: z.string(),
+    completed: z.boolean(),
+    completedAt: z.number().nullable(),
+    startsAt: z.number().nullable(),
+    endsAt: z.number().nullable(),
+  });
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/lifecycle',
+      operationId: 'readEventLifecycle',
+      tags: ['Events'],
+      summary: 'Read Organizer lifecycle and revision',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema },
+      responses: {
+        ...errors,
+        200: {
+          description: 'Current Organizer lifecycle',
+          content: { 'application/json': { schema: lifecycle } },
+        },
+      },
+    }),
+    async c =>
+      c.json(
+        await c
+          .get('ctx')
+          .runQuery(internal.events.lifecycleOperations.getLifecycleRest, {
+            personId: c.get('personId') as Id<'persons'>,
+            eventId: c.req.valid('param').eventId as Id<'events'>,
+          }),
+        200
+      )
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/lifecycle',
+      operationId: 'updateEventLifecycle',
+      tags: ['Events'],
+      summary: 'Complete, reopen or reschedule as current Organizer',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+        body: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: z
+                .object({
+                  expectedRevision: z.string(),
+                  action: z.enum(['complete', 'reopen', 'reschedule']),
+                  startsAt: z.number().nullable().optional(),
+                  endsAt: z.number().nullable().optional(),
+                })
+                .strict(),
+            },
+          },
+        },
+      },
+      responses: {
+        ...errors,
+        409: {
+          description: 'Stale revision or conflicting/expired operation ID',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+        200: {
+          description:
+            'Minimal committed receipt; replay never repeats effects',
+          content: {
+            'application/json': {
+              schema: z.object({
+                operationId: z.string(),
+                outcome: z.literal('committed'),
+                result: z.object({
+                  eventId: z.string(),
+                  revision: z.string(),
+                  completed: z.boolean(),
+                }),
+                effects: z.object({
+                  email: z.literal('not-requested'),
+                  cleanup: z.literal('not-requested'),
+                }),
+              }),
+            },
+          },
+        },
+      },
+    }),
+    async c =>
+      c.json(
+        await c
+          .get('ctx')
+          .runMutation(internal.events.lifecycleOperations.setLifecycleRest, {
+            credentialId: c.get('credential').credentialId,
+            personId: c.get('personId') as Id<'persons'>,
+            eventId: c.req.valid('param').eventId as Id<'events'>,
+            operationId: c.req.valid('header')['Idempotency-Key'],
+            ...c.req.valid('json'),
           }),
         200
       )

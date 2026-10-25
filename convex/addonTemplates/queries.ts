@@ -1,3 +1,4 @@
+import { templateDocument } from '../addons/contracts';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -7,6 +8,7 @@ import { requireAuth } from '../auth';
  */
 export const getMyTemplates = query({
   args: {},
+  returns: v.array(templateDocument),
   handler: async ctx => {
     const { person } = await requireAuth(ctx);
 
@@ -25,6 +27,7 @@ export const getTemplate = query({
   args: {
     templateId: v.id('addonTemplates'),
   },
+  returns: v.union(templateDocument, v.null()),
   handler: async (ctx, { templateId }) => {
     const { person } = await requireAuth(ctx);
 
@@ -44,6 +47,7 @@ export const getTemplate = query({
  */
 export const getMyPublishedTemplates = query({
   args: {},
+  returns: v.array(templateDocument),
   handler: async ctx => {
     const { person } = await requireAuth(ctx);
 

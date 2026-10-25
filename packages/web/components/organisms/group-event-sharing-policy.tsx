@@ -41,13 +41,12 @@ export function GroupEventSharingPolicy({
         }
       }}
     >
-      <h2 className='font-heading text-xl font-semibold'>
+      <h2 className='font-heading text-lg font-semibold'>
         Group Event sharing policy
       </h2>
       <p>
-        Sharing also requires Event Organizer authority and current access to
-        Group member content. This policy does not grant general Event
-        management powers.
+        Members must also organize the Event and have access to Group content.
+        Sharing grants no Event management powers.
       </p>
       <Label htmlFor='group-event-sharing-policy'>
         Who may share Events with this Group?

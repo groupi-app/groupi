@@ -1,3 +1,4 @@
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
 import { deleteResolvedAccount } from '../users/mutations';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
@@ -114,6 +115,7 @@ async function deleteEventAndRelatedData(
 
   // 6. Finally, delete the event itself
   await deleteEventApplications(ctx, eventId);
+  await deleteEventParticipationRevisions(ctx, eventId);
   await ctx.db.delete(eventId);
 }
 

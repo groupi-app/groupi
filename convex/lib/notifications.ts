@@ -253,6 +253,7 @@ export type NotificationType =
   | 'GROUP_APPLICATION_APPROVED'
   | 'GROUP_APPLICATION_DECLINED'
   | 'GROUP_ONBOARDING_REQUIRED'
+  | 'GROUP_DISCORD_SYNC_BLOCKED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -523,6 +524,8 @@ export function getNotificationEmailSubject(
       return `Your application to ${groupTitle || 'a Group'} was declined`;
     case 'GROUP_ANNOUNCEMENT':
       return ctx.announcementTitle || 'Group announcement';
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -619,6 +622,8 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -714,6 +719,8 @@ function getNotificationMessageMarkdown(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -808,6 +815,8 @@ export function getNotificationMessagePlain(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
@@ -1612,8 +1621,13 @@ export async function createNotification(
       );
     return notificationId;
   }
+  const decisionEmail =
+    data.type === 'GROUP_APPLICATION_APPROVED' ||
+    data.type === 'GROUP_APPLICATION_DECLINED';
   const [emails, webhooks, pushes] = await Promise.all([
-    collectEmailData(ctx, notificationData, preFetched?.messageContext),
+    decisionEmail
+      ? Promise.resolve([])
+      : collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),
     collectPushData(
       ctx,
@@ -1653,7 +1667,7 @@ export async function notifyEventMembers(
   data: {
     eventId: Id<'events'>;
     type: NotificationType;
-    authorId: Id<'persons'>;
+    authorId?: Id<'persons'>;
     postId?: Id<'posts'>;
     datetime?: number;
     rsvp?: RsvpStatus;
@@ -1667,7 +1681,7 @@ export async function notifyEventMembers(
     .collect();
 
   const excludeIds = new Set([
-    data.authorId as string,
+    ...(data.authorId ? [data.authorId as string] : []),
     ...(data.excludePersonIds || []).map(id => id as string),
   ]);
 
@@ -1891,7 +1905,7 @@ export async function notifyThreadParticipants(
   data: {
     postId: Id<'posts'>;
     eventId: Id<'events'>;
-    postAuthorId: Id<'persons'>;
+    postAuthorId?: Id<'persons'>;
     replyAuthorId: Id<'persons'>;
   }
 ): Promise<{ sent: number; skippedPresent: number; skippedMuted: number }> {
@@ -1918,12 +1932,13 @@ export async function notifyThreadParticipants(
 
   // Collect all unique participant IDs to notify
   const participantIds = new Set<string>();
-  if (data.postAuthorId !== data.replyAuthorId) {
+  if (data.postAuthorId && data.postAuthorId !== data.replyAuthorId) {
     participantIds.add(data.postAuthorId as string);
   }
   for (const reply of existingReplies) {
-    if ((reply.authorId as string) !== (data.replyAuthorId as string)) {
-      participantIds.add(reply.authorId as string);
+    const humanReplyAuthorId = ctx.db.normalizeId('persons', reply.authorId);
+    if (humanReplyAuthorId && humanReplyAuthorId !== data.replyAuthorId) {
+      participantIds.add(humanReplyAuthorId);
     }
   }
 

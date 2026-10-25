@@ -63,7 +63,7 @@ export const attachmentWithUrlValidator = v.object({
   altText: v.optional(v.string()),
   postId: v.optional(v.id('posts')),
   replyId: v.optional(v.id('replies')),
-  uploaderId: v.id('persons'),
+  uploaderId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
   url: v.union(v.string(), v.null()),
@@ -76,7 +76,7 @@ export type AttachmentParent = {
   replyId?: Id<'replies'>;
 };
 
-function getAttachmentType(
+export function getAttachmentType(
   mimeType: string
 ): 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' {
   if ((ALLOWED_MIME_TYPES.IMAGE as readonly string[]).includes(mimeType)) {
@@ -154,7 +154,7 @@ export async function requireAttachmentParentAccess(
   }
 }
 
-async function requireValidStoredFile(
+export async function requireValidStoredFile(
   ctx: MutationCtx,
   attachment: AttachmentInput
 ) {

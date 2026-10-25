@@ -69,6 +69,7 @@ describe('Group applications through the actual web Convex provider', () => {
     expect(mutation.mock.calls[0][1]).toEqual({
       applicationId: pending._id,
       answers: { why: 'Help organize' },
+      expectedRevision: pending.updatedAt,
     });
     await user.click(
       screen.getByRole('button', { name: 'Withdraw application' })
@@ -77,7 +78,10 @@ describe('Group applications through the actual web Convex provider', () => {
     expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
       'groupApplications/mutations:withdrawGroupApplication'
     );
-    expect(mutation.mock.calls[1][1]).toEqual({ applicationId: pending._id });
+    expect(mutation.mock.calls[1][1]).toEqual({
+      applicationId: pending._id,
+      expectedRevision: pending.updatedAt,
+    });
     mounted.unmount();
     await client.close();
   });
@@ -166,6 +170,8 @@ it('allows current managers to review immediately, with no invite or Event admis
   expect(mutation.mock.calls[0][1]).toEqual({
     applicationId: pending._id,
     decision: 'APPROVED',
+    expectedRevision: pending.updatedAt,
+    operationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
   });
   expect(
     screen.getByRole('button', { name: 'Approve application' })
@@ -502,6 +508,52 @@ it('submits all seven admission field types with typed numeric, boolean and list
       yes: false,
     },
   });
+  mounted.unmount();
+  await client.close();
+});
+
+it('shows the committed decision separately and retries only its failed email', async () => {
+  const { client, mutation } = clientFor(
+    {
+      applicationsEnabled: true,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    [
+      {
+        ...pending,
+        status: 'APPROVED',
+        decisionDelivery: 'failed',
+        applicant: {
+          personId: 'person-one',
+          name: 'Alex',
+          username: 'alex',
+          image: null,
+        },
+      },
+    ]
+  );
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupApplications groupId={groupId} review />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Decision email: failed'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Approve application' })
+  ).not.toBeInTheDocument();
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Retry decision email' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'groupApplications/decisionDelivery:retry'
+  );
+  expect(mutation.mock.calls[0][1]).toEqual({ applicationId: pending._id });
   mounted.unmount();
   await client.close();
 });

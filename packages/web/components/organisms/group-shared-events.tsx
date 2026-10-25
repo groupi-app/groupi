@@ -37,27 +37,32 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
       >
         Group-shared Events
       </h2>
-      <p>
-        Upcoming and undated Events shared with this Group. Read their logistics
-        without joining, RSVP changes, or access to participant content.
+      <p className='max-w-2xl text-sm leading-relaxed text-muted-foreground'>
+        Events shared with this Group.
       </p>
       {events === undefined ? (
         <p role='status'>Loading Group-shared Events…</p>
       ) : (
         <>
-          {events.page.length === 0 && (
-            <p>No upcoming or undated Events on this page.</p>
-          )}
-          <ul className='space-y-4'>
+          {events.page.length === 0 && <p>No active Events on this page.</p>}
+          <ul className='grid gap-4 sm:grid-cols-2'>
             {events.page.map(({ event, canWithdraw }) => (
               <li
                 key={event._id}
-                className='rounded-card border border-border p-4 space-y-3'
+                className='flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-5'
               >
-                <h3 className='font-heading font-semibold'>{event.title}</h3>
-                {event.description && <p>{event.description}</p>}
-                <p>{event.location || 'Location TBD'}</p>
-                <p>
+                <h3 className='font-heading break-words font-semibold'>
+                  {event.title}
+                </h3>
+                {event.description && (
+                  <p className='whitespace-pre-wrap break-words text-sm text-muted-foreground'>
+                    {event.description}
+                  </p>
+                )}
+                <p className='break-words text-sm'>
+                  {event.location || 'Location TBD'}
+                </p>
+                <p className='break-words text-sm text-muted-foreground'>
                   {event.chosenDateTime === null
                     ? 'Date not yet confirmed'
                     : new Intl.DateTimeFormat(undefined, {
@@ -67,7 +72,7 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                       }).format(event.chosenDateTime)}{' '}
                   · {event.timezone}
                 </p>
-                <Button asChild variant='outline'>
+                <Button asChild variant='outline' className='self-start'>
                   <Link
                     href={`/event/${event._id}/preview`}
                     aria-label={`View ${event.title} logistics`}
@@ -78,7 +83,7 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                 {canWithdraw && (
                   <Button
                     variant='outline'
-                    className='h-auto min-h-10 max-w-full whitespace-normal text-left'
+                    className='h-auto min-h-10 max-w-full self-start whitespace-normal text-left'
                     disabled={busy !== null}
                     onClick={async () => {
                       setBusy(event._id);

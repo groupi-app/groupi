@@ -1,3 +1,5 @@
+import { handBackConnection } from '../groupDiscord/teardown';
+import { isGroupExcludedForPerson } from './exclusions';
 import { anonymizeAudienceActor } from '../groupEventAudiences/cleanup';
 import { canShare } from '../groupEventAudiences/model';
 
@@ -154,9 +156,17 @@ export async function update(
 export async function remove(
   ctx: MutationCtx,
   personId: Id<'persons'>,
-  groupId: Id<'groups'>
+  groupId: Id<'groups'>,
+  acknowledgeDiscordHandback = false
 ) {
   await requireOwner(ctx, groupId, personId);
+  await handBackConnection(
+    ctx,
+    groupId,
+    personId,
+    acknowledgeDiscordHandback,
+    true
+  );
   await cascadeDeleteGroupData(ctx, groupId);
   return null;
 }
@@ -166,7 +176,8 @@ export async function detail(
   groupId: Id<'groups'>
 ) {
   const group = await ctx.db.get(groupId);
-  if (!group) return null;
+  if (!group || (await isGroupExcludedForPerson(ctx, groupId, personId)))
+    return null;
   const membership = await ctx.db
     .query('groupMemberships')
     .withIndex('by_groupId_and_personId', q =>

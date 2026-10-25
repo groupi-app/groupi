@@ -58,6 +58,12 @@ vi.mock('./linked-accounts-section', () => ({
   LinkedAccountsSection: () => null,
 }));
 vi.mock('./passkey-section', () => ({ PasskeySection: () => null }));
+vi.mock('./connected-apps-section', () => ({
+  ConnectedAppsSection: () => null,
+}));
+vi.mock('./authorization-section', () => ({
+  AuthorizationSection: () => null,
+}));
 vi.mock('./api-keys-section', () => ({ ApiKeysSection: () => null }));
 import { ConvexClientProvider } from '../../providers/convex-provider';
 import AccountSettingsScreen from '../../../app/settings/account';

@@ -75,10 +75,12 @@ export function PostFeed({ data }: PostFeedProps) {
                           author: post.author?.person
                             ? {
                                 ...post.author.person,
+                                kind: post.author.kind,
                                 user: post.author.user,
                               }
                             : {
                                 _id: post.authorId,
+                                kind: post.author?.kind,
                                 _creationTime: 0,
                                 userId: '' as any, // Fallback for missing person
                                 user: post.author?.user || {

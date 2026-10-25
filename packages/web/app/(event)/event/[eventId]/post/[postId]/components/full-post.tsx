@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { DeletePostDialog } from '@/components/delete-post-dialog';
 import { Icons } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import {
@@ -22,6 +23,7 @@ import { useMobile } from '@/hooks/use-mobile';
 import { canDeletePost } from '@/lib/event-permissions';
 import Link from 'next/link';
 import MemberIcon from '@/components/member-icon';
+import { IntegrationAuthor } from '@/components/molecules/integration-author';
 import { MentionHandler } from './mention-handler';
 import { useIsPostMuted } from '@/hooks/convex/use-muting';
 import { AttachmentGallery } from '@/components/attachments';
@@ -217,7 +219,12 @@ export function FullPost({ data, postRef }: FullPostProps) {
       <div className='my-6 border-border rounded-lg'>
         <div className=''>
           <div className='flex items-center gap-3 mb-4'>
-            {authorMember ? (
+            {author?.kind === 'integration' ? (
+              <IntegrationAuthor
+                name={author.user.name || 'Integration'}
+                showName={false}
+              />
+            ) : authorMember ? (
               <MemberIcon
                 itemKey={authorMember._id}
                 userId={userId}
@@ -240,6 +247,11 @@ export function FullPost({ data, postRef }: FullPostProps) {
             <div className='flex-1'>
               <p className='text-sm font-medium'>
                 {author?.user?.name || author?.user?.email || 'Unknown'}
+                {author?.kind === 'integration' ? (
+                  <Badge variant='secondary' className='ml-2'>
+                    Integration
+                  </Badge>
+                ) : null}
               </p>
               <p className='text-xs text-muted-foreground'>
                 {new Date(post._creationTime).toLocaleString()}

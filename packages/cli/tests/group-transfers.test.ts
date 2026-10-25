@@ -160,3 +160,23 @@ test('explicit retirement sends only the selected Group DELETE', async () => {
   expect(JSON.parse(result.stdout)).toEqual({ success: true, groupId: 'g1' });
   expect(writes).toEqual(['DELETE /api/v2/groups/g1']);
 });
+
+test('explicit Discord handback acknowledgement is forwarded on Group deletion', async () => {
+  const writes: string[] = [];
+  await endpoint((req, res) => {
+    writes.push(`${req.method} ${req.url}`);
+    res.statusCode = 204;
+    res.end();
+  });
+  const result = await cli([
+    'groups',
+    'delete',
+    'g1',
+    '--yes',
+    '--acknowledge-discord-handback',
+  ]);
+  expect(result.code).toBe(0);
+  expect(writes).toEqual([
+    'DELETE /api/v2/groups/g1?acknowledgeDiscordHandback=true',
+  ]);
+});

@@ -10,6 +10,7 @@ import { UserSummarySchema, TimestampSchema } from './common';
 const AuthorSchema = z
   .object({
     id: z.string(),
+    kind: z.enum(['user', 'integration']).optional(),
     user: UserSummarySchema,
   })
   .nullable();

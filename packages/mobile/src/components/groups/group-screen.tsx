@@ -1,3 +1,8 @@
+import {
+  GroupDiscordSettings,
+  GroupDiscordRetiredStatus,
+} from './group-discord-settings';
+import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
@@ -44,7 +49,7 @@ export function GroupDetailScreen() {
     setDeleting(true);
     setError('');
     try {
-      await deleteGroup({ groupId: id });
+      await deleteGroup({ groupId: id, acknowledgeDiscordHandback: true });
       router.replace(`/g/${id}`);
     } catch (failure) {
       setError(
@@ -69,10 +74,13 @@ export function GroupDetailScreen() {
         {group === undefined ? (
           <ActivityIndicator accessibilityLabel='Loading Group' />
         ) : !group ? (
-          <Text className='text-foreground'>
-            Group unavailable. It may have been deleted or you may not have
-            access.
-          </Text>
+          <>
+            <Text className='text-foreground'>
+              Group unavailable. It may have been deleted or you may not have
+              access.
+            </Text>
+            <GroupDiscordRetiredStatus groupId={id} />
+          </>
         ) : (
           <>
             <GroupJoiningQuestionnairePrompt groupId={id} />
@@ -267,6 +275,10 @@ export function GroupDetailScreen() {
               </Button>
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
+            <GroupDiscordConnect groupId={id} />
+            {group.canManageMembers ? (
+              <GroupDiscordSettings groupId={id} />
+            ) : null}
             {group.canManageRoles ? (
               <GroupApplicationSettings
                 groupId={id}
@@ -311,7 +323,7 @@ export function GroupDetailScreen() {
                     onPress={() =>
                       showConfirmDialog({
                         title: 'Delete Group',
-                        message: `Permanently retire ${group.name} and remove its Group data and audience grants? Independent Events, invitations, memberships and RSVP remain unchanged. This cannot be undone.`,
+                        message: `Permanently retire ${group.name} and remove its Group data and audience grants? Independent Events, invitations, memberships and RSVP remain unchanged. Discord retained roles and server membership pass to Discord staff; pending removals still run. No Discord server or bot is deleted. After deletion, this Group’s existing link shows Discord cleanup status to authorized managers. This cannot be undone.`,
                         confirmLabel: 'Delete Group',
                         destructive: true,
                         onConfirm: remove,
@@ -347,9 +359,12 @@ export function GroupLandingScreen() {
         {group === undefined ? (
           <ActivityIndicator accessibilityLabel='Loading Group' />
         ) : !group ? (
-          <Text className='text-foreground'>
-            Group unavailable. This link may no longer be valid.
-          </Text>
+          <>
+            <Text className='text-foreground'>
+              Group unavailable. This link may no longer be valid.
+            </Text>
+            <GroupDiscordRetiredStatus groupId={groupId as Id<'groups'>} />
+          </>
         ) : (
           <>
             <Text

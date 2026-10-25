@@ -1,5 +1,7 @@
 'use client';
 
+import type { FunctionArgs } from 'convex/server';
+
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useState, useEffect } from 'react';
@@ -69,7 +71,7 @@ export function useEnableAddon() {
     async (
       eventId: Id<'events'>,
       addonType: string,
-      config: Record<string, unknown>
+      config: FunctionArgs<typeof addonMutations.enableAddon>['config']
     ) => {
       try {
         await enableAddon({ eventId, addonType, config });
@@ -123,7 +125,7 @@ export function useUpdateAddonConfig() {
     async (
       eventId: Id<'events'>,
       addonType: string,
-      config: Record<string, unknown>
+      config: FunctionArgs<typeof addonMutations.updateAddonConfig>['config']
     ) => {
       try {
         await updateConfig({ eventId, addonType, config });
@@ -228,7 +230,7 @@ export function useSetAddonData() {
       eventId: Id<'events'>,
       addonType: string,
       key: string,
-      data: unknown
+      data: FunctionArgs<typeof addonMutations.setAddonData>['data']
     ) => {
       try {
         return await setData({ eventId, addonType, key, data });

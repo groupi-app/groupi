@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "groupi-sdk"
+version = "0.1.0"
+description = "Explicit, instance-bound Groupi REST v2 client"
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+include = ["groupi_sdk*"]

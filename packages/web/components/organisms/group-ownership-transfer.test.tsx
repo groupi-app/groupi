@@ -9,7 +9,7 @@ import { ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
 import { expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
-import { GroupDetail } from './group-detail';
+import { GroupOwnershipSettings } from '@/features/groups';
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import type { Id } from '@/convex/_generated/dataModel';
 vi.unmock('convex/react');
@@ -58,6 +58,8 @@ beforeEach(() => {
       localQueryResult: () => {
         const name = getFunctionName(call[0]);
         if (name === 'groupTransfers/queries:status') return status;
+        if (name === 'groups/expulsions:progress') return null;
+        if (name === 'groupAnnouncements/eventMail:staffEvents') return [];
         if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
           return {
             groupId: 'group',
@@ -156,7 +158,7 @@ function mount(detail = false) {
   return render(
     <ConvexClientProvider>
       {detail ? (
-        <GroupDetail groupId={groupId} />
+        <GroupOwnershipSettings groupId={groupId} />
       ) : (
         <GroupOwnershipTransfer groupId={groupId} />
       )}
@@ -242,6 +244,6 @@ it('acceptance reports the terminal outcome and retirement requires explicit con
   await waitFor(() => expect(navigation.push).toHaveBeenCalledWith('/g/group'));
   expect(writes.at(-1)).toEqual({
     name: 'groups/mutations:deleteGroup',
-    args: { groupId },
+    args: { groupId, acknowledgeDiscordHandback: true },
   });
 });

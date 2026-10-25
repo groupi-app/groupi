@@ -1,4 +1,20 @@
 import {
+  connectionFields as discordConnectionFields,
+  mode as discordMode,
+} from './groupDiscord/contracts';
+import { tables as delegatedTables } from './delegatedApps/contracts';
+import {
+  principalFields,
+  grantFields,
+  credentialValidator,
+  auditFields,
+} from './authorization/contracts';
+import {
+  addonConfig,
+  addonData,
+  template as addonTemplateValidator,
+} from './addons/contracts';
+import {
   voteFields,
   mode as pollMode,
   option as pollOption,
@@ -37,6 +53,200 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupDiscordJourneys: defineTable({
+    stateHash: v.string(),
+    credentialId: v.id('authorizationCredentials'),
+    appId: v.id('delegatedApps'),
+    personId: v.id('persons'),
+    groupId: v.id('groups'),
+    connectionId: v.id('groupDiscordConnections'),
+    generation: v.number(),
+    returnUrl: v.string(),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+  })
+    .index('by_state', ['stateHash'])
+    .index('by_expiresAt', ['expiresAt']),
+
+  groupDiscordProviderState: defineTable({
+    scope: v.string(),
+    retryAt: v.number(),
+  }).index('by_scope', ['scope']),
+  groupDiscordSyncAlerts: defineTable({
+    groupId: v.id('groups'),
+    notifiedAt: v.number(),
+    pending: v.boolean(),
+    cursor: v.optional(v.string()),
+    viewerOffset: v.optional(v.number()),
+    nextDeliveryAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_delivery', ['pending', 'nextDeliveryAt']),
+  groupDiscordManagedIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.optional(v.string()),
+    latestLinkHash: v.optional(v.string()),
+  }).index('by_person', ['personId']),
+  groupDiscordRetiredIdentities: defineTable({
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+  }).index('by_person_identity', ['personId', 'discordUserId']),
+  groupDiscordEnrollments: defineTable({
+    handedBack: v.optional(v.boolean()),
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    discordUserId: v.string(),
+    connectionGeneration: v.number(),
+    generation: v.number(),
+    guildId: v.string(),
+    mode: v.optional(discordMode),
+    cleanupDesired: v.optional(
+      v.union(v.literal('removed'), v.literal('banned'))
+    ),
+    roleId: v.optional(v.string()),
+    desired: v.union(v.literal('granted'), v.literal('removed')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('screening'),
+      v.literal('connected'),
+      v.literal('blocked')
+    ),
+    error: v.optional(v.string()),
+    externalException: v.optional(v.string()),
+    grantAttemptedAt: v.optional(v.number()),
+    connectPending: v.optional(v.boolean()),
+    nextObservationAt: v.optional(v.number()),
+    observationError: v.optional(v.string()),
+    startedAt: v.number(),
+    updatedAt: v.number(),
+    lastObservedAt: v.optional(v.number()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
+    .index('by_person_removed_exception', [
+      'personId',
+      'mode',
+      'desired',
+      'externalException',
+    ])
+    .index('by_guild_identity', ['guildId', 'discordUserId'])
+    .index('by_observation', ['nextObservationAt'])
+    .index('by_group_observationError', [
+      'groupId',
+      'connectionGeneration',
+      'observationError',
+    ])
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
+  groupDiscordAuditStreams: defineTable({
+    guildId: v.string(),
+    action: v.number(),
+    cursor: v.string(),
+    overlapCursor: v.optional(v.string()),
+    retryAt: v.optional(v.number()),
+    notificationPending: v.optional(v.boolean()),
+    notificationCursor: v.optional(v.string()),
+    nextNotificationAt: v.optional(v.number()),
+    observedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+  })
+    .index('by_guild_action', ['guildId', 'action'])
+    .index('by_notification', ['notificationPending', 'nextNotificationAt']),
+  groupDiscordAuditEntries: defineTable({
+    guildId: v.string(),
+    entryId: v.string(),
+    expiresAt: v.number(),
+  })
+    .index('by_guild_entry', ['guildId', 'entryId'])
+    .index('by_expiry', ['expiresAt']),
+  groupDiscordConnections: defineTable(discordConnectionFields)
+    .index('by_group', ['groupId'])
+    .index('by_guild', ['guildId'])
+    .index('by_guild_status', ['guildId', 'status']),
+  // Cleanup is intentionally independent of live Group/configuration lifetime.
+  // Later lifecycle slices enqueue obligations here before invalidating enrollment.
+  groupDiscordCleanup: defineTable({
+    groupId: v.string(),
+    personId: v.optional(v.string()),
+    enrollmentGeneration: v.optional(v.number()),
+    generation: v.number(),
+    guildId: v.string(),
+    mode: discordMode,
+    discordUserId: v.string(),
+    roleId: v.optional(v.string()),
+    desired: v.union(
+      v.literal('role_removed'),
+      v.literal('removed'),
+      v.literal('banned')
+    ),
+    observed: v.union(
+      v.literal('unknown'),
+      v.literal('present'),
+      v.literal('absent'),
+      v.literal('banned')
+    ),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('completed')
+    ),
+    error: v.optional(v.string()),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_group_status', ['groupId', 'status'])
+    .index('by_group_person', ['groupId', 'personId', 'status'])
+    .index('by_person_status', ['personId', 'status'])
+    .index('by_target_status', ['guildId', 'discordUserId', 'roleId', 'status'])
+    .index('by_target_group_status', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'groupId',
+      'status',
+    ])
+    .index('by_target_group_enrollment', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+      'groupId',
+    ])
+    .index('by_target', [
+      'guildId',
+      'discordUserId',
+      'roleId',
+      'generation',
+      'enrollmentGeneration',
+    ])
+    .index('by_status_nextAttemptAt', ['status', 'nextAttemptAt']),
+  ...delegatedTables,
+  communityOperationReceipts: defineTable({
+    operationId: v.string(),
+    binding: v.string(),
+    result: v.string(),
+    acceptedAt: v.number(),
+    expiresAt: v.number(),
+  }).index('by_operationId', ['operationId']),
+  authorizationPrincipals: defineTable(principalFields).index(
+    'by_ownerPersonId',
+    ['ownerPersonId']
+  ),
+  authorizationGrants: defineTable(grantFields)
+    .index('by_grantorPersonId', ['grantorPersonId'])
+    .index('by_principalId', ['principalId']),
+  authorizationCredentials: defineTable(credentialValidator)
+    .index('by_secretHash', ['secretHash'])
+    .index('by_grantId', ['grantId']),
+  authorizationAudit: defineTable(auditFields)
+    .index('by_grantId', ['grantId'])
+    .index('by_createdAt', ['createdAt']),
   groupToolPolicies: defineTable(policyFields)
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind']),
@@ -167,7 +377,44 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupDecisionDispatches: defineTable({
+    applicationId: v.id('groupApplications'),
+    notificationId: v.id('notifications'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('sent'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  }).index('by_applicationId', ['applicationId']),
   groupApplications: defineTable({
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+    decisionDelivery: v.optional(
+      v.union(
+        v.literal('queued'),
+        v.literal('sending'),
+        v.literal('sent'),
+        v.literal('failed'),
+        v.literal('suppressed')
+      )
+    ),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     questions: v.array(questionValidator),
@@ -192,6 +439,64 @@ export default defineSchema({
   })
     .index('by_applicationId', ['applicationId'])
     .index('by_personId', ['personId']),
+  groupAnnouncementBrands: defineTable({
+    groupId: v.id('groups'),
+    appId: v.id('delegatedApps'),
+    returnUrl: v.string(),
+  }).index('by_groupId', ['groupId']),
+  groupEventAnnouncements: defineTable({
+    groupId: v.id('groups'),
+    eventId: v.id('events'),
+    senderId: v.id('persons'),
+    brandBinding: v.string(),
+    createdAt: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    cutoff: v.number(),
+    processed: v.boolean(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_senderId', ['senderId'])
+    .index('by_eventId', ['eventId']),
+  groupEventMail: defineTable({
+    announcementId: v.id('groupEventAnnouncements'),
+    personId: v.id('persons'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('delivered'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  })
+    .index('by_announcementId', ['announcementId'])
+    .index('by_personId', ['personId']),
+  groupAnnouncementPreferences: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    sourceMembershipId: v.optional(v.id('groupMemberships')),
+    subscribed: v.boolean(),
+    updatedAt: v.number(),
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+  })
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId', ['groupId']),
   groupAnnouncements: defineTable({
     groupId: v.id('groups'),
     senderId: v.optional(v.id('persons')),
@@ -213,6 +518,62 @@ export default defineSchema({
       'senderId',
       'requestId',
     ]),
+
+  communityExclusionAudit: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    generation: v.number(),
+    operationId: v.string(),
+    action: v.union(
+      v.literal('expel'),
+      v.literal('resume'),
+      v.literal('reinstate')
+    ),
+    at: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
+    .index('by_actor', ['actorId']),
+  communityExclusions: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    reinstatedBy: v.optional(v.id('persons')),
+    reinstatedAt: v.optional(v.number()),
+    events: v.optional(
+      v.array(
+        v.object({
+          eventId: v.id('events'),
+          state: v.union(
+            v.literal('pending'),
+            v.literal('blocked'),
+            v.literal('complete'),
+            v.literal('preserved'),
+            v.literal('retired')
+          ),
+          code: v.optional(v.string()),
+        })
+      )
+    ),
+    active: v.boolean(),
+    generation: v.number(),
+    operationId: v.string(),
+    eventIds: v.array(v.id('events')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    cleanup: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('complete')
+    ),
+    conflicts: v.array(v.object({ eventId: v.id('events'), code: v.string() })),
+  })
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_person', ['personId'])
+    .index('by_actor', ['actorId'])
+    .index('by_reinstatedBy', ['reinstatedBy'])
+    .index('by_group', ['groupId']),
 
   groupBans: defineTable({
     groupId: v.id('groups'),
@@ -302,7 +663,8 @@ export default defineSchema({
     .index('by_creator_normalizedName', ['creatorId', 'normalizedName']),
   uploads: defineTable({
     storageId: v.id('_storage'),
-    personId: v.id('persons'),
+    personId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
+    eventId: v.optional(v.id('events')),
     mimeType: v.string(),
     size: v.number(),
     purpose: v.union(
@@ -507,6 +869,7 @@ export default defineSchema({
     .index('by_groupId_and_eventId', ['groupId', 'eventId'])
     .index('by_sharedById', ['sharedById']),
   events: defineTable({
+    completedAt: v.optional(v.number()),
     friendsAudienceEnabled: v.optional(v.boolean()),
     title: v.string(),
     description: v.optional(v.string()),
@@ -581,7 +944,16 @@ export default defineSchema({
     .index('by_creator', ['creatorId'])
     .index('by_creator_visibility', ['creatorId', 'visibility']),
 
+  participationRevisions: defineTable({
+    eventId: v.id('events'),
+    personId: v.id('persons'),
+    revision: v.number(),
+  })
+    .index('by_person_event', ['personId', 'eventId'])
+    .index('by_event', ['eventId']),
+
   memberships: defineTable({
+    participationRevision: v.optional(v.number()),
     personId: v.id('persons'),
     eventId: v.id('events'),
     role: v.union(
@@ -635,7 +1007,7 @@ export default defineSchema({
     editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     eventId: v.id('events'),
     updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
@@ -648,7 +1020,7 @@ export default defineSchema({
     membershipId: v.optional(v.id('memberships')),
     updatedAt: v.optional(v.number()), // Unix timestamp for last edit
     // Denormalized fields
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     postId: v.id('posts'),
   })
     .index('by_post', ['postId'])
@@ -708,6 +1080,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('GROUP_ONBOARDING_REQUIRED'),
+      v.literal('GROUP_DISCORD_SYNC_BLOCKED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -741,6 +1114,7 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
     .index('by_person_and_type', ['personId', 'type'])
+    .index('by_person_type_group', ['personId', 'type', 'groupId'])
     .index('by_person_read', ['personId', 'read']),
 
   notificationMethods: defineTable({
@@ -750,7 +1124,7 @@ export default defineSchema({
     name: v.optional(v.string()), // "Work Email", "Personal Webhook"
     value: v.string(), // Email address, webhook URL, etc.
     // Webhook-specific configuration
-    webhookHeaders: v.optional(v.any()), // JSON object
+    webhookHeaders: v.optional(v.record(v.string(), v.string())), // JSON object
     customTemplate: v.optional(v.string()),
     webhookFormat: v.optional(
       v.union(
@@ -793,6 +1167,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('GROUP_ONBOARDING_REQUIRED'),
+      v.literal('GROUP_DISCORD_SYNC_BLOCKED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -898,7 +1273,7 @@ export default defineSchema({
     postId: v.optional(v.id('posts')),
     replyId: v.optional(v.id('replies')),
     // Uploader reference
-    uploaderId: v.id('persons'),
+    uploaderId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
@@ -950,7 +1325,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(), // e.g. 'reminders'
     enabled: v.boolean(),
-    config: v.any(), // addon-specific JSON
+    config: addonConfig, // Registered add-on configuration
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -971,7 +1346,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(),
     key: v.string(), // addon-defined key (e.g. 'vote:option1', 'expense:123')
-    data: v.any(), // addon-defined payload
+    data: addonData, // Answers, claims, votes, toggles and service metadata
     createdBy: v.optional(v.id('persons')),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -985,7 +1360,7 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     iconName: v.string(),
-    template: v.any(), // full CustomAddonTemplate (validated before save)
+    template: addonTemplateValidator, // Known draft structure; completeness checked before publication
     version: v.number(),
     isPublished: v.boolean(), // draft vs ready to use
     createdAt: v.number(),
@@ -1197,7 +1572,8 @@ export default defineSchema({
     status: v.union(
       v.literal('PENDING'),
       v.literal('ACCEPTED'),
-      v.literal('DECLINED')
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
     ),
     message: v.optional(v.string()), // Optional personal message
     role: v.union(v.literal('ATTENDEE'), v.literal('MODERATOR')),

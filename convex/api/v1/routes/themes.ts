@@ -125,6 +125,7 @@ export function createThemeRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateCustomThemeRequestSchema,
@@ -194,6 +195,7 @@ export function createThemeRoutes() {
     request: {
       params: ThemeIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateCustomThemeRequestSchema,
@@ -349,6 +351,7 @@ export function createThemeRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: SetThemePreferenceRequestSchema,

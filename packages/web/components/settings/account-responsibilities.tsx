@@ -92,7 +92,11 @@ function Responsibility({
     try {
       if (item.kind === 'GROUP') {
         const groupId = item.id as Id<'groups'>;
-        if (action === 'delete') await actions.deleteGroup({ groupId });
+        if (action === 'delete')
+          await actions.deleteGroup({
+            groupId,
+            acknowledgeDiscordHandback: true,
+          });
         else if (action === 'offer')
           await actions.offerGroup({
             groupId,
@@ -205,7 +209,9 @@ function Responsibility({
         >
           <p>
             Permanently delete {item.title} and its data?
-            {item.kind === 'GROUP' ? ' Independent Events remain.' : ''}
+            {item.kind === 'GROUP'
+              ? ' Discord retained roles and membership pass to Discord staff; pending removals still run. No Discord server or bot is deleted. Independent Events remain.'
+              : ''}
           </p>
           <Button
             type='button'

@@ -21,6 +21,10 @@ async function remove(
       await ctx.db.delete(delivery._id);
     await ctx.db.delete(notification._id);
   }
+  for await (const dispatch of ctx.db
+    .query('groupDecisionDispatches')
+    .withIndex('by_applicationId', q => q.eq('applicationId', applicationId)))
+    await ctx.db.delete(dispatch._id);
   await ctx.db.delete(applicationId);
 }
 export async function removeApplicationsForGroup(

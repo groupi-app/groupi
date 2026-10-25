@@ -1,0 +1,15 @@
+# Groupi concepts
+
+v2 · Current · Source: GLOSSARY.md
+
+Source availability does not establish hosted deployment or registry publication.
+
+## Organizer, moderator and platform administrator
+Canonical passage: /v2/concepts#roles
+
+An organizer or moderator has a role in an individual event. A platform administrator has authority over an installation and is a separate concept. Event membership and RSVP are separate: joining does not confirm attendance. Current authority is checked for the operation being performed.
+
+## Groups, invite lists and audiences
+Canonical passage: /v2/concepts#groups
+
+A Group is a formal membership community. An invite list is a private saved selection of existing users; editing it sends no invitation and changes no membership. An event audience determines visibility eligibility, independently of event membership, invitations and RSVP. A friend relationship is independent of shared Group membership.

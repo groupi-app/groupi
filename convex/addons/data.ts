@@ -1,3 +1,4 @@
+import { AddonDataSchema } from './schemas';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -95,12 +96,11 @@ export async function setAddonDataForPerson(
       const requested = (data as Record<string, number>)[item.id] ?? 0;
       const others = entries
         .filter(e => e.key.startsWith('claims:') && e.key !== key)
-        .reduce(
-          (total, e) =>
-            total +
-            (typeof e.data?.[item.id] === 'number' ? e.data[item.id] : 0),
-          0
-        );
+        .reduce((total, e) => {
+          const quantity =
+            typeof e.data === 'object' ? e.data[item.id] : undefined;
+          return total + (typeof quantity === 'number' ? quantity : 0);
+        }, 0);
       if (requested > 0 && requested + others > item.quantity)
         throw new Error(`Not enough remaining quantity for ${item.id}`);
     }
@@ -130,7 +130,7 @@ export async function setAddonDataForPerson(
     }
 
     await ctx.db.patch(existing._id, {
-      data,
+      data: AddonDataSchema.parse(data),
       ...(isOwnedReservedKey && { createdBy: personId }),
       updatedAt: now,
     });
@@ -141,7 +141,7 @@ export async function setAddonDataForPerson(
       eventId,
       addonType,
       key,
-      data,
+      data: AddonDataSchema.parse(data),
       createdBy: personId,
       createdAt: now,
       updatedAt: now,

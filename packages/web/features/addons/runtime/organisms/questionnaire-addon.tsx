@@ -1,6 +1,8 @@
 'use client';
 
 import { Save as ActionSave } from 'lucide-react';
+import type { AddonParticipantData } from '../../model/types';
+
 import { BUILTIN_COMPLETION } from '../../model/completion';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -462,24 +464,27 @@ function QuestionnaireResponseForm({
 }: {
   eventId: Id<'events'>;
   questions: Question[];
-  existingResponse: Record<string, unknown> | null;
+  existingResponse: AddonParticipantData | null;
 }) {
   const router = useRouter();
   const { person } = useGlobalUser();
   const setAddonData = useSetAddonData();
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [answers, setAnswers] = useState<AddonParticipantData>({});
   const [isSaving, setIsSaving] = useState(false);
 
   // Pre-fill from existing response
   useEffect(() => {
     if (existingResponse) {
-      setAnswers(existingResponse as Record<string, unknown>);
+      setAnswers(existingResponse);
     }
   }, [existingResponse]);
 
-  const updateAnswer = useCallback((questionId: string, value: unknown) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
-  }, []);
+  const updateAnswer = useCallback(
+    (questionId: string, value: AddonParticipantData[string]) => {
+      setAnswers(prev => ({ ...prev, [questionId]: value }));
+    },
+    []
+  );
 
   const handleSubmit = async () => {
     // Validate required fields
@@ -553,8 +558,8 @@ function QuestionInput({
   onChange,
 }: {
   question: Question;
-  value: unknown;
-  onChange: (value: unknown) => void;
+  value: AddonParticipantData[string] | undefined;
+  onChange: (value: AddonParticipantData[string]) => void;
 }) {
   switch (question.type) {
     case 'SHORT_ANSWER':
@@ -583,7 +588,7 @@ function QuestionInput({
           value={value !== undefined && value !== null ? String(value) : ''}
           onChange={e => {
             const v = e.target.value;
-            onChange(v === '' ? undefined : Number(v));
+            onChange(v === '' ? null : Number(v));
           }}
           placeholder='0'
         />
@@ -878,7 +883,7 @@ function QuestionnairePageComponent({ eventId, config }: AddonPageProps) {
     const entry = myData.find(
       (d: { key: string }) => d.key === `response:${person._id}`
     );
-    return entry ? (entry.data as Record<string, unknown>) : null;
+    return entry?.data && typeof entry.data === 'object' ? entry.data : null;
   }, [myData, person]);
 
   if (!config || questions.length === 0) {

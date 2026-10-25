@@ -67,8 +67,8 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
         Joining questionnaire settings
       </h3>
       <p className='text-sm text-muted-foreground'>
-        Admission remains immediate. Disabling or editing questions preserves
-        previous answers and their original definitions.
+        Members have already been admitted. Previous answers are preserved when
+        you edit or disable questions.
       </p>
       <label className='flex items-center gap-2'>
         <input
@@ -89,9 +89,8 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
         Require completion before Group member content
       </label>
       <p>
-        Required completion limits Group member content until current required
-        answers are saved. Membership, your records, and leaving remain
-        available.
+        Required answers unlock member content. Members can still view their
+        records and leave.
       </p>
       <ApplicationQuestionEditor
         title='Joining questions'

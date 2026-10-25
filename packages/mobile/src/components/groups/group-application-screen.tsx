@@ -106,7 +106,11 @@ function Application({ groupId }: { groupId: Id<'groups'> }) {
                     run(
                       () =>
                         form.pending
-                          ? edit({ applicationId: form.pending._id, answers })
+                          ? edit({
+                              applicationId: form.pending._id,
+                              answers,
+                              expectedRevision: form.pending.updatedAt,
+                            })
                           : submit({ groupId, answers }),
                       'Application submitted for review.'
                     )
@@ -121,7 +125,11 @@ function Application({ groupId }: { groupId: Id<'groups'> }) {
                     disabled={busy}
                     onPress={() =>
                       run(
-                        () => withdraw({ applicationId: form.pending!._id }),
+                        () =>
+                          withdraw({
+                            applicationId: form.pending!._id,
+                            expectedRevision: form.pending!.updatedAt,
+                          }),
                         'Application withdrawn.'
                       )
                     }

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import type { Id } from 'convex/_generated/dataModel';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { MemberAvatar } from '@/components/members/member-avatar';
 import { Timestamp } from '@/components/molecules';
 import {
@@ -27,6 +28,7 @@ export interface PostCardProps {
     updatedAt?: number;
     authorId: string;
     author?: {
+      kind?: 'user' | 'integration';
       name?: string | null;
       image?: string | null;
       person?: { _id: string; user?: { name: string; image?: string } };
@@ -137,14 +139,21 @@ export function PostCard({
       <Card>
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
-          <MemberAvatar
-            personId={post.authorId as Id<'persons'>}
-            src={authorImage}
-            name={authorName}
-            size='sm'
-          />
+          {post.author?.kind === 'integration' ? (
+            <UserAvatar src={authorImage} name={authorName} size='sm' />
+          ) : (
+            <MemberAvatar
+              personId={post.authorId as Id<'persons'>}
+              src={authorImage}
+              name={authorName}
+              size='sm'
+            />
+          )}
           <View className='flex-1'>
-            <Text variant='small'>{authorName}</Text>
+            <Text variant='small'>
+              {authorName}
+              {post.author?.kind === 'integration' ? ' · Integration' : ''}
+            </Text>
             <View className='flex-row items-center gap-1'>
               <Timestamp time={post._creationTime} className='text-xs' />
               {isEdited ? (

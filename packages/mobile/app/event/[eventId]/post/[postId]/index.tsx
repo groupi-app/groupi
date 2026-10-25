@@ -145,7 +145,10 @@ export default function PostDetailScreen() {
     post?.author?.user?.name ?? post?.author?.person?.user?.name ?? 'Unknown';
   const authorImage =
     post?.author?.user?.image ?? post?.author?.person?.user?.image ?? undefined;
-  const authorPersonId = post?.author?.person?._id;
+  const authorPersonId =
+    post?.author?.kind === 'integration'
+      ? undefined
+      : post?.author?.person?._id;
   const isAuthor = person?._id && post?.author?.person?._id === person._id;
   const userRole = postDetail.userMembership?.role;
   const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
@@ -377,6 +380,9 @@ export default function PostDetailScreen() {
                 <View>
                   <Text className='text-base font-medium text-foreground'>
                     {authorName}
+                    {post?.author?.kind === 'integration'
+                      ? ' · Integration'
+                      : ''}
                   </Text>
                   <Text className='text-xs text-muted-foreground'>
                     {formatTimeAgo(post._creationTime)}
@@ -422,6 +428,7 @@ export default function PostDetailScreen() {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               attachments?: any[];
               author?: {
+                kind?: 'user' | 'integration';
                 person?: {
                   _id: string;
                   user?: { name: string; image?: string };
@@ -438,7 +445,10 @@ export default function PostDetailScreen() {
               item.author?.user?.image ??
               item.author?.person?.user?.image ??
               undefined;
-            const replyAuthorPersonId = item.author?.person?._id;
+            const replyAuthorPersonId =
+              item.author?.kind === 'integration'
+                ? undefined
+                : item.author?.person?._id;
             const isReplyAuthor =
               person?._id && item.author?.person?._id === person._id;
             const replyAttachments = item.attachments ?? [];
@@ -472,6 +482,9 @@ export default function PostDetailScreen() {
                     <View className='flex-row items-center gap-2'>
                       <Text className='text-sm font-medium text-foreground'>
                         {replyAuthorName}
+                        {item.author?.kind === 'integration'
+                          ? ' · Integration'
+                          : ''}
                       </Text>
                       <Text className='text-xs text-muted-foreground'>
                         {formatTimeAgo(item._creationTime)}

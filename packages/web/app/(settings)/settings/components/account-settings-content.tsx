@@ -1,10 +1,16 @@
 'use client';
+import { AccountFormWithGuard } from './account-form-with-guard';
 
 import { Trash2 as ActionTrash2 } from 'lucide-react';
 import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
 import { LinkedAccountsList } from './linked-accounts-list';
 import { PasskeySettings } from './passkey-settings';
+import {
+  BoundedKeysSettings,
+  DeveloperAppsSettings,
+  ConnectedAppsSettings,
+} from '@/features/authorization';
 import { ApiKeysSettings } from './api-keys-settings';
 import { DeleteAccountModal } from './delete-account-modal';
 import { Button } from '@/components/ui/button';
@@ -32,14 +38,16 @@ export function AccountSettingsContent({
 
   return (
     <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <UsernameField />
-        </CardContent>
-      </Card>
+      <AccountFormWithGuard>
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <UsernameField />
+          </CardContent>
+        </Card>
+      </AccountFormWithGuard>
 
       <EmailManagement />
 
@@ -50,6 +58,12 @@ export function AccountSettingsContent({
       />
 
       <PasskeySettings />
+
+      <ConnectedAppsSettings />
+
+      <DeveloperAppsSettings />
+
+      <BoundedKeysSettings />
 
       <ApiKeysSettings />
 

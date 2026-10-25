@@ -6,6 +6,22 @@ import {
   TRIGGER_TYPES,
 } from '../addons/automations/types';
 
+export const AnswerValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  z.array(z.string()),
+]);
+export const AddonDataSchema = z.preprocess(
+  (value, ctx) => {
+    if (!safeJson(value))
+      ctx.addIssue({ code: 'custom', message: 'Unsafe data keys' });
+    return value;
+  },
+  z.record(z.string(), AnswerValueSchema)
+);
+export const StoredAddonDataSchema = z.union([z.string(), AddonDataSchema]);
 const text = z.string().max(10000);
 const id = z
   .string()
@@ -22,10 +38,10 @@ const condition = z
   .object({
     field: text.min(1),
     operator: z.enum(CONDITION_OPERATORS),
-    value: z.unknown().optional(),
+    value: AnswerValueSchema.optional(),
   })
   .strict();
-// Webhooks are deliberately not accepted until their runtime has a safe outbound boundary.
+// Stored snapshots preserve legacy webhook actions; definition authoring rejects them below.
 const action = z
   .object({
     type: z.enum(
@@ -36,20 +52,22 @@ const action = z
         'create_post',
         'update_event_description',
         'set_addon_data',
+        'send_webhook',
       ],
       {
         error:
           'Unsupported action; send_webhook is not supported by definition authoring',
       }
     ),
+    webhookUrl: text.optional(),
+    webhookHeaders: z.record(z.string(), z.string()).optional(),
     message: text.optional(),
     title: text.optional(),
     key: text.optional(),
-    data: z.unknown().optional(),
+    data: StoredAddonDataSchema.optional(),
     recipientToggleField: id.optional(),
   })
-  .strict()
-  .refine(isValidAction, 'Invalid action configuration');
+  .strict();
 const fieldTypes = [
   'text',
   'number',
@@ -109,29 +127,6 @@ const field = z
   })
   .strict()
   .superRefine((value, ctx) => {
-    if (!isValidField(value)) {
-      const guidance: Partial<Record<typeof value.type, string>> = {
-        select:
-          'Select fields require a label and at least two options unless configurable',
-        multiselect:
-          'Multiselect fields require a label and at least two options unless configurable',
-        vote: 'Vote fields require a label and at least two options unless configurable',
-        list_item:
-          'List fields require a label and valid items unless configurable',
-        action_button:
-          'Action buttons require buttonLabel and at least one valid action',
-        static_text: 'Static text fields require content',
-        dynamic_summary: 'Dynamic summary fields require summaryType',
-        info_callout: 'Info callout fields require calloutMessage',
-        number: 'Number fields require a label and min must not exceed max',
-      };
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          guidance[value.type] ??
-          'Invalid field configuration; check its label and type-specific settings',
-      });
-    }
     if (value.options && new Set(value.options).size !== value.options.length)
       ctx.addIssue({
         code: 'custom',
@@ -178,7 +173,7 @@ const field = z
         });
     }
   });
-const template = z
+export const TemplateSchema = z
   .object({
     name: z.string().min(1).max(60),
     description: z.string().min(1).max(200),
@@ -186,6 +181,8 @@ const template = z
     settings: z
       .object({
         requiresCompletion: z.boolean().optional(),
+        supportsOptOut: z.boolean().optional(),
+        optOutLabel: text.optional(),
         cardLinkLabel: text.optional(),
         cardSubtitle: text.optional(),
         cardOnly: z.boolean().optional(),
@@ -241,8 +238,7 @@ const template = z
       .max(50)
       .optional(),
   })
-  .strict()
-  .refine(isValidTemplate, 'Invalid complete template configuration');
+  .strict();
 
 function safeJson(value: unknown, depth = 0): boolean {
   if (depth > 30) return false;
@@ -266,10 +262,50 @@ export const DefinitionDocumentSchema = z
       .refine(value => value.trim().length > 0, 'Name is required'),
     description: z.string().max(200),
     iconName: id,
-    template,
+    template: TemplateSchema,
   })
   .strict()
   .superRefine((doc, ctx) => {
+    doc.template.sections.forEach((section, sectionIndex) =>
+      section.fields.forEach((field, fieldIndex) => {
+        if (!isValidField(field))
+          ctx.addIssue({
+            code: 'custom',
+            path: ['template', 'sections', sectionIndex, 'fields', fieldIndex],
+            message: ['select', 'multiselect', 'vote'].includes(field.type)
+              ? 'Choice fields require a label and at least two options unless configurable'
+              : 'Invalid field configuration; check label and type-specific settings',
+          });
+      })
+    );
+
+    if (!isValidTemplate(doc.template))
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Invalid complete template configuration',
+      });
+    const actions = [
+      ...(doc.template.onSubmitActions ?? []),
+      ...(doc.template.automations ?? []).flatMap(a => a.actions),
+      ...doc.template.sections.flatMap(s =>
+        s.fields.flatMap(f => f.actions ?? [])
+      ),
+    ];
+    if (actions.some(a => a.type === 'send_webhook' || !isValidAction(a)))
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Unsupported or invalid action configuration',
+      });
+    if (
+      doc.template.settings?.supportsOptOut !== undefined ||
+      doc.template.settings?.optOutLabel !== undefined
+    )
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'Legacy opt-out settings are unsupported by definition authoring',
+      });
+
     if (
       !safeJson(doc) ||
       new TextEncoder().encode(JSON.stringify(doc)).byteLength > 64 * 1024

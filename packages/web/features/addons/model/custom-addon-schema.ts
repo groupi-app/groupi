@@ -1,3 +1,8 @@
+import type { FunctionArgs } from 'convex/server';
+import type { api } from '@/convex/_generated/api';
+type SavedTemplate = FunctionArgs<
+  typeof api.addonTemplates.mutations.createTemplate
+>['template'];
 import YAML from 'yaml';
 
 // ===== Field Types =====
@@ -279,7 +284,9 @@ export interface AutomationTrigger {
 export interface AutomationCondition {
   field: string;
   operator: ConditionOperator;
-  value?: unknown;
+  value?: NonNullable<
+    SavedTemplate['sections'][number]['visibilityConditions']
+  >[number]['value'];
 }
 
 export interface AutomationAction {
@@ -289,7 +296,7 @@ export interface AutomationAction {
   webhookUrl?: string;
   webhookHeaders?: Record<string, string>;
   key?: string;
-  data?: unknown;
+  data?: NonNullable<SavedTemplate['onSubmitActions']>[number]['data'];
   /** Only send to recipients whose toggle field is enabled */
   recipientToggleField?: string;
 }

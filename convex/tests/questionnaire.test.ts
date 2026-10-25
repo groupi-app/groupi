@@ -63,7 +63,7 @@ describe('Questionnaire Add-on', () => {
           addonType: 'questionnaire',
           config: { questions: [] },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with missing question fields', async () => {
@@ -81,7 +81,7 @@ describe('Questionnaire Add-on', () => {
             ],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with invalid question type', async () => {
@@ -99,7 +99,7 @@ describe('Questionnaire Add-on', () => {
             ],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject choice type without options', async () => {
@@ -122,7 +122,7 @@ describe('Questionnaire Add-on', () => {
             ],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
   });
 

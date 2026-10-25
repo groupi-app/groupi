@@ -1,0 +1,114 @@
+# Choose an add-on author path
+
+v2 · Current · Source: docs/addon-framework.md
+
+Source availability does not establish hosted deployment or registry publication.
+
+## Develop a source handler and component
+Canonical passage: /v2/addons#source-handlers
+
+Source contributors use defineAddonHandler, register the branded handler in the backend registry and register an explicit frontend AddonDefinition. Standard AddonContext scopes data to the current event and add-on. Lifecycle hooks cover enable/configuration, participant data and event changes; trusted rawCtx is privileged source code, not a sandbox for arbitrary downloaded code. Follow the existing bring-list handler as a bounded starting point, validate all configuration and add a component to the explicit catalog.
+
+```typescript
+import { defineAddonHandler } from '../define';
+import { ADDON_TYPES } from '../types';
+
+interface BringListItem {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
+interface BringListConfig {
+  items: BringListItem[];
+}
+
+function isValidBringListConfig(config: unknown): config is BringListConfig {
+  if (typeof config !== 'object' || config === null) return false;
+  const c = config as Record<string, unknown>;
+
+  if (!Array.isArray(c.items) || c.items.length === 0) return false;
+
+  for (const item of c.items) {
+    if (typeof item !== 'object' || item === null) return false;
+    const i = item as Record<string, unknown>;
+
+    if (typeof i.id !== 'string' || i.id.length === 0) return false;
+    if (typeof i.name !== 'string' || i.name.length === 0) return false;
+    if (typeof i.quantity !== 'number' || i.quantity < 1) return false;
+  }
+
+  return true;
+}
+
+export const bringListHandler = defineAddonHandler({
+  type: ADDON_TYPES.BRING_LIST,
+
+  validateConfig: isValidBringListConfig,
+
+  onConfigUpdated: async (ctx, _oldConfig, _newConfig) => {
+    // Clear all existing claims when config changes
+    await ctx.deleteAllAddonData();
+
+    // Notify members that claims were cleared
+    const person = await ctx.getAuthPerson();
+    if (person) {
+      await ctx.notifyEventMembers({
+        type: 'ADDON_CONFIG_RESET',
+        authorId: person._id,
+      });
+    }
+  },
+
+  onDisabled: async ctx => {
+    await ctx.deleteAllAddonData();
+  },
+
+  onEventDeleted: async ctx => {
+    await ctx.deleteAllAddonData();
+  },
+});
+
+```
+
+## Verify the scoped handler through a real fixture workflow
+Canonical passage: /v2/addons#source-verification
+
+The source above is the current bring-list handler in convex/addons/handlers/bringList.ts. Its existing registry entry is in convex/addons/registry.ts and its frontend definition is in packages/web/features/addons/runtime/catalog.ts. Run the authenticated REST/CLI participation fixture to observe scoped configuration, participant validation and disabled-state cleanup without a live account. This fixture does not establish hosted notification or integration delivery.
+
+```sh
+pnpm --filter @groupi/convex exec vitest run tests/addon-participation-rest.test.ts
+```
+
+## Author a reusable add-on template
+Canonical passage: /v2/addons#templates
+
+An add-on template is a reusable definition; an event add-on uses its saved snapshot. Editing or deleting a template does not rewrite existing event configurations. For the CLI author path, first confirm addonAuthoring.version: 1 from the intended instance. Save this bounded portable definition as meal.json, then import it as a new private draft. Source/local availability is established; registry installation is not claimed.
+
+```json
+{
+  "schemaVersion": 1, "name": "Meal choice", "iconName": "listChecks",
+  "template": {"name": "Meal choice", "iconName": "listChecks", "sections": [
+    {"id": "meal", "title": "Meal", "layout": "form", "fields": [
+      {"id": "choice", "type": "select", "label": "Meal", "required": true, "options": ["Rice", "Pasta"]}
+    ]}
+  ]}
+}
+```
+
+## Import, inspect and deliberately publish
+Canonical passage: /v2/addons#template-first-success
+
+Capture TEMPLATE_ID and saved version from the import response. Inspect the saved definition before publishing and enabling it on an event you may manage. Concurrent versions fail without applying the write. If a response is uncertain, get the definition before trying again. These commands use the current generated CLI reference.
+
+```sh
+groupi addons definitions import --file meal.json --format json
+groupi addons definitions get TEMPLATE_ID --format json
+groupi addons definitions publish TEMPLATE_ID --expected-version 1 --yes --format json
+groupi addons enable EVENT_ID custom:TEMPLATE_ID --template-id TEMPLATE_ID --yes
+```
+
+## Check authorization and event isolation
+Canonical passage: /v2/addons#authorization
+
+Template ownership is independent of event organizer/moderator authority. Participant submissions use the authenticated identity, with no impersonation. Verify one event cannot read another event’s add-on data, and denied writes cause no side effects. A template is declarative data, not a dynamically installable arbitrary-code marketplace. send_webhook is unsupported for new authoring; configured actions can have side effects and must be inspected. See the existing authenticated REST participation and authoring fixtures for verification.

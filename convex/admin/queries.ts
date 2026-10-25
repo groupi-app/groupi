@@ -242,7 +242,15 @@ export const getPostsAdmin = query({
         posts.map(async post => {
           const author = await ctx.db.get(post.authorId);
           const authorUser = author
-            ? await getUserInfo(ctx, author.userId)
+            ? 'userId' in author
+              ? await getUserInfo(ctx, author.userId)
+              : {
+                  name: author.name,
+                  email: null,
+                  image: null,
+                  username: null,
+                  role: null,
+                }
             : null;
           const event = await ctx.db.get(post.eventId);
 
@@ -296,7 +304,15 @@ export const getPostsAdmin = query({
       posts.map(async post => {
         const author = await ctx.db.get(post.authorId);
         const authorUser = author
-          ? await getUserInfo(ctx, author.userId)
+          ? 'userId' in author
+            ? await getUserInfo(ctx, author.userId)
+            : {
+                name: author.name,
+                email: null,
+                image: null,
+                username: null,
+                role: null,
+              }
           : null;
         const event = await ctx.db.get(post.eventId);
 
@@ -372,7 +388,15 @@ export const getRepliesAdmin = query({
         replies.map(async reply => {
           const author = await ctx.db.get(reply.authorId);
           const authorUser = author
-            ? await getUserInfo(ctx, author.userId)
+            ? 'userId' in author
+              ? await getUserInfo(ctx, author.userId)
+              : {
+                  name: author.name,
+                  email: null,
+                  image: null,
+                  username: null,
+                  role: null,
+                }
             : null;
           const post = await ctx.db.get(reply.postId);
           const event = post ? await ctx.db.get(post.eventId) : null;
@@ -423,7 +447,15 @@ export const getRepliesAdmin = query({
       replies.map(async reply => {
         const author = await ctx.db.get(reply.authorId);
         const authorUser = author
-          ? await getUserInfo(ctx, author.userId)
+          ? 'userId' in author
+            ? await getUserInfo(ctx, author.userId)
+            : {
+                name: author.name,
+                email: null,
+                image: null,
+                username: null,
+                role: null,
+              }
           : null;
         const post = await ctx.db.get(reply.postId);
         const event = post ? await ctx.db.get(post.eventId) : null;

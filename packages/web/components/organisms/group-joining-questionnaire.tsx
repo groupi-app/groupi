@@ -10,9 +10,7 @@ import {
   useSubmitJoiningQuestionnaire,
 } from '@/hooks/convex/use-group-questionnaire';
 import { QuestionnaireAnswerSummary } from './group-questionnaire-answer-summary';
-import { GroupQuestionnaireReview } from './group-questionnaire-review';
 import { GroupQuestionnaireHistory } from './group-questionnaire-history';
-import { GroupQuestionnaireSettings } from './group-questionnaire-settings';
 import { ApplicationQuestionFields } from './application-question-fields';
 
 type Form = NonNullable<ReturnType<typeof useJoiningQuestionnaire>>;
@@ -24,6 +22,13 @@ export function GroupJoiningQuestionnaire({
   const form = useJoiningQuestionnaire({ groupId });
   if (form === undefined)
     return <p role='status'>Loading joining questionnaire…</p>;
+  if (
+    !form.enabled &&
+    !form.completed &&
+    !form.shouldPrompt &&
+    Object.keys(form.answers).length === 0
+  )
+    return null;
   return (
     <section
       className='space-y-4'
@@ -59,13 +64,6 @@ export function GroupJoiningQuestionnaire({
         form={form}
       />
       <GroupQuestionnaireHistory groupId={groupId} />
-      {form.canReview && <GroupQuestionnaireReview groupId={groupId} />}
-      {form.canConfigure && (
-        <GroupQuestionnaireSettings
-          key={`settings-${form.version}`}
-          form={form}
-        />
-      )}
       <Link
         className='text-primary underline'
         href={`/groups/${groupId}/questionnaire`}

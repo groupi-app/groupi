@@ -1,6 +1,8 @@
 'use client';
 
 import { Plus as ActionPlus } from 'lucide-react';
+import type { AddonConfiguration } from '../../model/types';
+
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -18,10 +20,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 
 interface TemplatePickerProps {
   eventId: Id<'events'>;
-  onSelect: (
-    addonType: string,
-    config: Record<string, unknown>
-  ) => Promise<void>;
+  onSelect: (addonType: string, config: AddonConfiguration) => Promise<void>;
 }
 
 export function TemplatePicker({ onSelect }: TemplatePickerProps) {

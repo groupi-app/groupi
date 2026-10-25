@@ -189,6 +189,7 @@ export function createAdminRoutes() {
     request: {
       params: UserIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: SetUserRoleRequestSchema,

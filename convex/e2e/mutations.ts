@@ -1,3 +1,6 @@
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
+import { nextParticipationRevision } from '../events/participationRevision';
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deletePersonApplications } from '../eventApplications/cleanup';
@@ -137,6 +140,11 @@ export const createMobileFixture = mutation({
       timezone: 'UTC',
     });
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -464,7 +472,17 @@ export const createMagicLinkToken = mutation({
  */
 export const debugVerifications = query({
   args: { fixtureKey: v.string() },
-  returns: v.array(v.any()),
+  returns: v.array(
+    v.object({
+      _id: v.string(),
+      _creationTime: v.number(),
+      identifier: v.string(),
+      value: v.string(),
+      expiresAt: v.number(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
   handler: async (ctx, { fixtureKey }) => {
     assertFixtureAccess(fixtureKey);
 
@@ -477,7 +495,7 @@ export const debugVerifications = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
     return verifications;
   },
 });
@@ -511,7 +529,7 @@ export const getLastMagicLink = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
 
     // Find verification matching the email
     const now = Date.now();
@@ -589,6 +607,11 @@ export const seedEvent = mutation({
 
     // Create organizer membership
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -729,6 +752,11 @@ export const seedMembership = mutation({
     }
 
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: args.role,
@@ -856,6 +884,7 @@ export const cleanupTestData = mutation({
         await deleteEventTransfers(ctx, eventId);
         await deleteEventApplications(ctx, eventId);
         await removeAudiencesForEvent(ctx, eventId);
+        await deleteEventParticipationRevisions(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted

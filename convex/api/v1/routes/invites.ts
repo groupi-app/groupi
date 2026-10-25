@@ -100,6 +100,7 @@ export function createInviteRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateInviteRequestSchema,

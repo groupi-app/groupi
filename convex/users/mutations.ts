@@ -1,3 +1,6 @@
+import { retireDiscordIdentity } from '../groupDiscord/identity';
+import { deletePersonParticipationRevisions } from '../events/participationRevision';
+import { parseWebhookHeaders } from '../notifications/contracts';
 import { removeGroupMembershipsForPerson } from '../groups/model';
 import { deletePersonApplications } from '../eventApplications/cleanup';
 import { claimUpload } from '../files/uploads';
@@ -262,7 +265,7 @@ export const updateUserNotificationSettings = mutation({
             name: methodData.name,
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
-            webhookHeaders: methodData.webhookHeaders,
+            webhookHeaders: parseWebhookHeaders(methodData.webhookHeaders),
             updatedAt: Date.now(),
           });
           methodId = existingMethod._id;
@@ -277,7 +280,7 @@ export const updateUserNotificationSettings = mutation({
             name: methodData.name,
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
-            webhookHeaders: methodData.webhookHeaders,
+            webhookHeaders: parseWebhookHeaders(methodData.webhookHeaders),
             updatedAt: now,
           });
         }
@@ -438,6 +441,7 @@ export async function deleteResolvedAccount(
   user: ExtendedAuthUser | null
 ) {
   await assertNoOwnedResources(ctx, person._id);
+  await retireDiscordIdentity(ctx, person.userId);
   await removeGroupMembershipsForPerson(ctx, person._id);
   const membershipsToRemove = await ctx.db
     .query('memberships')
@@ -660,6 +664,7 @@ export async function deleteResolvedAccount(
     'reminderOptOuts',
     'addonOptOuts',
     'discordGuildAuthorizations',
+    'groupDiscordManagedIdentities',
   ] as const) {
     for await (const record of ctx.db
       .query(table)
@@ -669,6 +674,11 @@ export async function deleteResolvedAccount(
   }
   await deletePersonApplications(ctx, person._id);
   await deleteListsForPerson(ctx, person._id);
+  await deletePersonParticipationRevisions(ctx, person._id);
+  for await (const retired of ctx.db
+    .query('groupDiscordRetiredIdentities')
+    .withIndex('by_person_identity', q => q.eq('personId', person._id)))
+    await ctx.db.delete(retired._id);
   await ctx.db.delete(person._id);
 
   if (user) {

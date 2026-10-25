@@ -62,6 +62,10 @@ const notificationTypeLabels: Record<
     label: 'Group application declined',
     description: 'When your Group application is declined',
   },
+  GROUP_DISCORD_SYNC_BLOCKED: {
+    label: 'Discord synchronization blocked',
+    description: 'A Group you manage needs Discord permissions or retry.',
+  },
   GROUP_ONBOARDING_REQUIRED: {
     label: 'Required Group onboarding',
     description: 'current required Group answers need completing.',
@@ -639,6 +643,7 @@ export function NotificationSettingsCard({
                         NotificationTypeEnum.GROUP_MEMBER_BANNED,
                         NotificationTypeEnum.GROUP_ANNOUNCEMENT,
                         NotificationTypeEnum.GROUP_ONBOARDING_REQUIRED,
+                        NotificationTypeEnum.GROUP_DISCORD_SYNC_BLOCKED,
                       ].map(type => renderCheckbox(type))}
                     </div>
                   </div>

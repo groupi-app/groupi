@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import {
   query,
   action,
@@ -19,6 +20,8 @@ const linkedAccountValidator = v.object(linkedAccountFields);
 const enrichedAccountValidator = v.object({
   ...linkedAccountFields,
   username: v.optional(v.string()),
+  displayName: v.optional(v.string()),
+  avatarUrl: v.optional(v.string()),
 });
 
 // Use require to avoid deep type instantiation errors with internal references
@@ -78,7 +81,7 @@ export const getLinkedAccounts = query({
     });
 
     // findMany returns paginated result with page array
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
 
     // Map to safe public format (no tokens)
     return accounts.map(
@@ -125,7 +128,7 @@ export const hasLinkedProvider = query({
     });
 
     // findMany returns paginated result with page array
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
 
     const providers = new Set(
       accounts.map((a: { providerId: string }) => a.providerId)
@@ -146,6 +149,8 @@ export const getAccountsForEnrichment = internalQuery({
   returns: v.object({
     user: v.union(v.object({ email: v.string() }), v.null()),
     accounts: v.array(linkedAccountValidator),
+    selectedDiscordUserId: v.optional(v.string()),
+    managedDiscordIdentityRetired: v.optional(v.boolean()),
   }),
   handler: async ctx => {
     const user = await authComponent.getAuthUser(ctx);
@@ -164,9 +169,32 @@ export const getAccountsForEnrichment = internalQuery({
       },
     });
 
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
+    const person = await ctx.db
+      .query('persons')
+      .withIndex('by_user_id', q => q.eq('userId', userId))
+      .unique();
+    const selected = person
+      ? await ctx.db
+          .query('groupDiscordManagedIdentities')
+          .withIndex('by_person', q => q.eq('personId', person._id))
+          .unique()
+      : null;
 
     return {
+      managedDiscordIdentityRetired: !!(
+        person &&
+        selected?.discordUserId &&
+        (await ctx.db
+          .query('groupDiscordRetiredIdentities')
+          .withIndex('by_person_identity', q =>
+            q
+              .eq('personId', person._id)
+              .eq('discordUserId', selected.discordUserId!)
+          )
+          .unique())
+      ),
+      selectedDiscordUserId: selected?.discordUserId,
       user: { email: user.email },
       accounts: accounts.map(
         (account: {
@@ -186,26 +214,47 @@ export const getAccountsForEnrichment = internalQuery({
 });
 
 /**
- * Fetch Discord username from Discord API
+ * Fetch safe profile fields for this exact linked Discord identity
  */
-async function fetchDiscordUsername(
-  ctx: ActionCtx,
-  accountId: string
-): Promise<string | null> {
+async function fetchDiscordProfile(ctx: ActionCtx, accountId: string) {
   try {
     const response = await fetchDiscordUserApi(ctx, accountId, '/users/@me');
-
-    if (!response.ok) {
-      console.log('[Discord API] Failed to fetch user:', response.status);
-      return null;
+    if (!response.ok) return undefined;
+    const data: {
+      id?: unknown;
+      username?: unknown;
+      global_name?: unknown;
+      avatar?: unknown;
+      discriminator?: unknown;
+    } = await response.json();
+    if (data.id !== accountId || typeof data.username !== 'string')
+      return undefined;
+    const username = data.username;
+    const displayName =
+      typeof data.global_name === 'string' && data.global_name.trim()
+        ? data.global_name
+        : username;
+    let avatarUrl: string | undefined;
+    if (/^\d{1,20}$/.test(accountId)) {
+      if (
+        typeof data.avatar === 'string' &&
+        /^(a_)?[a-f0-9]{32}$/.test(data.avatar)
+      ) {
+        avatarUrl = `https://cdn.discordapp.com/avatars/${accountId}/${data.avatar}.png?size=128`;
+      } else if (data.avatar === null || data.avatar === undefined) {
+        const legacy =
+          typeof data.discriminator === 'string' &&
+          /^\d{4}$/.test(data.discriminator) &&
+          data.discriminator !== '0000';
+        const index = legacy
+          ? Number(data.discriminator) % 5
+          : Number((BigInt(accountId) >> 22n) % 6n);
+        avatarUrl = `https://cdn.discordapp.com/embed/avatars/${index}.png`;
+      }
     }
-
-    const data = await response.json();
-    // Discord returns username (new format) or username#discriminator (old format)
-    return data.username || null;
+    return { username, displayName, avatarUrl };
   } catch {
-    console.error('[Discord API] Unable to retrieve the linked Discord user');
-    return null;
+    return undefined;
   }
 }
 
@@ -213,8 +262,7 @@ type LinkedAccount = Infer<typeof linkedAccountValidator>;
 type EnrichedAccount = Infer<typeof enrichedAccountValidator>;
 
 /**
- * Action to get linked accounts with enriched Discord usernames
- * Uses Discord API to fetch the actual username
+ * Get linked accounts with current Discord display fields. Credentials stay server-side.
  */
 export const getLinkedAccountsWithUsernames = action({
   args: {},
@@ -232,30 +280,81 @@ export const getLinkedAccountsWithUsernames = action({
     // Enrich accounts with usernames
     const enrichedAccounts: EnrichedAccount[] = await Promise.all(
       data.accounts.map(async (account: LinkedAccount) => {
-        let username: string | undefined;
-
-        if (account.providerId === 'google') {
-          // For Google, use user's email
-          username = data.user?.email;
-        } else if (account.providerId === 'discord') {
-          // For Discord, fetch username from Discord API
-          const discordUsername = await fetchDiscordUsername(
-            ctx,
-            account.accountId
-          );
-          username = discordUsername || undefined;
-        }
+        const profile =
+          account.providerId === 'discord'
+            ? await fetchDiscordProfile(ctx, account.accountId)
+            : undefined;
+        const username =
+          account.providerId === 'google'
+            ? data.user?.email
+            : profile?.username;
 
         return {
           id: account.id,
           providerId: account.providerId,
           accountId: account.accountId,
           username,
+          displayName: profile?.displayName,
+          avatarUrl: profile?.avatarUrl,
           createdAt: account.createdAt,
         };
       })
     );
 
     return enrichedAccounts;
+  },
+});
+
+/** Retirement remains visible after unlink, even when no provider account remains. */
+export const getDiscordRetirementStatus = query({
+  args: {},
+  returns: v.object({
+    pending: v.boolean(),
+    error: v.optional(v.string()),
+    externallyManaged: v.boolean(),
+    selectedDiscordUserId: v.optional(v.string()),
+  }),
+  handler: async ctx => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return { pending: false, externallyManaged: false };
+    const person = await ctx.db
+      .query('persons')
+      .withIndex('by_user_id', q => q.eq('userId', String(user._id)))
+      .unique();
+    if (!person) return { pending: false, externallyManaged: false };
+    let error: string | undefined;
+    let pending = false;
+    for (const status of ['pending', 'blocked'] as const) {
+      const row = await ctx.db
+        .query('groupDiscordCleanup')
+        .withIndex('by_person_status', q =>
+          q.eq('personId', String(person._id)).eq('status', status)
+        )
+        .first();
+      if (row) {
+        pending = true;
+        error ??= row.error;
+      }
+    }
+    const exception = await ctx.db
+      .query('groupDiscordEnrollments')
+      .withIndex('by_person_removed_exception', q =>
+        q
+          .eq('personId', person._id)
+          .eq('mode', 'membership')
+          .eq('desired', 'removed')
+          .gt('externalException', undefined)
+      )
+      .first();
+    const selected = await ctx.db
+      .query('groupDiscordManagedIdentities')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .unique();
+    return {
+      pending,
+      error,
+      externallyManaged: !!exception,
+      selectedDiscordUserId: selected?.discordUserId,
+    };
   },
 });

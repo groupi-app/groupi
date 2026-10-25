@@ -1,5 +1,7 @@
 'use client';
 
+import type { AddonConfiguration } from '../../model/types';
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useEventHeader } from '@/hooks/convex/use-events';
@@ -26,7 +28,7 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
   const allAddons = getEventAddonDefinitions(addonConfigs);
 
   const handleSave = useCallback(
-    async (addonType: string, config: Record<string, unknown>) => {
+    async (addonType: string, config: AddonConfiguration) => {
       setIsSaving(true);
       try {
         const existing = addonConfigs?.find(

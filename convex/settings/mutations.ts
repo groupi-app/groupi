@@ -1,3 +1,4 @@
+import { parseWebhookHeaders } from '../notifications/contracts';
 import { mutation, type MutationCtx } from '../_generated/server';
 import { v, ConvexError, type Infer } from 'convex/values';
 import { requireAuth, getPersonForUser } from '../auth';
@@ -31,6 +32,7 @@ const notificationTypeValidator = v.union(
   v.literal('GROUP_APPLICATION_DECLINED'),
   v.literal('GROUP_ANNOUNCEMENT'),
   v.literal('GROUP_ONBOARDING_REQUIRED'),
+  v.literal('GROUP_DISCORD_SYNC_BLOCKED'),
   v.literal('EVENT_INVITE_RECEIVED'),
   v.literal('EVENT_INVITE_ACCEPTED'),
   v.literal('ADDON_CONFIG_RESET'),
@@ -165,14 +167,7 @@ export async function saveNotificationSettingsForPerson(
     let methodId = method.id;
 
     // Parse webhook headers if provided
-    let webhookHeaders = undefined;
-    if (method.webhookHeaders) {
-      try {
-        webhookHeaders = JSON.parse(method.webhookHeaders);
-      } catch {
-        // Keep as undefined if invalid JSON
-      }
-    }
+    const webhookHeaders = parseWebhookHeaders(method.webhookHeaders);
 
     if (methodId && existingMethodIds.has(methodId)) {
       // Update existing method

@@ -344,6 +344,7 @@ export function createFriendRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: SendFriendRequestSchema,

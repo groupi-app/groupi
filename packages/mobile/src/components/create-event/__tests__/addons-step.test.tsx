@@ -109,7 +109,7 @@ describe('add-on configuration validation', () => {
             {
               id: 'question-1',
               label: 'Pick one',
-              type: 'MULTIPLE_CHOICE',
+              type: 'MULTIPLE_CHOICE' as const,
               required: true,
               options: [],
             },
@@ -142,7 +142,7 @@ describe('add-on configuration validation', () => {
           {
             id: 'question-1',
             label: 'Pick one',
-            type: 'MULTIPLE_CHOICE',
+            type: 'MULTIPLE_CHOICE' as const,
             required: true,
             options: ['A'],
           },

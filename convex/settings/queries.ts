@@ -69,6 +69,7 @@ export const getNotificationSettings = query({
                 'GROUP_APPLICATION_DECLINED',
                 'GROUP_ANNOUNCEMENT',
                 'GROUP_ONBOARDING_REQUIRED',
+                'GROUP_DISCORD_SYNC_BLOCKED',
               ] as const
             )
               .filter(

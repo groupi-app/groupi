@@ -15,7 +15,16 @@ async function fixture() {
       eventId,
       addonType: 'questionnaire',
       enabled: true,
-      config: { questions: [{ id: 'answer', type: 'SHORT_ANSWER' }] },
+      config: {
+        questions: [
+          {
+            id: 'answer',
+            label: 'Answer',
+            type: 'SHORT_ANSWER',
+            required: false,
+          },
+        ],
+      },
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
@@ -128,10 +137,24 @@ describe('Add-on data transaction authorization', () => {
         addonType,
         enabled: true,
         config: {
+          templateId: 'submission',
           template: {
             name: 'Submission',
+            description: '',
+            iconName: 'List',
             sections: [
-              { id: 'form', fields: [{ id: 'submitted', type: 'yesno' }] },
+              {
+                id: 'form',
+                title: 'Form',
+                fields: [
+                  {
+                    id: 'submitted',
+                    label: 'Submitted',
+                    type: 'yesno',
+                    required: false,
+                  },
+                ],
+              },
             ],
             automations: [
               {
