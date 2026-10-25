@@ -2,6 +2,7 @@
 
 import { AuthenticatedLayout } from '@/components/auth/AuthenticatedLayout';
 import { ReactNode } from 'react';
+import { EventPageSkeleton } from '@/components/skeletons/event-page-skeleton';
 
 /**
  * Layout for Event route group.
@@ -10,5 +11,9 @@ import { ReactNode } from 'react';
  * Each sub-page handles its own specific skeleton via loading.tsx or Suspense.
  */
 export default function EventLayout({ children }: { children: ReactNode }) {
-  return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
+  return (
+    <AuthenticatedLayout loadingFallback={<EventPageSkeleton />}>
+      {children}
+    </AuthenticatedLayout>
+  );
 }

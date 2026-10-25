@@ -8,7 +8,8 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardActions } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PostCardSkeleton } from '@/components/skeletons/post-card-skeleton';
+export { PostCardSkeleton } from '@/components/skeletons/post-card-skeleton';
 import { formatDate } from '@/lib/utils';
 import { canDeletePost } from '@/lib/event-permissions';
 import Link from 'next/link';
@@ -425,34 +426,4 @@ export function PostCard({
   );
 }
 
-export function PostCardSkeleton() {
-  return (
-    <Card treatment='quiet' className='w-full max-w-4xl'>
-      <div className='w-full transition-all pt-4 px-5 pb-2'>
-        <div className='flex flex-col gap-1'>
-          <div className='flex items-center gap-2 mb-1'>
-            <Skeleton className='size-10 rounded-full' />
-            <div className='flex flex-col space-y-1'>
-              <Skeleton className='w-36 h-4' />
-              <Skeleton className='w-16 h-3' />
-            </div>
-          </div>
-          <div className='flex flex-wrap gap-1'>
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-3/4 h-4' />
-          </div>
-          <div className='flex items-center justify-between mt-2'>
-            <Skeleton className='w-16 h-4' />
-            <Skeleton className='w-16 h-4' />
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// Attach Skeleton as a static property for backward compatibility
 PostCard.Skeleton = PostCardSkeleton;

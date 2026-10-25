@@ -50,11 +50,19 @@ All thirteen requested fixes are implemented:
     moderation lives in Admissions, personal controls live in membership settings,
     and ownership/deletion safety remains intact. Onboarding retains a confirmed leave escape.
 
-Validation: all 1,454 web tests and 1,294 Convex tests passed. Convex uses the
-CI-supported `test:no-codegen` command; the root test wrapper requires an absent
-`CONVEX_DEPLOYMENT` and therefore did not finish. `pnpm check` passed, including
-811 source/generated contracts; ten contract-guard tests and token lint passed.
-Independent navigation and UI reviewers reported no remaining actionable findings.
+The user also requested a page-matched Event loading skeleton before merging.
+Loading and loaded content now share the existing `DetailPageTemplate` and a
+shared Event header/title layout; auth, route, membership, query and add-on
+pending states use one inert skeleton. Public logistics has its own narrower
+shared shell and loading placeholders. Unknown covers, add-ons and permitted
+actions are not invented; missing/denied/error behavior remains intact.
+
+Local validation: all 1,478 web tests passed, including 24 new loading/transition
+cases. The earlier 1,294 Convex tests passed on unchanged backend source through
+the CI-supported `test:no-codegen` command; the root wrapper still requires an
+absent `CONVEX_DEPLOYMENT`. `pnpm check` passed, including 811 source/generated
+contracts; ten contract-guard tests and token lint passed. Independent navigation
+and UI reviewers reported no remaining actionable findings.
 
 An explicitly authorized localhost Storybook session served this source to the
 existing in-app browser. Shared surfaces/controls were inspected at desktop,
@@ -73,7 +81,11 @@ hooks enabled. [Draft PR #435](https://github.com/groupi-app/groupi/pull/435)
 targets `test`; the approved changeset commit is
 `cd94e00ba0e7fc975bddf02e4db06206ac5cd91d`. GitHub checks and the automatic Vercel
 preview are being monitored on the PR head. Their outcome is separate from the
-local fixture evidence above. No merge or manual deployment is authorized.
+local fixture evidence above. The skeleton follow-up and its additional patch-note
+sentence were approved; the original release-note paragraph is unchanged. Merge
+ownership remains with the parent task after the added fix and exact-head hosted
+checks are verified. This implementation task has not sent a merge, auto-merge,
+or ready-for-review action. No manual deployment is authorized.
 
 ## Design-language merge integration — 2026-10-25
 
