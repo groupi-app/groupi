@@ -44,7 +44,9 @@ export function EventToolScreen({ kind, mode }: { kind: Kind; mode: Mode }) {
   const eventId = params.eventId as Id<'events'>;
   const toolId = params.toolId as Id<'groupTools'> | undefined;
   const addons = useEventAddons(
-    kind === 'lists' && mode === 'index' ? eventId : undefined
+    (kind === 'lists' || kind === 'forms') && mode === 'index'
+      ? eventId
+      : undefined
   );
   const props = { groupId: eventId };
   const detailProps = toolId ? { ...props, toolId } : null;
@@ -100,12 +102,26 @@ export function EventToolScreen({ kind, mode }: { kind: Kind; mode: Mode }) {
     <DetailScreenTemplate title={`Event ${kind}`}>
       {kind === 'lists' &&
       mode === 'index' &&
-      addons?.some(addon => addon.addonType === 'bring-list') ? (
+      addons?.some(
+        addon => addon.enabled && addon.addonType === 'bring-list'
+      ) ? (
         <Button
           variant='outline'
           onPress={() => router.push(`/event/${eventId}/addons/bring-list`)}
         >
-          Bring List · existing items and claims
+          What to bring · saved items and claims
+        </Button>
+      ) : null}
+      {kind === 'forms' &&
+      mode === 'index' &&
+      addons?.some(
+        addon => addon.enabled && addon.addonType === 'questionnaire'
+      ) ? (
+        <Button
+          variant='outline'
+          onPress={() => router.push(`/event/${eventId}/addons/questionnaire`)}
+        >
+          Your details · saved Event answers
         </Button>
       ) : null}
       <EventToolScope eventId={eventId}>

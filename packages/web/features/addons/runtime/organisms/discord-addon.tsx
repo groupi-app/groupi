@@ -380,7 +380,13 @@ function DiscordManageConfig({
 
   const handleSave = async () => {
     if (!selectedGuildId || !selectedGuildName) return;
-    await onSave({ guildId: selectedGuildId, guildName: selectedGuildName });
+    if (
+      (await onSave({
+        guildId: selectedGuildId,
+        guildName: selectedGuildName,
+      })) === false
+    )
+      return;
     setPendingEnable(false);
   };
 

@@ -57,6 +57,42 @@ incremental compatibility boundaries:
 No Event tool REST/CLI authoring is added. Existing Group tool REST/CLI endpoints
 remain Group-scoped. Destructive actions retain confirmation.
 
+## Participant features and Event Settings
+
+The generic Event-page Add-ons catalogue and its management toolbar are removed.
+Organizer enable/configure/disable controls live under Event Settings → Add-ons.
+Existing management links remain aliases to that destination. Placement is
+read-only and does not invoke enable, update, disable or provider operations.
+
+| Saved feature                               | Participant placement                                                    | Preserved behavior                                                                    |
+| ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Reminders                                   | “Remind me” beside Event planning/date/RSVP                              | Personal opt-out and scheduled reminder status                                        |
+| Questionnaire                               | “Your details” completion action and Forms discovery                     | Required gate, answer editing, saved responses and organizer review                   |
+| Bring List                                  | “What to bring” and Lists discovery                                      | Same items, quantities, per-person claims and claim review                            |
+| Discord                                     | Connection/status beside Event planning                                  | Existing participant Discord link and sync status                                     |
+| Custom form/vote/list/interactive templates | Event content under the saved template name                              | Whole event-saved template, response key, conditions, actions and completion behavior |
+| Custom card-only/display templates          | Named inline Event content                                               | Existing inline controls, acknowledgement and information                             |
+| Unknown or malformed saved features         | Accessible unavailable status; preserved configuration entry in Settings | No invented interaction, raw configuration exposure or automatic removal              |
+
+Custom templates with mixed interactions remain whole rather than splitting
+shared responses or conditions across Forms/Lists/Polls. Native retains its
+existing clearly named browser handoff for the full custom renderer; this placement
+change does not build a second renderer for all custom field types. Built-in
+participant flows remain native. Disabled configurations are not offered as active
+participant actions, but remain visible to managers where applicable.
+
+Required questionnaire exemptions and legacy paths are preserved: web
+`/event/:id/addon/:type`, native `/event/:id/addons/:type`; web `/manage-addons`
+and native `/addons/manage` retain management redirects. Configuration changes
+or disabling that can clear questionnaire responses/Bring List claims require
+explicit confirmation; cancellation and failures retain edits. Unknown saved
+configuration is never passed through a guessed editor.
+
+PR435 head `b2da51eb` is locally integrated to preserve its settings/navigation
+fixes. This is a local source merge, not a merge of either remote pull request.
+The user approved the amended minor release note covering this participant-feature
+placement and Event Settings management scope.
+
 ## Data and schema evolution
 
 Existing Event posts already satisfy the canonical parent invariant. Their

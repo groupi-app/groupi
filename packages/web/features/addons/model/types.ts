@@ -40,8 +40,8 @@ export interface ManageConfigProps {
   eventId: Id<'events'>;
   config: Record<string, unknown> | null;
   chosenDateTime?: number;
-  onSave: (config: AddonConfiguration) => Promise<void>;
-  onDisable: () => Promise<void>;
+  onSave: (config: AddonConfiguration) => Promise<void | boolean>;
+  onDisable: () => Promise<void | boolean>;
   isSaving: boolean;
 }
 
