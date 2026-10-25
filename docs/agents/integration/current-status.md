@@ -4,6 +4,7 @@ Current feature evidence and historical integration checkpoints. Source verifica
 
 ## Table of Contents
 
+- [UI regression candidate — 2026-10-25](#ui-regression-candidate--2026-10-25)
 - [Design-language merge integration — 2026-10-25](#design-language-merge-integration--2026-10-25)
 - [Design-language implementation — 2026-10-24](#design-language-implementation--2026-10-24)
 - [Hosted Discord and Group pages — 2026-10-24](#hosted-discord-and-group-pages--2026-10-24)
@@ -19,6 +20,56 @@ Current feature evidence and historical integration checkpoints. Source verifica
 - [Verification and open gates](#verification-and-open-gates)
 - [Evidence and maintenance](#evidence-and-maintenance)
 - [Architecture integration candidate — 2026-10-11](#architecture-integration-candidate--2026-10-11)
+
+## UI regression candidate — 2026-10-25
+
+Implementation source `7a03ca23556b588187f5d9cdf0a8cc2026bbb6c6` on
+`codex/ui-regressions-navigation` starts from current `test`
+`8fdbc93288fb5050cd3a133959850d97602cd2e3` (remote rechecked unchanged).
+This is a local candidate, not a live deployment. The original checkout and
+concurrent dependency/documentation work remain untouched.
+
+All thirteen requested fixes are implemented:
+
+1. Home tabs share the content width and attach directly to the panel.
+2. Dialog surfaces have no forced white edge; their grid respects narrow widths.
+3. RSVP choices keep Maybe intact and expose the selected response accessibly.
+4. Navigation attention counts use solid red indicators with capped visual counts.
+5. Date options reserve date-button space, wrap complete controls, and align deletion
+   with the first date row; native time inputs retain room for their contents.
+6. Event forms/dialogs own feedback once; duplicate mutation-hook announcements are removed.
+7. Event ownership is in settings, with recipient access retained. Organizer-only
+   deletion is a bottom settings card and retains destructive confirmation.
+8. Post cards opt out of sticker edges while retaining independent interaction.
+9. Compact presence dots retain a visible color core; browser checks confirmed all
+   existing presence/status background tokens resolve.
+10. Mobile sheets have no forced white edge.
+11. The mobile action reads Friends & Groups and has a sheet description.
+12. Friends & Groups tabs stay on one scrollable row with visible keyboard focus.
+13. Group overview retains content/read-only members; related actions use menus,
+    moderation lives in Admissions, personal controls live in membership settings,
+    and ownership/deletion safety remains intact. Onboarding retains a confirmed leave escape.
+
+Validation: all 1,454 web tests and 1,294 Convex tests passed. Convex uses the
+CI-supported `test:no-codegen` command; the root test wrapper requires an absent
+`CONVEX_DEPLOYMENT` and therefore did not finish. `pnpm check` passed, including
+811 source/generated contracts; ten contract-guard tests and token lint passed.
+Independent navigation and UI reviewers reported no remaining actionable findings.
+
+An explicitly authorized localhost Storybook session served this source to the
+existing in-app browser. Shared surfaces/controls were inspected at desktop,
+390px and 320px; actual Group overview/menus/membership controls were inspected
+at desktop and 390px against local read-only query snapshots. Screenshots are
+internal QA evidence. These fixtures do not establish authenticated application
+acceptance. Matching frontend/backend/session, real-device and observed VoiceOver
+checks remain open. No login, credentials, backend deployment or real data writes
+were performed. The shared Post/Form/List/Poll feature is outside this candidate.
+
+The exact `@groupi/web` patch changeset summary is awaiting user approval. Automatic
+approval review denied the branch push before execution because that prerequisite
+is pending; no remote branch or draft PR has been created. Resume the changeset,
+normal push and draft PR targeting `test` after the requested approval. No merge
+or deployment is authorized.
 
 ## Design-language merge integration — 2026-10-25
 
