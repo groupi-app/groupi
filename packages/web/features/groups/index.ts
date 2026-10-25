@@ -7,3 +7,4 @@ export { GroupAnnouncementsSettings } from './group-announcements-settings';
 export { GroupOwnershipSettings } from './group-ownership-settings';
 export { GroupQuestionnaireManagement } from './group-questionnaire-settings';
 export { GroupDirectory } from './group-directory';
+export { GroupMembershipSettings } from './group-membership-settings';

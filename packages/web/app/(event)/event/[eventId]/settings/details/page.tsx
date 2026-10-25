@@ -1,4 +1,5 @@
 'use client';
+import { EventDeleteCard } from '../components/event-delete-card';
 import { EventLifecycleSettings } from '@/components/organisms/event-lifecycle-settings';
 
 import { use } from 'react';
@@ -56,6 +57,7 @@ export default function EventSettingsDetailsPage(props: {
             eventId={event._id}
             role={eventData?.userMembership?.role}
           />
+          <EventDeleteCard />
         </div>
       )}
     </SettingsPageTemplate>

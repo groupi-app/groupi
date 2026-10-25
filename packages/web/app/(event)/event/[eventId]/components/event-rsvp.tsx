@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
+import { RsvpChoices } from '@/components/molecules/rsvp-choices';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -167,45 +168,8 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
               control={form.control}
               name='rsvp'
               render={({ field }) => (
-                <FormItem className='flex gap-2 items-center space-y-0'>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'YES' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('YES')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <Icons.check className='text-success' />
-                        <span>Yes</span>
-                      </div>
-                    </Button>
-                  </FormControl>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'MAYBE' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('MAYBE')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <span className='font-semibold w-6 text-xl text-warning text-center'>
-                          ?
-                        </span>
-                        <span>Maybe</span>
-                      </div>
-                    </Button>
-                  </FormControl>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'NO' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('NO')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <Icons.close className='text-error' />
-                        <span>No</span>
-                      </div>
-                    </Button>
-                  </FormControl>
+                <FormItem>
+                  <RsvpChoices value={field.value} onChange={field.onChange} />
                 </FormItem>
               )}
             />

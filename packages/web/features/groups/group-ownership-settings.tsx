@@ -13,10 +13,7 @@ export function GroupOwnershipSettings({ groupId }: { groupId: Id<'groups'> }) {
     <GroupSettingsPanel title='Ownership & safety'>
       <>
         {group.canManageIdentity && (
-          <>
-            <GroupOwnershipTransfer groupId={groupId} />
-            <GroupDeletion groupId={groupId} />
-          </>
+          <GroupOwnershipTransfer groupId={groupId} />
         )}
         {group.canManageMembers && (
           <>
@@ -24,6 +21,7 @@ export function GroupOwnershipSettings({ groupId }: { groupId: Id<'groups'> }) {
             <GroupBanManagement groupId={groupId} />
           </>
         )}
+        {group.canManageIdentity && <GroupDeletion groupId={groupId} />}
       </>
     </GroupSettingsPanel>
   );

@@ -109,6 +109,10 @@ describe('Post card merged attribution and actions', () => {
     expect(screen.queryByText('Integration')).toBeNull();
     const profile = screen.getByRole('button', { name: 'Member profile' });
     expect(profile.closest('a')).toBeNull();
+    expect(profile.closest('[data-slot="card"]')).toHaveAttribute(
+      'data-edge',
+      'none'
+    );
     expect(profile.closest('[data-slot="card-actions"]')).not.toBeNull();
     expect(
       screen.getByRole('link', { name: /Community update/ })

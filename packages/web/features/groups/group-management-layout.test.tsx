@@ -33,6 +33,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.authenticated = true;
   state.role = 'OWNER';
+  state.pathname = '/groups/group-one/settings/invitations';
 });
 describe('Group management navigation', () => {
   it('provides visible settings links and identifies the current screen', () => {
@@ -109,3 +110,51 @@ describe('Group management navigation', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+it('allows members to open only their personal membership settings', () => {
+  state.role = 'MEMBER';
+  state.pathname = '/groups/group-one/settings/membership';
+  render(
+    <GroupManagementLayout>
+      <p>Personal controls</p>
+    </GroupManagementLayout>
+  );
+  expect(screen.getByText('Personal controls')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Your membership' })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Admissions' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'Ownership & safety' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'Invitations' })
+  ).not.toBeInTheDocument();
+});
+
+it.each([
+  'admissions',
+  'invitations',
+  'questionnaire',
+  'discord',
+  'announcements',
+  'ownership',
+])(
+  'keeps ordinary members out of %s management after adding personal settings',
+  path => {
+    state.role = 'MEMBER';
+    state.pathname = `/groups/group-one/settings/${path}`;
+    render(
+      <GroupManagementLayout>
+        <p>Private manager controls</p>
+      </GroupManagementLayout>
+    );
+    expect(
+      screen.queryByText('Private manager controls')
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Group settings unavailable')).toBeInTheDocument();
+  }
+);

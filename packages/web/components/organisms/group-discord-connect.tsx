@@ -11,7 +11,7 @@ export function GroupDiscordConnect({ groupId }: { groupId: Id<'groups'> }) {
     const result = await authClient.linkSocial({
       provider: 'discord',
       scopes: ['identify', 'guilds', 'guilds.join'],
-      callbackURL: `/groups/${encodeURIComponent(groupId)}`,
+      callbackURL: `/groups/${encodeURIComponent(groupId)}/settings/membership`,
     });
     if (result.error)
       throw new Error(

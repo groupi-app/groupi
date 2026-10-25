@@ -311,7 +311,7 @@ export function PostCard({
   );
 
   const cardContent = (
-    <Card treatment='interactive' className='w-full group'>
+    <Card treatment='interactive' edge='none' className='w-full group'>
       <CardActions className='absolute top-4 left-3'>
         {author.kind === 'integration' ? (
           <IntegrationAuthor

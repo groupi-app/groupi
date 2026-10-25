@@ -11,7 +11,6 @@ import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { StickerIcon } from '@/components/atoms';
 import Link from 'next/link';
-import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
 import { LeaveEventDialog } from './leaveEventDialog';
 import { ReportDialog } from '@/components/report-dialog';
@@ -60,7 +59,6 @@ export function EventHeader({ data }: EventHeaderProps) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   // State hooks
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -278,17 +276,6 @@ export function EventHeader({ data }: EventHeaderProps) {
             Event Settings
           </Button>
         </Link>
-        <Button
-          variant='destructive-ghost'
-          className='w-full justify-start'
-          onClick={() => {
-            setDrawerOpen(false);
-            setDeleteDialogOpen(true);
-          }}
-        >
-          <Icons.delete className='size-4 mr-2' />
-          Delete Event
-        </Button>
       </>
     ) : (
       <>
@@ -308,6 +295,17 @@ export function EventHeader({ data }: EventHeaderProps) {
               Mute Event
             </>
           )}
+        </Button>
+        <Button
+          asChild
+          variant='ghost'
+          className='w-full justify-start'
+          onClick={() => setDrawerOpen(false)}
+        >
+          <Link href={`/event/${eventId}/settings/ownership`}>
+            <Icons.settings className='size-4 mr-2' />
+            Event ownership
+          </Link>
         </Button>
         <Button
           variant='ghost'
@@ -443,19 +441,15 @@ export function EventHeader({ data }: EventHeaderProps) {
                         </div>
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuItem
-                      variant='destructive'
-                      className='cursor-pointer'
-                      onClick={() => setDeleteDialogOpen(true)}
-                    >
-                      <div className='flex items-center gap-3'>
-                        <Icons.delete className='size-4' />
-                        <span>Delete Event</span>
-                      </div>
-                    </DropdownMenuItem>
                   </>
                 ) : (
                   <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/event/${eventId}/settings/ownership`}>
+                        <Icons.settings className='size-4' />
+                        Event ownership
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className='cursor-pointer'
                       onClick={() => setReportDialogOpen(true)}
@@ -530,11 +524,7 @@ export function EventHeader({ data }: EventHeaderProps) {
         {description && <p data-test='event-description'>{description}</p>}
         <EventRSVP eventId={eventIdTyped} />
       </header>
-      {userMembership.role === 'ORGANIZER' ? (
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DeleteEventDialog eventId={eventIdTyped} />
-        </Dialog>
-      ) : (
+      {userMembership.role !== 'ORGANIZER' && (
         <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
           <LeaveEventDialog eventId={eventIdTyped} />
         </Dialog>

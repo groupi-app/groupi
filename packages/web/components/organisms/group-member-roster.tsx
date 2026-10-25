@@ -79,7 +79,13 @@ function GroupMemberActions({
   );
 }
 const roles = { OWNER: 'Owner', MODERATOR: 'Moderator', MEMBER: 'Member' };
-export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
+export function GroupMemberRoster({
+  groupId,
+  readOnly = false,
+}: {
+  groupId: Id<'groups'>;
+  readOnly?: boolean;
+}) {
   const [cursor, setCursor] = useState<string | null>(null);
   const members = useGroupMembers(groupId, { numItems: 20, cursor });
   return (
@@ -122,11 +128,13 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
                       {roles[member.role]}
                     </p>
                   </div>
-                  <GroupMemberActions
-                    key={`${member.personId}-${member.role}`}
-                    groupId={groupId}
-                    member={member}
-                  />
+                  {!readOnly && (
+                    <GroupMemberActions
+                      key={`${member.personId}-${member.role}`}
+                      groupId={groupId}
+                      member={member}
+                    />
+                  )}
                 </li>
               );
             })}

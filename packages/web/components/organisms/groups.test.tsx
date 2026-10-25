@@ -275,14 +275,12 @@ describe('Group identity and authority', () => {
     setQueryResult(group);
     const user = userEvent.setup();
     render(<GroupDetail groupId={groupId} />);
-    expect(screen.getByRole('link', { name: '/g/group-one' })).toHaveAttribute(
-      'href',
-      '/g/group-one'
-    );
-    expect(screen.getByRole('link', { name: 'Edit Group' })).toHaveAttribute(
-      'href',
-      '/groups/group-one/edit'
-    );
+    expect(
+      screen.queryByRole('link', { name: 'Edit Group' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Group settings' })
+    ).toHaveAttribute('href', '/groups/group-one/settings');
     render(<GroupEdit groupId={groupId} />);
     await user.clear(screen.getByLabelText('Group name'));
     await user.type(screen.getByLabelText('Group name'), 'Garden Club');
@@ -514,4 +512,29 @@ describe('Groups directory navigation', () => {
       '/groups'
     );
   });
+});
+
+it('collects Group tools and sharing in keyboard-operable menus', async () => {
+  setQueryResult(group);
+  const user = userEvent.setup();
+  render(<GroupDetail groupId={groupId} />);
+  await user.click(screen.getByRole('button', { name: 'Group tools' }));
+  expect(
+    screen.getByRole('menuitem', { name: 'Forms and form settings' })
+  ).toHaveAttribute('href', '/groups/group-one/forms');
+  expect(
+    screen.getByRole('menuitem', { name: 'Polls and poll settings' })
+  ).toHaveAttribute('href', '/groups/group-one/polls');
+  expect(
+    screen.getByRole('menuitem', { name: 'Community lists and settings' })
+  ).toHaveAttribute('href', '/groups/group-one/lists');
+  await user.keyboard('{Escape}');
+  expect(screen.getByRole('button', { name: 'Group tools' })).toHaveFocus();
+  await user.click(screen.getByRole('button', { name: 'Group actions' }));
+  expect(
+    screen.getByRole('menuitem', { name: 'Open unlisted Group page' })
+  ).toHaveAttribute('href', '/g/group-one');
+  expect(
+    screen.getByRole('menuitem', { name: 'Your membership settings' })
+  ).toHaveAttribute('href', '/groups/group-one/settings/membership');
 });
