@@ -64,11 +64,14 @@ function AuthenticatedGroupManagementLayout({
   if (group === undefined) return <p role='status'>Loading Group…</p>;
   if (
     !group ||
-    !(editing
-      ? group.canManageIdentity
-      : group.canManageMembers ||
-        group.canManageIdentity ||
-        group.canManageInvitations)
+    !(
+      pathname.endsWith('/settings/membership') ||
+      (editing
+        ? group.canManageIdentity
+        : group.canManageMembers ||
+          group.canManageIdentity ||
+          group.canManageInvitations)
+    )
   )
     return (
       <main className='mx-auto max-w-4xl space-y-4 p-6'>
@@ -84,6 +87,12 @@ function AuthenticatedGroupManagementLayout({
       </main>
     );
   const items = [
+    {
+      path: 'membership',
+      title: 'Your membership',
+      icon: Users,
+      show: true,
+    },
     {
       path: 'admissions',
       title: 'Admissions',

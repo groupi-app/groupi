@@ -42,7 +42,11 @@ it('counts only received requests needing attention while retaining sent request
   useFriendsDialogStore.getState().openDialog();
   const user = userEvent.setup();
   render(<FriendsDialog />);
-  const tab = screen.getByRole('tab', { name: 'Requests 1' });
+  const tab = screen.getByRole('tab', { name: 'Requests 1 unread' });
+  expect(screen.getByLabelText('1 unread')).toHaveAttribute(
+    'data-slot',
+    'unread-indicator'
+  );
   await user.click(tab);
   expect(screen.getByText('Received (1)')).toBeVisible();
   expect(screen.getByText('Sent (2)')).toBeVisible();
