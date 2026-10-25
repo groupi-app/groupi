@@ -2,13 +2,15 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| Version | Supported |
+| ------- | --------- |
+| 0.1.x   | Yes       |
+
+This is the documented support range, not a list of current package versions.
+Packages in this branch have later versions. Confirm security support for those
+versions with a maintainer; this document does not establish that policy.
 
 ## Reporting a Vulnerability
-
-We take security seriously. If you discover a security vulnerability, please report it responsibly.
 
 **Please DO NOT create a public GitHub issue for security vulnerabilities.**
 

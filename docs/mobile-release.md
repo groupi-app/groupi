@@ -45,10 +45,12 @@ eas credentials:configure-build --platform android --profile production
 eas credentials:configure-build --platform ios --profile production
 ```
 
-Android managed production signing is configured. The iOS App ID belongs to
-Apple team `X2HQQURT9V`; its explicit bundle ID is `com.groupi.mobile`, and
-Associated Domains is enabled. EAS-managed iOS signing is configured for
-physical-device previews, TestFlight, push entitlements, and App Store release.
+The checked-in linking configuration uses Apple prefix `X2HQQURT9V` and bundle
+ID `com.groupi.mobile`, and the native configuration declares Associated Domains.
+Before building, verify the matching App ID, entitlements, certificates,
+provisioning profiles, and EAS-managed Android/iOS credentials in the owner
+accounts. Source configuration alone does not establish current signing readiness.
+The dated activation record below describes earlier account verification.
 
 Create EAS `preview` and `production` environment variables for:
 
@@ -94,11 +96,12 @@ The GitHub **Mobile Build and Release** workflow exposes five manual choices:
 - `release-internal`: signed store builds, Android internal-track release, and
   iOS App Store Connect upload.
 
-EAS-hosted `maestro` workflow jobs require a paid Expo plan. The preview and
-production E2E workflows and flows are ready, but the current Expo account
-cannot execute or fully validate that job type until the plan is enabled.
-Signed preview, production acceptance, and internal release workflows validate
-successfully without that entitlement.
+Before running hosted Maestro jobs, verify that the Expo account has the required
+plan entitlement and that the selected workflow passes the current hosted
+validator. Checked-in workflow definitions do not establish account access or a
+successful remote run. Signed preview, production acceptance, and internal release
+workflows use build/submit jobs rather than Maestro jobs; verify their signing and
+store prerequisites separately.
 
 The same pipelines can be run directly from the app directory:
 
@@ -110,11 +113,14 @@ pnpm build:acceptance
 pnpm release:internal
 ```
 
-E2E builds read the EAS `preview` environment. The current Maestro suite covers
+E2E builds read the EAS `preview` environment. The checked-in Maestro flows cover
 cold launch, the native authentication surface, client-side email validation,
-and signed-out invite deep-link routing. Authenticated provider, session,
-attachment, event, and push delivery flows require preview test identities and
-a reachable E2E-enabled backend before they can be automated safely.
+signed-out invite/protected routing, and process recovery. The preview workflow
+also includes an authenticated fixture that signs in with a one-time test code,
+opens a seeded event and post, and cleans up its records. It requires a reachable
+E2E-enabled backend and fixture credentials; its presence does not establish a
+successful hosted run. Real provider sign-in, physical push delivery, and the
+remaining authenticated journeys require separate acceptance evidence.
 
 Production E2E intentionally excludes the authenticated fixture because that
 fixture creates and removes records. It runs only signed-out, non-destructive

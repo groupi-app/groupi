@@ -1,6 +1,9 @@
-# Groupi Architecture Guide
+# Groupi architecture
 
-This guide describes Groupi's cross-platform architecture, including package structure, data flow patterns, and best practices for feature development.
+Groupi uses a Convex backend, a Next.js web app, and a React Native/Expo mobile
+app. Shared TypeScript modules supply business logic, hooks, and design tokens.
+This guide describes the source in this branch; it does not establish which
+features are deployed or released.
 
 ## Table of Contents
 
@@ -16,666 +19,174 @@ This guide describes Groupi's cross-platform architecture, including package str
 
 ## Overview
 
-Groupi uses a **modern cross-platform architecture** built around:
+Web and mobile use Convex queries and mutations for application data. Better Auth
+runs as a Convex component. CLI and SDK clients use the versioned REST API hosted
+by Convex; their request/response transport is distinct from app subscriptions.
 
-- **Client-Only Applications** (web and mobile) that share business logic
-- **Real-time Backend** powered by Convex with automatic subscriptions
-- **Better Auth Integration** for authentication via Convex component
-- **Platform Abstraction** for seamless cross-platform development
-- **Shared Business Logic** with platform-specific UI implementations
-
-This architecture maximizes code reuse while maintaining platform-specific optimizations and user experiences.
+The web UI uses client components. Next.js also hosts auth proxy and documentation
+route handlers under `packages/web/app/api/`; application backend operations live
+in Convex. The client-component convention does not mean the repository has no
+server route handlers.
 
 ## Architecture Pattern
 
-### Core Principles
-
-1. **Real-Time First**: All data operations are real-time by default via Convex subscriptions
-2. **Cross-Platform by Design**: 95% of business logic is shared between web and mobile
-3. **Client-Only**: No server-side rendering or API routes - pure client applications
-4. **Platform Abstraction**: Navigation, storage, and UI feedback are abstracted
-5. **Type Safety**: End-to-end TypeScript with auto-generated types from Convex
-
-### High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Convex Backend                           │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ Better Auth Component (manages users, sessions, etc.)    │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │  Queries    │  │ Mutations   │  │  Actions    │            │
-│  │ (Real-time) │  │ (Atomic)    │  │ (External)  │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    │                       │
-         ┌─────────────────────┐   ┌─────────────────────┐
-         │   @groupi/shared    │   │   @groupi/shared    │
-         │                     │   │                     │
-         │ ┌─────────────────┐ │   │ ┌─────────────────┐ │
-         │ │ Business Logic  │ │   │ │ Business Logic  │ │
-         │ │    Hooks        │ │   │ │    Hooks        │ │
-         │ └─────────────────┘ │   │ └─────────────────┘ │
-         │ ┌─────────────────┐ │   │ ┌─────────────────┐ │
-         │ │ Platform        │ │   │ │ Platform        │ │
-         │ │ Abstractions    │ │   │ │ Abstractions    │ │
-         │ └─────────────────┘ │   │ └─────────────────┘ │
-         └─────────────────────┘   └─────────────────────┘
-                    │                       │
-         ┌─────────────────────┐   ┌─────────────────────┐
-         │    Web App          │   │   Mobile App        │
-         │  (Next.js 16)       │   │ (React Native/Expo) │
-         └─────────────────────┘   └─────────────────────┘
-```
+- Keep reusable business logic in `@groupi/shared`, with platform-specific UI in
+  web and mobile. There is no measured code-reuse percentage for the repository.
+- Inject the generated Convex API into shared hook factories.
+- Supply navigation, storage, and toast adapters at the platform boundary. Shared
+  modules must not import `next/*`, `react-native`, or `expo-*`.
+- Infer application types from generated Convex contracts. Regenerate declarations
+  after schema or function-contract changes.
+- Keep permissions inside backend operations, including the transaction that writes
+  data. Authenticating an HTTP request alone does not authorize its operation.
 
 ## Package Structure
 
-### `/convex/` - Backend Functions
+| Location                        | Responsibility                                                       |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `convex/`                       | Schema, domain operations, auth, scheduled work, and HTTP API        |
+| `packages/web/app/`             | Next.js routes and layouts                                           |
+| `packages/web/features/`        | Feature-owned application UI, hooks, logic, and tests                |
+| `packages/web/components/`      | Reusable atomic UI and shadcn/ui components                          |
+| `packages/web/providers/`       | Convex, theme, and visibility providers                              |
+| `packages/mobile/app/`          | Expo Router routes                                                   |
+| `packages/mobile/src/`          | Native UI, hooks, providers, and platform adapters                   |
+| `packages/mobile/app.config.ts` | Expo application configuration                                       |
+| `packages/shared/src/`          | Shared hooks, platform interfaces, design system, utilities, and GDL |
+| `packages/cli/`                 | Command-line client using REST v2                                    |
+| `packages/sdk/`                 | TypeScript SDK source                                                |
+| `packages/python-sdk/`          | Python SDK source                                                    |
+| `packages/portal/`              | Public developer documentation and generated exports                 |
 
-Each domain owns its operations and internal REST adapters. Public native
-`queries.ts` and `mutations.ts` paths remain stable, while reusable behavior lives
-in focused domain modules such as `events/writes.ts`. `api/v1/` and `api/v2/` own
-HTTP schemas, envelopes, and status conventions; both call domain adapters.
-Shared API-key verification and Hono middleware live in `api/auth.ts` and
-`api/middleware/auth.ts`. Write operations authorize the verified actor inside
-the transaction. See [the backend ownership decision](./adr/0003-domain-owned-backend-operations.md).
+Each backend domain owns reusable operations and its internal REST adapters.
+Public native `queries.ts` and `mutations.ts` paths remain stable while focused
+modules such as `events/writes.ts` own behavior. `convex/api/v1/` and
+`convex/api/v2/` own HTTP schemas, envelopes, and status conventions. Shared
+API-key verification and middleware live in `convex/api/auth.ts` and
+`convex/api/middleware/auth.ts`.
 
-```
-convex/
-├── schema.ts              # Database schema definition
-├── auth.ts                # Better Auth client and utilities
-├── auth.config.ts         # Better Auth configuration
-├── convex.config.ts       # Component registration (Better Auth, Presence)
-├── http.ts                # HTTP endpoints (auth routes)
-├── _generated/            # Auto-generated types (DO NOT EDIT)
-├── accounts/              # User account management
-│   ├── queries.ts
-│   └── mutations.ts
-├── admin/                 # Admin dashboard functions
-│   ├── queries.ts
-│   └── mutations.ts
-├── availability/          # Event availability tracking
-│   ├── queries.ts
-│   └── mutations.ts
-├── events/                # Event CRUD operations
-│   ├── queries.ts
-│   └── mutations.ts
-├── invites/               # Event invite management
-│   ├── queries.ts
-│   └── mutations.ts
-├── notifications/         # Notification system
-│   ├── queries.ts
-│   └── mutations.ts
-├── posts/                 # Discussion posts
-│   ├── queries.ts
-│   └── mutations.ts
-├── replies/               # Post replies
-│   ├── queries.ts
-│   └── mutations.ts
-├── settings/              # User settings
-│   ├── queries.ts
-│   └── mutations.ts
-├── users/                 # User profile operations
-│   ├── queries.ts
-│   └── mutations.ts
-├── presence.ts            # Real-time presence tracking
-├── lib/
-│   └── notifications.ts   # Notification utilities
-└── tests/                 # Backend tests
-    └── *.test.ts
-```
+Web features expose public entry points; routes compose them. Reusable UI stays
+in the atomic hierarchy of atoms, molecules, organisms, and templates. Add-ons are
+the first feature migration, with import boundaries enforced by ESLint; other
+features adopt this convention incrementally. Runtime consumers must remain
+independent of authoring code. See the [web feature decision](./adr/0002-feature-owned-application-modules.md)
+and [backend ownership decision](./adr/0003-domain-owned-backend-operations.md).
 
-### `/packages/shared/` - Cross-Platform Business Logic
-
-```
-packages/shared/
-├── src/
-│   ├── hooks/
-│   │   ├── index.ts           # Hook factory exports
-│   │   ├── types.ts           # Convex API type definitions
-│   │   ├── useAuth.ts         # Authentication hooks
-│   │   ├── useEventData.ts    # Event data hooks
-│   │   ├── useEventActions.ts # Event action hooks
-│   │   ├── usePostData.ts     # Post data hooks
-│   │   └── usePostActions.ts  # Post action hooks
-│   ├── platform/
-│   │   ├── index.ts           # Platform abstraction exports
-│   │   ├── types.ts           # Platform adapter interfaces
-│   │   ├── navigation.ts      # Navigation abstraction
-│   │   ├── storage.ts         # Storage abstraction
-│   │   └── toast.ts           # Toast/notification abstraction
-│   ├── design/
-│   │   ├── index.ts           # Design system exports
-│   │   ├── tokens.ts          # Design tokens
-│   │   └── utils.ts           # Design utilities
-│   ├── types/
-│   │   └── index.ts           # Shared type definitions
-│   └── utils/
-│       ├── index.ts           # Utility exports
-│       ├── device.ts          # Device/layout utilities
-│       ├── keyboard.ts        # Keyboard handling
-│       └── accessibility.ts   # Accessibility helpers
-└── package.json
-```
-
-### `/packages/web/` - Next.js Web Application
-
-```
-packages/web/
-├── src/
-│   ├── app/                   # Next.js App Router pages
-│   │   ├── (auth)/           # Authentication pages
-│   │   ├── (event)/          # Event-related pages
-│   │   ├── (post)/           # Post-related pages
-│   │   └── layout.tsx        # Root layout with providers
-│   ├── components/           # Web-specific UI components
-│   │   └── ui/              # shadcn/ui components
-│   ├── hooks/               # Web-specific hooks
-│   └── lib/                 # Web utilities
-│       ├── convex.ts        # Convex client setup
-│       └── platform.ts      # Web platform adapters
-├── next.config.mjs
-└── package.json
-```
-
-### `/packages/mobile/` - React Native Mobile Application
-
-```
-packages/mobile/
-├── src/
-│   ├── screens/              # Screen components
-│   ├── components/           # Mobile-specific components
-│   ├── lib/
-│   │   └── platform-setup.ts # Mobile platform adapters
-│   └── theme/                # Mobile theme configuration
-├── app.json                  # Expo configuration
-└── package.json
-```
+Workspace consumers resolve shared TypeScript source without a shared prebuild.
+Distribution uses compiled exports through pnpm publication overrides. See
+[workspace source ownership](./workspace-source-ownership-design.md).
 
 ## Data Model
 
-### Core Tables
+| Table or table family                                                        | Purpose                                                     |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `persons`                                                                    | Application profiles linked to Better Auth user IDs         |
+| `events`, `memberships`                                                      | Events and their member roles and RSVP responses            |
+| `potentialDateTimes`, `availabilities`                                       | Proposed date ranges and member availability                |
+| `posts`, `replies`                                                           | Event discussions, including authorized Integration authors |
+| `invites`, `eventInvites`                                                    | Invitation links and direct invitations                     |
+| `groups`, `groupMemberships`                                                 | Formal communities with membership independent of events    |
+| `notifications`                                                              | User notifications                                          |
+| `authorizationPrincipals`, `authorizationGrants`, `authorizationCredentials` | Bounded API actors, grants, and credentials                 |
 
-Groupi uses Convex for data storage with the following key tables:
-
-| Table            | Purpose                                            |
-| ---------------- | -------------------------------------------------- |
-| `persons`        | App-specific user data, links to Better Auth users |
-| `events`         | Event planning core entity                         |
-| `memberships`    | User participation in events (role, RSVP)          |
-| `posts`          | Discussion posts within events                     |
-| `replies`        | Responses to posts                                 |
-| `invites`        | Event invite tokens                                |
-| `notifications`  | User notifications                                 |
-| `availabilities` | User availability for potential dates              |
-
-### User Data Architecture
-
-Users are managed by the **Better Auth Convex Component**, which stores authentication data in its own namespace. Our app schema has a `persons` table that links to component users:
-
-```typescript
-// Better Auth component manages: users, sessions, accounts, verifications
-// Our schema has persons that reference component users:
-
-persons: defineTable({
-  userId: v.string(),  // Better Auth component user ID
-  bio: v.optional(v.string()),
-  pronouns: v.optional(v.string()),
-  lastSeen: v.optional(v.number()),
-}).index('by_user_id', ['userId']),
-```
-
-This separation allows Better Auth to manage authentication while we maintain app-specific user data.
+Better Auth owns accounts, users, and sessions in its component namespace.
+`persons.userId` is a string linking to that component; it is not an
+`Id<'users'>` in the application schema. Group membership, event audience,
+event membership, admission, and RSVP are separate concepts. See the
+[glossary](../GLOSSARY.md) and [schema reference](./database-schema.md).
 
 ## Authentication
 
-### Better Auth Integration
+Use the helpers exported by `convex/auth.ts`:
 
-Authentication uses the Better Auth Convex Component. Key patterns:
+- `requireAuth(ctx)` returns the authenticated user and application person or
+  throws. Use it for protected writes.
+- `getCurrentPerson(ctx)` returns the current person or `null`, for queries that
+  support unauthenticated access.
+- `requireEventRole` and `requireEventPermission` enforce event authority.
+- `authComponent.getAnyUserById(ctx, userId as AuthUserId)` reads a Better Auth
+  user. Component tables are not queried through the application database.
 
-```typescript
-// convex/auth.ts - Auth client and utilities
-import { createClient } from '@convex-dev/better-auth';
-import { components } from './_generated/api';
-
-// Create the Better Auth client
-export const authComponent = createClient<DataModel>(components.betterAuth);
-
-// Type for Better Auth user IDs
-export type AuthUserId = Parameters<typeof authComponent.getAnyUserById>[1];
-
-// Extended user type with plugin fields (username, role, etc.)
-export type ExtendedAuthUser = {
-  _id: string;
-  name?: string | null;
-  email: string;
-  image?: string | null;
-  username?: string | null;
-  role?: string | null;
-};
-```
-
-### Getting Current User
-
-```typescript
-// In any query or mutation
-import { getCurrentPerson, authComponent, AuthUserId } from '../auth';
-
-export const myQuery = query({
-  handler: async ctx => {
-    // Get the current person (our app's user record)
-    const currentPerson = await getCurrentPerson(ctx);
-    if (!currentPerson) {
-      throw new Error('Authentication required');
-    }
-
-    // If you need Better Auth user data (name, email, etc.)
-    const user = await authComponent.getAnyUserById(
-      ctx,
-      currentPerson.userId as AuthUserId
-    );
-
-    return { person: currentPerson, user };
-  },
-});
-```
-
-### Looking Up Any User
-
-```typescript
-// Look up user by their Better Auth ID
-const user = await authComponent.getAnyUserById(ctx, userId as AuthUserId);
-
-// Cast to ExtendedAuthUser to access plugin fields
-const extendedUser = user as ExtendedAuthUser;
-console.log(extendedUser.username, extendedUser.role);
-```
+An authenticated identity alone does not grant event or Group access. Domain
+operations must enforce current membership, role, grant, and resource constraints.
+See [authentication architecture](./auth-architecture.md) and
+[bounded authorization](./bounded-authorization.md).
 
 ## Data Flow
 
-### Query Pattern (Real-time Subscriptions)
+App interaction flows from a platform UI through a shared or platform hook to a
+Convex query or mutation. Queries subscribe to their dependencies; committed
+changes update subscribed clients. Mutations run transactionally. Actions handle
+external work and call queries/mutations as needed.
 
-Convex queries automatically subscribe to real-time updates. No manual cache management needed:
-
-```typescript
-// In shared hooks
-export function createEventHooks(api: ConvexApi) {
-  return {
-    useEventData: (eventId: string) => {
-      // This automatically subscribes to real-time updates
-      // When data changes on the server, the component re-renders
-      return useQuery(api.events.queries.getEvent, { eventId });
-    },
-  };
-}
-
-// In components - data updates automatically
-const event = useEventData(eventId);
-// When another user modifies this event, `event` updates automatically
-```
-
-### Mutation Pattern
+Shared event hooks expose existing operations without adding platform feedback:
 
 ```typescript
-export function createEventActionHooks(api: ConvexApi) {
-  return {
-    useCreateEvent: () => {
-      const mutation = useMutation(api.events.mutations.createEvent);
+import { createEventHooks } from '@groupi/shared/hooks';
 
-      return async (data: CreateEventInput) => {
-        try {
-          const result = await mutation(data);
-          toast.success('Event created successfully!');
-          navigation.push(`/event/${result}`);
-          return { success: true, data: result };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'An error occurred';
-          toast.error(`Failed to create event: ${message}`);
-          return { success: false, error: message };
-        }
-      };
-    },
-  };
-}
+const { useEventHeader, useCreateEvent } = createEventHooks(api);
+// Inside a component or hook:
+const eventHeader = useEventHeader(eventId);
+const createEvent = useCreateEvent();
 ```
 
-### Platform Abstraction Pattern
+The consuming UI handles mutation success, failure, navigation, and toasts.
+Handle `undefined` query results as loading and follow each query's declared
+missing-resource or permission result. Do not replace subscriptions with manual
+`useState`/`useEffect` fetch loops for app data.
 
-```typescript
-// Platform-agnostic code in shared package
-import { navigation, storage, toast } from '@groupi/shared/platform';
-
-function handleEventCreation() {
-  // This works identically on web and mobile
-  navigation.push('/events/new');
-  storage.setItem('lastRoute', '/events/new');
-  toast.success('Navigating to create event...');
-}
-
-// Platform-specific implementations provided at runtime:
-// Web: Next.js router, localStorage, Sonner
-// Mobile: React Navigation, Expo SecureStore, React Native Toast
-```
+REST adapters verify credentials and call domain operations. They retain each
+API version's declared wire contract. Source availability does not establish
+API deployment or SDK publication; consult the relevant release and verification
+guides before relying on an external client capability.
 
 ## Real-Time Patterns
 
-### Automatic Subscriptions
+`useQuery` maintains app data subscriptions. There is no manual cache invalidation
+step for those subscribed query results. REST clients do not acquire a realtime
+subscription by making an HTTP read.
 
-Convex handles real-time sync automatically. When you use `useQuery`:
-
-1. **Initial load**: Data fetched from server
-2. **Subscription**: Client subscribes to changes
-3. **Updates**: When data changes (from any client), your component re-renders
-4. **No manual cache**: No need for React Query, SWR, or cache invalidation
-
-```typescript
-// This is all you need for real-time data
-const posts = useQuery(api.posts.queries.getPostsByEvent, { eventId });
-
-// When any user creates/updates/deletes a post, this updates automatically
-```
-
-### Presence Tracking
-
-For features like "who's online" or "typing indicators", use the Presence component:
-
-```typescript
-// convex/presence.ts
-import { Presence } from '@convex-dev/presence';
-
-export const presence = new Presence(components.presence);
-
-// Heartbeat to indicate user is present
-export const heartbeat = mutation({
-  args: { roomId: v.string(), userId: v.string(), ... },
-  handler: async (ctx, args) => {
-    return await presence.heartbeat(ctx, args.roomId, args.userId, ...);
-  },
-});
-
-// List users in a room
-export const list = query({
-  args: { roomToken: v.string() },
-  handler: async (ctx, { roomToken }) => {
-    return await presence.list(ctx, roomToken);
-  },
-});
-```
-
-### Typing Indicators
-
-```typescript
-// Update presence data with typing status
-export const updatePresenceData = mutation({
-  args: {
-    roomId: v.string(),
-    userId: v.string(),
-    data: v.optional(
-      v.object({
-        isTyping: v.optional(v.boolean()),
-        lastActivity: v.optional(v.number()),
-      })
-    ),
-  },
-  handler: async (ctx, { roomId, userId, data }) => {
-    return await presence.updateRoomUser(ctx, roomId, userId, data);
-  },
-});
-```
+Presence is implemented in `convex/presence.ts` using `@convex-dev/presence`.
+Rooms include `app`, `event:{eventId}`, and `post:{postId}`. Presence writes derive
+identity from the authenticated session and validate event-scoped room access;
+the optional legacy `userId` argument is not trusted. Presence data supports online
+status and typing indicators. Follow the [presence guide](./presence.md) for
+heartbeat, visibility, status, and privacy behavior.
 
 ## Feature Development
 
-### Adding a New Feature
-
-For every new feature, follow this order:
-
-#### Step 1: Backend Schema and Functions
-
-```typescript
-// 1. Add to convex/schema.ts
-comments: defineTable({
-  content: v.string(),
-  authorId: v.id("persons"),
-  postId: v.id("posts"),
-})
-  .index("by_post", ["postId"])
-  .index("by_author", ["authorId"]),
-
-// 2. Create convex/comments/queries.ts
-export const getCommentsByPost = query({
-  args: { postId: v.id("posts") },
-  handler: async (ctx, { postId }) => {
-    return await ctx.db
-      .query("comments")
-      .withIndex("by_post", (q) => q.eq("postId", postId))
-      .order("desc")
-      .collect();
-  },
-});
-
-// 3. Create convex/comments/mutations.ts
-export const createComment = mutation({
-  args: { content: v.string(), postId: v.id("posts") },
-  handler: async (ctx, args) => {
-    const person = await getCurrentPerson(ctx);
-    if (!person) throw new Error("Not authenticated");
-
-    return await ctx.db.insert("comments", {
-      ...args,
-      authorId: person._id,
-    });
-  },
-});
-```
-
-#### Step 2: Shared Business Logic
-
-```typescript
-// packages/shared/src/hooks/useCommentData.ts
-export function createCommentHooks(api: ConvexApi) {
-  function useCommentsByPost(postId: string) {
-    return useQuery(api.comments.queries.getCommentsByPost, { postId });
-  }
-
-  function useCreateComment() {
-    const mutation = useMutation(api.comments.mutations.createComment);
-
-    return async (data: { content: string; postId: string }) => {
-      try {
-        const result = await mutation(data);
-        toast.success('Comment posted!');
-        return { success: true, data: result };
-      } catch (error) {
-        toast.error('Failed to post comment');
-        return { success: false, error };
-      }
-    };
-  }
-
-  return { useCommentsByPost, useCreateComment };
-}
-```
-
-#### Step 3: Platform UI
-
-```typescript
-// Web component
-export function CommentList({ postId }: { postId: string }) {
-  const { useCommentsByPost } = createCommentHooks(api);
-  const comments = useCommentsByPost(postId);
-
-  if (!comments) return <div>Loading...</div>;
-
-  return (
-    <div className="space-y-4">
-      {comments.map((comment) => (
-        <CommentCard key={comment._id} comment={comment} />
-      ))}
-    </div>
-  );
-}
-```
-
-### Feature Development Checklist
-
-1. **Backend First**:
-   - [ ] Define schema in `convex/schema.ts`
-   - [ ] Create queries in `convex/{domain}/queries.ts`
-   - [ ] Create mutations in `convex/{domain}/mutations.ts`
-   - [ ] Add proper indexes for query performance
-
-2. **Shared Business Logic**:
-   - [ ] Create hooks in `packages/shared/src/hooks/`
-   - [ ] Export from `packages/shared/src/hooks/index.ts`
-   - [ ] Add error handling with platform toast abstraction
-
-3. **Platform UI**:
-   - [ ] Implement web components using shared hooks
-   - [ ] Implement mobile components using same hooks
-   - [ ] Handle loading and error states
+1. Define backend contracts and indexes in the owning domain and schema. Validate
+   inputs and enforce permissions for reads and writes.
+2. Add queries/mutations and focused domain operations. Keep native and REST
+   behavior consistent where they represent the same operation, preserving
+   intentional versioned transport differences.
+3. Run `pnpm generate` after schema, function signature, or function name changes.
+4. Add shared hooks and exports for cross-platform behavior. Keep platform imports
+   and user feedback in the consuming application.
+5. Add web and mobile UI with loading, empty, and error states. Separate data
+   access from reusable presentation components.
+6. Add permission, validation, and behavior tests; run `pnpm check` and relevant
+   one-shot test commands from the [testing guide](./testing.md).
+7. For user-facing changes, follow the [changeset workflow](./changesets.md).
 
 ## Best Practices
 
-### Data Layer (Convex)
+- Validate arguments with concrete Convex validators and use indexes matching
+  query access patterns. Avoid unbounded collection and repeated per-item reads
+  when a bounded or batched operation is available.
+- Keep write authorization and side effects in the same domain transaction.
+  Permission checks must cover resources referenced by an operation, not just
+  its entry point.
+- Infer types from generated contracts rather than recreating database shapes
+  in consumers. Never edit generated declarations by hand.
+- Use semantic design tokens and reusable UI components. Keep application
+  features behind their public entry points.
+- Parse GDL through `@groupi/shared/gdl` with explicit reference time and timezone.
+  Web/mobile supply the device zone; omitted REST timezone defaults to UTC.
+  See [GDL ownership](./shared-gdl-design.md).
+- Report failures to the user and preserve uncertain write outcomes where the
+  client contract requires explicit recovery. A lost response is not evidence
+  that a write failed.
 
-**DO:**
-
-```typescript
-export const createEvent = mutation({
-  args: {
-    title: v.string(),
-    description: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    // Always check auth
-    const person = await getCurrentPerson(ctx);
-    if (!person) throw new Error('Not authenticated');
-
-    // Validate inputs
-    if (args.title.length < 3) {
-      throw new Error('Title must be at least 3 characters');
-    }
-
-    return await ctx.db.insert('events', {
-      ...args,
-      creatorId: person._id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  },
-});
-```
-
-**DON'T:**
-
-```typescript
-export const createEvent = mutation({
-  args: { data: v.any() }, // ❌ No validation
-  handler: async (ctx, { data }) => {
-    // ❌ No auth check
-    return await ctx.db.insert('events', data);
-  },
-});
-```
-
-### Shared Business Logic
-
-**DO:**
-
-```typescript
-// Use factory pattern for dependency injection
-export function createEventHooks(api: ConvexApi) {
-  function useCreateEvent() {
-    const mutation = useMutation(api.events.mutations.createEvent);
-
-    return async (data: CreateEventInput) => {
-      try {
-        const result = await mutation(data);
-        toast.success('Event created!');
-        navigation.push(`/event/${result}`);
-        return { success: true, data: result };
-      } catch (error) {
-        toast.error('Failed to create event');
-        return { success: false, error };
-      }
-    };
-  }
-
-  return { useCreateEvent };
-}
-```
-
-**DON'T:**
-
-```typescript
-// ❌ Don't import platform-specific modules
-import { useRouter } from 'next/navigation'; // Web-only!
-import { toast } from 'sonner'; // Web-only!
-
-export function useCreateEvent() {
-  const router = useRouter(); // Won't work on mobile
-  // ...
-}
-```
-
-### Component Architecture
-
-**DO:**
-
-```typescript
-// Separate data fetching from UI
-function EventPage({ eventId }: { eventId: string }) {
-  const event = useEventData(eventId);
-
-  if (!event) return <LoadingSpinner />;
-  return <EventUI event={event} />;
-}
-
-// Pure UI component
-function EventUI({ event }: { event: Event }) {
-  return (
-    <div>
-      <h1>{event.title}</h1>
-      <p>{event.description}</p>
-    </div>
-  );
-}
-```
-
-**DON'T:**
-
-```typescript
-// ❌ Don't use manual state for server data
-function EventPage({ eventId }: { eventId: string }) {
-  const [event, setEvent] = useState(null);
-
-  useEffect(() => {
-    fetchEvent(eventId).then(setEvent); // ❌ Manual fetching
-  }, [eventId]);
-
-  // ...
-}
-```
-
-### Error Handling
-
-Always handle errors in mutation hooks and provide user feedback:
-
-```typescript
-return async (data: Input) => {
-  try {
-    const result = await mutation(data);
-    toast.success('Success!');
-    return { success: true, data: result };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'An error occurred';
-    toast.error(message);
-    return { success: false, error: message };
-  }
-};
-```
+Agents must follow the [script policy](../.agents/rules/scripts.md), including its
+restrictions on dev servers, builds, and deployment commands.

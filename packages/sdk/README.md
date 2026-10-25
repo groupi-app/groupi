@@ -1,9 +1,9 @@
 # Groupi TypeScript SDK
 
 An unpublished, dependency-free REST v2 release candidate for Node.js 22/24.
-It exposes **251 public operations**: 249 generated named methods and two binary
-upload/discard adapters. All 81 source schema types and every generated operation
-input/response have specific types. `GroupiError.details` alone is opaque because
+The generated operation inventory and binary upload/discard adapters are recorded
+in [`type-audit.json`](type-audit.json). Source schema types and generated operation
+inputs/responses have specific types. `GroupiError.details` alone is opaque because
 it may contain an external exception. Browser owner-key use is rejected.
 
 ```ts

@@ -1,206 +1,71 @@
-# Groupi Convex Backend
+# Groupi Convex backend
 
-The Convex backend for Groupi, providing real-time database, authentication, and serverless functions.
+Convex owns Groupi's application data, queries, mutations, actions, storage,
+scheduled jobs, and versioned REST endpoints. Better Auth runs as a Convex
+component.
 
-## Overview
+## Table of Contents
 
-Convex serves as the complete backend for Groupi, handling:
+- [Structure](#structure)
+- [Authentication and permissions](#authentication-and-permissions)
+- [Schema and tests](#schema-and-tests)
+- [Development](#development)
 
-- Real-time database with automatic subscriptions
-- Authentication via Better Auth integration
-- Serverless functions (queries, mutations, actions)
-- File storage
-- Scheduled jobs
+## Structure
 
-## Directory Structure
+| Location                                                      | Purpose                                                |
+| ------------------------------------------------------------- | ------------------------------------------------------ |
+| `_generated/`                                                 | Generated function references and data types           |
+| `schema.ts`                                                   | Root application schema                                |
+| `auth.ts`, `betterAuth/`                                      | Auth configuration, helpers, and component integration |
+| `events/`, `groups/`, `posts/`, `replies/`, and other domains | Native functions and domain operations                 |
+| `api/v1/`, `api/v2/`                                          | Versioned HTTP routes and OpenAPI schemas              |
+| `api/`                                                        | Shared REST authentication and transport support       |
+| `tests/`                                                      | Backend fixtures and tests                             |
 
-```
-convex/
-├── _generated/           # Auto-generated types (don't edit)
-├── auth.ts               # Better Auth configuration
-├── schema.ts             # Database schema definition
-├── events/               # Event-related functions
-│   ├── queries.ts        # Read operations
-│   └── mutations.ts      # Write operations
-├── persons/              # User profile functions
-├── posts/                # Discussion/post functions
-├── replies/              # Reply functions
-├── memberships/          # Event membership functions
-├── notifications/        # Notification functions
-├── presence/             # Real-time presence functions
-├── friends/              # Friend system functions
-└── tests/                # Backend tests
-```
+Reusable writes belong to domains. Native functions and domain REST adapters
+call those operations; domains must not import versioned HTTP folders. Preserve
+public function paths and wire contracts when moving implementations. See the
+[backend ownership decision](../docs/adr/0003-domain-owned-backend-operations.md).
 
-## Core Tables
+## Authentication and permissions
 
-| Table            | Purpose                                     |
-| ---------------- | ------------------------------------------- |
-| `users`          | Better Auth user accounts                   |
-| `persons`        | App profiles (linked to users via `userId`) |
-| `events`         | Events with dates, location, reminders      |
-| `memberships`    | Person-to-event relationships with roles    |
-| `posts`          | Event discussion posts                      |
-| `replies`        | Replies to posts                            |
-| `notifications`  | User notifications                          |
-| `presenceTokens` | Real-time presence tracking                 |
+Use `requireAuth(ctx)` for authenticated operations and `getCurrentPerson(ctx)`
+for optional query authentication. Both live in `auth.ts`. Authentication alone
+does not grant access to an event or Group: check current membership, roles,
+grants, and admission rules for the requested operation.
 
-## Authentication
+Enforce write permissions inside the mutation transaction. An HTTP preflight
+query cannot replace that check. Validate arguments and return contracts using
+Convex validators. REST credentials retain their action and resource limits;
+an API method never grants authority by itself.
 
-Authentication uses Better Auth with Convex component:
+## Schema and tests
 
-```typescript
-import { requireAuth, getCurrentPerson } from './auth';
+`persons.userId` is a string referring to a Better Auth component user. The root
+schema has no `users` table. Events use `memberships`; Groups use separate
+`groupMemberships`. Group membership does not automatically create event
+membership or an RSVP.
 
-// In mutations - require authentication
-export const createEvent = mutation({
-  args: { title: v.string() },
-  handler: async (ctx, args) => {
-    const { user, person } = await requireAuth(ctx);
-    // user is authenticated, person is their app profile
-  },
-});
-
-// In queries - optional authentication
-export const getPublicEvents = query({
-  handler: async ctx => {
-    const person = await getCurrentPerson(ctx);
-    // person may be null if not authenticated
-  },
-});
-```
-
-## Writing Functions
-
-### Queries (Read Operations)
-
-```typescript
-// convex/events/queries.ts
-import { query } from '../_generated/server';
-import { v } from 'convex/values';
-
-export const getEvent = query({
-  args: { eventId: v.id('events') },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.eventId);
-  },
-});
-
-export const listUserEvents = query({
-  args: {},
-  handler: async ctx => {
-    const person = await getCurrentPerson(ctx);
-    if (!person) return [];
-
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-
-    return Promise.all(memberships.map(m => ctx.db.get(m.eventId)));
-  },
-});
-```
-
-### Mutations (Write Operations)
-
-```typescript
-// convex/events/mutations.ts
-import { mutation } from '../_generated/server';
-import { v } from 'convex/values';
-
-export const createEvent = mutation({
-  args: {
-    title: v.string(),
-    description: v.optional(v.string()),
-    location: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { person } = await requireAuth(ctx);
-
-    const eventId = await ctx.db.insert('events', {
-      title: args.title,
-      description: args.description,
-      location: args.location,
-      creatorId: person._id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-
-    // Auto-add creator as organizer
-    await ctx.db.insert('memberships', {
-      eventId,
-      personId: person._id,
-      role: 'ORGANIZER',
-      rsvpStatus: 'YES',
-    });
-
-    return eventId;
-  },
-});
-```
-
-## Schema Definition
-
-The schema is defined in `schema.ts`:
-
-```typescript
-import { defineSchema, defineTable } from 'convex/server';
-import { v } from 'convex/values';
-
-export default defineSchema({
-  events: defineTable({
-    title: v.string(),
-    description: v.optional(v.string()),
-    creatorId: v.id('persons'),
-    // ... more fields
-  }).index('by_creator', ['creatorId']),
-
-  memberships: defineTable({
-    eventId: v.id('events'),
-    personId: v.id('persons'),
-    role: v.union(
-      v.literal('ORGANIZER'),
-      v.literal('MODERATOR'),
-      v.literal('ATTENDEE')
-    ),
-    rsvpStatus: v.union(v.literal('YES'), v.literal('NO'), v.literal('MAYBE')),
-  })
-    .index('by_event', ['eventId'])
-    .index('by_person', ['personId']),
-});
-```
+Use [`schema.ts`](schema.ts) and the
+[database reference](../docs/database-schema.md) for fields and indexes, and
+[Authentication](../docs/auth-architecture.md) for identity boundaries.
+Prefer the existing helpers in [`tests/test_helpers.ts`](tests/test_helpers.ts)
+to hand-written fixture schemas. Never copy an example that omits required
+fields into a public function.
 
 ## Development
 
-### Regenerating Types
-
-After modifying `schema.ts` or function signatures:
+From the repository root:
 
 ```bash
-pnpm generate
+pnpm generate      # After schema, function name, or signature changes
+pnpm test:convex    # Backend tests once
+pnpm check         # Lint, types, contracts, and formatting
 ```
 
-### Running Tests
+The [script policy](../.agents/rules/scripts.md) restricts agent runtime, build,
+and deployment commands. Backend logs appear in the selected Convex deployment;
+keep credentials and private user content out of logs.
 
-```bash
-pnpm test:convex
-```
-
-### Viewing Logs
-
-Use `console.log` in your functions - logs appear in the Convex dashboard.
-
-## Best Practices
-
-1. **Always validate inputs** using `v` validators in args
-2. **Use indexes** for all queries to ensure performance
-3. **Check authentication** at the start of protected functions
-4. **Avoid N+1 queries** by fetching related data efficiently
-5. **Use transactions** (mutations are automatically transactional)
-
-## Related Documentation
-
-- [Convex Documentation](https://docs.convex.dev/)
-- [Architecture Rules](../.agents/rules/architecture.md)
-- [Testing Guide](../.agents/rules/testing.md)
+See [Testing](../docs/testing.md) and [Convex rules](../.agents/rules/convex.md).
