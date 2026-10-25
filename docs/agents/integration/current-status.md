@@ -68,8 +68,12 @@ were performed. The shared Post/Form/List/Poll feature is outside this candidate
 The user approved the exact `@groupi/web` patch summary on 2026-10-25;
 `.changeset/quiet-stickers-connected-navigation.md` records it. The earlier push
 was denied before execution while approval was pending; its remote-state check
-confirmed no branch existed. Normal push and a draft PR targeting `test` resume
-with that new approval. No merge or deployment is authorized.
+confirmed no branch existed. After approval, the normal push succeeded with all
+hooks enabled. [Draft PR #435](https://github.com/groupi-app/groupi/pull/435)
+targets `test`; the approved changeset commit is
+`cd94e00ba0e7fc975bddf02e4db06206ac5cd91d`. GitHub checks and the automatic Vercel
+preview are being monitored on the PR head. Their outcome is separate from the
+local fixture evidence above. No merge or manual deployment is authorized.
 
 ## Design-language merge integration — 2026-10-25
 
