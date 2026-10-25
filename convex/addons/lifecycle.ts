@@ -33,12 +33,18 @@ function buildContext(
   ctx: MutationCtx,
   handler: AnyDefinedHandler,
   eventId: Id<'events'>,
-  addonType: string
+  addonType: string,
+  authenticatedPersonId?: Id<'persons'>
 ): AddonContext {
   if (handler.trusted) {
-    return createTrustedAddonContext(ctx, addonType, eventId);
+    return createTrustedAddonContext(
+      ctx,
+      addonType,
+      eventId,
+      authenticatedPersonId
+    );
   }
-  return createAddonContext(ctx, addonType, eventId);
+  return createAddonContext(ctx, addonType, eventId, authenticatedPersonId);
 }
 
 /**
@@ -100,12 +106,19 @@ export async function dispatchSingleAddonLifecycle(
     key?: string;
     data?: unknown;
     submitterId?: Id<'persons'>;
-  }
+  },
+  authenticatedPersonId?: Id<'persons'>
 ): Promise<void> {
   const handler = getAddonHandler(addonType);
   if (!handler) return;
 
-  const addonCtx = buildContext(ctx, handler, eventId, addonType);
+  const addonCtx = buildContext(
+    ctx,
+    handler,
+    eventId,
+    addonType,
+    authenticatedPersonId
+  );
 
   await dispatchToHandler(handler, addonCtx, event, config, oldConfig, args);
 }

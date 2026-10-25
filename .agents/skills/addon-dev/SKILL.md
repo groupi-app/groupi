@@ -61,57 +61,20 @@ registerAddonHandler(myAddonHandler);
 
 ## Step 4: Run `pnpm generate`
 
-## Step 5: Create Frontend Addon
+## Step 5: Create Frontend Implementation
 
-```
-packages/web/app/(newEvent)/create/components/addons/my-addon.tsx
-```
+Use `packages/web/features/addons/runtime/organisms/` and match an existing built-in.
+Export a definition with creation, event-card, and management UI, plus an optional
+page. Its creation state contains add-on configurations and relevant dates; the
+feature must not import a route's form context.
 
-Must call `registerAddon()` at module level:
+## Step 6: Add to the Explicit Catalog
 
-```typescript
-import { registerAddon } from '../addon-registry';
-
-function CreateConfig({ formState, onChange }) {
-  /* config UI */
-}
-function EventCard({ eventId, config }) {
-  /* summary card */
-}
-function ManageConfig({ eventId, addonId, config }) {
-  /* manage page UI */
-}
-
-registerAddon({
-  id: 'my-addon',
-  name: 'My Add-on',
-  description: 'What it does',
-  icon: IconComponent,
-  CreateConfigComponent: CreateConfig,
-  EventCardComponent: EventCard,
-  ManageConfigComponent: ManageConfig,
-  // Optional for gating:
-  // requiresCompletion: true,
-  // completionRoute: '/addon/my-addon',
-  onEnable: formState => ({
-    addonConfigs: {
-      ...formState.addonConfigs,
-      'my-addon': { setting: 'default' },
-    },
-  }),
-});
-```
-
-## Step 6: Add Side-Effect Imports
-
-Add `import './addons/my-addon'` or the full path to ALL 4 files:
-
-1. `packages/web/app/(event)/event/[eventId]/event-addons.tsx`
-2. `packages/web/app/(event)/event/[eventId]/addon/[addonId]/page.tsx`
-3. `packages/web/app/(event)/event/[eventId]/manage-addons/manage-addons-content.tsx`
-4. `packages/web/app/(newEvent)/create/components/new-event-addons.tsx`
-
-Missing any of these = the addon won't render in that context.
+Add the definition to `features/addons/runtime/catalog.ts` and shared completion
+metadata to `features/addons/model/completion.ts`. This is the only composition
+point; routes need no new side-effect imports. Outside the feature, consume public
+entry points under `@/features/addons/`. Custom definitions use each event's saved
+template and must not cache metadata globally by template ID.
 
 ## Step 7: Write Tests
 

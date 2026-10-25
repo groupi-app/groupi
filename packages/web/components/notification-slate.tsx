@@ -22,7 +22,14 @@ interface EnrichedNotification extends Doc<'notifications'> {
   createdAt: number; // Alias for _creationTime
   event?: { id: string; title: string };
   post?: { id: string; title: string };
-  author?: { user?: { name?: string; email?: string } };
+  author?: { user?: { name?: string; email?: string | null } };
+  group?: { id: string; title: string } | null;
+  groupAnnouncement?: { title: string; message: string } | null;
+  groupInvite?: { id: string; status: string } | null;
+  groupApplication?: {
+    id: string;
+    status: Doc<'groupApplications'>['status'];
+  } | null;
 }
 
 export function NotificationSlate({
@@ -67,7 +74,33 @@ export function NotificationSlate({
   };
 
   const getNotificationLink = (): string => {
+    if (type === 'GROUP_ONBOARDING_REQUIRED')
+      return notification.group
+        ? `/groups/${notification.group.id}/questionnaire`
+        : '/events';
     // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
+    if (type === 'GROUP_APPLICATION_RECEIVED')
+      return notification.group
+        ? `/groups/${notification.group.id}#group-applications`
+        : '/events';
+    if (
+      type === 'GROUP_APPLICATION_APPROVED' ||
+      type === 'GROUP_APPLICATION_DECLINED'
+    )
+      return notification.group
+        ? `/g/${notification.group.id}#group-applications`
+        : '/events';
+    if (
+      type === 'GROUP_INVITE_RECEIVED' ||
+      type === 'GROUP_INVITE_ACCEPTED' ||
+      type === 'GROUP_MEMBER_REMOVED' ||
+      type === 'GROUP_MEMBER_BANNED'
+    )
+      return notification.group ? `/g/${notification.group.id}` : '/events';
+    if (type === 'GROUP_ANNOUNCEMENT')
+      return notification.group
+        ? `/groups/${notification.group.id}`
+        : '/events';
     if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
 
     if (!event) return '/';
@@ -75,6 +108,11 @@ export function NotificationSlate({
     const eventId = event.id;
 
     switch (type) {
+      case 'EVENT_APPLICATION_RECEIVED':
+        return `/event/${eventId}/settings/applications`;
+      case 'EVENT_APPLICATION_APPROVED':
+      case 'EVENT_APPLICATION_DECLINED':
+        return `/event/${eventId}/apply`;
       case 'EVENT_EDITED':
       case 'DATE_CHOSEN':
       case 'DATE_CHANGED':
@@ -132,6 +170,25 @@ export function NotificationSlate({
     const postTitle = post?.title || 'Post';
 
     switch (type) {
+      case 'EVENT_APPLICATION_RECEIVED':
+        return (
+          <>
+            New application to <strong>{eventTitle}</strong> awaits review
+          </>
+        );
+      case 'EVENT_APPLICATION_APPROVED':
+        return (
+          <>
+            Your application to <strong>{eventTitle}</strong> was approved. Your
+            RSVP is Pending.
+          </>
+        );
+      case 'EVENT_APPLICATION_DECLINED':
+        return (
+          <>
+            Your application to <strong>{eventTitle}</strong> was declined
+          </>
+        );
       case 'EVENT_EDITED':
         return (
           <>
@@ -251,6 +308,75 @@ export function NotificationSlate({
         return (
           <>
             <strong>{authorName}</strong> accepted your friend request
+          </>
+        );
+
+      case 'GROUP_APPLICATION_RECEIVED':
+        return (
+          <>
+            New application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> awaits
+            review
+          </>
+        );
+      case 'GROUP_APPLICATION_APPROVED':
+        return (
+          <>
+            Your application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> was
+            approved. You are now a Group member.
+          </>
+        );
+      case 'GROUP_APPLICATION_DECLINED':
+        return (
+          <>
+            Your application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> was declined
+          </>
+        );
+      case 'GROUP_ANNOUNCEMENT':
+        return (
+          <>
+            <strong>
+              {notification.groupAnnouncement?.title || 'Group announcement'}
+            </strong>
+            {notification.groupAnnouncement?.message
+              ? `: ${notification.groupAnnouncement.message}`
+              : ' — unavailable'}
+          </>
+        );
+      case 'GROUP_ONBOARDING_REQUIRED':
+        return (
+          <>Complete required Group onboarding to access member content.</>
+        );
+      case 'GROUP_MEMBER_REMOVED':
+      case 'GROUP_MEMBER_BANNED':
+        return (
+          <>
+            <strong>{authorName}</strong>{' '}
+            {type === 'GROUP_MEMBER_REMOVED'
+              ? 'removed you from'
+              : 'banned you from'}{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
+          </>
+        );
+      case 'GROUP_INVITE_RECEIVED':
+        return (
+          <>
+            {' '}
+            <strong>{authorName}</strong> invited you to{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
+            {notification.groupInvite?.status &&
+            notification.groupInvite.status !== 'PENDING'
+              ? ` — ${notification.groupInvite.status.toLowerCase()}`
+              : ''}
+          </>
+        );
+      case 'GROUP_INVITE_ACCEPTED':
+        return (
+          <>
+            <strong>{authorName}</strong> accepted your invitation to{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
           </>
         );
 

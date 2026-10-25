@@ -28,6 +28,15 @@ function formatDateTime(timestamp?: number): string | undefined {
 /**
  * Generate the invite email HTML
  */
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    char =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+        char
+      ]!
+  );
+}
 function generateInviteEmailHtml(params: {
   recipientName?: string;
   eventTitle: string;
@@ -49,9 +58,29 @@ function generateInviteEmailHtml(params: {
     customMessage,
     inviteUrl,
     plusOnes,
-  } = params;
+  } = {
+    ...params,
+    recipientName:
+      params.recipientName === undefined
+        ? undefined
+        : escapeHtml(params.recipientName),
+    eventTitle: escapeHtml(params.eventTitle),
+    eventDescription:
+      params.eventDescription === undefined
+        ? undefined
+        : escapeHtml(params.eventDescription),
+    eventLocation:
+      params.eventLocation === undefined
+        ? undefined
+        : escapeHtml(params.eventLocation),
+    customMessage:
+      params.customMessage === undefined
+        ? undefined
+        : escapeHtml(params.customMessage),
+    inviteUrl: escapeHtml(params.inviteUrl),
+  };
 
-  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+  const siteUrl = escapeHtml(process.env.SITE_URL || 'https://groupi.gg');
   const greeting = recipientName ? `Hey ${recipientName}` : 'Hey';
   const dateTimeStr = formatDateTime(eventDateTime);
   const endTimeStr = formatDateTime(eventEndDateTime);
@@ -163,6 +192,7 @@ export const sendInviteEmails = internalAction({
       })
     ),
   },
+  returns: v.object({ emailsSent: v.number(), emailsFailed: v.number() }),
   handler: async (_ctx, args) => {
     const {
       eventTitle,

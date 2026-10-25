@@ -12,6 +12,12 @@ describe('getSafeAuthReturnPath', () => {
     '/settings/privacy',
     '/profile/person-123',
     '/notifications',
+    '/groups/group-123/lists',
+    '/groups/group-123/lists/create',
+    '/groups/group-123/lists/policy',
+    '/groups/group-123/lists/tool-123',
+    '/groups/group-123/lists/tool-123/manage',
+    '/groups/group-123/lists/tool-123/own',
     '%2Finvite%2Finvite-token',
     '/',
   ])('allows internal app destination %s', destination => {
@@ -116,3 +122,54 @@ describe('getAuthRouteDecision', () => {
     });
   });
 });
+
+it('retains bounded private Group application return paths', () => {
+  expect(getSafeAuthReturnPath('/groups/group-123/apply')).toBe(
+    '/groups/group-123/apply'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/applications')).toBe(
+    '/groups/group-123/applications'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/apply/private')).toBeNull();
+});
+
+it('allows only the bounded Group shared Event surface return route', () => {
+  expect(getSafeAuthReturnPath('/groups/group-123/events')).toBe(
+    '/groups/group-123/events'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/events/private')).toBeNull();
+});
+
+it.each([
+  '/groups/group-123/polls',
+  '/groups/group-123/polls/create',
+  '/groups/group-123/polls/poll-123/history',
+])('preserves bounded poll route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBe(path)
+);
+it.each([
+  '/groups/group-123/polls/poll-123/history/private',
+  '/groups/group-123/polls/policy/private',
+  '/groups/group-123/polls/poll-123/unknown',
+])('rejects unknown nested poll route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBeNull()
+);
+
+it.each([
+  '/groups/group-123/forms',
+  '/groups/group-123/forms/create',
+  '/groups/group-123/forms/policy',
+  '/groups/group-123/forms/tool-123',
+  '/groups/group-123/forms/tool-123/manage',
+  '/groups/group-123/forms/tool-123/history',
+  '/groups/group-123/forms/tool-123/results',
+])('preserves existing native Forms return route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBe(path)
+);
+it.each([
+  '/groups/group-123/forms/tool-123/history/private',
+  '/groups/group-123/forms/policy/private',
+  '/groups/group-123/forms/tool-123/unknown',
+])('rejects unbounded Forms return route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBeNull()
+);

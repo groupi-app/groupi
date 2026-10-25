@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PostCard } from './post-card';
@@ -106,6 +107,33 @@ describe('PostCard', () => {
 
     expect(router.push).toHaveBeenCalledWith('/event/event-123/post/post-123');
     expect(mocks.showActionMenu).not.toHaveBeenCalled();
+  });
+
+  it('keeps paragraph and list boundaries in the preview without exposing HTML entities', () => {
+    const card = PostCard({
+      post: {
+        ...post,
+        content:
+          '<p>First paragraph</p><p>Second &amp; third<br>Next line</p><ol><li>Bring snacks</li><li>Bring water</li></ol>',
+      },
+      eventId: 'event-123',
+      currentPersonId: 'person-current',
+    });
+    const children = Children.toArray(
+      card.props.children.props.children as ReactNode
+    );
+    const preview = children.find(
+      child =>
+        isValidElement<{ numberOfLines?: number }>(child) &&
+        child.props.numberOfLines === 3
+    );
+
+    expect(isValidElement(preview) && preview.props).toEqual(
+      expect.objectContaining({
+        children:
+          'First paragraph\nSecond & third\nNext line\n1. Bring snacks\n2. Bring water',
+      })
+    );
   });
 
   it('offers mute and report actions for another member post', () => {

@@ -7,6 +7,8 @@
   ],
   "pathPrefixes": [
     "/invite",
+    "/g",
+    "/groups",
     "/event",
     "/user",
     "/settings",

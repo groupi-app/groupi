@@ -187,7 +187,7 @@ describe('Questionnaire Add-on', () => {
         eventId: setup.eventId,
         addonType: 'questionnaire',
         key: `response:${setup.organizer.personId}`,
-        data: { q1: 'Organizer response' },
+        data: { q1: 'Vegetarian' },
       });
       await t.run(async ctx => {
         await ctx.db.patch(setup.attendee.membershipId, { role: 'MODERATOR' });
@@ -198,7 +198,7 @@ describe('Questionnaire Add-on', () => {
           eventId: setup.eventId,
           addonType: 'questionnaire',
           key: `response:${setup.organizer.personId}`,
-          data: { q1: 'Spoofed response' },
+          data: { q1: 'Vegan' },
         })
       ).rejects.toThrow('must belong to the current user');
 
@@ -480,7 +480,7 @@ describe('Questionnaire Add-on', () => {
         eventId: setup.eventId,
         addonType: 'questionnaire',
         key: `response:${setup.attendee.personId}`,
-        data: { q1: 'Real response' },
+        data: { q1: 'Vegan' },
       });
 
       status = await attendeeAuth.query(

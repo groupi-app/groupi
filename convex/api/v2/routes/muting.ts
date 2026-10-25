@@ -71,7 +71,7 @@ export function createMutingRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.muting.listMuted;
+    const listFn = internal.muting.rest.listMuted;
     const result = await ctx.runQuery(listFn, { personId, type });
 
     return c.json(
@@ -139,7 +139,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const muteFn = internal.api.v1.internal.muting.muteEvent;
+      const muteFn = internal.muting.rest.muteEvent;
       const result = await ctx.runMutation(muteFn, { personId, eventId });
 
       const message = result.alreadyMuted
@@ -204,7 +204,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unmuteFn = internal.api.v1.internal.muting.unmuteEvent;
+      const unmuteFn = internal.muting.rest.unmuteEvent;
       await ctx.runMutation(unmuteFn, { personId, eventId });
 
       return c.body(null, 204);
@@ -276,7 +276,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const muteFn = internal.api.v1.internal.muting.mutePost;
+      const muteFn = internal.muting.rest.mutePost;
       const result = await ctx.runMutation(muteFn, { personId, postId });
 
       const message = result.alreadyMuted
@@ -341,7 +341,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unmuteFn = internal.api.v1.internal.muting.unmutePost;
+      const unmuteFn = internal.muting.rest.unmutePost;
       await ctx.runMutation(unmuteFn, { personId, postId });
 
       return c.body(null, 204);
@@ -357,5 +357,73 @@ export function createMutingRoutes() {
     }
   });
 
+  for (const scope of ['events', 'posts'] as const) {
+    const route = createRoute({
+      method: 'get',
+      path: `/muting/${scope}/{targetId}`,
+      tags: ['Muting'],
+      summary: `Inspect ${scope} mute status`,
+      security: [{ apiKey: [] }],
+      request: { params: z.object({ targetId: z.string() }) },
+      responses: {
+        200: {
+          description: 'Mute state (effective includes parent event)',
+          content: {
+            'application/json': {
+              schema: z.object({
+                isMuted: z.boolean(),
+                eventMuted: z.boolean().optional(),
+                effectiveMuted: z.boolean(),
+              }),
+            },
+          },
+        },
+        403: {
+          description: 'Not a member',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+        404: {
+          description: 'Not found',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    });
+    app.openapi(route, async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get(
+        'personId'
+      ) as import('../../../_generated/dataModel').Id<'persons'>;
+      const id = c.req.valid('param').targetId;
+      try {
+        const result =
+          scope === 'events'
+            ? await ctx.runQuery(internal.muting.rest.eventMuteStatus, {
+                personId,
+                eventId:
+                  id as import('../../../_generated/dataModel').Id<'events'>,
+              })
+            : await ctx.runQuery(internal.muting.rest.postMuteStatus, {
+                personId,
+                postId:
+                  id as import('../../../_generated/dataModel').Id<'posts'>,
+              });
+        return c.json(result, 200);
+      } catch (error) {
+        const forbidden =
+          error instanceof Error && error.message.includes('not a member');
+        return c.json(
+          {
+            error: {
+              code: forbidden ? 'FORBIDDEN' : 'NOT_FOUND',
+              message: forbidden
+                ? 'You are not a member of this event'
+                : 'Target not found',
+            },
+          },
+          forbidden ? 403 : 404
+        );
+      }
+    });
+  }
   return app;
 }

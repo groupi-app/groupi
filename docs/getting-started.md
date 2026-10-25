@@ -110,7 +110,7 @@ This restores all project skills from `skills-lock.json` into your local agent d
 | `convex-schema-validator`       | Schema validation patterns            |
 | `convex-realtime`               | Real-time subscription patterns       |
 | `convex-cron-jobs`              | Scheduled function patterns           |
-| `native-data-fetching`          | Official Expo data fetching           |
+| `expo-data-fetching`            | Official Expo data fetching           |
 | `expo-react-native-typescript`  | Expo + React Native + TypeScript      |
 | `expo-react-native-performance` | React Native performance optimization |
 | `vitest`                        | Vitest testing patterns               |

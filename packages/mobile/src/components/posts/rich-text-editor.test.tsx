@@ -66,17 +66,39 @@ vi.mock('../ui/skeleton', () => ({ Skeleton: 'Skeleton' }));
 
 import { getTrailingSlashQuery, RichTextEditor } from './rich-text-editor';
 
-function childWithType(
-  tree: ReactElement<Record<string, unknown>>,
+function descendantWithType(
+  tree: ReactNode,
   type: string
 ): ReactElement<Record<string, unknown>> {
-  const child = Children.toArray(tree.props.children as ReactNode).find(
-    candidate => isValidElement(candidate) && candidate.type === type
-  );
-  if (!isValidElement<Record<string, unknown>>(child)) {
-    throw new Error(`${type} was not rendered`);
+  for (const child of Children.toArray(tree)) {
+    if (!isValidElement<Record<string, unknown>>(child)) continue;
+    if (child.type === type) return child;
+    try {
+      return descendantWithType(child.props.children as ReactNode, type);
+    } catch {
+      // Search the next branch.
+    }
   }
-  return child;
+  throw new Error(`${type} was not rendered`);
+}
+
+function descendantWithAccessibilityLabel(
+  tree: ReactNode,
+  label: string
+): ReactElement<Record<string, unknown>> {
+  for (const child of Children.toArray(tree)) {
+    if (!isValidElement<Record<string, unknown>>(child)) continue;
+    if (child.props.accessibilityLabel === label) return child;
+    try {
+      return descendantWithAccessibilityLabel(
+        child.props.children as ReactNode,
+        label
+      );
+    } catch {
+      // Search the next branch.
+    }
+  }
+  throw new Error(`${label} was not rendered`);
 }
 
 describe('RichTextEditor', () => {
@@ -104,7 +126,7 @@ describe('RichTextEditor', () => {
       'bridgeExtensions'
     );
 
-    const richText = childWithType(tree, 'RichText');
+    const richText = descendantWithType(tree, 'RichText');
     expect(richText.props.exclusivelyUseCustomOnMessage).toBe(false);
     expect(
       Children.toArray(tree.props.children as ReactNode).some(
@@ -112,17 +134,13 @@ describe('RichTextEditor', () => {
       )
     ).toBe(false);
     expect(
-      Children.toArray(tree.props.children as ReactNode).some(
-        child =>
-          isValidElement<Record<string, unknown>>(child) &&
-          child.props.accessibilityLabel === 'Loading editor'
-      )
-    ).toBe(true);
+      descendantWithAccessibilityLabel(tree, 'Loading editor')
+    ).toBeTruthy();
   });
 
   it('applies the placeholder and Groupi theme after the WebView loads', () => {
     const tree = RichTextEditor({ placeholder: 'Share an update' });
-    const richText = childWithType(tree, 'RichText');
+    const richText = descendantWithType(tree, 'RichText');
     mocks.editor.injectCSS.mockClear();
 
     (richText.props.onLoad as () => void)();
@@ -172,6 +190,30 @@ describe('RichTextEditor', () => {
       })
     );
     expect(onChange).toHaveBeenCalledWith('<p>Updated body</p>');
+  });
+
+  it('supports a compact accessible reply editor', () => {
+    const tree = RichTextEditor({
+      variant: 'compact',
+      minHeight: 76,
+      autofocus: true,
+      accessibilityLabel: 'Write a reply',
+    });
+
+    expect(mocks.useEditorBridge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        autofocus: true,
+        initialContent: '<p></p>',
+      })
+    );
+    const richText = descendantWithType(tree, 'RichText');
+    expect(richText.props.scrollEnabled).toBe(true);
+    expect(richText.props.bounces).toBe(false);
+    expect(richText.props.accessibilityLabel).toBe('Write a reply');
+    expect(mocks.editor.injectCSS).toHaveBeenCalledWith(
+      expect.stringMatching(/padding: 8px 10px[\s\S]*p \{ margin: 0; \}/),
+      'groupi-theme'
+    );
   });
 
   it('runs slash commands after removing the typed query', () => {

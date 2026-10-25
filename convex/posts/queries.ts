@@ -1,3 +1,4 @@
+import { canViewAttendance, privateNote } from '../events/attendance';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import {
@@ -311,10 +312,14 @@ export const getEventPostFeed = query({
     });
 
     // Build memberships with users using the same map
-    const membershipsWithUsers = eventMemberships.map(membership => {
+    const visibleMemberships = canViewAttendance(event, userMembership)
+      ? eventMemberships
+      : [userMembership];
+    const membershipsWithUsers = visibleMemberships.map(membership => {
       const memberData = personMap.get(membership.personId as string);
       return {
         ...membership,
+        rsvpNote: privateNote(membership.rsvpNote, userMembership, membership),
         person: memberData
           ? {
               ...memberData.person,

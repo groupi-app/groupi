@@ -155,6 +155,10 @@ describe('PushNotificationProvider', () => {
       granted: true,
       canAskAgain: true,
     } as Notifications.NotificationPermissionsStatus);
+    vi.mocked(Notifications.requestPermissionsAsync).mockResolvedValue({
+      granted: true,
+      canAskAgain: true,
+    } as Notifications.NotificationPermissionsStatus);
     vi.mocked(Notifications.getExpoPushTokenAsync).mockResolvedValue({
       data: 'ExponentPushToken[device-token]',
       type: 'expo',
@@ -176,6 +180,33 @@ describe('PushNotificationProvider', () => {
     );
     expect(mocks.stateSetters[0]).toHaveBeenCalledWith('denied');
     expect(mocks.registerDevice).not.toHaveBeenCalled();
+  });
+
+  it('requests permission after the first authenticated launch and registers the device', async () => {
+    vi.mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValueOnce({
+        granted: false,
+        canAskAgain: true,
+      } as Notifications.NotificationPermissionsStatus)
+      .mockResolvedValue({
+        granted: true,
+        canAskAgain: true,
+      } as Notifications.NotificationPermissionsStatus);
+    createProvider();
+
+    mocks.effects[0]?.();
+
+    await vi.waitFor(() =>
+      expect(Notifications.requestPermissionsAsync).toHaveBeenCalledWith({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      })
+    );
+    await vi.waitFor(() => expect(mocks.registerDevice).toHaveBeenCalledOnce());
+    expect(mocks.stateSetters[0]).toHaveBeenCalledWith('registered');
   });
 
   it('registers a granted token and unregisters only this installation', async () => {

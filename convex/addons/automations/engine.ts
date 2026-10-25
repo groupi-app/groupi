@@ -213,7 +213,6 @@ export async function runAutomationsForDataSubmission(
   submitterId: Id<'persons'>
 ): Promise<void> {
   const automations = await loadAutomations(ctx);
-  if (automations.length === 0) return;
 
   // Extract field values from data (best effort)
   const fieldValues = extractFieldValues(data);
@@ -482,24 +481,10 @@ async function checkListItemFull(
   );
   if (!hasListFullTrigger) return;
 
-  // Extract field ID from claims key (format: claims:{fieldId}:{itemId}:{personId})
-  const parts = key.split(':');
-  if (parts.length < 3) return;
-  const fieldId = parts[1];
-
-  // Get template to check item capacity
-  const addonConfig = await ctx.rawCtx.db
-    .query('eventAddonConfigs')
-    .withIndex('by_event_addon', q =>
-      q.eq('eventId', ctx.eventId).eq('addonType', ctx.addonType)
-    )
-    .first();
-
-  if (!addonConfig?.config) return;
-  const config = addonConfig.config as Record<string, unknown>;
-  const template = config.template as Record<string, unknown>;
+  // App and CLI claims are stored as claims:{personId} -> {itemId: quantity}.
+  if (!key.startsWith('claims:')) return;
+  const template = await loadTemplate(ctx);
   if (!template?.sections) return;
-
   const sections = template.sections as Array<{
     fields: Array<{
       id: string;
@@ -507,33 +492,39 @@ async function checkListItemFull(
       items?: Array<{ id: string; quantity: number }>;
     }>;
   }>;
-
-  // Find the field
-  let field: (typeof sections)[0]['fields'][0] | undefined;
-  for (const section of sections) {
-    field = section.fields.find(f => f.id === fieldId);
-    if (field) break;
-  }
-  if (!field || field.type !== 'list_item' || !field.items) return;
-
-  // Count claims for each item in this field
-  const addonData = await ctx.queryAddonData();
-  const claims = addonData.filter(d => d.key.startsWith(`claims:${fieldId}:`));
-
-  // Check each item
-  for (const item of field.items) {
-    const itemClaims = claims.filter(c =>
-      c.key.startsWith(`claims:${fieldId}:${item.id}:`)
-    );
-    if (itemClaims.length >= item.quantity) {
-      // This item is full — fire the trigger
+  const claims = (await ctx.queryAddonData()).filter(d =>
+    d.key.startsWith('claims:')
+  );
+  for (const field of sections.flatMap(s => s.fields)) {
+    if (field.type !== 'list_item' || !field.items) continue;
+    const full = field.items.some(item => {
+      if (
+        !(
+          typeof fieldValues[item.id] === 'number' &&
+          (fieldValues[item.id] as number) > 0
+        )
+      )
+        return false;
+      const total = claims.reduce((sum, entry) => {
+        const data = entry.data as Record<string, unknown> | null;
+        const quantity = data?.[item.id];
+        return (
+          sum +
+          (typeof quantity === 'number' &&
+          Number.isFinite(quantity) &&
+          quantity > 0
+            ? quantity
+            : 0)
+        );
+      }, 0);
+      return total >= item.quantity;
+    });
+    if (full)
       await runAutomations(ctx, 'list_item_full', {
         personId: submitterId,
         fieldValues,
-        fieldId,
+        fieldId: field.id,
       });
-      break; // Only fire once per submission
-    }
   }
 }
 
@@ -559,13 +550,18 @@ async function checkVoteThreshold(
   const voteCounts = new Map<string, number>();
   for (const vote of votes) {
     const voteData = vote.data;
-    if (Array.isArray(voteData)) {
-      for (const option of voteData) {
-        const key = String(option);
-        voteCounts.set(key, (voteCounts.get(key) ?? 0) + 1);
-      }
-    } else if (typeof voteData === 'string') {
-      voteCounts.set(voteData, (voteCounts.get(voteData) ?? 0) + 1);
+    const options = Array.isArray(voteData)
+      ? voteData
+      : typeof voteData === 'string'
+        ? [voteData]
+        : voteData &&
+            typeof voteData === 'object' &&
+            Array.isArray((voteData as Record<string, unknown>).options)
+          ? (voteData as { options: unknown[] }).options
+          : [];
+    for (const option of new Set(options)) {
+      if (typeof option !== 'string') continue;
+      voteCounts.set(option, (voteCounts.get(option) ?? 0) + 1);
     }
   }
 

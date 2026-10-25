@@ -1,3 +1,5 @@
+import { internal } from '../_generated/api';
+import { purposeValidator, cleanupUnclaimed } from './uploads';
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -17,13 +19,21 @@ import { requireAuth } from '../auth';
  * Returns URL that client can POST file data to
  */
 export const generateUploadUrl = mutation({
-  args: {},
-  handler: async ctx => {
+  args: { purpose: v.optional(purposeValidator) },
+  handler: async (ctx, args) => {
     // Require authentication
-    await requireAuth(ctx);
-
-    // Generate upload URL
-    return await ctx.storage.generateUploadUrl();
+    const { person } = await requireAuth(ctx);
+    const token = crypto.randomUUID();
+    const ticketId = await ctx.db.insert('uploadTickets', {
+      token,
+      purpose: args.purpose ?? 'attachment',
+      personId: person._id,
+      expiresAt: Date.now() + 600000,
+    });
+    await ctx.scheduler.runAfter(600000, internal.files.uploads.expireTicket, {
+      id: ticketId,
+    });
+    return `${process.env.CONVEX_SITE_URL}/api/uploads/app?token=${token}`;
   },
 });
 
@@ -35,7 +45,13 @@ export const getFileUrl = mutation({
     storageId: v.id('_storage'),
   },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
+    const { person } = await requireAuth(ctx);
+    const row = await ctx.db
+      .query('uploads')
+      .withIndex('by_storage', q => q.eq('storageId', args.storageId))
+      .unique();
+    if (!row || row.personId !== person._id)
+      throw new Error('File belongs to another account');
     return await ctx.storage.getUrl(args.storageId);
   },
 });
@@ -48,8 +64,8 @@ export const deleteFile = mutation({
     storageId: v.id('_storage'),
   },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
-    await ctx.storage.delete(args.storageId);
+    const { person } = await requireAuth(ctx);
+    await cleanupUnclaimed(ctx, person._id, args.storageId);
     return { success: true };
   },
 });

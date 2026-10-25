@@ -1,62 +1,54 @@
 ---
 name: convex
-displayName: Convex Development
-description: Umbrella skill for all Convex development patterns. Routes to specific skills like convex-functions, convex-realtime, convex-agents, etc.
-version: 1.0.0
-author: Convex
-tags: [convex, backend, database, realtime]
+description: "Routes Convex work to the right builder skill and covers the handful of rules that apply everywhere: validators on every function, withIndex over filter, idempotent mutations, internal functions for scheduling. Use when a task mentions Convex and no more specific skill matches, or as the first stop before picking one."
 ---
 
-# Convex Development Skills
+# Convex
 
-This is an index skill for Convex development. Use specific skills for detailed guidance:
+Start here, pick the matching skill below, and load it. If nothing matches, the rules at the bottom still apply.
 
-## Core Development
+## Pick a skill
 
-| Skill | Command | Use When |
-|-------|---------|----------|
-| Functions | `/convex-functions` | Writing queries, mutations, actions |
-| Schema | `/convex-schema-validator` | Defining database schemas and validators |
-| Realtime | `/convex-realtime` | Building reactive subscriptions |
-| HTTP Actions | `/convex-http-actions` | Webhooks and HTTP endpoints |
+| Skill | Load when |
+| --- | --- |
+| convex-best-practices | general patterns, project structure, "is this the Convex way" |
+| convex-functions | queries, mutations, actions, internal functions, error handling |
+| convex-schema-validator | tables, indexes, validators, `v.*` types, schema changes |
+| convex-realtime | useQuery, optimistic updates, pagination, presence, rerender churn |
+| convex-http-actions | webhooks, REST endpoints, `convex/http.ts`, Stripe or Clerk callbacks |
+| convex-file-storage | uploads, upload URLs, serving files, storage cleanup |
+| convex-cron-jobs | crons.ts, runAfter, runAt, batching, a cron that is not firing |
+| convex-migrations | backfills, renaming fields, schema evolution with live data |
+| convex-agents | AI agents, threads, tools, streaming, RAG with `@convex-dev/agent` |
+| convex-component-authoring | building a reusable component package, `defineComponent` |
+| convex-security-check | fast pre ship audit: auth on public functions, exposed data |
+| convex-security-audit | deep review: authorization model, injection, rate limits, secrets |
+| avoid-feature-creep | scope pushback, MVP cuts, "just one more feature" |
+| project-workflow | multi step tasks, PRDs in prds/, task.md, plans for review |
+| project-docs | syncing task.md, changelog.md, files.md with shipped code |
+| git-safety | revert, undo, reset, checkout, clean, stash, force push |
 
-## Data & Storage
+Two skills often apply at once. Load the domain skill for the code and the process skill for the workflow, for example convex-functions plus project-workflow.
 
-| Skill | Command | Use When |
-|-------|---------|----------|
-| File Storage | `/convex-file-storage` | File uploads, serving, storage |
-| Migrations | `/convex-migrations` | Schema evolution, data backfills |
+## Rules that hold everywhere
 
-## Advanced Patterns
+- Every function declares `args` and `returns` validators, including internal ones.
+- Read through `withIndex`. `.filter()` on a table scan is a bug waiting for data.
+- Mutations are idempotent. Check current state, return early when there is nothing to do.
+- Schedule and cron only `internal.*` functions. Never `api.*`.
+- Never call `Date.now()` inside a query. Pass time in as an argument.
+- Use `npx convex dev` for development. Do not run `npx convex deploy` unless asked.
+- Fetch https://docs.convex.dev/llms.txt before trusting memory about an API.
 
-| Skill | Command | Use When |
-|-------|---------|----------|
-| Agents | `/convex-agents` | Building AI agents with tools |
-| Cron Jobs | `/convex-cron-jobs` | Scheduled background tasks |
-| Components | `/convex-component-authoring` | Reusable Convex packages |
+## Do not
 
-## Security
+- Edit anything under `convex/_generated/`.
+- Use `crons.daily`, `crons.hourly`, or `crons.weekly`. Use `crons.interval` or `crons.cron`.
+- Put `"use node"` in a file that also exports queries or mutations.
+- Run git commands that discard work without loading git-safety first.
 
-| Skill | Command | Use When |
-|-------|---------|----------|
-| Security Check | `/convex-security-check` | Quick security audit checklist |
-| Security Audit | `/convex-security-audit` | Deep security review |
+## Docs
 
-## Guidelines
-
-| Skill | Command | Use When |
-|-------|---------|----------|
-| Best Practices | `/convex-best-practices` | General patterns and guidelines |
-
-## Quick Start
-
-For most tasks:
-1. Start with `/convex-best-practices` for general patterns
-2. Use `/convex-functions` for writing backend logic
-3. Use `/convex-schema-validator` for data modeling
-4. Use specific skills as needed for your use case
-
-## Documentation
-
-- Primary: https://docs.convex.dev
-- LLM-optimized: https://docs.convex.dev/llms.txt
+- https://docs.convex.dev/llms.txt
+- https://docs.convex.dev/understanding/best-practices
+- https://docs.convex.dev/functions

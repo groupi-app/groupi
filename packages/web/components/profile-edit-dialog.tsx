@@ -238,7 +238,7 @@ export function ProfileEditDialog({
           const file = new File([pendingImageBlob], filename, {
             type: 'image/jpeg',
           });
-          const result = await uploadFile(file);
+          const result = await uploadFile(file, 'avatar');
           if (result) {
             imageStorageId = result.storageId;
           }

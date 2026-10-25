@@ -1,3 +1,6 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -6,14 +9,17 @@ export async function cascadeDeleteEventData(
   ctx: MutationCtx,
   eventId: Id<'events'>
 ) {
+  await deleteEventTransfers(ctx, eventId);
+  await removeAudiencesForEvent(ctx, eventId);
+
   const [
     memberships,
     potentialDates,
     posts,
     invites,
+    eventInvites,
     notifications,
     addonConfigs,
-    addonDataEntries,
     addonOptOuts,
     reminderOptOuts,
   ] = await Promise.all([
@@ -34,16 +40,16 @@ export async function cascadeDeleteEventData(
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect(),
     ctx.db
+      .query('eventInvites')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect(),
+    ctx.db
       .query('notifications')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect(),
     ctx.db
       .query('eventAddonConfigs')
       .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect(),
-    ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon', q => q.eq('eventId', eventId))
       .collect(),
     ctx.db
       .query('addonOptOuts')
@@ -87,6 +93,13 @@ export async function cascadeDeleteEventData(
 
   await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
 
+  // Handlers may delete their own data. Collect only the remaining rows after
+  // lifecycle cleanup so the generic fallback never deletes stale document IDs.
+  const addonDataEntries = await ctx.db
+    .query('addonData')
+    .withIndex('by_event_addon', q => q.eq('eventId', eventId))
+    .collect();
+
   for (const avails of availabilitiesByMembership) {
     for (const a of avails) {
       await ctx.db.delete(a._id);
@@ -109,6 +122,10 @@ export async function cascadeDeleteEventData(
 
   for (const i of invites) {
     await ctx.db.delete(i._id);
+  }
+
+  for (const invite of eventInvites) {
+    await ctx.db.delete(invite._id);
   }
 
   for (const deliveries of deliveriesByNotification) {
@@ -141,5 +158,6 @@ export async function cascadeDeleteEventData(
     await ctx.db.delete(m._id);
   }
 
+  await deleteEventApplications(ctx, eventId);
   await ctx.db.delete(eventId);
 }

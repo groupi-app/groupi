@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import type { Id } from 'convex/_generated/dataModel';
+import {
+  getNotificationDestination,
+  getNotificationMessage,
+  type NotificationPresentationInput,
+} from './notification-presentation';
+import { getPushNotificationDestination } from './push-notifications';
+
+describe('native Group invitation notifications', () => {
+  const invite: NotificationPresentationInput = {
+    type: 'GROUP_INVITE_RECEIVED',
+    groupId: 'group-123' as Id<'groups'>,
+    group: { id: 'group-123' as Id<'groups'>, title: 'Book club' },
+    groupInvite: { id: 'invite-123' as Id<'groupInvites'>, status: 'PENDING' },
+  };
+  it.each([
+    'GROUP_APPLICATION_RECEIVED',
+    'GROUP_APPLICATION_APPROVED',
+    'GROUP_APPLICATION_DECLINED',
+  ] as const)('routes %s to private status or authorized review', type => {
+    const path =
+      type === 'GROUP_APPLICATION_RECEIVED'
+        ? '/groups/group-123/applications'
+        : '/groups/group-123/apply';
+    expect(getNotificationDestination({ ...invite, type })).toBe(path);
+    expect(getNotificationMessage({ ...invite, type })).toContain(
+      'application'
+    );
+    expect(
+      getPushNotificationDestination({
+        destination:
+          type === 'GROUP_APPLICATION_RECEIVED'
+            ? 'groupApplications'
+            : 'groupApplication',
+        groupId: 'group-123',
+      })
+    ).toBe(path);
+    expect(
+      getPushNotificationDestination({
+        destination: 'groupApplication',
+        groupId: '../secret',
+      })
+    ).toBeNull();
+  });
+  it('describes a Group invitation and opens its identity landing', () => {
+    expect(getNotificationMessage(invite)).toBe(
+      'Someone invited you to Book club'
+    );
+    expect(getNotificationDestination(invite)).toBe('/g/group-123');
+    expect(
+      getPushNotificationDestination({
+        destination: 'group',
+        groupId: 'group-123',
+      })
+    ).toBe('/g/group-123');
+  });
+  it('routes removals and bans to the Group landing', () => {
+    for (const type of [
+      'GROUP_MEMBER_REMOVED',
+      'GROUP_MEMBER_BANNED',
+    ] as const) {
+      expect(getNotificationDestination({ ...invite, type })).toBe(
+        '/g/group-123'
+      );
+      expect(getNotificationMessage({ ...invite, type })).toContain(
+        type === 'GROUP_MEMBER_REMOVED' ? 'removed' : 'banned'
+      );
+    }
+  });
+  it('reflects resolved invitations and refuses unsafe push destinations', () => {
+    expect(
+      getNotificationMessage({
+        ...invite,
+        groupInvite: {
+          id: 'invite-123' as Id<'groupInvites'>,
+          status: 'CANCELLED',
+        },
+      })
+    ).toBe('Group invitation to Book club: cancelled');
+    expect(
+      getNotificationMessage({ ...invite, type: 'GROUP_INVITE_ACCEPTED' })
+    ).toBe('Someone accepted your invitation to Book club');
+    expect(
+      getPushNotificationDestination({
+        destination: 'group',
+        groupId: '../event/secret',
+      })
+    ).toBeNull();
+  });
+});

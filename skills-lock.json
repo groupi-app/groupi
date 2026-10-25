@@ -4,72 +4,86 @@
     "convex": {
       "source": "waynesutton/convexskills",
       "sourceType": "github",
-      "computedHash": "de7a20d081cd19bf8bce4038bd62d038a0a88f218f85afb35320d09b052fb534"
+      "skillPath": "skills/convex/SKILL.md",
+      "computedHash": "9bc93f30e24cf57756ea254666dfb61d4a0df566f9c8f844fc1719c3d03dccf8"
     },
     "convex-best-practices": {
       "source": "waynesutton/convexskills",
       "sourceType": "github",
-      "computedHash": "3b24d2afbb5859e3a3640c1e47e2ac9ace81e9737ec76b891951999361c92ab1"
+      "skillPath": "skills/convex-best-practices/SKILL.md",
+      "computedHash": "e3c00bf29b48a495bb3ae43bbf338131366ed1a63380a088eca2202f80e6a9a0"
     },
     "convex-cron-jobs": {
       "source": "waynesutton/convexskills",
       "sourceType": "github",
-      "computedHash": "e786347f192c02a97e703b41cb2d8727346092b7112a1c86da9fbe982247962e"
+      "skillPath": "skills/convex-cron-jobs/SKILL.md",
+      "computedHash": "e576378b763e676c59b6e71ab56ae549cf4b84cf8bf8cfbe3212f1be45be1cad"
     },
     "convex-realtime": {
       "source": "waynesutton/convexskills",
       "sourceType": "github",
-      "computedHash": "aa08a2856778c09aa8c0f5eef431fc102115e04461d7d3f86e6ce97b5848b52f"
+      "skillPath": "skills/convex-realtime/SKILL.md",
+      "computedHash": "bb06a49bcbf5b41678a65c2e419bf03f5ecbcd5ea6ac6ee9ee06882a273debbc"
     },
     "convex-schema-validator": {
       "source": "waynesutton/convexskills",
       "sourceType": "github",
-      "computedHash": "97b7965f2bc665f1848196813c79e32bff2d8b58b3a701b313c4a96f0bf5ac95"
+      "skillPath": "skills/convex-schema-validator/SKILL.md",
+      "computedHash": "6b33c6ef8b0a17c7463465b5ea789cf9afed15a09971a309b50684eac8b0580e"
+    },
+    "expo-data-fetching": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/expo/skills/expo-data-fetching/SKILL.md",
+      "computedHash": "f09e886fe2bd6dcfaf6094a7ca0d8029c4f4a8cfb3264b5cc23d4a21cb4b2cbe"
     },
     "expo-react-native-performance": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
-      "computedHash": "6dab08ce00cfd8e0e8e978b50688ab03722fb2c7a1f561dc55eb7f255361ebb8"
+      "skillPath": "skills/.experimental/expo-react-native-performance/SKILL.md",
+      "computedHash": "da6e70dd6c48bd87388d966d8789063041a70928fa824841a3e097e59e924a54"
     },
     "expo-react-native-typescript": {
       "source": "mindrally/skills",
       "sourceType": "github",
+      "skillPath": "expo-react-native-typescript/SKILL.md",
       "computedHash": "ef1a36e2a4e803d4e754eabea9b851221ee37b5c416256dbc9d2d1b333447f4b"
     },
     "migrate-nativewind-to-uniwind": {
       "source": "uni-stack/uniwind",
       "sourceType": "github",
-      "computedHash": "eab5d13811440639772e87c342e66ce796c88fb33e12e41849ab1a500aea6c90"
-    },
-    "native-data-fetching": {
-      "source": "expo/skills",
-      "sourceType": "github",
-      "computedHash": "6c14e4efb34a9c4759e8b959f82dec328f87dd89a022957c6737086984b9b106"
+      "skillPath": "skills/migrate-nativewind-to-uniwind/SKILL.md",
+      "computedHash": "095066623a369bccadd62065ac44e7b4addce4cd1f9317b08fc2f8ea2d9ad4bd"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
-      "computedHash": "1ec42c9b918b315d8e5c6c856b78c3c4725fc93dea30b9b7e9975c69848fcce6"
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "f615de216e085a84e31593ad0fa9062232adc40cd87b7c7ab2b8e49abf6500be"
     },
     "uniwind": {
       "source": "uni-stack/uniwind",
       "sourceType": "github",
-      "computedHash": "76e8e9be3a60fe60d9229c7a0c6e4c30bdde2e23ff377dbfa827b80226bd4d89"
+      "skillPath": "skills/uniwind/SKILL.md",
+      "computedHash": "d886797a7bf8989393c3f784b48242e4d6baeb9ad85ef765143010f893ea3656"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
+      "skillPath": "skills/composition-patterns/SKILL.md",
       "computedHash": "f98931159fa9c7fed043bcd18a891a46dcf89ababa38df13a4c5b7b30dc0ce07"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
-      "computedHash": "afeca00ac2f492d88fdd010e73d91719a5b57c564bb4a73325b0bd77e11323ab"
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "3219a1944e404ffc14d1d9d6aef6dd2e3855b81387ee0a044ccbfe14d34c2357"
     },
     "vitest": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
-      "computedHash": "84d2d291054736df0cdee47d1a9a8d3ceb5b9e5a06afb879edff51f55ef30816"
+      "skillPath": "skills/.curated/vitest/SKILL.md",
+      "computedHash": "2432cb7f9099423fb3768a925fa95d7f8a6dc56c76eaded47472f558bff7139e"
     }
   }
 }

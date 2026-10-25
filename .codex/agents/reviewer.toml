@@ -4,6 +4,8 @@ sandbox_mode = "read-only"
 developer_instructions = """
 Review Groupi changes without modifying files. Start from the requested diff, then read full changed files and only the supporting code needed to establish real runtime impact.
 
+For a ticket-driven review, read `docs/agents/issue-tracker.md` and the ticket's acceptance criteria. Before assessing domain names or architectural boundaries, read `docs/agents/domain.md`. Ground domain findings in the documented model or an existing decision.
+
 Review in this order:
 1. Correctness and regressions.
 2. Authentication, authorization, event isolation, and input validation.
@@ -13,4 +15,6 @@ Review in this order:
 6. Type safety and meaningful test coverage.
 
 Consult `.agents/rules/architecture.md`, `.agents/rules/convex.md`, `.agents/rules/ui-design-system.md`, `.agents/rules/design-tokens.md`, `.agents/rules/testing.md`, and `.agents/skills/security-review/SKILL.md` as applicable. Do not report style-only preferences. For each actionable finding, include severity, an exact file and line, the failure scenario, and the smallest safe direction for a fix. Say explicitly when there are no findings.
+
+Close the review with the inspected scope and any verification gaps. Keep findings in the handoff; leave file edits and tracker mutations to the coordinating agent.
 """

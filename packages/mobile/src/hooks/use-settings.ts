@@ -23,6 +23,9 @@ type QueriedNotificationType =
   QueriedNotificationMethod['notifications'][number]['notificationType'];
 
 export const SUPPORTED_NOTIFICATION_TYPES: readonly NotificationType[] = [
+  'EVENT_APPLICATION_RECEIVED',
+  'EVENT_APPLICATION_APPROVED',
+  'EVENT_APPLICATION_DECLINED',
   'EVENT_EDITED',
   'NEW_POST',
   'NEW_REPLY',
@@ -40,6 +43,15 @@ export const SUPPORTED_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'FRIEND_REQUEST_ACCEPTED',
   'EVENT_INVITE_RECEIVED',
   'EVENT_INVITE_ACCEPTED',
+  'GROUP_APPLICATION_RECEIVED',
+  'GROUP_APPLICATION_APPROVED',
+  'GROUP_APPLICATION_DECLINED',
+  'GROUP_INVITE_RECEIVED',
+  'GROUP_INVITE_ACCEPTED',
+  'GROUP_MEMBER_REMOVED',
+  'GROUP_MEMBER_BANNED',
+  'GROUP_ANNOUNCEMENT',
+  'GROUP_ONBOARDING_REQUIRED',
   'ADDON_CONFIG_RESET',
   'ADDON_AUTOMATION',
 ];
@@ -48,6 +60,9 @@ function isSupportedNotificationType(
   type: QueriedNotificationType
 ): type is NotificationType {
   switch (type) {
+    case 'EVENT_APPLICATION_RECEIVED':
+    case 'EVENT_APPLICATION_APPROVED':
+    case 'EVENT_APPLICATION_DECLINED':
     case 'EVENT_EDITED':
     case 'NEW_POST':
     case 'NEW_REPLY':
@@ -65,6 +80,15 @@ function isSupportedNotificationType(
     case 'FRIEND_REQUEST_ACCEPTED':
     case 'EVENT_INVITE_RECEIVED':
     case 'EVENT_INVITE_ACCEPTED':
+    case 'GROUP_APPLICATION_RECEIVED':
+    case 'GROUP_APPLICATION_APPROVED':
+    case 'GROUP_APPLICATION_DECLINED':
+    case 'GROUP_INVITE_RECEIVED':
+    case 'GROUP_INVITE_ACCEPTED':
+    case 'GROUP_MEMBER_REMOVED':
+    case 'GROUP_ANNOUNCEMENT':
+    case 'GROUP_ONBOARDING_REQUIRED':
+    case 'GROUP_MEMBER_BANNED':
     case 'ADDON_CONFIG_RESET':
     case 'ADDON_AUTOMATION':
       return true;

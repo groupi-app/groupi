@@ -1,0 +1,2 @@
+# Preserve executable and formatter-compatible line endings on every platform.
+* text=auto eol=lf

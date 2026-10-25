@@ -266,3 +266,15 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 ---
 
 Built with care by the Groupi team
+
+### Shared package distribution
+
+Workspace consumers resolve `@groupi/shared` directly to TypeScript source and
+need no shared prebuild. To prepare a distribution, compile shared through the
+normal release/CI build path, then use `pnpm --dir packages/shared pack
+--pack-destination <output-directory>`. pnpm applies the package's `publishConfig`
+overrides so the tarball exports compiled CommonJS, ES modules, and declarations.
+Use pnpm for packing and publishing; npm does not apply these manifest overrides.
+Validate a prepared tarball with `node scripts/check-shared-package.mjs
+<tarball-path>`. CI runs this check after its shared build. Source checks remain
+available through `pnpm check:workspace-source` without compiling anything.

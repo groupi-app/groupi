@@ -118,6 +118,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               }
             | {
                 data: {
+                  configId?: null | string;
                   createdAt: number;
                   enabled?: null | boolean;
                   expiresAt?: null | number;
@@ -382,6 +383,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
+                    | "configId"
                     | "name"
                     | "start"
                     | "prefix"
@@ -673,6 +675,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
+                    | "configId"
                     | "name"
                     | "start"
                     | "prefix"
@@ -763,7 +766,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "starts_with"
               | "ends_with";
             value:
-              string | number | boolean | Array<string> | Array<number> | null;
+              | string
+              | number
+              | boolean
+              | Array<string>
+              | Array<number>
+              | null;
           }>;
         },
         any,
@@ -800,7 +808,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "starts_with"
               | "ends_with";
             value:
-              string | number | boolean | Array<string> | Array<number> | null;
+              | string
+              | number
+              | boolean
+              | Array<string>
+              | Array<number>
+              | null;
           }>;
         },
         any,
@@ -1108,6 +1121,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 model: "apikey";
                 update: {
+                  configId?: null | string;
                   createdAt?: number;
                   enabled?: null | boolean;
                   expiresAt?: null | number;
@@ -1132,6 +1146,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
+                    | "configId"
                     | "name"
                     | "start"
                     | "prefix"
@@ -1490,6 +1505,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | {
                 model: "apikey";
                 update: {
+                  configId?: null | string;
                   createdAt?: number;
                   enabled?: null | boolean;
                   expiresAt?: null | number;
@@ -1514,6 +1530,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
+                    | "configId"
                     | "name"
                     | "start"
                     | "prefix"

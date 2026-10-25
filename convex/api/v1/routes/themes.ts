@@ -57,7 +57,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.themes.listCustomThemes;
+    const listFn = internal.themes.rest.listCustomThemes;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(
@@ -103,7 +103,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.themes.getThemePreferences;
+    const getFn = internal.themes.rest.getThemePreferences;
     const result = await ctx.runQuery(getFn, { personId });
 
     return c.json(
@@ -167,7 +167,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.themes.createCustomTheme;
+    const createFn = internal.themes.rest.createCustomTheme;
     const result = await ctx.runMutation(createFn, {
       personId,
       ...body,
@@ -253,7 +253,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.themes.updateCustomTheme;
+    const updateFn = internal.themes.rest.updateCustomTheme;
     const result = await ctx.runMutation(updateFn, {
       themeId,
       personId,
@@ -326,7 +326,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.themes.deleteCustomTheme;
+    const deleteFn = internal.themes.rest.deleteCustomTheme;
     await ctx.runMutation(deleteFn, { themeId, personId });
 
     return c.json(
@@ -391,7 +391,7 @@ export function createThemeRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const setFn = internal.api.v1.internal.themes.setThemePreference;
+    const setFn = internal.themes.rest.setThemePreference;
     const result = await ctx.runMutation(setFn, {
       personId,
       ...body,

@@ -26,7 +26,7 @@ export const ReplyDetailSchema = z
 // Create reply request body
 export const CreateReplyRequestSchema = z
   .object({
-    text: z.string().min(1).max(5000).openapi({
+    text: z.string().min(1).max(65536).openapi({
       example: 'Thanks for sharing!',
       description: 'Reply text',
     }),
@@ -36,7 +36,7 @@ export const CreateReplyRequestSchema = z
 // Update reply request body
 export const UpdateReplyRequestSchema = z
   .object({
-    text: z.string().min(1).max(5000),
+    text: z.string().min(1).max(65536),
   })
   .openapi('UpdateReplyRequest');
 

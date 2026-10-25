@@ -67,6 +67,7 @@ export const SubmitAvailabilityRequestSchema = z
       z.object({
         potentialDateTimeId: z.string(),
         status: AvailabilitySubmitStatusSchema,
+        note: z.string().max(200).optional(),
       })
     ),
   })

@@ -1,4 +1,5 @@
 'use client';
+import { discussionLengthAllowed } from '@groupi/shared';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -29,7 +30,12 @@ import { useCurrentUserTypingState } from '@/hooks/convex/use-presence';
 import { User } from '@/convex/types';
 
 const formSchema = z.object({
-  reply: z.string().max(5000, 'Reply must be 5000 characters or less'),
+  reply: z
+    .string()
+    .refine(
+      value => discussionLengthAllowed(value, 5000),
+      'Reply must be 5000 visible characters or less'
+    ),
 });
 
 // Type for userMembership prop

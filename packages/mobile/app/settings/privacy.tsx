@@ -16,6 +16,8 @@ import {
 import { useBlockedUsers, useUnblockUser } from '@/hooks/use-friends';
 
 type FriendRequestOption = 'EVERYONE' | 'EVENT_MEMBERS' | 'NO_ONE';
+type GroupInviteOption = 'EVERYONE' | 'FRIENDS' | 'NO_ONE';
+
 type EventInviteOption = 'EVERYONE' | 'EVENT_MEMBERS' | 'FRIENDS' | 'NO_ONE';
 
 const FRIEND_REQUEST_OPTIONS: {
@@ -76,6 +78,28 @@ const EVENT_INVITE_OPTIONS: {
   },
 ];
 
+const GROUP_INVITE_OPTIONS: {
+  value: GroupInviteOption;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'EVERYONE',
+    label: 'Everyone',
+    description: 'Any Group manager can invite you',
+  },
+  {
+    value: 'FRIENDS',
+    label: 'Friends',
+    description: 'Only your friends can invite you to Groups',
+  },
+  {
+    value: 'NO_ONE',
+    label: 'No one',
+    description: 'Nobody can invite you to Groups',
+  },
+];
+
 export default function PrivacySettingsScreen() {
   const settings = usePrivacySettings();
   const saveSettings = useSavePrivacySettings();
@@ -86,6 +110,8 @@ export default function PrivacySettingsScreen() {
     useState<FriendRequestOption | null>(null);
   const [eventInvitesOverride, setEventInvitesOverride] =
     useState<EventInviteOption | null>(null);
+  const [groupInvitesOverride, setGroupInvitesOverride] =
+    useState<GroupInviteOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const primaryColor = String(
     useCSSVariable('--color-primary') ?? 'transparent'
@@ -100,6 +126,9 @@ export default function PrivacySettingsScreen() {
     (settings?.allowEventInvitesFrom as EventInviteOption | undefined) ??
     'EVERYONE';
 
+  const groupInvitesFrom =
+    groupInvitesOverride ?? settings?.allowGroupInvitesFrom ?? 'EVERYONE';
+
   async function handleSaveFriendRequests(value: FriendRequestOption) {
     if (isSaving) return;
     const previous = friendRequestsOverride;
@@ -108,6 +137,7 @@ export default function PrivacySettingsScreen() {
     const saved = await saveSettings({
       allowFriendRequestsFrom: value,
       allowEventInvitesFrom: eventInvitesFrom,
+      allowGroupInvitesFrom: groupInvitesFrom,
     });
     if (!saved) setFriendRequestsOverride(previous);
     setIsSaving(false);
@@ -121,8 +151,23 @@ export default function PrivacySettingsScreen() {
     const saved = await saveSettings({
       allowFriendRequestsFrom: friendRequestsFrom,
       allowEventInvitesFrom: value,
+      allowGroupInvitesFrom: groupInvitesFrom,
     });
     if (!saved) setEventInvitesOverride(previous);
+    setIsSaving(false);
+  }
+
+  async function handleSaveGroupInvites(value: GroupInviteOption) {
+    if (isSaving) return;
+    const previous = groupInvitesOverride;
+    setGroupInvitesOverride(value);
+    setIsSaving(true);
+    const saved = await saveSettings({
+      allowFriendRequestsFrom: friendRequestsFrom,
+      allowEventInvitesFrom: eventInvitesFrom,
+      allowGroupInvitesFrom: value,
+    });
+    if (!saved) setGroupInvitesOverride(previous);
     setIsSaving(false);
   }
 
@@ -151,6 +196,7 @@ export default function PrivacySettingsScreen() {
           {FRIEND_REQUEST_OPTIONS.map((option, index) => (
             <Pressable
               key={option.value}
+              accessibilityLabel={`Friend requests from ${option.label}`}
               onPress={() => void handleSaveFriendRequests(option.value)}
               disabled={isSaving}
               accessibilityRole='radio'
@@ -202,6 +248,7 @@ export default function PrivacySettingsScreen() {
           {EVENT_INVITE_OPTIONS.map((option, index) => (
             <Pressable
               key={option.value}
+              accessibilityLabel={`Event invitations from ${option.label}`}
               onPress={() => void handleSaveEventInvites(option.value)}
               disabled={isSaving}
               accessibilityRole='radio'
@@ -236,6 +283,39 @@ export default function PrivacySettingsScreen() {
               ) : (
                 <View className='h-[22px] w-[22px] rounded-full border-2 border-border' />
               )}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View className='mb-6'>
+        <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
+          Group invitations
+        </Text>
+        <Text className='mb-3 text-sm text-muted-foreground'>
+          Who can invite you to Groups?
+        </Text>
+        <View className='rounded-card border border-border overflow-hidden'>
+          {GROUP_INVITE_OPTIONS.map((option, index) => (
+            <Pressable
+              key={option.value}
+              accessibilityLabel={`Group invitations from ${option.label}`}
+              accessibilityRole='radio'
+              accessibilityState={{
+                checked: groupInvitesFrom === option.value,
+                disabled: isSaving,
+                busy: isSaving,
+              }}
+              onPress={() => void handleSaveGroupInvites(option.value)}
+              disabled={isSaving}
+              className={`gap-1 px-4 py-3 ${index < GROUP_INVITE_OPTIONS.length - 1 ? 'border-b border-border' : ''}`}
+            >
+              <Text className='font-medium text-foreground'>
+                {option.label}
+              </Text>
+              <Text className='text-sm text-muted-foreground'>
+                {option.description}
+              </Text>
             </Pressable>
           ))}
         </View>

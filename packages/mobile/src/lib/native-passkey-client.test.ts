@@ -9,7 +9,7 @@ vi.mock('@lobehub/expo-better-auth-passkey', () => ({
   expoPasskeyClient: vi.fn(),
 }));
 
-vi.mock('expo-modules-core', () => ({
+vi.mock('expo', () => ({
   requireOptionalNativeModule: vi.fn(() => null),
 }));
 

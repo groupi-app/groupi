@@ -1,6 +1,6 @@
 'use client';
 
-import { BuilderPage } from '../components/builder-page';
+import { BuilderPage } from '@/features/addons/authoring';
 
 export default function NewTemplatePage() {
   return <BuilderPage />;

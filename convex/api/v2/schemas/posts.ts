@@ -55,11 +55,11 @@ export const PostDetailSchema = z
 // Create post request body
 export const CreatePostRequestSchema = z
   .object({
-    title: z.string().min(1).max(200).openapi({
+    title: z.string().min(1).max(65536).openapi({
       example: 'Meeting Notes',
       description: 'Post title',
     }),
-    content: z.string().min(1).max(10000).openapi({
+    content: z.string().min(1).max(65536).openapi({
       example: 'Here are the notes from our meeting...',
       description: 'Post content',
     }),
@@ -69,8 +69,8 @@ export const CreatePostRequestSchema = z
 // Update post request body
 export const UpdatePostRequestSchema = z
   .object({
-    title: z.string().min(1).max(200).optional(),
-    content: z.string().min(1).max(10000).optional(),
+    title: z.string().min(1).max(65536).optional(),
+    content: z.string().min(1).max(65536).optional(),
   })
   .openapi('UpdatePostRequest');
 

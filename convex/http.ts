@@ -1,9 +1,11 @@
+import { appUpload } from './files/uploads';
 import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { authComponent, createAuth } from './auth';
 import { handler as apiV1Handler } from './api/v1/index';
 import { handler as apiV2Handler } from './api/v2/index';
 import { internal } from './_generated/api';
+import { inbox as appReviewInbox } from './appReview/http';
 
 /**
  * HTTP router for Convex
@@ -14,6 +16,17 @@ import { internal } from './_generated/api';
  */
 
 const http = httpRouter();
+
+http.route({
+  path: '/app-review/inbox',
+  method: 'GET',
+  handler: appReviewInbox,
+});
+http.route({
+  path: '/app-review/inbox',
+  method: 'POST',
+  handler: appReviewInbox,
+});
 
 // Register Better Auth routes
 // This handles all auth endpoints like /api/auth/signin, /api/auth/signout, etc.
@@ -386,6 +399,38 @@ http.route({
   handler: apiV2Handler,
 });
 
+// Private Invite list collection and lookup routes.
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+http.route({
+  path: '/api/v2/invite-lists',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+http.route({
+  path: '/api/v2/invite-lists',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
 http.route({
   pathPrefix: '/api/v2/friends/',
   method: 'GET',
@@ -666,10 +711,9 @@ const inviteMetaHandler = httpAction(async (ctx, request) => {
     });
   }
 
-  const meta = await ctx.runQuery(
-    internal.api.v1.internal.invites.getInviteOgMeta,
-    { token }
-  );
+  const meta = await ctx.runQuery(internal.invites.rest.getInviteOgMeta, {
+    token,
+  });
 
   if (!meta) {
     return new Response(JSON.stringify({ error: 'Invite not found' }), {
@@ -697,4 +741,20 @@ http.route({
   handler: inviteMetaHandler,
 });
 
+http.route({ path: '/api/uploads/app', method: 'POST', handler: appUpload });
+http.route({
+  path: '/api/uploads/app',
+  method: 'OPTIONS',
+  handler: httpAction(
+    async () =>
+      new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      })
+  ),
+});
 export default http;

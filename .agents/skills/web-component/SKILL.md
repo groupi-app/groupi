@@ -7,6 +7,12 @@ description: Creating web UI components for Groupi following the atomic architec
 
 ## Level Selection
 
+First choose ownership: feature-specific UI belongs inside its feature module
+(`packages/web/features/<feature>/`), alongside its hooks, logic, and tests.
+Routes consume public feature entry points. Use the atomic locations below for
+reusable UI; the atomic complexity vocabulary also applies inside a feature.
+Add-ons are the first migrated feature. See `docs/adr/0002-feature-owned-application-modules.md`.
+
 | If the component...                    | Level    | Location                |
 | -------------------------------------- | -------- | ----------------------- |
 | Is a single, indivisible element       | Atom     | `components/atoms/`     |

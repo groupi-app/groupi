@@ -72,7 +72,16 @@ export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
   owner: 'theiasurette',
-  version: '0.1.0',
+  version: '0.4.1',
+  // This native runtime is intentionally independent from the app/package
+  // version. Keep it stable for JavaScript-only OTA releases and increment it
+  // whenever native dependencies or native configuration change.
+  runtimeVersion: '2',
+  updates: {
+    url: `https://u.expo.dev/${easProjectId}`,
+    checkAutomatically: 'ON_LOAD' as const,
+    fallbackToCacheTimeout: 0,
+  },
   orientation: 'portrait',
   scheme: 'groupi',
   icon: './assets/icon.png',
@@ -83,7 +92,7 @@ export default {
     backgroundColor: '#ffffff',
   },
   ios: {
-    supportsTablet: true,
+    supportsTablet: false,
     bundleIdentifier: 'com.groupi.mobile',
     associatedDomains: [
       `applinks:${appLinkHost}`,
@@ -99,6 +108,7 @@ export default {
       backgroundColor: '#8200AD',
     },
     package: 'com.groupi.mobile',
+    googleServicesFile: './google-services.json',
     intentFilters: linkingConfig.pathPrefixes.map(pathPrefix => ({
       action: 'VIEW',
       autoVerify: true,
@@ -112,11 +122,22 @@ export default {
     '@react-native-community/datetimepicker',
     'expo-font',
     [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Groupi uses your photo library when you choose images for events, posts, and replies.',
+        cameraPermission:
+          'Groupi uses your camera when you take images for events, posts, and replies.',
+        microphonePermission: false,
+      },
+    ],
+    [
       'expo-notifications',
       {
         defaultChannel: 'default',
         icon: './assets/notification-icon.png',
         color: '#6d28d9',
+        enableBackgroundRemoteNotifications: true,
       },
     ],
   ],

@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, canModifyPost } from '../middleware/auth';
+import { requireEventMembership, canModifyPost } from '../../middleware/auth';
 import {
   ErrorResponseSchema,
   EventIdParamSchema,
@@ -72,10 +72,8 @@ export function createPostRoutes() {
 
     await requireEventMembership(ctx, eventId, personId);
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.posts.listEventPosts;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const listFn = internal.posts.rest.listEventPosts;
+    const result = await ctx.runQuery(listFn, { eventId, personId });
 
     return c.json(
       {
@@ -146,15 +144,12 @@ export function createPostRoutes() {
     const { eventId } = c.req.valid('param');
     const body = c.req.valid('json');
 
-    const membership = await requireEventMembership(ctx, eventId, personId);
+    await requireEventMembership(ctx, eventId, personId);
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.posts.createPost;
+    const createFn = internal.posts.rest.createPost;
     const result = await ctx.runMutation(createFn, {
       eventId,
       personId,
-      membershipId: membership.membershipId,
       ...body,
     });
 
@@ -221,9 +216,7 @@ export function createPostRoutes() {
     const personId = c.get('personId');
     const { postId } = c.req.valid('param');
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.posts.getPostDetail;
+    const getFn = internal.posts.rest.getPostDetail;
     const result = await ctx.runQuery(getFn, { postId, personId });
 
     if (!result) {
@@ -312,10 +305,12 @@ export function createPostRoutes() {
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.posts.updatePost;
-    const result = await ctx.runMutation(updateFn, { postId, ...body });
+    const updateFn = internal.posts.rest.updatePost;
+    const result = await ctx.runMutation(updateFn, {
+      postId,
+      personId,
+      ...body,
+    });
 
     return c.json(
       {
@@ -388,10 +383,8 @@ export function createPostRoutes() {
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.posts.deletePost;
-    await ctx.runMutation(deleteFn, { postId });
+    const deleteFn = internal.posts.rest.deletePost;
+    await ctx.runMutation(deleteFn, { postId, personId });
 
     return c.json(
       {

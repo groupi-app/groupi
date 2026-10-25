@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import { api } from '../_generated/api';
+import { createPostForPerson } from '../posts/writes';
+import { createReplyForPerson } from '../replies/writes';
 import { createTestInstance, TestScenarios } from './test_helpers';
 
 async function storeTextFile(
@@ -9,14 +11,71 @@ async function storeTextFile(
 ) {
   return await t.run(async ctx => {
     const file = new Blob([contents], { type: 'text/plain' });
+    const storageId = await ctx.storage.store(file);
+    const organizer = await ctx.db
+      .query('memberships')
+      .filter(q => q.eq(q.field('role'), 'ORGANIZER'))
+      .first();
+    await ctx.db.insert('uploads', {
+      storageId,
+      personId: organizer!.personId,
+      purpose: 'attachment',
+      mimeType: 'text/plain',
+      size: file.size,
+      createdAt: Date.now(),
+      claimed: false,
+    });
     return {
-      storageId: await ctx.storage.store(file),
+      storageId,
       size: file.size,
     };
   });
 }
 
 describe('atomic parent and attachment creation', () => {
+  test('uses the verified actor for attachments without native auth context', async () => {
+    const t = createTestInstance();
+    const { organizer, eventId } = await TestScenarios.multiUser(t);
+    const postUpload = await storeTextFile(t, 'post file');
+    const replyUpload = await storeTextFile(t, 'reply file');
+
+    const result = await t.run(async ctx => {
+      const { postId } = await createPostForPerson(ctx, organizer.personId, {
+        eventId,
+        title: 'Transport independent post',
+        content: 'Files use the verified actor.',
+        attachments: [
+          { ...postUpload, filename: 'post.txt', mimeType: 'text/plain' },
+        ],
+      });
+      const { replyId } = await createReplyForPerson(ctx, organizer.personId, {
+        postId,
+        text: '',
+        attachments: [
+          { ...replyUpload, filename: 'reply.txt', mimeType: 'text/plain' },
+        ],
+      });
+      return { postId, replyId };
+    });
+
+    const attachments = await t.run(ctx =>
+      ctx.db.query('attachments').collect()
+    );
+    expect(attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          postId: result.postId,
+          uploaderId: organizer.personId,
+        }),
+        expect.objectContaining({
+          replyId: result.replyId,
+          uploaderId: organizer.personId,
+        }),
+      ])
+    );
+    expect(attachments).toHaveLength(2);
+  });
+
   test('creates a post and all attachment records in one mutation', async () => {
     const t = createTestInstance();
     const { organizerAuth, eventId } = await TestScenarios.multiUser(t);

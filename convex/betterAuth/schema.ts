@@ -98,6 +98,7 @@ export const tables = {
     .index('credentialID', ['credentialID'])
     .index('userId', ['userId']),
   apikey: defineTable({
+    configId: v.optional(v.union(v.null(), v.string())),
     name: v.optional(v.union(v.null(), v.string())),
     start: v.optional(v.union(v.null(), v.string())),
     prefix: v.optional(v.union(v.null(), v.string())),
@@ -119,6 +120,7 @@ export const tables = {
     permissions: v.optional(v.union(v.null(), v.string())),
     metadata: v.optional(v.union(v.null(), v.string())),
   })
+    .index('expiresAt', ['expiresAt'])
     .index('key', ['key'])
     .index('userId', ['userId']),
 };

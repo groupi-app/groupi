@@ -1,3 +1,4 @@
+import { createAuthAccount } from './auth.helpers';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import betterAuthSchema from '../betterAuth/schema';
 import { createTestInstance } from './test_helpers';
@@ -46,6 +47,58 @@ describe('native E2E fixtures', () => {
         value as string | undefined
       );
     }
+  });
+
+  it('cleans only the selected fixture Event audience grants while preserving the Group and other independent Events', async () => {
+    const t = createE2ETestInstance();
+    const owner = await createAuthAccount(t, 'audience-e2e-cleanup');
+    const groupId = await owner.auth.mutation(
+      api.groups.mutations.createGroup,
+      { name: 'Fixture audience' }
+    );
+    const selected = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Selected fixture Event' }
+    );
+    const retained = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Retained Event' }
+    );
+    for (const eventId of [selected.eventId, retained.eventId])
+      await owner.auth.mutation(
+        api.groupEventAudiences.mutations.shareEventWithGroup,
+        { groupId, eventId }
+      );
+    expect(
+      await t.mutation(api.e2e.mutations.cleanupTestData, {
+        fixtureKey: FIXTURE_KEY,
+        userIds: [],
+        personIds: [],
+        eventIds: [selected.eventId],
+        postIds: [],
+        inviteIds: [],
+        membershipIds: [selected.membershipId],
+      })
+    ).toEqual({ success: true });
+    expect(
+      await t.run(ctx =>
+        ctx.db
+          .query('groupEventAudiences')
+          .withIndex('by_eventId', q => q.eq('eventId', selected.eventId))
+          .collect()
+      )
+    ).toEqual([]);
+    expect(
+      (
+        await owner.auth.query(
+          api.groupEventAudiences.queries.listGroupSharedEvents,
+          { groupId, paginationOpts: { numItems: 20, cursor: null } }
+        )
+      ).page
+    ).toMatchObject([{ event: { _id: retained.eventId } }]);
+    expect(
+      await owner.auth.query(api.groups.queries.getGroup, { groupId })
+    ).not.toBeNull();
   });
 
   it('requires the preview-only fixture key before creating data', async () => {

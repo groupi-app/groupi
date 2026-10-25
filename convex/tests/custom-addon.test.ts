@@ -514,7 +514,7 @@ describe('custom addon handler', () => {
       eventId,
       addonType: 'custom:template123',
       key: `response:${personId}`,
-      data: { f1: ['Vegetarian'], f3: 'Hawaiian' },
+      data: { f1: ['Vegetarian'] },
     });
 
     // Retrieve data

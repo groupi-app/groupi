@@ -25,7 +25,7 @@ export const MemberDetailSchema = z
 
 // Member list response
 export const MemberListResponseSchema = z
-  .array(MemberDetailSchema)
+  .array(MemberDetailSchema.extend({ rsvpNote: z.string().nullable() }))
   .openapi('MemberListResponse');
 
 // Update member role request body
@@ -39,7 +39,9 @@ export const UpdateMemberRoleRequestSchema = z
 export const UpdateRsvpRequestSchema = z
   .object({
     rsvpStatus: RsvpStatusSchema,
+    rsvpNote: z.string().max(200).optional(),
   })
+  .strict()
   .openapi('UpdateRsvpRequest');
 
 // RSVP update response
@@ -47,5 +49,11 @@ export const RsvpUpdateResponseSchema = z
   .object({
     membershipId: z.string(),
     rsvpStatus: RsvpStatusSchema,
+    rsvpNote: z.string().nullable(),
   })
   .openapi('RsvpUpdateResponse');
+
+export const MemberPageSchema = z.object({
+  items: MemberListResponseSchema,
+  nextCursor: z.string().nullable(),
+});

@@ -1,8 +1,12 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, requireEventRole } from '../middleware/auth';
+import {
+  requireEventMembership,
+  requireEventRole,
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   EventAddonParamSchema,
@@ -10,7 +14,7 @@ import {
   EnableAddonRequestSchema,
   UpdateAddonConfigRequestSchema,
   SetAddonDataRequestSchema,
-  AddonListResponseSchema,
+  AddonConfigResponseSchema,
   AddonConfigSingleResponseSchema,
   AddonDataListResponseSchema,
   AddonDataSingleResponseSchema,
@@ -27,6 +31,65 @@ type Variables = {
 export function createAddonRoutes() {
   const app = new OpenAPIHono<{ Variables: Variables }>();
 
+  const paging = z.object({
+    pagination: z.literal('cursor').optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: z.string().min(1).optional(),
+  });
+  const templateSchema = z.object({
+    id: z.string(),
+    addonType: z.string(),
+    name: z.string(),
+    description: z.string(),
+    version: z.number(),
+    template: z.unknown(),
+  });
+  const templatesRoute = createRoute({
+    method: 'get',
+    path: '/addon-templates',
+    tags: ['Add-ons'],
+    summary: 'List existing published templates owned by this identity',
+    security: [{ apiKey: [] }],
+    request: { query: paging },
+    responses: {
+      200: {
+        description: 'Available custom templates',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                z.array(templateSchema),
+                z.object({
+                  items: z.array(templateSchema),
+                  nextCursor: z.string().nullable(),
+                }),
+              ]),
+            }),
+          },
+        },
+      },
+    },
+  });
+  app.openapi(templatesRoute, async c => {
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await c
+            .get('ctx')
+            .runQuery(internal.addons.rest.listPublishedTemplatesPage, {
+              personId: c.get('personId'),
+              limit: query.limit,
+              cursor: query.cursor ?? null,
+            })
+        : await c
+            .get('ctx')
+            .runQuery(internal.addons.rest.listPublishedTemplates, {
+              personId: c.get('personId'),
+            });
+    return c.json({ success: true as const, data: result }, 200);
+  });
+
   // ===== ADDON CONFIG ROUTES =====
 
   // GET /events/:eventId/addons - List all addon configs
@@ -35,17 +98,28 @@ export function createAddonRoutes() {
     path: '/events/{eventId}/addons',
     tags: ['Add-ons'],
     summary: 'List add-ons',
-    description: 'Get all add-on configurations for an event',
+    description:
+      'Get all add-on configurations for an event, including disabled add-ons',
     security: [{ apiKey: [] }],
     request: {
       params: EventIdParamSchema,
+      query: paging,
     },
     responses: {
       200: {
         description: 'List of add-on configs',
         content: {
           'application/json': {
-            schema: AddonListResponseSchema,
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                z.array(AddonConfigResponseSchema),
+                z.object({
+                  items: z.array(AddonConfigResponseSchema),
+                  nextCursor: z.string().nullable(),
+                }),
+              ]),
+            }),
           },
         },
       },
@@ -77,8 +151,16 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.addons.listEventAddons;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const listFn = internal.addons.rest.listEventAddons;
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await ctx.runQuery(internal.addons.rest.listEventAddonsPage, {
+            eventId,
+            limit: query.limit,
+            cursor: query.cursor ?? null,
+          })
+        : await ctx.runQuery(listFn, { eventId });
 
     return c.json(
       {
@@ -96,7 +178,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Enable add-on',
     description:
-      'Enable an add-on for an event with the given config. Requires MODERATOR role or higher.',
+      'Enable an add-on for an event with validated config. Existing custom add-ons can use {templateId} from /addon-templates; only app-supported configurable template settings are mutable. Re-enabling an enabled add-on updates config through its lifecycle. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
@@ -155,7 +237,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const enableFn = internal.api.v1.internal.addons.enableAddon;
+      const enableFn = internal.addons.rest.enableAddon;
       await ctx.runMutation(enableFn, {
         eventId,
         personId,
@@ -232,8 +314,8 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const disableFn = internal.api.v1.internal.addons.disableAddon;
-    await ctx.runMutation(disableFn, { eventId, addonType });
+    const disableFn = internal.addons.rest.disableAddon;
+    await ctx.runMutation(disableFn, { eventId, addonType, personId });
 
     return c.json(
       {
@@ -251,7 +333,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Update add-on config',
     description:
-      'Update the configuration for an enabled add-on. Requires MODERATOR role or higher.',
+      'Replace the configuration for an enabled add-on, invoking its response-reset and notification lifecycle. Custom definition fields are protected. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
@@ -310,7 +392,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const updateFn = internal.api.v1.internal.addons.updateAddonConfig;
+      const updateFn = internal.addons.rest.updateAddonConfig;
       const result = await ctx.runMutation(updateFn, {
         eventId,
         personId,
@@ -390,7 +472,7 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getDataFn = internal.api.v1.internal.addons.getAddonData;
+    const getDataFn = internal.addons.rest.getAddonData;
     const result = await ctx.runQuery(getDataFn, { eventId, addonType });
 
     return c.json(
@@ -468,7 +550,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const setDataFn = internal.api.v1.internal.addons.setAddonData;
+      const setDataFn = internal.addons.rest.setAddonData;
       const result = await ctx.runMutation(setDataFn, {
         eventId,
         addonType,
@@ -492,6 +574,7 @@ export function createAddonRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to set add-on data';
       return c.json(
@@ -557,7 +640,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.addons.deleteAddonData;
+      const deleteFn = internal.addons.rest.deleteAddonData;
       await ctx.runMutation(deleteFn, { eventId, addonType, key, personId });
     } catch (error) {
       const message =

@@ -16,6 +16,7 @@ import { useDeletePost } from '@/hooks/use-posts';
 import { useIsPostMuted, useTogglePostMute } from '@/hooks/use-muting';
 import { useCreateReport } from '@/hooks/use-reports';
 import { toast } from '@groupi/shared/platform';
+import { htmlToPlainText } from './html-content';
 
 export interface PostCardProps {
   post: {
@@ -67,8 +68,8 @@ export function PostCard({
   const createReport = useCreateReport();
   const { showActionMenu } = useActionMenu();
 
-  // Strip HTML for preview — show plain text in card
-  const plainContent = post.content.replace(/<[^>]*>/g, '').trim();
+  // Preserve block boundaries so adjacent paragraphs do not become one long word.
+  const plainContent = htmlToPlainText(post.content).trim();
 
   function handleLongPress() {
     const options: ActionMenuOption[] = [

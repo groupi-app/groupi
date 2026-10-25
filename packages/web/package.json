@@ -1,6 +1,6 @@
 {
   "name": "@groupi/web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "license": "GPL-3.0",
   "type": "module",
@@ -29,7 +29,8 @@
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "lighthouse": "bash scripts/lighthouse.sh",
-    "lighthouse:dev": "bash scripts/lighthouse.sh dev"
+    "lighthouse:dev": "bash scripts/lighthouse.sh dev",
+    "test:history": "node e2e/history/run.mjs"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.13",
@@ -123,7 +124,7 @@
     "use-places-autocomplete": "^4.0.1",
     "vaul": "^1.1.2",
     "yaml": "^2.8.2",
-    "zod": "^4.1.12",
+    "zod": "4.4.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

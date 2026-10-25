@@ -1,364 +1,588 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
-import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
+import type { Id } from '../../../_generated/dataModel';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership } from '../../v1/middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
-import {
-  InviteListResponseSchema,
-  InvitePublicResponseSchema,
-  AcceptInviteResponseSchema,
-  CreateInviteRequestSchema,
-  InviteIdParamSchema,
-  InviteTokenParamSchema,
-} from '../schemas/invites';
-
-// Type for Hono app with Convex context
-type Variables = {
-  ctx: ActionCtx;
-  userId: string;
-  personId: string;
+import * as schema from '../schemas/invites';
+type Variables = { ctx: ActionCtx; userId: string; personId: string };
+const errors = {
+  400: {
+    description: 'Invalid input',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
+  403: {
+    description: 'Forbidden',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: 'Not found',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: 'Invite unavailable or request conflict',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
 };
-
 export function createInviteRoutes() {
   const app = new OpenAPIHono<{ Variables: Variables }>({
     defaultHook: createValidationHook<{ Variables: Variables }>(),
   });
-
-  // GET /events/:eventId/invites - List event invites
-  const listInvitesRoute = createRoute({
-    method: 'get',
-    path: '/events/{eventId}/invites',
-    tags: ['Invites'],
-    summary: 'List event invites',
-    description: 'Get all invites for an event (requires membership)',
-    security: [{ apiKey: [] }],
-    request: {
-      params: EventIdParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'List of invites',
-        content: {
-          'application/json': {
-            schema: InviteListResponseSchema,
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/invites',
+      tags: ['Invites'],
+      summary: 'List link and email invites',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        query: schema.InviteListQuerySchema,
+      },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.union([
+                schema.InviteListResponseSchema,
+                schema.InvitePageSchema,
+              ]),
+            },
           },
         },
+        ...errors,
       },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      403: {
-        description: 'Forbidden - not a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(listInvitesRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { eventId } = c.req.valid('param');
-
-    // Verify membership
-    await requireEventMembership(ctx, eventId, personId);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.invites.listEventInvites;
-    const result = await ctx.runQuery(listFn, { eventId });
-
-    return c.json(result.invites, 200);
-  });
-
-  // POST /events/:eventId/invites - Create invite
-  const createInviteRoute = createRoute({
-    method: 'post',
-    path: '/events/{eventId}/invites',
-    tags: ['Invites'],
-    summary: 'Create invite',
-    description: 'Create a new invite link for an event (requires membership)',
-    security: [{ apiKey: [] }],
-    request: {
-      params: EventIdParamSchema,
-      body: {
-        content: {
-          'application/json': {
-            schema: CreateInviteRequestSchema,
-          },
-        },
-      },
-    },
-    responses: {
-      201: {
-        description: 'Invite created',
-        content: {
-          'application/json': {
-            schema: z.object({
-              id: z.string(),
-              token: z.string(),
-            }),
-          },
-        },
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      403: {
-        description: 'Forbidden - not a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(createInviteRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { eventId } = c.req.valid('param');
-    const body = c.req.valid('json');
-
-    // Verify membership and get membershipId
-    const membership = await requireEventMembership(ctx, eventId, personId);
-
-    const expiresAt = body.expiresAt
-      ? new Date(body.expiresAt).getTime()
-      : undefined;
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.invites.createInvite;
-    const result = await ctx.runMutation(createFn, {
-      eventId,
-      creatorMembershipId: membership.membershipId,
-      maxUses: body.maxUses,
-      name: body.name,
-      expiresAt,
-    });
-
-    return c.json(
-      {
-        id: result.id,
-        token: result.token,
-      },
-      201
-    );
-  });
-
-  // DELETE /invites/:inviteId - Delete invite
-  const deleteInviteRoute = createRoute({
-    method: 'delete',
-    path: '/invites/{inviteId}',
-    tags: ['Invites'],
-    summary: 'Delete invite',
-    description: 'Delete an invite link',
-    security: [{ apiKey: [] }],
-    request: {
-      params: InviteIdParamSchema,
-    },
-    responses: {
-      204: {
-        description: 'Invite deleted successfully',
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      404: {
-        description: 'Invite not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(deleteInviteRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { inviteId } = c.req.valid('param');
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.invites.deleteInvite;
-      await ctx.runMutation(deleteFn, { inviteId, personId });
-
-      return c.body(null, 204);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete invite';
-      return c.json(
-        {
-          error: { code: 'NOT_FOUND', message },
-        },
-        404
-      );
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { eventId } = c.req.valid('param');
+      const query = c.req.valid('query');
+      const result = await ctx.runQuery(internal.invites.rest.listLinks, {
+        personId,
+        eventId: eventId as Id<'events'>,
+        kind: query.kind ?? 'all',
+        limit: query.pagination === 'cursor' ? (query.limit ?? 20) : undefined,
+        cursor: query.cursor,
+      });
+      return c.json(result, 200);
     }
-  });
-
-  // GET /invites/:token - Get invite by token (public)
-  const getInviteByTokenRoute = createRoute({
-    method: 'get',
-    path: '/invites/{token}',
-    tags: ['Invites'],
-    summary: 'Get invite by token',
-    description: 'Get public invite information by token (no auth required)',
-    request: {
-      params: InviteTokenParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Invite details',
-        content: {
-          'application/json': {
-            schema: InvitePublicResponseSchema,
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/invites',
+      tags: ['Invites'],
+      summary: 'Create link invitation',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        body: {
+          required: true,
+          content: {
+            'application/json': { schema: schema.CreateInviteRequestSchema },
           },
         },
+        headers: z.object({ 'idempotency-key': z.string().optional() }),
       },
-      404: {
-        description: 'Invite not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
+      responses: {
+        201: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({ id: z.string(), token: z.string() }),
+            },
           },
         },
+        ...errors,
       },
-    },
-  });
-
-  app.openapi(getInviteByTokenRoute, async c => {
-    const ctx = c.get('ctx');
-    const { token } = c.req.valid('param');
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.invites.getInviteByToken;
-    const result = await ctx.runQuery(getFn, { token });
-
-    if (!result) {
-      return c.json(
-        {
-          error: { code: 'NOT_FOUND', message: 'Invite not found' },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { eventId } = c.req.valid('param');
+      const result = await ctx.runMutation(internal.invites.rest.create, {
+        personId,
+        userId: c.get('userId'),
+        requestId: c.req.header('Idempotency-Key'),
+        body: {
+          ...c.req.valid('json'),
+          kind: 'link',
+          eventId: eventId as Id<'events'>,
         },
-        404
-      );
+      });
+      if (!('id' in result)) throw new Error('Unexpected invitation result');
+      return c.json(result, 201);
     }
-
-    return c.json(result, 200);
-  });
-
-  // POST /invites/:token/accept - Accept invite
-  const acceptInviteRoute = createRoute({
-    method: 'post',
-    path: '/invites/{token}/accept',
-    tags: ['Invites'],
-    summary: 'Accept invite',
-    description: 'Accept an invite and join the event',
-    security: [{ apiKey: [] }],
-    request: {
-      params: InviteTokenParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Invite accepted',
-        content: {
-          'application/json': {
-            schema: AcceptInviteResponseSchema,
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/invites/email',
+      tags: ['Invites'],
+      summary: 'Create email invitation',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        body: {
+          required: true,
+          content: {
+            'application/json': { schema: schema.EmailInviteRequestSchema },
+          },
+        },
+        headers: z.object({ 'idempotency-key': z.string().optional() }),
+      },
+      responses: {
+        201: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({
+                createdCount: z.number(),
+                inviteIds: z.array(z.string()),
+                queuedCount: z.number(),
+              }),
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { eventId } = c.req.valid('param');
+      const result = await ctx.runMutation(internal.invites.rest.create, {
+        personId,
+        userId: c.get('userId'),
+        requestId: c.req.header('Idempotency-Key'),
+        body: {
+          ...c.req.valid('json'),
+          kind: 'email',
+          eventId: eventId as Id<'events'>,
+        },
+      });
+      if (!('createdCount' in result))
+        throw new Error('Unexpected invitation result');
+      return c.json(result, 201);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/member-invites',
+      tags: ['Invites'],
+      summary: 'Create member invitation',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        body: {
+          required: true,
+          content: {
+            'application/json': { schema: schema.MemberInviteRequestSchema },
+          },
+        },
+        headers: z.object({ 'idempotency-key': z.string().optional() }),
+      },
+      responses: {
+        201: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({
+                inviteId: z.string(),
+                status: z.literal('PENDING'),
+              }),
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { eventId } = c.req.valid('param');
+      const result = await ctx.runMutation(internal.invites.rest.create, {
+        personId,
+        userId: c.get('userId'),
+        requestId: c.req.header('Idempotency-Key'),
+        body: {
+          ...c.req.valid('json'),
+          kind: 'member',
+          eventId: eventId as Id<'events'>,
+        },
+      });
+      if (!('inviteId' in result))
+        throw new Error('Unexpected invitation result');
+      return c.json(result, 201);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/invites/send-pending',
+      tags: ['Invites'],
+      summary: 'Create pending invitation',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        headers: z.object({ 'idempotency-key': z.string().optional() }),
+      },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({ queuedCount: z.number() }),
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { eventId } = c.req.valid('param');
+      const result = await ctx.runMutation(internal.invites.rest.create, {
+        personId,
+        userId: c.get('userId'),
+        requestId: c.req.header('Idempotency-Key'),
+        body: { kind: 'pending', eventId: eventId as Id<'events'> },
+      });
+      if (!('queuedCount' in result))
+        throw new Error('Unexpected invitation result');
+      return c.json(result, 200);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'patch',
+      path: '/invites/{inviteId}',
+      tags: ['Invites'],
+      summary: 'Edit invitation',
+      security: [{ apiKey: [] }],
+      request: {
+        params: schema.InviteIdParamSchema,
+        body: {
+          required: true,
+          content: {
+            'application/json': { schema: schema.EditInviteRequestSchema },
           },
         },
       },
-      400: {
-        description:
-          'Bad request - invite expired, max uses reached, or already a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.InviteSummarySchema },
           },
         },
+        ...errors,
       },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      404: {
-        description: 'Invite not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(acceptInviteRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { token } = c.req.valid('param');
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const acceptFn = internal.api.v1.internal.invites.acceptInvite;
-      const result = await ctx.runMutation(acceptFn, { token, personId });
-
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
       return c.json(
-        {
-          eventId: result.eventId,
-          membershipId: result.membershipId,
-        },
+        await ctx.runMutation(internal.invites.rest.editLink, {
+          personId,
+          inviteId: inviteId as Id<'invites'>,
+          ...c.req.valid('json'),
+        }),
         200
       );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to accept invite';
-
-      if (message === 'Invite not found') {
-        return c.json(
-          {
-            error: { code: 'NOT_FOUND', message },
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/invites/{inviteId}',
+      tags: ['Invites'],
+      summary: 'Delete invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteIdParamSchema },
+      responses: { 204: { description: 'Success' }, ...errors },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
+      await ctx.runMutation(internal.invites.rest.deleteLink, {
+        personId,
+        inviteId: inviteId as Id<'invites'>,
+      });
+      return c.body(null, 204);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/invites/{token}',
+      tags: ['Invites'],
+      summary: 'Inspect bearer invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteTokenParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.InvitePublicResponseSchema },
           },
-          404
-        );
-      }
-
-      return c.json(
-        {
-          error: { code: 'BAD_REQUEST', message },
         },
-        400
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const { token } = c.req.valid('param');
+      return c.json(
+        await ctx.runQuery(internal.invites.rest.inspectLink, {
+          token,
+          now: Date.now(),
+        }),
+        200
       );
     }
-  });
-
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/invites/{token}/accept',
+      tags: ['Invites'],
+      summary: 'Accept bearer invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteTokenParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.AcceptInviteResponseSchema },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { token } = c.req.valid('param');
+      return c.json(
+        await ctx.runMutation(internal.invites.rest.acceptLink, {
+          personId,
+          token,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/member-invites',
+      tags: ['Invites'],
+      summary: 'List username invitations',
+      security: [{ apiKey: [] }],
+      request: { query: schema.MemberListQuerySchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.MemberInvitePageSchema },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const query = c.req.valid('query');
+      return c.json(
+        await ctx.runQuery(internal.invites.rest.listMembers, {
+          personId,
+          status: query.status ?? 'PENDING',
+          limit: query.limit ?? 20,
+          cursor: query.cursor,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/member-invites',
+      tags: ['Invites'],
+      summary: 'List username invitations',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        query: schema.MemberListQuerySchema,
+      },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.MemberInvitePageSchema },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const query = c.req.valid('query');
+      return c.json(
+        await ctx.runQuery(internal.invites.rest.listMembers, {
+          personId,
+          eventId: c.req.valid('param').eventId as Id<'events'>,
+          status: query.status ?? 'all',
+          limit: query.limit ?? 20,
+          cursor: query.cursor,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/member-invites/{inviteId}',
+      tags: ['Invites'],
+      summary: 'Inspect username invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.MemberInviteSummarySchema },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
+      return c.json(
+        await ctx.runQuery(internal.invites.rest.getMember, {
+          personId,
+          inviteId: inviteId as Id<'eventInvites'>,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/member-invites/{inviteId}/accept',
+      tags: ['Invites'],
+      summary: 'accept username invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.AcceptInviteResponseSchema },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
+      const result = await ctx.runMutation(
+        internal.invites.rest.respondMember,
+        { personId, inviteId: inviteId as Id<'eventInvites'>, action: 'accept' }
+      );
+      if (result.membershipId === undefined)
+        throw new Error('Unexpected invitation result');
+      return c.json(
+        { eventId: result.eventId, membershipId: result.membershipId },
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/member-invites/{inviteId}/decline',
+      tags: ['Invites'],
+      summary: 'decline username invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({ success: z.literal(true) }),
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
+      const result = await ctx.runMutation(
+        internal.invites.rest.respondMember,
+        {
+          personId,
+          inviteId: inviteId as Id<'eventInvites'>,
+          action: 'decline',
+        }
+      );
+      if (result.success !== true)
+        throw new Error('Unexpected invitation result');
+      return c.json({ success: true as const }, 200);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/member-invites/{inviteId}',
+      tags: ['Invites'],
+      summary: 'cancel username invitation',
+      security: [{ apiKey: [] }],
+      request: { params: schema.InviteIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({ success: z.literal(true) }),
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const { inviteId } = c.req.valid('param');
+      const result = await ctx.runMutation(
+        internal.invites.rest.respondMember,
+        { personId, inviteId: inviteId as Id<'eventInvites'>, action: 'cancel' }
+      );
+      if (result.success !== true)
+        throw new Error('Unexpected invitation result');
+      return c.json({ success: true as const }, 200);
+    }
+  );
   return app;
 }

@@ -1,3 +1,5 @@
+import { canViewAttendance, privateNote } from '../events/attendance';
+import { latestResponses } from './reads';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth, getPersonWithUser } from '../auth';
@@ -47,10 +49,12 @@ export const getEventAvailabilityData = query({
       .collect();
 
     // Get all memberships for this event
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
+    const memberships = canViewAttendance(event, userMembership)
+      ? await ctx.db
+          .query('memberships')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      : [userMembership];
 
     // Get user data for each member
     const membersWithUsers = await Promise.all(
@@ -58,6 +62,11 @@ export const getEventAvailabilityData = query({
         const memberData = await getPersonWithUser(ctx, membership.personId);
         return {
           ...membership,
+          rsvpNote: privateNote(
+            membership.rsvpNote,
+            userMembership,
+            membership
+          ),
           person: memberData?.person || null,
           user: memberData?.user || null,
         };
@@ -65,11 +74,6 @@ export const getEventAvailabilityData = query({
     );
 
     const validMembers = membersWithUsers.filter(m => m.person && m.user);
-
-    // Determine if current user can see private notes (organizer/moderator)
-    const canSeeAllNotes =
-      userMembership.role === 'ORGANIZER' ||
-      userMembership.role === 'MODERATOR';
 
     // Build a membership lookup map for efficient member resolution
     const membershipMap = new Map(validMembers.map(m => [m._id, m]));
@@ -85,15 +89,13 @@ export const getEventAvailabilityData = query({
           )
           .collect();
 
-        const availabilities = dateAvailabilities
+        const availabilities = latestResponses(dateAvailabilities)
           .map(avail => {
             const member = membershipMap.get(avail.membershipId);
             if (!member) return null;
 
             // Availability notes are visible to the author + organizers/moderators
-            const isAuthor = member.personId === currentPerson._id;
-            const visibleNote =
-              isAuthor || canSeeAllNotes ? avail.note : undefined;
+            const visibleNote = privateNote(avail.note, userMembership, member);
 
             return {
               ...avail,

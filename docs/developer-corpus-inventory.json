@@ -1,0 +1,810 @@
+{
+  "auditDate": "2026-10-13",
+  "sourceCommit": "c307c779fd6907936c34303ac34f755c7fa266db",
+  "scope": "Tracked root/developer/package Markdown except changelogs; CLI JSON sources, public web API page and generated REST catalogs. Agent instruction trees are excluded; these audit decision artifacts are not product guide content. No credentials, user data or private planning contents are copied.",
+  "entryCount": 53,
+  "commandReference": {
+    "package": "@groupi/cli",
+    "version": "0.1.0",
+    "entriesIncludingGroups": 158,
+    "canonicalSource": "packages/cli/docs/command-reference.json",
+    "generator": "packages/cli/scripts/generate-reference.js"
+  },
+  "entries": [
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "canonicalIdentity": "guide:CODE_OF_CONDUCT.md",
+      "source": {
+        "file": "CODE_OF_CONDUCT.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/CODE_OF_CONDUCT.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-03-13 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "canonicalIdentity": "guide:CONTRIBUTING.md",
+      "source": {
+        "file": "CONTRIBUTING.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/CONTRIBUTING.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-15 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "GLOSSARY.md",
+      "canonicalIdentity": "guide:GLOSSARY.md",
+      "source": {
+        "file": "GLOSSARY.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/GLOSSARY.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "MAINTAINERS.md",
+      "canonicalIdentity": "guide:MAINTAINERS.md",
+      "source": {
+        "file": "MAINTAINERS.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/MAINTAINERS.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-02-04 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "README.md",
+      "canonicalIdentity": "guide:README.md",
+      "source": {
+        "file": "README.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/README.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-23 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "SECURITY.md",
+      "canonicalIdentity": "guide:SECURITY.md",
+      "source": {
+        "file": "SECURITY.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/SECURITY.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-02-04 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "convex/README.md",
+      "canonicalIdentity": "guide:convex/README.md",
+      "source": {
+        "file": "convex/README.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/convex/README.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-15 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/addon-framework.md",
+      "canonicalIdentity": "guide:docs/addon-framework.md",
+      "source": {
+        "file": "docs/addon-framework.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/addon-framework.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-02-24 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/adr/0001-cli-rest-transport.md",
+      "canonicalIdentity": "guide:docs/adr/0001-cli-rest-transport.md",
+      "source": {
+        "file": "docs/adr/0001-cli-rest-transport.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/adr/0001-cli-rest-transport.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/agents/domain.md",
+      "canonicalIdentity": "guide:docs/agents/domain.md",
+      "source": {
+        "file": "docs/agents/domain.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/agents/domain.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/agents/issue-tracker.md",
+      "canonicalIdentity": "guide:docs/agents/issue-tracker.md",
+      "source": {
+        "file": "docs/agents/issue-tracker.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/agents/issue-tracker.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/agents/triage-labels.md",
+      "canonicalIdentity": "guide:docs/agents/triage-labels.md",
+      "source": {
+        "file": "docs/agents/triage-labels.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/agents/triage-labels.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/app-review-access.md",
+      "canonicalIdentity": "guide:docs/app-review-access.md",
+      "source": {
+        "file": "docs/app-review-access.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/app-review-access.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-17 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/architecture.md",
+      "canonicalIdentity": "guide:docs/architecture.md",
+      "source": {
+        "file": "docs/architecture.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/architecture.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/auth-architecture.md",
+      "canonicalIdentity": "guide:docs/auth-architecture.md",
+      "source": {
+        "file": "docs/auth-architecture.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/auth-architecture.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/changesets.md",
+      "canonicalIdentity": "guide:docs/changesets.md",
+      "source": {
+        "file": "docs/changesets.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/changesets.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-01 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/cli-capabilities.md",
+      "canonicalIdentity": "guide:docs/cli-capabilities.md",
+      "source": {
+        "file": "docs/cli-capabilities.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/cli-capabilities.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/cli-completion-plan.md",
+      "canonicalIdentity": "guide:docs/cli-completion-plan.md",
+      "source": {
+        "file": "docs/cli-completion-plan.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/cli-completion-plan.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/cli-release.md",
+      "canonicalIdentity": "guide:docs/cli-release.md",
+      "source": {
+        "file": "docs/cli-release.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/cli-release.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-01 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "docs/data-exports.md",
+      "canonicalIdentity": "guide:docs/data-exports.md",
+      "source": {
+        "file": "docs/data-exports.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/data-exports.md#L1"
+      },
+      "audience": "future-integrator",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "planned-only",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-02-24 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from supported-guide results; any public design publication requires explicit planned label"
+    },
+    {
+      "path": "docs/database-schema.md",
+      "canonicalIdentity": "guide:docs/database-schema.md",
+      "source": {
+        "file": "docs/database-schema.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/database-schema.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/getting-started.md",
+      "canonicalIdentity": "guide:docs/getting-started.md",
+      "source": {
+        "file": "docs/getting-started.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/getting-started.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/groupi-date-language-spec.md",
+      "canonicalIdentity": "guide:docs/groupi-date-language-spec.md",
+      "source": {
+        "file": "docs/groupi-date-language-spec.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/groupi-date-language-spec.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-05 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/ios-testing.md",
+      "canonicalIdentity": "guide:docs/ios-testing.md",
+      "source": {
+        "file": "docs/ios-testing.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/ios-testing.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-23 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "docs/mobile-e2e-audit-2026-08-23.md",
+      "canonicalIdentity": "guide:docs/mobile-e2e-audit-2026-08-23.md",
+      "source": {
+        "file": "docs/mobile-e2e-audit-2026-08-23.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/mobile-e2e-audit-2026-08-23.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-23 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/mobile-release.md",
+      "canonicalIdentity": "guide:docs/mobile-release.md",
+      "source": {
+        "file": "docs/mobile-release.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/mobile-release.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-26 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "docs/mobile-store-readiness.md",
+      "canonicalIdentity": "guide:docs/mobile-store-readiness.md",
+      "source": {
+        "file": "docs/mobile-store-readiness.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/mobile-store-readiness.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-29 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/mobile-update-boundary.md",
+      "canonicalIdentity": "guide:docs/mobile-update-boundary.md",
+      "source": {
+        "file": "docs/mobile-update-boundary.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/mobile-update-boundary.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-10 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "docs/open-source-readiness-plan.md",
+      "canonicalIdentity": "guide:docs/open-source-readiness-plan.md",
+      "source": {
+        "file": "docs/open-source-readiness-plan.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/open-source-readiness-plan.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-02-04 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "docs/presence.md",
+      "canonicalIdentity": "guide:docs/presence.md",
+      "source": {
+        "file": "docs/presence.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/presence.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-30 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/self-hosting.md",
+      "canonicalIdentity": "guide:docs/self-hosting.md",
+      "source": {
+        "file": "docs/self-hosting.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/self-hosting.md#L1"
+      },
+      "audience": "future-integrator",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "planned-only",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-27 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from supported-guide results; any public design publication requires explicit planned label"
+    },
+    {
+      "path": "docs/testing.md",
+      "canonicalIdentity": "guide:docs/testing.md",
+      "source": {
+        "file": "docs/testing.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/testing.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/ui-design-system.md",
+      "canonicalIdentity": "guide:docs/ui-design-system.md",
+      "source": {
+        "file": "docs/ui-design-system.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/ui-design-system.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-30 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "docs/web-vs-mobile-gap-analysis.md",
+      "canonicalIdentity": "guide:docs/web-vs-mobile-gap-analysis.md",
+      "source": {
+        "file": "docs/web-vs-mobile-gap-analysis.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/docs/web-vs-mobile-gap-analysis.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-27 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "canonicalIdentity": "cli:0.1.0:README.md",
+      "source": {
+        "file": "packages/cli/README.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/README.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/cli/docs/addon-authoring.md",
+      "canonicalIdentity": "cli:0.1.0:addon-authoring.md",
+      "source": {
+        "file": "packages/cli/docs/addon-authoring.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/addon-authoring.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/cli/docs/addon-participation.md",
+      "canonicalIdentity": "cli:0.1.0:addon-participation.md",
+      "source": {
+        "file": "packages/cli/docs/addon-participation.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/addon-participation.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-01 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/cli/docs/command-reference.md",
+      "canonicalIdentity": "cli:0.1.0:command-reference.md",
+      "source": {
+        "file": "packages/cli/docs/command-reference.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/command-reference.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "generated; change source then regenerate; never hand-copy command help"
+    },
+    {
+      "path": "packages/cli/docs/discussion.md",
+      "canonicalIdentity": "cli:0.1.0:discussion.md",
+      "source": {
+        "file": "packages/cli/docs/discussion.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/discussion.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-01 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/cli/docs/guidance-verification.md",
+      "canonicalIdentity": "cli:0.1.0:guidance-verification.md",
+      "source": {
+        "file": "packages/cli/docs/guidance-verification.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/guidance-verification.md#L1"
+      },
+      "audience": "maintainer",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "maintainer-curation",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-30 is NOT successful workflow verification",
+      "publicationPolicy": "publish only reviewed generic procedures; omit account/deployment-specific evidence"
+    },
+    {
+      "path": "packages/cli/docs/terminal.md",
+      "canonicalIdentity": "cli:0.1.0:terminal.md",
+      "source": {
+        "file": "packages/cli/docs/terminal.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/terminal.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-01 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/cli/docs/workflow-examples.md",
+      "canonicalIdentity": "cli:0.1.0:workflow-examples.md",
+      "source": {
+        "file": "packages/cli/docs/workflow-examples.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/workflow-examples.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-30 is NOT successful workflow verification",
+      "publicationPolicy": "generated; change source then regenerate; never hand-copy command help"
+    },
+    {
+      "path": "packages/cli/skills/groupi/SKILL.md",
+      "canonicalIdentity": "cli:0.1.0:SKILL.md",
+      "source": {
+        "file": "packages/cli/skills/groupi/SKILL.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/skills/groupi/SKILL.md#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "reuse distributed canonical artifact"
+    },
+    {
+      "path": "packages/mobile/.maestro/README.md",
+      "canonicalIdentity": "guide:packages/mobile/.maestro/README.md",
+      "source": {
+        "file": "packages/mobile/.maestro/README.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/mobile/.maestro/README.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-24 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "packages/mobile/COMPONENTS.md",
+      "canonicalIdentity": "guide:packages/mobile/COMPONENTS.md",
+      "source": {
+        "file": "packages/mobile/COMPONENTS.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/mobile/COMPONENTS.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-14 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "packages/web/CONVEX_INTEGRATION_COMPLETE.md",
+      "canonicalIdentity": "guide:packages/web/CONVEX_INTEGRATION_COMPLETE.md",
+      "source": {
+        "file": "packages/web/CONVEX_INTEGRATION_COMPLETE.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/web/CONVEX_INTEGRATION_COMPLETE.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "packages/web/LOGGING_INTEGRATION_GUIDE.md",
+      "canonicalIdentity": "guide:packages/web/LOGGING_INTEGRATION_GUIDE.md",
+      "source": {
+        "file": "packages/web/LOGGING_INTEGRATION_GUIDE.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/web/LOGGING_INTEGRATION_GUIDE.md#L1"
+      },
+      "audience": "internal-maintainer",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "exclude",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-01-25 is NOT successful workflow verification",
+      "publicationPolicy": "exclude from default public corpus/search; curate separate sanitized guides if needed"
+    },
+    {
+      "path": "packages/web/README.md",
+      "canonicalIdentity": "guide:packages/web/README.md",
+      "source": {
+        "file": "packages/web/README.md",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/web/README.md#L1"
+      },
+      "audience": "contributor",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-15 is NOT successful workflow verification",
+      "publicationPolicy": "candidate; factual verification required"
+    },
+    {
+      "path": "packages/cli/docs/command-reference.json",
+      "canonicalIdentity": "cli:0.1.0:command-reference.json",
+      "source": {
+        "file": "packages/cli/docs/command-reference.json",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/command-reference.json#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-10-04 is NOT successful workflow verification",
+      "publicationPolicy": "generated; change source then regenerate; never hand-copy command help"
+    },
+    {
+      "path": "packages/cli/docs/agent-workflows.json",
+      "canonicalIdentity": "cli:0.1.0:agent-workflows.json",
+      "source": {
+        "file": "packages/cli/docs/agent-workflows.json",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/cli/docs/agent-workflows.json#L1"
+      },
+      "audience": "CLI-user/agent/add-on-author",
+      "version": "@groupi/cli 0.1.0",
+      "availability": "implemented-source; release-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-09-30 is NOT successful workflow verification",
+      "publicationPolicy": "canonical workflow argument source; generated examples derive here"
+    },
+    {
+      "path": "packages/web/app/docs/api/page.tsx",
+      "canonicalIdentity": "guide:packages/web/app/docs/api/page.tsx",
+      "source": {
+        "file": "packages/web/app/docs/api/page.tsx",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/packages/web/app/docs/api/page.tsx#L1"
+      },
+      "audience": "integrator",
+      "version": "source snapshot c307c779fd6907936c34303ac34f755c7fa266db",
+      "availability": "review-before-publication",
+      "owner": "@TheiaSurette (CODEOWNERS)",
+      "freshness": "audited 2026-10-13; last source commit 2026-08-21 is NOT successful workflow verification",
+      "publicationPolicy": "curate/replace factual duplication using generated REST references; drift found"
+    },
+    {
+      "path": "/api/v1/openapi.json",
+      "canonicalIdentity": "rest:1.0.0",
+      "source": {
+        "file": "convex/api/v1/index.ts",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/convex/api/v1/index.ts#L1"
+      },
+      "audience": "integrator/SDK-author",
+      "version": "1.0.0",
+      "availability": "generated-in-source; deployment-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS); API domain reviewers to designate",
+      "freshness": "generated locally from c307c779fd6907936c34303ac34f755c7fa266db on 2026-10-13",
+      "publicationPolicy": "canonical schemas; fix known omissions before complete generated SDK/explorer promise"
+    },
+    {
+      "path": "/api/v2/openapi.json",
+      "canonicalIdentity": "rest:2.0.0",
+      "source": {
+        "file": "convex/api/v2/index.ts",
+        "line": 1,
+        "url": "https://github.com/groupi-app/groupi/blob/c307c779fd6907936c34303ac34f755c7fa266db/convex/api/v2/index.ts#L1"
+      },
+      "audience": "integrator/SDK-author",
+      "version": "2.0.0",
+      "availability": "generated-in-source; deployment-unverified",
+      "owner": "@TheiaSurette (CODEOWNERS); API domain reviewers to designate",
+      "freshness": "generated locally from c307c779fd6907936c34303ac34f755c7fa266db on 2026-10-13",
+      "publicationPolicy": "canonical schemas; fix known omissions before complete generated SDK/explorer promise"
+    }
+  ]
+}

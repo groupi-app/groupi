@@ -79,6 +79,29 @@ async function authenticateUser(
   targetUrl: string = '/events'
 ): Promise<boolean> {
   setupPageErrorHandler(page);
+  const expectedOrigin = new URL(baseURL).origin;
+  const isAuthenticatedDestination = (url: URL) =>
+    url.origin === expectedOrigin &&
+    /^\/(events|onboarding|create|settings)(?:\/|$)/.test(url.pathname);
+  const isSignIn = (url: URL) =>
+    url.origin === expectedOrigin && url.pathname === '/sign-in';
+  const confirmSession = async () => {
+    if (!isAuthenticatedDestination(new URL(page.url()))) return false;
+    const response = await page.request.get(
+      `${expectedOrigin}/api/auth/get-session`,
+      {
+        maxRedirects: 0,
+      }
+    );
+    if (!response.ok()) return false;
+    const result = await response.json();
+    return Boolean(
+      result?.session?.id &&
+        result?.user?.id &&
+        result.session.userId === result.user.id &&
+        result.user.email === email
+    );
+  };
 
   try {
     // Try the fast E2E login endpoint first
@@ -102,11 +125,11 @@ async function authenticateUser(
         const rewrittenUrl = `${baseURL}${parsed.pathname}${parsed.search}`;
         await page.goto(rewrittenUrl);
         // Wait for navigation to complete - use domcontentloaded instead of networkidle
-        await page.waitForURL(/\/(events|onboarding|create|settings)/, {
+        await page.waitForURL(isAuthenticatedDestination, {
           timeout: 10000,
           waitUntil: 'domcontentloaded',
         });
-        return true;
+        return await confirmSession();
       }
     }
 
@@ -120,20 +143,23 @@ async function authenticateUser(
       magicLinkUrl = `${baseURL}${parsed.pathname}${parsed.search}`;
       await page.goto(magicLinkUrl);
       // Wait for redirect after magic link verification
-      await page.waitForURL(/\/(events|onboarding|create|settings|sign-in)/, {
-        timeout: 10000,
-        waitUntil: 'domcontentloaded',
-      });
+      await page.waitForURL(
+        url => isAuthenticatedDestination(url) || isSignIn(url),
+        {
+          timeout: 10000,
+          waitUntil: 'domcontentloaded',
+        }
+      );
 
       // If still on sign-in, navigate to target
-      if (page.url().includes('/sign-in')) {
+      if (isSignIn(new URL(page.url()))) {
         await page.goto(`${baseURL}${targetUrl}`);
-        await page.waitForURL(/\/(events|onboarding|create|settings)/, {
+        await page.waitForURL(isAuthenticatedDestination, {
           timeout: 5000,
           waitUntil: 'domcontentloaded',
         });
       }
-      return true;
+      return await confirmSession();
     }
 
     console.warn(`Failed to create magic link token for ${email}`);
@@ -151,16 +177,23 @@ export const test = base.extend<GroupiFixtures>({
   // Auth helper - auto-cleanup after each test
   authHelper: async ({ baseURL }, use) => {
     const helper = new AuthHelper(baseURL);
-    await use(helper);
-    await helper.cleanup();
+    try {
+      await use(helper);
+    } finally {
+      await helper.cleanup();
+    }
   },
 
   // Seeder - auto-cleanup after each test
 
-  seeder: async (_deps, use) => {
+  // Playwright parses fixture dependencies from this destructuring pattern.
+  seeder: async ({}, use) => {
     const seeder = new ConvexSeeder();
-    await use(seeder);
-    await seeder.cleanup();
+    try {
+      await use(seeder);
+    } finally {
+      await seeder.cleanup();
+    }
   },
 
   // Page objects
@@ -216,11 +249,26 @@ export const test = base.extend<GroupiFixtures>({
     const page = await context.newPage();
     const seeder = new ConvexSeeder();
 
-    await authenticateUser(page, baseURL!, authenticatedUser.email, seeder);
-    await page.close();
-
-    await use(context);
-    await context.close();
+    try {
+      if (
+        !(await authenticateUser(
+          page,
+          baseURL!,
+          authenticatedUser.email,
+          seeder
+        ))
+      ) {
+        throw new Error('Authenticated E2E fixture setup failed');
+      }
+      await page.close();
+      await use(context);
+    } finally {
+      try {
+        await seeder.cleanup();
+      } finally {
+        await context.close();
+      }
+    }
   },
 
   // Page with auth already set up
@@ -253,17 +301,27 @@ export const test = base.extend<GroupiFixtures>({
     const page = await context.newPage();
     const seeder = new ConvexSeeder();
 
-    await authenticateUser(
-      page,
-      baseURL!,
-      unonboardedUser.email,
-      seeder,
-      '/onboarding'
-    );
-    await page.close();
-
-    await use(context);
-    await context.close();
+    try {
+      if (
+        !(await authenticateUser(
+          page,
+          baseURL!,
+          unonboardedUser.email,
+          seeder,
+          '/onboarding'
+        ))
+      ) {
+        throw new Error('Unonboarded E2E fixture setup failed');
+      }
+      await page.close();
+      await use(context);
+    } finally {
+      try {
+        await seeder.cleanup();
+      } finally {
+        await context.close();
+      }
+    }
   },
 
   // Page for unonboarded user

@@ -1,8 +1,12 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, requireEventRole } from '../middleware/auth';
+import {
+  requireEventMembership,
+  requireEventRole,
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   MemberListResponseSchema,
@@ -71,8 +75,11 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.members.listEventMembers;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const listFn = internal.events.membersRest.listEventMembers;
+    const result = await ctx.runQuery(listFn, {
+      eventId,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {
@@ -150,9 +157,11 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateRoleFn = internal.api.v1.internal.members.updateMemberRole;
+    const updateRoleFn = internal.events.managementRest.updateRole;
     const result = await ctx.runMutation(updateRoleFn, {
-      membershipId: memberId,
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      membershipId: memberId as Id<'memberships'>,
       newRole: body.role,
     });
 
@@ -225,8 +234,12 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const removeFn = internal.api.v1.internal.members.removeMember;
-    await ctx.runMutation(removeFn, { membershipId: memberId });
+    const removeFn = internal.events.managementRest.remove;
+    await ctx.runMutation(removeFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      membershipId: memberId as Id<'memberships'>,
+    });
 
     return c.json(
       {
@@ -283,8 +296,11 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const leaveFn = internal.api.v1.internal.members.leaveEvent;
-    await ctx.runMutation(leaveFn, { eventId, personId });
+    const leaveFn = internal.events.managementRest.leave;
+    await ctx.runMutation(leaveFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {
@@ -349,11 +365,12 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateRsvpFn = internal.api.v1.internal.members.updateRsvp;
+    const updateRsvpFn = internal.events.membersRest.updateRsvp;
     const result = await ctx.runMutation(updateRsvpFn, {
       eventId,
       personId,
       rsvpStatus: body.rsvpStatus,
+      rsvpNote: body.rsvpNote,
     });
 
     return c.json(

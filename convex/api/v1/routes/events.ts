@@ -1,8 +1,12 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, requireEventRole } from '../middleware/auth';
+import {
+  requireEventMembership,
+  requireEventRole,
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   EventListResponseSchema,
@@ -11,7 +15,7 @@ import {
   CreateEventRequestSchema,
   UpdateEventRequestSchema,
 } from '../schemas/events';
-import { parseGDL } from '../../../lib/gdl_parser';
+import { parseGDL } from '@groupi/shared/gdl';
 
 // Type for Hono app with Convex context
 type Variables = {
@@ -58,8 +62,10 @@ export function createEventRoutes() {
     // Get user's events via internal query
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.events.listUserEvents;
-    const result = await ctx.runQuery(listFn, { personId });
+    const listFn = internal.events.restQueries.listUserEvents;
+    const result = await ctx.runQuery(listFn, {
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {
@@ -120,7 +126,7 @@ export function createEventRoutes() {
     const personId = c.get('personId');
     const body = c.req.valid('json');
 
-    if (body.gdl && body.potentialDateTimeOptions) {
+    if (body.gdl !== undefined && body.potentialDateTimeOptions !== undefined) {
       return c.json(
         {
           success: false as const,
@@ -134,10 +140,14 @@ export function createEventRoutes() {
       );
     }
 
-    let mutationBody = { personId, ...body };
+    const { timezone, ...eventBody } = body;
+    let mutationBody = { ...eventBody };
 
-    if (body.gdl) {
-      const gdlResult = parseGDL(body.gdl);
+    if (body.gdl !== undefined) {
+      const gdlResult = parseGDL(body.gdl, {
+        referenceDate: new Date(),
+        timeZone: timezone ?? 'UTC',
+      });
       if (!gdlResult.success) {
         return c.json(
           {
@@ -163,8 +173,12 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.events.createEvent;
-    const result = await ctx.runMutation(createFn, mutationBody);
+    const createFn = internal.events.rest.create;
+    const result = await ctx.runMutation(createFn, {
+      personId: personId as Id<'persons'>,
+      userId: c.get('userId'),
+      body: mutationBody,
+    });
 
     return c.json(
       {
@@ -235,8 +249,11 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.events.getEventDetail;
-    const result = await ctx.runQuery(getFn, { eventId });
+    const getFn = internal.events.restQueries.getEventDetail;
+    const result = await ctx.runQuery(getFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     if (!result) {
       return c.json(
@@ -322,8 +339,14 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.events.updateEvent;
-    const result = await ctx.runMutation(updateFn, { eventId, ...body });
+    const updateFn = internal.events.rest.update;
+    const detail = await ctx.runMutation(updateFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      body,
+    });
+    // v1 PATCH historically omits poll options from its event projection.
+    const { potentialDateTimeOptions: _options, ...result } = detail;
 
     return c.json(
       {
@@ -394,8 +417,11 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.events.deleteEvent;
-    await ctx.runMutation(deleteFn, { eventId });
+    const deleteFn = internal.events.managementRest.removeEvent;
+    await ctx.runMutation(deleteFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {

@@ -51,6 +51,12 @@ vi.mock('react-native', () => ({
     openSettings: vi.fn().mockResolvedValue(undefined),
   },
   useColorScheme: vi.fn(() => 'light'),
+  useWindowDimensions: vi.fn(() => ({
+    width: 375,
+    height: 667,
+    scale: 3,
+    fontScale: 1,
+  })),
 }));
 
 // RN Primitives publishes JSX in an .mjs file, which Node cannot load in the

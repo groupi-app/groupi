@@ -159,6 +159,27 @@ describe('create event payload', () => {
     );
   });
 
+  it('tags event images as cover uploads before creating the event', async () => {
+    mocks.formState = createFormState({
+      imageFile: {
+        uri: 'file:///cover.png',
+        filename: 'cover.png',
+        mimeType: 'image/png',
+      },
+    });
+    mocks.uploadFile.mockResolvedValue({ storageId: 'owned-cover' });
+    await submitReview();
+    expect(mocks.uploadFile).toHaveBeenCalledWith(
+      'file:///cover.png',
+      'cover.png',
+      'image/png',
+      'cover'
+    );
+    expect(mocks.createEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ imageStorageId: 'owned-cover' })
+    );
+  });
+
   it('rejects a reminder that would be sent in the past', async () => {
     mocks.formState = createFormState({
       singleDate: new Date('2029-06-15T15:00:00Z'),

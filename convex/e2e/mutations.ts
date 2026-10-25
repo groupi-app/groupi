@@ -1,3 +1,7 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deletePersonApplications } from '../eventApplications/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import { v } from 'convex/values';
 import { makeSignature } from 'better-auth/crypto';
 import { mutation, query } from '../_generated/server';
@@ -849,6 +853,9 @@ export const cleanupTestData = mutation({
           await ctx.db.delete(reminder._id);
         }
 
+        await deleteEventTransfers(ctx, eventId);
+        await deleteEventApplications(ctx, eventId);
+        await removeAudiencesForEvent(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted
@@ -900,6 +907,7 @@ export const cleanupTestData = mutation({
           await ctx.db.delete(notification._id);
         }
 
+        await deletePersonApplications(ctx, personId);
         await ctx.db.delete(personId);
       } catch {
         // Ignore if already deleted

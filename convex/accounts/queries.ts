@@ -1,6 +1,25 @@
-import { query, action, internalQuery } from '../_generated/server';
+import {
+  query,
+  action,
+  internalQuery,
+  type ActionCtx,
+} from '../_generated/server';
 import { components } from '../_generated/api';
 import { authComponent } from '../auth';
+import { fetchDiscordUserApi } from '../discord/userApi';
+import { v, type Infer } from 'convex/values';
+
+const linkedAccountFields = {
+  id: v.string(),
+  providerId: v.string(),
+  accountId: v.string(),
+  createdAt: v.number(),
+};
+const linkedAccountValidator = v.object(linkedAccountFields);
+const enrichedAccountValidator = v.object({
+  ...linkedAccountFields,
+  username: v.optional(v.string()),
+});
 
 // Use require to avoid deep type instantiation errors with internal references
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
@@ -120,10 +139,14 @@ export const hasLinkedProvider = query({
 });
 
 /**
- * Internal query to get accounts with tokens for Discord username fetching
+ * Internal query for account metadata. Provider tokens stay in Better Auth.
  */
-export const getAccountsWithTokens = internalQuery({
+export const getAccountsForEnrichment = internalQuery({
   args: {},
+  returns: v.object({
+    user: v.union(v.object({ email: v.string() }), v.null()),
+    accounts: v.array(linkedAccountValidator),
+  }),
   handler: async ctx => {
     const user = await authComponent.getAuthUser(ctx);
     if (!user) {
@@ -150,13 +173,11 @@ export const getAccountsWithTokens = internalQuery({
           _id: string;
           providerId: string;
           accountId: string;
-          accessToken?: string | null;
           createdAt: number;
         }) => ({
           id: account._id,
           providerId: account.providerId,
           accountId: account.accountId,
-          accessToken: account.accessToken,
           createdAt: account.createdAt,
         })
       ),
@@ -168,14 +189,11 @@ export const getAccountsWithTokens = internalQuery({
  * Fetch Discord username from Discord API
  */
 async function fetchDiscordUsername(
-  accessToken: string
+  ctx: ActionCtx,
+  accountId: string
 ): Promise<string | null> {
   try {
-    const response = await fetch('https://discord.com/api/users/@me', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await fetchDiscordUserApi(ctx, accountId, '/users/@me');
 
     if (!response.ok) {
       console.log('[Discord API] Failed to fetch user:', response.status);
@@ -185,27 +203,14 @@ async function fetchDiscordUsername(
     const data = await response.json();
     // Discord returns username (new format) or username#discriminator (old format)
     return data.username || null;
-  } catch (error) {
-    console.error('[Discord API] Error fetching user:', error);
+  } catch {
+    console.error('[Discord API] Unable to retrieve the linked Discord user');
     return null;
   }
 }
 
-type AccountWithToken = {
-  id: string;
-  providerId: string;
-  accountId: string;
-  accessToken?: string | null;
-  createdAt: number;
-};
-
-type EnrichedAccount = {
-  id: string;
-  providerId: string;
-  accountId: string;
-  username?: string;
-  createdAt: number;
-};
+type LinkedAccount = Infer<typeof linkedAccountValidator>;
+type EnrichedAccount = Infer<typeof enrichedAccountValidator>;
 
 /**
  * Action to get linked accounts with enriched Discord usernames
@@ -213,9 +218,10 @@ type EnrichedAccount = {
  */
 export const getLinkedAccountsWithUsernames = action({
   args: {},
+  returns: v.array(enrichedAccountValidator),
   handler: async (ctx): Promise<EnrichedAccount[]> => {
     const data = await ctx.runQuery(
-      internalApi.accounts.queries.getAccountsWithTokens,
+      internalApi.accounts.queries.getAccountsForEnrichment,
       {}
     );
 
@@ -225,16 +231,17 @@ export const getLinkedAccountsWithUsernames = action({
 
     // Enrich accounts with usernames
     const enrichedAccounts: EnrichedAccount[] = await Promise.all(
-      data.accounts.map(async (account: AccountWithToken) => {
+      data.accounts.map(async (account: LinkedAccount) => {
         let username: string | undefined;
 
         if (account.providerId === 'google') {
           // For Google, use user's email
           username = data.user?.email;
-        } else if (account.providerId === 'discord' && account.accessToken) {
+        } else if (account.providerId === 'discord') {
           // For Discord, fetch username from Discord API
           const discordUsername = await fetchDiscordUsername(
-            account.accessToken
+            ctx,
+            account.accountId
           );
           username = discordUsername || undefined;
         }

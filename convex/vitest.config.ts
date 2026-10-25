@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
+    // Public CLI bridge tests spawn processes; bound workspace runner contention.
+    maxWorkers: 2,
     include: ['tests/**/*.test.ts'],
     exclude: ['**/node_modules/**', 'dist'],
     // Convex functions run in Edge Runtime environment
@@ -13,9 +15,7 @@ export default defineConfig({
         inline: ['convex-test'],
       },
     },
-    // Suppress "Write outside of transaction" unhandled rejections from convex-test.
-    // These occur because ctx.scheduler.runAfter() triggers async scheduled functions
-    // that try to write after the transaction ends — a known convex-test limitation.
-    dangerouslyIgnoreUnhandledErrors: true,
+    // Unhandled scheduler failures must fail CI, even when assertions pass.
+    dangerouslyIgnoreUnhandledErrors: false,
   },
 });

@@ -385,12 +385,20 @@ export function useUpdatePost(eventId?: Id<'events'>) {
   }, [baseMutation, eventId]);
 
   return useCallback(
-    async (data: { postId: Id<'posts'>; title: string; content: string }) => {
+    async (data: {
+      postId: Id<'posts'>;
+      title: string;
+      content: string;
+      attachmentsToAdd?: PostAttachmentInput[];
+      attachmentIdsToDelete?: Id<'attachments'>[];
+    }) => {
       try {
         const result = await updatePost({
           postId: data.postId,
           title: data.title,
           content: data.content,
+          attachmentsToAdd: data.attachmentsToAdd,
+          attachmentIdsToDelete: data.attachmentIdsToDelete,
         });
 
         // No success toast - instant update is feedback enough

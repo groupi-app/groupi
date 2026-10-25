@@ -1,3 +1,5 @@
+import { safeDiscussionContent } from '../../packages/shared/src/utils/discussion-content';
+import { checkIsBlocked } from './privacy';
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
@@ -123,6 +125,9 @@ export async function shouldSkipNotification(
  * Avoids redundant event/post/author lookups when sending to multiple recipients.
  */
 interface PreFetchedMessageContext {
+  groupTitle?: string;
+  announcementTitle?: string;
+  announcementMessage?: string;
   eventTitle?: string;
   postTitle?: string;
   authorName?: string;
@@ -176,6 +181,9 @@ async function fetchMessageContext(
   data: {
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -224,6 +232,9 @@ export type NotificationType =
   | 'DATE_CHOSEN'
   | 'DATE_CHANGED'
   | 'DATE_RESET'
+  | 'EVENT_APPLICATION_RECEIVED'
+  | 'EVENT_APPLICATION_APPROVED'
+  | 'EVENT_APPLICATION_DECLINED'
   | 'USER_JOINED'
   | 'USER_LEFT'
   | 'USER_PROMOTED'
@@ -233,6 +244,15 @@ export type NotificationType =
   | 'EVENT_REMINDER'
   | 'FRIEND_REQUEST_RECEIVED'
   | 'FRIEND_REQUEST_ACCEPTED'
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED'
+  | 'GROUP_MEMBER_REMOVED'
+  | 'GROUP_ANNOUNCEMENT'
+  | 'GROUP_MEMBER_BANNED'
+  | 'GROUP_APPLICATION_RECEIVED'
+  | 'GROUP_APPLICATION_APPROVED'
+  | 'GROUP_APPLICATION_DECLINED'
+  | 'GROUP_ONBOARDING_REQUIRED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -245,19 +265,11 @@ export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
  * Mentions are formatted as: <span class="mention" data-id="personId">@label</span>
  */
 export function extractMentionedPersonIds(content: string): string[] {
-  // Match data-id attributes in mention spans
-  const mentionRegex = /data-id=["']([^"']+)["']/g;
-  const personIds: string[] = [];
-  let match;
-
-  while ((match = mentionRegex.exec(content)) !== null) {
-    const personId = match[1];
-    if (personId && !personIds.includes(personId)) {
-      personIds.push(personId);
-    }
+  try {
+    return safeDiscussionContent(content).mentions;
+  } catch {
+    return [];
   }
-
-  return personIds;
 }
 
 /**
@@ -282,7 +294,9 @@ export async function notifyMentionedUsers(
     return { sent: 0, skipped: 0 };
   }
 
-  const personIds = filteredIds.map(id => id as Id<'persons'>);
+  const personIds = filteredIds
+    .map(id => ctx.db.normalizeId('persons', id))
+    .filter((id): id is Id<'persons'> => id !== null);
 
   const [
     persons,
@@ -320,7 +334,11 @@ export async function notifyMentionedUsers(
     const person = persons[i];
     const membership = memberships[i];
 
-    if (!person || !membership) {
+    if (
+      !person ||
+      !membership ||
+      (await checkIsBlocked(ctx, data.authorId, personId))
+    ) {
       skipped++;
       continue;
     }
@@ -408,6 +426,9 @@ async function getEnabledEmailsForNotification(
  */
 export interface NotificationMessageContext {
   type: NotificationType;
+  groupTitle?: string;
+  announcementTitle?: string;
+  announcementMessage?: string;
   eventTitle?: string;
   authorName?: string;
   postTitle?: string;
@@ -434,7 +455,7 @@ function getRsvpDisplayText(rsvp: RsvpStatus): string {
 export function getNotificationEmailSubject(
   ctx: NotificationMessageContext
 ): string {
-  const { type, eventTitle, authorName, postTitle } = ctx;
+  const { type, eventTitle, authorName, postTitle, groupTitle } = ctx;
   const prefix = eventTitle ? `[${eventTitle}] ` : '';
 
   switch (type) {
@@ -454,6 +475,12 @@ export function getNotificationEmailSubject(
       return `${prefix}Event date changed`;
     case 'DATE_RESET':
       return `${prefix}Event date reset`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return authorName
         ? `${prefix}${authorName} joined`
@@ -484,6 +511,24 @@ export function getNotificationEmailSubject(
       return authorName
         ? `${authorName} accepted your friend request`
         : 'Friend request accepted';
+    case 'GROUP_INVITE_RECEIVED':
+      return `${authorName || 'Someone'} invited you to ${groupTitle || 'a Group'}`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return `New application to ${groupTitle || 'a Group'}`;
+    case 'GROUP_APPLICATION_APPROVED':
+      return `Your application to ${groupTitle || 'a Group'} was approved`;
+    case 'GROUP_APPLICATION_DECLINED':
+      return `Your application to ${groupTitle || 'a Group'} was declined`;
+    case 'GROUP_ANNOUNCEMENT':
+      return ctx.announcementTitle || 'Group announcement';
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${authorName || 'Someone'} accepted your invitation to ${groupTitle || 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
       return authorName
         ? `${prefix}${authorName} invited you`
@@ -529,6 +574,12 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
       return `The date poll for ${event} has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined ${event}`;
     case 'USER_LEFT':
@@ -554,6 +605,26 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to ${event}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -598,6 +669,12 @@ function getNotificationMessageMarkdown(
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
       return `The date poll for ${event} has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined ${event}`;
     case 'USER_LEFT':
@@ -623,6 +700,26 @@ function getNotificationMessageMarkdown(
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to ${event}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -666,6 +763,12 @@ export function getNotificationMessagePlain(
       return `The date for "${event}" has been changed`;
     case 'DATE_RESET':
       return `The date poll for "${event}" has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined "${event}"`;
     case 'USER_LEFT':
@@ -691,6 +794,26 @@ export function getNotificationMessagePlain(
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to "${event}"`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -748,6 +871,15 @@ function buildNotificationUrl(
 ): string {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
 
+  if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
+    return `${siteUrl}/event/${eventId}/settings/applications`;
+  if (
+    eventId &&
+    (type === 'EVENT_APPLICATION_APPROVED' ||
+      type === 'EVENT_APPLICATION_DECLINED')
+  )
+    return `${siteUrl}/event/${eventId}/apply`;
+
   // Friend-related notifications link to the friends page
   if (
     type === 'FRIEND_REQUEST_RECEIVED' ||
@@ -786,12 +918,15 @@ function buildNotificationUrl(
 /**
  * Collect email data for a notification (to be sent via action)
  */
-async function collectEmailData(
+export async function collectEmailData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -813,6 +948,9 @@ async function collectEmailData(
   if (preFetchedCtx) {
     messageContext = {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1060,12 +1198,15 @@ function formatWebhookPayload(
 /**
  * Collect webhook data for a notification (to be sent via action)
  */
-async function collectWebhookData(
+export async function collectWebhookData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1093,6 +1234,9 @@ async function collectWebhookData(
   if (preFetchedCtx) {
     messageContext = {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1162,18 +1306,48 @@ export type PushNotificationRequest = {
 function getPushDestination(
   type: NotificationType,
   eventId?: Id<'events'>,
-  postId?: Id<'posts'>
+  postId?: Id<'posts'>,
+  groupId?: Id<'groups'>
 ): {
-  destination: 'notifications' | 'invites' | 'friends' | 'event' | 'post';
+  groupId?: Id<'groups'>;
+  destination:
+    | 'notifications'
+    | 'invites'
+    | 'friends'
+    | 'event'
+    | 'post'
+    | 'group'
+    | 'groupApplication'
+    | 'groupApplications'
+    | 'eventApplications'
+    | 'eventApplication';
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
 } {
+  if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
+    return { destination: 'eventApplications', eventId };
+  if (
+    eventId &&
+    (type === 'EVENT_APPLICATION_APPROVED' ||
+      type === 'EVENT_APPLICATION_DECLINED')
+  )
+    return { destination: 'eventApplication', eventId };
   if (
     type === 'FRIEND_REQUEST_RECEIVED' ||
     type === 'FRIEND_REQUEST_ACCEPTED'
   ) {
     return { destination: 'friends' };
   }
+  if (groupId && type === 'GROUP_APPLICATION_RECEIVED')
+    return { destination: 'groupApplications', groupId };
+  if (
+    groupId &&
+    (type === 'GROUP_APPLICATION_APPROVED' ||
+      type === 'GROUP_APPLICATION_DECLINED')
+  )
+    return { destination: 'groupApplication', groupId };
+  if (groupId && type.startsWith('GROUP_'))
+    return { destination: 'group', groupId };
   if (type === 'EVENT_INVITE_RECEIVED') {
     return { destination: 'invites' };
   }
@@ -1195,6 +1369,9 @@ async function resolveNotificationMessageContext(
   data: {
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1204,6 +1381,9 @@ async function resolveNotificationMessageContext(
   if (preFetchedCtx) {
     return {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1256,6 +1436,9 @@ export async function collectPushData(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1307,7 +1490,12 @@ export async function collectPushData(
   );
   const title = getNotificationEmailSubject(messageContext).slice(0, 120);
   const body = getNotificationMessagePlain(messageContext).slice(0, 1_000);
-  const destination = getPushDestination(data.type, data.eventId, data.postId);
+  const destination = getPushDestination(
+    data.type,
+    data.eventId,
+    data.postId,
+    data.groupId
+  );
   const now = Date.now();
 
   return await Promise.all(
@@ -1344,6 +1532,9 @@ export async function createNotification(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;
@@ -1361,6 +1552,9 @@ export async function createNotification(
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
+    groupId: data.groupId,
+    groupInviteId: data.groupInviteId,
+    groupApplicationId: data.groupApplicationId,
     eventId: data.eventId,
     postId: data.postId,
     datetime: data.datetime,
@@ -1377,11 +1571,47 @@ export async function createNotification(
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
+    groupId: data.groupId,
+    groupInviteId: data.groupInviteId,
+    groupApplicationId: data.groupApplicationId,
     eventId: data.eventId,
     postId: data.postId,
     rsvp: data.rsvp,
   };
 
+  if (data.type === 'GROUP_ONBOARDING_REQUIRED' && data.groupId) {
+    await ctx.db.insert('groupOnboardingDispatches', {
+      groupId: data.groupId,
+      personId: data.personId,
+      notificationId,
+    });
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<
+        'action',
+        { notificationId: Id<'notifications'> },
+        null
+      >('groupQuestionnaires/actions:sendExternal'),
+      { notificationId }
+    );
+    const pushes = await collectPushData(
+      ctx,
+      notificationId,
+      notificationData,
+      preFetched?.messageContext
+    );
+    if (pushes.length)
+      await ctx.scheduler.runAfter(
+        0,
+        makeFunctionReference<
+          'action',
+          { deliveryIds: Id<'pushDeliveries'>[] },
+          { sent: number; failed: number; retrying: number }
+        >('pushNotifications/actions:sendPushNotifications'),
+        { deliveryIds: pushes.map(push => push.deliveryId) }
+      );
+    return notificationId;
+  }
   const [emails, webhooks, pushes] = await Promise.all([
     collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),
@@ -1591,6 +1821,9 @@ export async function notifyPerson(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;

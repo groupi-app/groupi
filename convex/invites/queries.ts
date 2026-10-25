@@ -1,3 +1,4 @@
+import { inviteCapacity } from './writes';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import {
@@ -45,6 +46,7 @@ export const getEventInvites = query({
     // Enhance invites with email status
     const enhancedInvites = invites.map(invite => ({
       ...invite,
+      usesTotal: inviteCapacity(invite),
       hasEmail: !!invite.email,
       emailStatus: invite.email
         ? invite.emailSentAt
@@ -152,7 +154,7 @@ export const getInviteByToken = query({
         eventId: invite.eventId,
         name: invite.name || null,
         usesRemaining: invite.usesRemaining,
-        usesTotal: invite.usesTotal,
+        usesTotal: inviteCapacity(invite),
         expiresAt: invite.expiresAt ?? null,
         token: invite.token,
       },

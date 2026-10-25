@@ -10,6 +10,7 @@ import { useEventAddons } from '@/hooks/use-addons';
 import { canRoleViewAttendeeList } from '@/lib/event-access-policy';
 import { canInviteMembers } from '@groupi/shared/utils';
 
+import { EventOwnershipTransfer } from '@/components/events/event-ownership-transfer';
 import { EventHeader } from '@/components/events/event-header';
 import { MemberList } from '@/components/events/member-list';
 import { PostFeed } from '@/components/posts/post-feed';
@@ -104,6 +105,12 @@ export default function EventDetailScreen() {
                 )}
               />
             ) : null}
+
+            <EventOwnershipTransfer
+              eventId={typedEventId}
+              personId={headerData.userMembership.person._id}
+              members={membersData?.event.memberships ?? []}
+            />
 
             {addons && addons.length > 0 ? (
               <EventAddonsSection addons={addons} eventId={eventId} />

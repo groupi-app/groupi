@@ -4,8 +4,8 @@
  * Mutation functions for managing theme preferences and custom themes.
  */
 
-import { v } from 'convex/values';
-import { mutation } from '../_generated/server';
+import { v, ConvexError, type Infer } from 'convex/values';
+import { mutation, type MutationCtx } from '../_generated/server';
 import { requireAuth } from '../auth';
 
 // Token overrides validator
@@ -52,58 +52,78 @@ const tokenOverridesValidator = v.object({
   ),
 });
 
+const themePreferenceValidator = v.object({
+  selectedThemeType: v.union(v.literal('base'), v.literal('custom')),
+  selectedThemeId: v.string(),
+  selectedCustomThemeId: v.optional(v.id('customThemes')),
+  useSystemPreference: v.boolean(),
+  systemLightThemeId: v.string(),
+  systemDarkThemeId: v.string(),
+});
+
 /**
  * Save theme preference for the current user
  * Creates new preference if none exists, otherwise updates existing
  */
 export const saveThemePreference = mutation({
-  args: {
-    selectedThemeType: v.union(v.literal('base'), v.literal('custom')),
-    selectedThemeId: v.string(),
-    selectedCustomThemeId: v.optional(v.id('customThemes')),
-    useSystemPreference: v.boolean(),
-    systemLightThemeId: v.string(),
-    systemDarkThemeId: v.string(),
-  },
+  args: themePreferenceValidator.fields,
   handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
 
-    // Check if preferences already exist
-    const existing = await ctx.db
-      .query('themePreferences')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .first();
-
-    const now = Date.now();
-
-    if (existing) {
-      // Update existing preferences
-      await ctx.db.patch(existing._id, {
-        selectedThemeType: args.selectedThemeType,
-        selectedThemeId: args.selectedThemeId,
-        selectedCustomThemeId: args.selectedCustomThemeId,
-        useSystemPreference: args.useSystemPreference,
-        systemLightThemeId: args.systemLightThemeId,
-        systemDarkThemeId: args.systemDarkThemeId,
-        updatedAt: now,
-      });
-      return existing._id;
-    } else {
-      // Create new preferences
-      const id = await ctx.db.insert('themePreferences', {
-        personId: person._id,
-        selectedThemeType: args.selectedThemeType,
-        selectedThemeId: args.selectedThemeId,
-        selectedCustomThemeId: args.selectedCustomThemeId,
-        useSystemPreference: args.useSystemPreference,
-        systemLightThemeId: args.systemLightThemeId,
-        systemDarkThemeId: args.systemDarkThemeId,
-        updatedAt: now,
-      });
-      return id;
-    }
+    return saveThemePreferenceForPerson(ctx, person._id, args);
   },
 });
+
+export async function saveThemePreferenceForPerson(
+  ctx: MutationCtx,
+  personId: import('../_generated/dataModel').Id<'persons'>,
+  args: Infer<typeof themePreferenceValidator>
+) {
+  if (args.selectedThemeType === 'custom' || args.selectedCustomThemeId) {
+    const theme = args.selectedCustomThemeId
+      ? await ctx.db.get(args.selectedCustomThemeId)
+      : null;
+    if (!theme || theme.personId !== personId)
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'Select a custom theme owned by this account.',
+      });
+  }
+  // Check if preferences already exist
+  const existing = await ctx.db
+    .query('themePreferences')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .first();
+
+  const now = Date.now();
+
+  if (existing) {
+    // Update existing preferences
+    await ctx.db.patch(existing._id, {
+      selectedThemeType: args.selectedThemeType,
+      selectedThemeId: args.selectedThemeId,
+      selectedCustomThemeId: args.selectedCustomThemeId,
+      useSystemPreference: args.useSystemPreference,
+      systemLightThemeId: args.systemLightThemeId,
+      systemDarkThemeId: args.systemDarkThemeId,
+      updatedAt: now,
+    });
+    return existing._id;
+  } else {
+    // Create new preferences
+    const id = await ctx.db.insert('themePreferences', {
+      personId: personId,
+      selectedThemeType: args.selectedThemeType,
+      selectedThemeId: args.selectedThemeId,
+      selectedCustomThemeId: args.selectedCustomThemeId,
+      useSystemPreference: args.useSystemPreference,
+      systemLightThemeId: args.systemLightThemeId,
+      systemDarkThemeId: args.systemDarkThemeId,
+      updatedAt: now,
+    });
+    return id;
+  }
+}
 
 /**
  * Create a new custom theme

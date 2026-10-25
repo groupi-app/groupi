@@ -173,7 +173,10 @@ export function useFileUpload() {
   const [isUploading, setIsUploading] = useState(false);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<UploadResult | null> => {
+    async (
+      file: File,
+      purpose: 'attachment' | 'cover' | 'avatar' = 'attachment'
+    ): Promise<UploadResult | null> => {
       // Validate file
       const validation = validateFile(file);
       if (!validation.valid) {
@@ -188,7 +191,7 @@ export function useFileUpload() {
         const dimensions = await getImageDimensions(file);
 
         // Step 1: Get a presigned URL from Convex
-        const uploadUrl = await generateUploadUrl();
+        const uploadUrl = await generateUploadUrl({ purpose });
 
         // Step 2: Upload the file directly to that URL
         const response = await fetch(uploadUrl, {

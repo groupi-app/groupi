@@ -63,7 +63,7 @@ export function createProfileRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.profile.getCurrentProfile;
+    const getFn = internal.users.profileRest.getCurrentProfile;
     const result = await ctx.runQuery(getFn, { personId });
 
     if (!result) {
@@ -123,7 +123,7 @@ export function createProfileRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.profile.getProfileByUsername;
+    const getFn = internal.users.profileRest.getProfileByUsername;
     const result = await ctx.runQuery(getFn, { username });
 
     if (!result) {
@@ -191,7 +191,7 @@ export function createProfileRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.profile.updateProfile;
+    const updateFn = internal.users.profileRest.updateProfile;
     const result = await ctx.runMutation(updateFn, {
       personId,
       userId,

@@ -1,5 +1,5 @@
 import { passkeyClient } from '@better-auth/passkey/client';
-import { requireOptionalNativeModule } from 'expo-modules-core';
+import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 interface PasskeyActionGroups {

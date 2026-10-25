@@ -1,26 +1,22 @@
-import { mutation, type MutationCtx } from '../_generated/server';
+import {
+  readNotification,
+  unreadNotification,
+  readAllNotifications,
+  readEventNotifications,
+  readPostNotifications,
+  clearNotification,
+  clearAllNotifications,
+} from './model';
+import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
-import { Doc, Id } from '../_generated/dataModel';
+import { Doc } from '../_generated/dataModel';
 
 /**
  * Notifications mutations for the Convex backend
  *
  * These functions handle notification state changes with proper authentication.
  */
-
-async function deletePushDeliveries(
-  ctx: MutationCtx,
-  notificationIds: Id<'notifications'>[]
-) {
-  for (const notificationId of notificationIds) {
-    const deliveries = await ctx.db
-      .query('pushDeliveries')
-      .withIndex('by_notification', q => q.eq('notificationId', notificationId))
-      .collect();
-    await Promise.all(deliveries.map(delivery => ctx.db.delete(delivery._id)));
-  }
-}
 
 /**
  * Mark single notification as read
@@ -30,21 +26,10 @@ export const markNotificationAsRead = mutation({
     notificationId: v.id('notifications'),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { notificationId }) => {
     const { person } = await requireAuth(ctx);
-
-    const notification = await ctx.db.get(notificationId);
-    if (!notification) {
-      throw new Error('Notification not found');
-    }
-
-    // Verify ownership
-    if (notification.personId !== person._id) {
-      throw new Error('Not authorized to modify this notification');
-    }
-
-    await ctx.db.patch(notificationId, { read: true, updatedAt: Date.now() });
-    return { success: true };
+    return readNotification(ctx, person._id, notificationId);
   },
 });
 
@@ -56,21 +41,10 @@ export const markNotificationAsUnread = mutation({
     notificationId: v.id('notifications'),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { notificationId }) => {
     const { person } = await requireAuth(ctx);
-
-    const notification = await ctx.db.get(notificationId);
-    if (!notification) {
-      throw new Error('Notification not found');
-    }
-
-    // Verify ownership
-    if (notification.personId !== person._id) {
-      throw new Error('Not authorized to modify this notification');
-    }
-
-    await ctx.db.patch(notificationId, { read: false, updatedAt: Date.now() });
-    return { success: true };
+    return unreadNotification(ctx, person._id, notificationId);
   },
 });
 
@@ -81,24 +55,10 @@ export const markAllNotificationsAsRead = mutation({
   args: {
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean(), count: v.number() }),
   handler: async ctx => {
     const { person } = await requireAuth(ctx);
-
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person_read', q =>
-        q.eq('personId', person._id).eq('read', false)
-      )
-      .collect();
-
-    for (const notification of notifications) {
-      await ctx.db.patch(notification._id, {
-        read: true,
-        updatedAt: Date.now(),
-      });
-    }
-
-    return { success: true, count: notifications.length };
+    return readAllNotifications(ctx, person._id);
   },
 });
 
@@ -110,25 +70,10 @@ export const markEventNotificationsAsRead = mutation({
     eventId: v.id('events'),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean(), count: v.number() }),
   handler: async (ctx, { eventId }) => {
     const { person } = await requireAuth(ctx);
-
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person_read', q =>
-        q.eq('personId', person._id).eq('read', false)
-      )
-      .filter(q => q.eq(q.field('eventId'), eventId))
-      .collect();
-
-    for (const notification of notifications) {
-      await ctx.db.patch(notification._id, {
-        read: true,
-        updatedAt: Date.now(),
-      });
-    }
-
-    return { success: true, count: notifications.length };
+    return readEventNotifications(ctx, person._id, eventId);
   },
 });
 
@@ -140,25 +85,10 @@ export const markPostNotificationsAsRead = mutation({
     postId: v.id('posts'),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean(), count: v.number() }),
   handler: async (ctx, { postId }) => {
     const { person } = await requireAuth(ctx);
-
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person_read', q =>
-        q.eq('personId', person._id).eq('read', false)
-      )
-      .filter(q => q.eq(q.field('postId'), postId))
-      .collect();
-
-    for (const notification of notifications) {
-      await ctx.db.patch(notification._id, {
-        read: true,
-        updatedAt: Date.now(),
-      });
-    }
-
-    return { success: true, count: notifications.length };
+    return readPostNotifications(ctx, person._id, postId);
   },
 });
 
@@ -173,20 +103,7 @@ export const deleteNotification = mutation({
   returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { notificationId }) => {
     const { person } = await requireAuth(ctx);
-
-    const notification = await ctx.db.get(notificationId);
-    if (!notification) {
-      throw new Error('Notification not found');
-    }
-
-    // Verify ownership
-    if (notification.personId !== person._id) {
-      throw new Error('Not authorized to delete this notification');
-    }
-
-    await deletePushDeliveries(ctx, [notificationId]);
-    await ctx.db.delete(notificationId);
-    return { success: true };
+    return clearNotification(ctx, person._id, notificationId);
   },
 });
 
@@ -200,21 +117,7 @@ export const deleteAllNotifications = mutation({
   returns: v.object({ success: v.boolean(), count: v.number() }),
   handler: async ctx => {
     const { person } = await requireAuth(ctx);
-
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-
-    await deletePushDeliveries(
-      ctx,
-      notifications.map(notification => notification._id)
-    );
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
-
-    return { success: true, count: notifications.length };
+    return clearAllNotifications(ctx, person._id);
   },
 });
 
@@ -293,6 +196,9 @@ export const addNotificationMethod = mutation({
       'DATE_CHOSEN',
       'DATE_CHANGED',
       'DATE_RESET',
+      'EVENT_APPLICATION_RECEIVED',
+      'EVENT_APPLICATION_APPROVED',
+      'EVENT_APPLICATION_DECLINED',
       'USER_JOINED',
       'USER_LEFT',
       'USER_PROMOTED',
@@ -460,6 +366,9 @@ export const updateNotificationSetting = mutation({
       v.literal('DATE_CHOSEN'),
       v.literal('DATE_CHANGED'),
       v.literal('DATE_RESET'),
+      v.literal('EVENT_APPLICATION_RECEIVED'),
+      v.literal('EVENT_APPLICATION_APPROVED'),
+      v.literal('EVENT_APPLICATION_DECLINED'),
       v.literal('USER_JOINED'),
       v.literal('USER_LEFT'),
       v.literal('USER_PROMOTED'),

@@ -384,7 +384,7 @@ describe('custom addon with automations', () => {
         title: 'Dietary Info',
         fields: [
           {
-            id: 'f1',
+            id: 'dietary',
             type: 'text',
             label: 'Dietary restrictions',
             required: true,

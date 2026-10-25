@@ -1,6 +1,6 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
-import { components } from './_generated/api';
+import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import { query, QueryCtx, MutationCtx } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
@@ -180,6 +180,14 @@ const createAuthOptionsInternal = (
       username(),
       magicLink({
         sendMagicLink: async ({ email, url }) => {
+          if (
+            process.env.APP_REVIEW_INBOX_ENABLED === 'true' &&
+            email.toLowerCase().startsWith('app-review-') &&
+            (await ctx.runQuery(internal.appReview.queries.usesPrivateInbox, {
+              email,
+            }))
+          )
+            return;
           // Log magic link for development if debug logging is enabled
           if (process.env.DEBUG_MAGIC_LINKS === 'true') {
             console.log(`🔗 MAGIC LINK - URL: ${url}`);
@@ -248,6 +256,15 @@ const createAuthOptionsInternal = (
         async sendVerificationOTP({ email, otp, type }) {
           if (type !== 'sign-in') return;
 
+          if (
+            process.env.APP_REVIEW_INBOX_ENABLED === 'true' &&
+            email.toLowerCase().startsWith('app-review-') &&
+            (await ctx.runQuery(internal.appReview.queries.usesPrivateInbox, {
+              email,
+            }))
+          )
+            return;
+
           if (process.env.DEBUG_MAGIC_LINKS === 'true') {
             console.log(`🔢 OTP CODE for ${email}: ${otp}`);
           }
@@ -310,7 +327,11 @@ const createAuthOptionsInternal = (
         origin: passkeyConfig.origin,
       }),
       admin(),
-      apiKey(),
+      apiKey({
+        // Keep legacy stored ownership and REST verification compatible with
+        // the plugin's referenceId terminology without rewriting existing keys.
+        schema: { apikey: { fields: { referenceId: 'userId' } } },
+      }),
       // Adds the native OAuth state proxy and returns session cookies only on
       // trusted non-HTTP callback URLs. Ordinary web callbacks remain intact.
       expo(),
@@ -559,14 +580,35 @@ export async function getEventMembership(ctx: AuthCtx, eventId: string) {
   const person = await getCurrentPerson(ctx);
   if (!person) return null;
 
-  const membership = await ctx.db
+  return getEventMembershipForPerson(ctx, eventId as Id<'events'>, person._id);
+}
+
+/** Look up a verified actor's membership inside the current transaction. */
+export async function getEventMembershipForPerson(
+  ctx: AuthCtx,
+  eventId: Id<'events'>,
+  personId: Id<'persons'>
+) {
+  return ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>
-      q.eq('personId', person._id).eq('eventId', eventId as Id<'events'>)
+      q.eq('personId', personId).eq('eventId', eventId)
     )
     .first();
+}
 
-  return membership;
+export async function hasEventRoleForPerson(
+  ctx: AuthCtx,
+  eventId: Id<'events'>,
+  personId: Id<'persons'>,
+  role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
+) {
+  const membership = await getEventMembershipForPerson(ctx, eventId, personId);
+  if (!membership) return false;
+  if (role === 'ATTENDEE') return true;
+  if (role === 'MODERATOR')
+    return membership.role === 'ORGANIZER' || membership.role === 'MODERATOR';
+  return membership.role === 'ORGANIZER';
 }
 
 /**
@@ -590,16 +632,9 @@ export async function hasEventRole(
   eventId: string,
   role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
 ) {
-  const membership = await getEventMembership(ctx, eventId);
-  if (!membership) return false;
-
-  // ORGANIZER has all permissions
-  if (role === 'ATTENDEE') return true;
-  if (role === 'MODERATOR')
-    return membership.role === 'ORGANIZER' || membership.role === 'MODERATOR';
-  if (role === 'ORGANIZER') return membership.role === 'ORGANIZER';
-
-  return false;
+  const person = await getCurrentPerson(ctx);
+  if (!person) return false;
+  return hasEventRoleForPerson(ctx, eventId as Id<'events'>, person._id, role);
 }
 
 /**
@@ -675,26 +710,42 @@ export async function requireEventPermission(
   eventId: string,
   permission: EventPermissionKey
 ) {
-  const membership = await requireEventMembership(ctx, eventId);
+  const { person } = await requireAuth(ctx);
+  return requireEventPermissionForPerson(
+    ctx,
+    eventId as Id<'events'>,
+    person._id,
+    permission
+  );
+}
 
-  const event = await ctx.db.get(eventId as Id<'events'>);
-  if (!event) {
-    throw new ConvexError('Event not found');
+/** Require configurable event policy for a verified transport actor. */
+export async function requireEventPermissionForPerson(
+  ctx: AuthCtx,
+  eventId: Id<'events'>,
+  personId: Id<'persons'>,
+  permission: EventPermissionKey
+) {
+  const membership = await getEventMembershipForPerson(ctx, eventId, personId);
+  if (!membership) {
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: 'Event membership required',
+    });
   }
-
-  const level: PermissionLevel =
-    event.permissions?.[permission] ?? DEFAULT_EVENT_PERMISSIONS[permission];
-
+  const event = await ctx.db.get(eventId);
+  if (!event) {
+    throw new ConvexError({ code: 'NOT_FOUND', message: 'Event not found' });
+  }
+  const level = resolveEventPermissions(event)[permission];
   const requiredLevel =
     ROLE_HIERARCHY[level === 'EVERYONE' ? 'ATTENDEE' : level] ?? 1;
-  const userLevel = ROLE_HIERARCHY[membership.role] ?? 0;
-
-  if (userLevel < requiredLevel) {
-    throw new ConvexError(
-      `Permission denied: this action requires ${level === 'EVERYONE' ? 'event membership' : `${level} role`}`
-    );
+  if ((ROLE_HIERARCHY[membership.role] ?? 0) < requiredLevel) {
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: `Permission denied: this action requires ${level === 'EVERYONE' ? 'event membership' : `${level} role`}`,
+    });
   }
-
   return membership;
 }
 

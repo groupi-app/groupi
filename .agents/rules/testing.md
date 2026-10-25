@@ -869,18 +869,7 @@ describe('UserList', () => {
 
 ## Coverage Requirements
 
-| Package | Branches               | Functions | Lines | Statements |
-| ------- | ---------------------- | --------- | ----- | ---------- |
-| Web     | 70%                    | 70%       | 70%   | 70%        |
-| Shared  | 80%                    | 80%       | 80%   | 80%        |
-| Mobile  | 70%                    | 70%       | 70%   | 70%        |
-| Convex  | No threshold (backend) |
-
-Run coverage reports:
-
-```bash
-pnpm test:coverage
-```
+Read [coverage policy](../../docs/testing.md#coverage-requirements) for enforced thresholds, improvement targets, and coverage verification. That guide is authoritative; use the package Vitest configurations for executable values.
 
 ## Common Issues and Solutions
 

@@ -119,6 +119,7 @@ export const publishTemplate = mutation({
 
     await ctx.db.patch(templateId, {
       isPublished: true,
+      version: existing.version + 1,
       updatedAt: Date.now(),
     });
 
@@ -146,6 +147,7 @@ export const unpublishTemplate = mutation({
 
     await ctx.db.patch(templateId, {
       isPublished: false,
+      version: existing.version + 1,
       updatedAt: Date.now(),
     });
 

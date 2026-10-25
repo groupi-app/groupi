@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     globals: true,
     include: [
+      'features/**/*.test.{ts,tsx}',
+      'eslint-rules/**/*.test.ts',
       'hooks/**/*.test.ts',
       'hooks/**/*.test.tsx',
       'components/**/*.test.tsx',
@@ -50,6 +52,14 @@ export default defineConfig({
         'test-setup.ts',
         '**/*.config.*',
         '**/*.d.ts',
+        'features/**/*.test.{ts,tsx}',
+        // Preserve the app/** route-UI scope when moving add-ons into features.
+        // Models, hooks, catalogs, gating, and page adapters remain measured.
+        // See docs/testing.md before changing this relocation boundary.
+        'features/addons/authoring/**',
+        'features/addons/creation/organisms/**',
+        'features/addons/runtime/organisms/**',
+        'eslint-rules/**',
         'env.mjs',
         'middleware.ts',
         'coverage/**',
@@ -59,15 +69,16 @@ export default defineConfig({
         'app/**/not-found.tsx',
         'app/globals.css',
       ],
+      // Enforced baseline floors; improvement targets and scope: docs/testing.md.
+      // Vitest global metrics belong directly under thresholds (no global wrapper).
       thresholds: {
-        global: {
-          branches: 70,
-          functions: 70,
-          lines: 70,
-          statements: 70,
-        },
+        branches: 33.9,
+        functions: 38.4,
+        lines: 37.2,
+        statements: 36.9,
       },
       include: [
+        'features/**/*.{ts,tsx}',
         'hooks/**/*.{ts,tsx}',
         'components/**/*.{ts,tsx}',
         'lib/**/*.{ts,tsx}',
@@ -78,7 +89,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/convex': resolve(__dirname, '../../convex'),
-      '@groupi/shared': resolve(__dirname, '../shared/src'),
       '@': resolve(__dirname, '.'),
       '~': resolve(__dirname, '.'),
     },

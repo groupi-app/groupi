@@ -22,6 +22,7 @@ export const PotentialDateTimeSchema = z
     id: z.string(),
     dateTime: TimestampSchema,
     endDateTime: TimestampSchema.nullable(),
+    note: z.string().nullable(),
   })
   .openapi('PotentialDateTime');
 
@@ -31,6 +32,7 @@ export const UserAvailabilitySchema = z
     membershipId: z.string(),
     user: UserSummarySchema,
     status: AvailabilityStatusSchema,
+    note: z.string().nullable(),
   })
   .openapi('UserAvailability');
 
@@ -60,13 +62,19 @@ export const AvailabilityGridResponseSchema = z
 // Submit availability request body
 export const SubmitAvailabilityRequestSchema = z
   .object({
-    responses: z.array(
-      z.object({
-        potentialDateTimeId: z.string(),
-        status: AvailabilitySubmitStatusSchema,
-      })
-    ),
+    responses: z
+      .array(
+        z
+          .object({
+            potentialDateTimeId: z.string(),
+            status: AvailabilitySubmitStatusSchema,
+            note: z.string().max(200).optional(),
+          })
+          .strict()
+      )
+      .max(8192),
   })
+  .strict()
   .refine(
     ({ responses }) =>
       new Set(responses.map(response => response.potentialDateTimeId)).size ===
@@ -91,3 +99,46 @@ export const SubmitAvailabilityResponseSchema = z
 export const PotentialDatesResponseSchema = z
   .array(PotentialDateTimeSchema)
   .openapi('PotentialDatesResponse');
+
+export const PotentialDatesPageSchema = z.object({
+  items: z.array(PotentialDateTimeSchema),
+  nextCursor: z.string().nullable(),
+});
+export const OwnAvailabilityPageSchema = z.object({
+  items: z.array(
+    z.object({
+      potentialDateTime: PotentialDateTimeSchema,
+      status: AvailabilityStatusSchema,
+      note: z.string().nullable(),
+      availabilityId: z.string().nullable(),
+    })
+  ),
+  nextCursor: z.string().nullable(),
+});
+export const AvailabilityResponsesPageSchema = z.object({
+  items: z.array(
+    z.object({
+      membershipId: z.string(),
+      personId: z.string(),
+      user: UserSummarySchema.nullable(),
+      status: AvailabilityStatusSchema,
+      note: z.string().nullable(),
+    })
+  ),
+  nextCursor: z.string().nullable(),
+});
+export const ChooseDateSchema = z.discriminatedUnion('selectionSource', [
+  z
+    .object({
+      selectionSource: z.literal('POLL'),
+      potentialDateTimeId: z.string().min(1),
+    })
+    .strict(),
+  z
+    .object({
+      selectionSource: z.literal('MANUAL'),
+      chosenDateTime: z.string().datetime({ offset: true }),
+      chosenEndDateTime: z.string().datetime({ offset: true }).optional(),
+    })
+    .strict(),
+]);
