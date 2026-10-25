@@ -180,13 +180,17 @@ describe('useAddonGating', () => {
 describe('EventAddonGate', () => {
   it('hides event content while loading and while redirecting', () => {
     status = undefined;
-    const { rerender } = render(
+    const { rerender, container } = render(
       <EventAddonGate eventId={eventId}>
         <p>Event discussion</p>
       </EventAddonGate>
     );
     expect(screen.queryByText('Event discussion')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent(/loading event/i);
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
     status = {
       isOrganizer: false,
       availability: { required: false, completed: false },
@@ -198,6 +202,8 @@ describe('EventAddonGate', () => {
       </EventAddonGate>
     );
     expect(screen.queryByText('Event discussion')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
     expect(navigation.replace).toHaveBeenCalledWith(
       `/event/${eventId}/addon/questionnaire`
     );
@@ -208,6 +214,8 @@ describe('EventAddonGate', () => {
       </EventAddonGate>
     );
     expect(screen.getByText('Event discussion')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
   });
 
   it.each([

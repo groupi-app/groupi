@@ -1,15 +1,69 @@
 'use client';
 
-import { Component, useState, type ReactNode } from 'react';
+import {
+  Component,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   useEventLogistics,
   useJoinEvent,
 } from '@/hooks/convex/use-event-admission';
+
+/** Public logistics and its skeleton share a shell, separate from member content. */
+function EventLogisticsShell({ children, ...props }: ComponentProps<'main'>) {
+  return (
+    <main className='mx-auto max-w-2xl p-6 space-y-6' {...props}>
+      {children}
+    </main>
+  );
+}
+
+export function EventLogisticsPreviewSkeleton() {
+  return (
+    <>
+      <p role='status' className='sr-only'>
+        Loading event…
+      </p>
+      <EventLogisticsShell aria-busy='true'>
+        <div aria-hidden='true'>
+          <Skeleton className='h-6 w-14' />
+        </div>
+        <div aria-hidden='true'>
+          <Skeleton className='h-9 w-3/4' />
+        </div>
+        <div aria-hidden='true' className='flex items-center gap-3'>
+          <Skeleton className='size-10 shrink-0 rounded-full' />
+          <div className='min-w-0 flex-1'>
+            <p className='text-sm text-muted-foreground'>Organizer</p>
+            <Skeleton className='h-6 w-32 max-w-full' />
+          </div>
+        </div>
+        <section
+          aria-hidden='true'
+          className='rounded-card bg-card p-4 space-y-4'
+        >
+          <div>
+            <h2 className='font-heading font-semibold'>Location</h2>
+            <Skeleton className='h-6 w-3/4' />
+          </div>
+          <div>
+            <h2 className='font-heading font-semibold'>Dates</h2>
+            <Skeleton className='h-5 w-24' />
+            <Skeleton className='mt-1 h-6 w-full' />
+          </div>
+        </section>
+      </EventLogisticsShell>
+    </>
+  );
+}
 
 class LogisticsBoundary extends Component<
   { children: ReactNode },
@@ -52,12 +106,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  if (logistics === undefined)
-    return (
-      <p role='status' className='p-6'>
-        Loading event…
-      </p>
-    );
+  if (logistics === undefined) return <EventLogisticsPreviewSkeleton />;
   const { event, organizer, entryAction } = logistics;
   const organizerName = organizer?.name || organizer?.username || 'Organizer';
   const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -68,7 +117,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
   const formatRange = (start: number, end: number | null) =>
     `${dateFormatter.format(start)}${end !== null ? ` – ${dateFormatter.format(end)}` : ''}`;
   return (
-    <main className='mx-auto max-w-2xl p-6 space-y-6'>
+    <EventLogisticsShell>
       <Link href='/events' className='text-primary underline'>
         Events
       </Link>
@@ -224,6 +273,6 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
           </div>
         ) : null}
       </section>
-    </main>
+    </EventLogisticsShell>
   );
 }

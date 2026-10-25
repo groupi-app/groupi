@@ -5,6 +5,7 @@ import { useEffect, use } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 import { EventDataProvider, useEventData } from './context';
 import { EventAddonGate } from '@/features/addons/gating';
+import { EventPageSkeleton } from '@/components/skeletons/event-page-skeleton';
 
 interface EventLayoutProps {
   children: React.ReactNode;
@@ -51,9 +52,10 @@ function EventLayoutContent({
     }
   }, [isLoading, isMember, eventNotFound, router]);
 
-  if (isLoading || eventNotFound || !isMember) {
-    return <p role='status'>Loading event…</p>;
+  if (eventNotFound || (headerData !== undefined && !isMember)) {
+    return <p role='status'>Redirecting to events…</p>;
   }
+  if (isLoading) return <EventPageSkeleton />;
 
   return (
     <EventAddonGate eventId={eventId as Id<'events'>}>
