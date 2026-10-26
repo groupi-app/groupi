@@ -25,6 +25,7 @@ export function Editor({
     : `/event/${eventId}`;
   return (
     <DiscussionComposer
+      canConfigureReplies={!postData}
       initialTitle={postData?.title}
       initialContent={postData?.content}
       existingAttachments={existingAttachments}
@@ -37,6 +38,7 @@ export function Editor({
         content,
         attachments,
         attachmentIdsToDelete,
+        repliesDisabled,
       }) => {
         if (postData) {
           await update({
@@ -53,6 +55,7 @@ export function Editor({
             title,
             content,
             attachments,
+            ...(repliesDisabled !== undefined ? { repliesDisabled } : {}),
           });
           router.push(`/event/${eventId}`);
         }

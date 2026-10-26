@@ -12,6 +12,7 @@ interface NativeNode {
 interface Mounted {
   root: { findAll: (test: (node: NativeNode) => boolean) => NativeNode[] };
   unmount: () => void;
+  update: (element: ReactNode) => void;
 }
 const renderer = require(
   require.resolve('react-test-renderer', {
@@ -499,5 +500,108 @@ it('blocks a canonical Reply with neither visible text nor attachments', async (
   });
   expect(state.createReply).not.toHaveBeenCalled();
   expect(state.uploadAll).not.toHaveBeenCalled();
+  await act(async () => tree.unmount());
+});
+
+it.each([undefined, groupId])(
+  'keeps historical replies readable while closing creation for parent %s',
+  async owner => {
+    state.detail = {
+      ...(state.detail as object),
+      post: {
+        ...(state.detail as { post: object }).post,
+        repliesDisabled: true,
+        replies: [
+          {
+            _id: 'old-reply',
+            text: 'Historical reply',
+            _creationTime: 1,
+            author: { person: { _id: 'another' }, user: { name: 'Avery' } },
+          },
+        ],
+      },
+    };
+    const tree = await mount(
+      createElement(PostDetailScreen, { groupId: owner, postId })
+    );
+    expect(node(tree, 'ReplyComposer').props.disabled).toBe(true);
+    const list = node(tree, 'FlatList');
+    expect(list.props.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ _id: 'old-reply', text: 'Historical reply' }),
+      ])
+    );
+    await act(async () => tree.unmount());
+  }
+);
+
+it('preserves a reply draft across a reactive lock and guards an already captured send callback', async () => {
+  const { ReplyComposer } =
+    await vi.importActual<typeof import('./reply-composer')>(
+      './reply-composer'
+    );
+  const props = { postId, onTypingChange: vi.fn() };
+  const tree = await mount(createElement(ReplyComposer, props));
+  await act(async () => {
+    (node(tree, 'RichTextEditor').props.onChange as (value: string) => void)(
+      '<p>Keep this draft</p>'
+    );
+  });
+  const queuedSend = node(tree, 'Button', 'Send reply').props
+    .onPress as () => Promise<void>;
+  await act(async () =>
+    tree.update(createElement(ReplyComposer, { ...props, disabled: true }))
+  );
+  expect(tree.root.findAll(n => n.type === 'RichTextEditor')).toHaveLength(0);
+  await act(async () => queuedSend());
+  expect(state.createReply).not.toHaveBeenCalled();
+  expect(state.uploadAll).not.toHaveBeenCalled();
+  await act(async () =>
+    tree.update(createElement(ReplyComposer, { ...props, disabled: false }))
+  );
+  expect(node(tree, 'RichTextEditor').props.initialContent).toBe(
+    '<p>Keep this draft</p>'
+  );
+  await act(async () => tree.unmount());
+});
+
+it('does not create a reply if its parent closes while attachments upload', async () => {
+  const { ReplyComposer } =
+    await vi.importActual<typeof import('./reply-composer')>(
+      './reply-composer'
+    );
+  state.pendingUploads = [
+    { id: 'pending', filename: 'file.pdf', status: 'pending' },
+  ];
+  let finishUpload!: (files: unknown[]) => void;
+  state.uploadAll.mockReturnValue(
+    new Promise(resolve => {
+      finishUpload = resolve;
+    })
+  );
+  const props = { postId, onTypingChange: vi.fn() };
+  const tree = await mount(createElement(ReplyComposer, props));
+  let send!: Promise<void>;
+  await act(async () => {
+    send = (
+      node(tree, 'Button', 'Send reply').props.onPress as () => Promise<void>
+    )();
+  });
+  await act(async () =>
+    tree.update(createElement(ReplyComposer, { ...props, disabled: true }))
+  );
+  await act(async () => {
+    finishUpload([
+      {
+        storageId: 'storage',
+        filename: 'file.pdf',
+        mimeType: 'application/pdf',
+        size: 20,
+      },
+    ]);
+    await send;
+  });
+  expect(state.createReply).not.toHaveBeenCalled();
+  expect(state.clearAll).not.toHaveBeenCalled();
   await act(async () => tree.unmount());
 });

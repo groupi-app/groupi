@@ -91,6 +91,11 @@ export function PostDetailScreen({
     [allTypingUsers, currentPersonId]
   );
 
+  const repliesDisabled = postDetail?.post.repliesDisabled ?? false;
+  useEffect(() => {
+    if (repliesDisabled) setTyping(false);
+  }, [repliesDisabled, setTyping]);
+
   // Clear typing on unmount
   useEffect(() => {
     return () => setTyping(false);
@@ -611,10 +616,14 @@ export function PostDetailScreen({
         />
 
         {/* Typing indicator */}
-        <TypingIndicator typingUsers={typingUsers} />
+        <TypingIndicator typingUsers={repliesDisabled ? [] : typingUsers} />
 
         {!editingReplyId ? (
-          <ReplyComposer postId={typedPostId} onTypingChange={setTyping} />
+          <ReplyComposer
+            postId={typedPostId}
+            onTypingChange={setTyping}
+            disabled={repliesDisabled}
+          />
         ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>

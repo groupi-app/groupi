@@ -1,3 +1,4 @@
+import { requireRepliesOpen } from '../posts/controls';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
@@ -20,6 +21,8 @@ export async function writeIntegrationContent(
     content?: string;
     text?: string;
     hasAttachments?: boolean;
+    repliesDisabled?: boolean;
+    expectedRepliesRevision?: number;
   }
 ) {
   const principal = await ctx.db.get(args.principalId);
@@ -50,6 +53,7 @@ export async function writeIntegrationContent(
         title,
         content,
         authorId: principal._id,
+        repliesDisabled: args.repliesDisabled,
         updatedAt: now,
       });
       await notifyEventMembers(ctx, {
@@ -61,6 +65,7 @@ export async function writeIntegrationContent(
     }
     const post = args.postId ? await ctx.db.get(args.postId) : null;
     if (!post || post.eventId !== args.eventId) throw denied();
+    requireRepliesOpen(post);
     const text = await validateContent(
       ctx,
       args.sponsorPersonId,
@@ -97,6 +102,22 @@ export async function writeIntegrationContent(
         'Integrations may change only their own discussion content.'
       );
     if (args.operation === 'edit') {
+      if (args.repliesDisabled !== undefined) {
+        if (
+          args.expectedRepliesRevision === undefined ||
+          !Number.isSafeInteger(args.expectedRepliesRevision) ||
+          args.expectedRepliesRevision !== (post.repliesRevision ?? 0)
+        )
+          throw new ConvexError({
+            code: 'STALE_REVISION',
+            message: 'This post changed. Refresh before trying again.',
+          });
+        if (args.repliesDisabled !== (post.repliesDisabled ?? false))
+          await ctx.db.patch(post._id, {
+            repliesDisabled: args.repliesDisabled,
+            repliesRevision: (post.repliesRevision ?? 0) + 1,
+          });
+      }
       const title =
         args.title === undefined
           ? post.title

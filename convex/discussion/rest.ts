@@ -38,6 +38,10 @@ const summaryFields = {
   content: v.optional(v.string()),
   editedAt: v.optional(v.union(v.number(), v.null())),
   replyCount: v.optional(v.number()),
+  repliesDisabled: v.optional(v.boolean()),
+  repliesRevision: v.optional(v.number()),
+  pinnedAt: v.optional(v.number()),
+  pinRevision: v.optional(v.number()),
   postId: v.optional(v.id('posts')),
   text: v.optional(v.string()),
   updatedAt: v.optional(v.union(v.number(), v.null())),
@@ -85,6 +89,10 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
       ? {
           eventId: row.eventId,
           title: row.title,
+          repliesDisabled: row.repliesDisabled ?? false,
+          repliesRevision: row.repliesRevision ?? 0,
+          pinnedAt: row.pinnedAt,
+          pinRevision: row.pinRevision ?? 0,
           content: row.content,
           editedAt: row.editedAt ?? null,
           replyCount: (
@@ -238,6 +246,8 @@ export const write = internalMutation({
     body: v.object({
       title: v.optional(v.string()),
       content: v.optional(v.string()),
+      repliesDisabled: v.optional(v.boolean()),
+      expectedRepliesRevision: v.optional(v.number()),
       text: v.optional(v.string()),
       attachments: v.optional(v.array(attachmentInputValidator)),
       attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
@@ -278,6 +288,7 @@ export const write = internalMutation({
           eventId: a.id as Id<'events'>,
           title: body.title ?? '',
           content: body.content ?? '',
+          repliesDisabled: body.repliesDisabled,
           attachments: body.attachments,
         });
       if (a.operation === 'delete')
@@ -288,6 +299,8 @@ export const write = internalMutation({
         postId: a.id as Id<'posts'>,
         title: body.title,
         content: body.content,
+        repliesDisabled: body.repliesDisabled,
+        expectedRepliesRevision: body.expectedRepliesRevision,
         attachmentsToAdd: body.attachmentsToAdd,
         attachmentIdsToDelete: body.attachmentIdsToDelete,
       });

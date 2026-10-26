@@ -259,3 +259,16 @@ it('opens canonical Group posts and Group manager edit routes without Event IDs'
     '/groups/group-123/posts/post-123/edit'
   );
 });
+
+it('announces pinned and locked state without removing historical reply counts', () => {
+  const card = PostCard({
+    post: { ...post, pinnedAt: 100, repliesDisabled: true },
+    eventId: 'event',
+    currentPersonId: 'reader',
+  });
+  expect(card.props.accessibilityLabel).toBe(
+    'Pinned, Packing list, by Avery, replies closed, 2 replies'
+  );
+  card.props.onPress();
+  expect(router.push).toHaveBeenCalledWith('/event/event/post/post-123');
+});

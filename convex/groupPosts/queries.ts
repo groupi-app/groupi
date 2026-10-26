@@ -1,3 +1,4 @@
+import { pinnedPosts } from '../posts/controls';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
@@ -15,22 +16,31 @@ export const getPost = query({
     model.get(ctx, (await requireAuth(ctx)).person._id, postId),
 });
 export const listPosts = query({
-  args: { groupId: v.id('groups'), paginationOpts: paginationOptsValidator },
+  args: {
+    groupId: v.id('groups'),
+    paginationOpts: paginationOptsValidator,
+    excludePinned: v.optional(v.boolean()),
+  },
   returns: v.object({
     page: v.array(post),
     isDone: v.boolean(),
     continueCursor: v.string(),
   }),
-  handler: async (ctx, { groupId, paginationOpts }) => {
+  handler: async (ctx, { groupId, paginationOpts, excludePinned }) => {
     const { person } = await requireAuth(ctx);
     await requireGroupMemberContent(ctx, groupId, person._id);
     if (paginationOpts.numItems < 1 || paginationOpts.numItems > 100)
       throw new Error('Page size must be 1–100.');
-    const result = await ctx.db
-      .query('posts')
-      .withIndex('by_groupId', q => q.eq('groupId', groupId))
-      .order('desc')
-      .paginate(paginationOpts);
+    const source = excludePinned
+      ? ctx.db
+          .query('posts')
+          .withIndex('by_groupId_and_pinnedAt', q =>
+            q.eq('groupId', groupId).eq('pinnedAt', undefined)
+          )
+      : ctx.db
+          .query('posts')
+          .withIndex('by_groupId', q => q.eq('groupId', groupId));
+    const result = await source.order('desc').paginate(paginationOpts);
     return {
       page: await Promise.all(
         result.page.map(row => model.present(ctx, person._id, row))
@@ -106,5 +116,19 @@ export const mentionMembers = query({
         });
     }
     return result;
+  },
+});
+
+export const listPinnedPosts = query({
+  args: { groupId: v.id('groups') },
+  returns: v.array(post),
+  handler: async (ctx, { groupId }) => {
+    const { person } = await requireAuth(ctx);
+    await requireGroupMemberContent(ctx, groupId, person._id);
+    return Promise.all(
+      (await pinnedPosts(ctx, { groupId })).map(row =>
+        model.present(ctx, person._id, row)
+      )
+    );
   },
 });

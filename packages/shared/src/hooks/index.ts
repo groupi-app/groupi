@@ -81,3 +81,4 @@ export { createGroupPostHooks } from './useGroupPosts';
 
 export { useLifecycleClock } from './useLifecycleClock';
 export { createEventSettingsHooks } from './useEventSettings';
+export { createPostControlHooks } from './usePostControls';

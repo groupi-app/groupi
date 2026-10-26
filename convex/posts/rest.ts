@@ -21,6 +21,10 @@ const postSummary = v.object({
   content: v.string(),
   createdAt: v.number(),
   editedAt: v.union(v.number(), v.null()),
+  repliesDisabled: v.boolean(),
+  repliesRevision: v.number(),
+  pinnedAt: v.optional(v.number()),
+  pinRevision: v.number(),
   author: discussionAuthor,
 });
 const postDetail = v.object({
@@ -36,6 +40,10 @@ async function readPostSummary(ctx: QueryCtx, post: Doc<'posts'>) {
     content: post.content,
     createdAt: post._creationTime,
     editedAt: post.editedAt ?? null,
+    repliesDisabled: post.repliesDisabled ?? false,
+    repliesRevision: post.repliesRevision ?? 0,
+    pinnedAt: post.pinnedAt,
+    pinRevision: post.pinRevision ?? 0,
     author: await readDiscussionAuthor(ctx, post.authorId),
   };
 }
@@ -118,13 +126,17 @@ export const createPost = internalMutation({
     personId: v.string(),
     title: v.string(),
     content: v.string(),
+    repliesDisabled: v.optional(v.boolean()),
   },
   returns: v.object({ postId: v.id('posts') }),
-  handler: async (ctx, { eventId, personId, title, content }) => {
+  handler: async (
+    ctx,
+    { eventId, personId, title, content, repliesDisabled }
+  ) => {
     const { postId } = await createPostForPerson(
       ctx,
       personId as Id<'persons'>,
-      { eventId: eventId as Id<'events'>, title, content }
+      { eventId: eventId as Id<'events'>, title, content, repliesDisabled }
     );
     return { postId };
   },
@@ -136,6 +148,8 @@ export const updatePost = internalMutation({
     personId: v.string(),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    repliesDisabled: v.optional(v.boolean()),
+    expectedRepliesRevision: v.optional(v.number()),
   },
   returns: postDetail,
   handler: async (ctx, { postId, personId, ...updates }) => {

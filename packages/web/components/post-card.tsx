@@ -1,5 +1,10 @@
 'use client';
 
+import { Pin, Lock } from 'lucide-react';
+import {
+  usePostStateActions,
+  PostStateMenuItems,
+} from '@/features/discussion/post-state-actions';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { Dialog } from '@/components/ui/dialog';
@@ -47,6 +52,8 @@ type PostData = Doc<'posts'> & {
   replies: Array<Doc<'replies'>>;
   replyCount?: number;
   authorId: string;
+  canSetRepliesDisabled?: boolean;
+  canPin?: boolean;
 };
 
 export function PostCard({
@@ -115,6 +122,7 @@ export function PostCard({
     [baseHandleMoreClick]
   );
 
+  const stateActions = usePostStateActions(postData, () => setSheetOpen(false));
   const isMe = author ? userId === authorId : false;
 
   if (!author) return null;
@@ -142,6 +150,7 @@ export function PostCard({
           </>
         )}
       </Button>
+      <PostStateMenuItems state={stateActions} menu='drawer' />
       {!isMe && (
         <Button
           variant='ghost'
@@ -182,6 +191,7 @@ export function PostCard({
   // Context menu content for desktop
   const contextMenuContent = (
     <>
+      <PostStateMenuItems state={stateActions} menu='context' />
       <ContextMenuItem
         onSelect={e => {
           e.preventDefault();
@@ -248,6 +258,7 @@ export function PostCard({
   // Dropdown menu content for desktop action button
   const dropdownContent = (
     <>
+      <PostStateMenuItems state={stateActions} menu='dropdown' />
       <DropdownMenuItem
         onSelect={e => {
           e.preventDefault();
@@ -354,6 +365,12 @@ export function PostCard({
             <div className='flex flex-col gap-1'>
               <div className='ml-12 mb-2 flex min-w-0 flex-col pr-12'>
                 <div className='flex items-center gap-2'>
+                  {postData.pinnedAt !== undefined && (
+                    <Pin
+                      className='size-4 shrink-0 text-muted-foreground'
+                      aria-label='Pinned post'
+                    />
+                  )}
                   <span className='min-w-0 flex-1 sm:text-xl font-heading text-card-foreground truncate'>
                     {title}
                   </span>
@@ -370,6 +387,12 @@ export function PostCard({
                   ) : null}
                 </span>
               </div>
+              {postData.repliesDisabled && (
+                <span className='flex items-center gap-1 text-xs text-muted-foreground'>
+                  <Lock className='size-3' aria-hidden />
+                  Replies locked
+                </span>
+              )}
               <PostCardContent content={content} />
               <div className='flex items-center justify-between mt-2'>
                 <div className='flex flex-col sm:flex-row sm:items-center sm:gap-4'>
@@ -387,7 +410,8 @@ export function PostCard({
                 <div className='text-muted-foreground flex items-center gap-1'>
                   <RepliesIcons replies={replies} />
                   <span className='text-sm'>
-                    {replyCount ?? replies.length} replies
+                    {replyCount ?? replies.length}{' '}
+                    {(replyCount ?? replies.length) === 1 ? 'reply' : 'replies'}
                   </span>
                 </div>
               </div>
@@ -395,6 +419,11 @@ export function PostCard({
           </div>
         </Link>
       </CardAction>
+      {stateActions.error && (
+        <p role='alert' className='px-5 pb-3 text-sm text-error'>
+          {stateActions.error}
+        </p>
+      )}
     </Card>
   );
 

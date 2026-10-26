@@ -1,10 +1,20 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
+import { Pin, MoreHorizontal } from 'lucide-react';
+import { ActionMenu } from '@/components/ui/action-menu';
+import { ActionMenuButton } from '@/components/ui/action-menu-button';
+import { useActionMenu } from '@/hooks/use-action-menu';
+import { usePinnedGroupPosts } from '@/hooks/convex/use-post-controls';
+import {
+  usePostStateActions,
+  PostStateMenuItems,
+  type PostState,
+} from '@/features/discussion/post-state-actions';
 import { GroupPollFeed } from '@/components/organisms/group-polls';
 import { Button } from '@/components/ui/button';
 import { GroupConfirmedAction } from '@/components/organisms/group-confirmed-action';
@@ -27,8 +37,16 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
   const eligible =
     group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
   const posts = hooks.useGroupPosts(
-    eligible ? { groupId, paginationOpts: { numItems: 20, cursor } } : 'skip'
+    eligible
+      ? {
+          groupId,
+          excludePinned: true,
+          paginationOpts: { numItems: 20, cursor },
+        }
+      : 'skip'
   );
+  const pinned = usePinnedGroupPosts(eligible ? { groupId } : 'skip');
+  const pinnedIds = new Set((pinned ?? []).map(post => post._id));
   if (group === undefined) return <p role='status'>Loading Group…</p>;
   if (!eligible)
     return (
@@ -42,41 +60,30 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
       <h2 id='group-posts-heading' className='font-heading text-2xl font-bold'>
         Posts
       </h2>
+      {pinned === undefined ? (
+        <p role='status'>Loading pinned posts…</p>
+      ) : (
+        pinned.length > 0 && (
+          <div aria-label='Pinned posts' className='space-y-3'>
+            {[...pinned]
+              .sort((a, b) => (b.pinnedAt ?? 0) - (a.pinnedAt ?? 0))
+              .map(post => (
+                <GroupPostCard key={post._id} post={post} groupId={groupId} />
+              ))}
+          </div>
+        )
+      )}
       <GroupPollFeed groupId={groupId} />
       {posts === undefined ? (
         <p role='status'>Loading posts…</p>
       ) : (
         <>
-          {!posts.page.length && <p>No posts yet.</p>}
-          {posts.page.map(post => (
-            <article
-              key={post._id}
-              className='space-y-3 rounded-card border border-border p-4'
-            >
-              <Link
-                className='font-heading text-lg font-semibold text-primary underline'
-                href={`/groups/${groupId}/posts/${post._id}`}
-              >
-                {post.title}
-              </Link>
-              <p className='text-sm text-muted-foreground'>
-                {post.authorName} · {new Date(post.createdAt).toLocaleString()}
-              </p>
-              <DiscussionContent content={post.content} preview />
-              <AttachmentGallery attachments={post.attachments} />
-              {post.unreadCount > 0 && (
-                <p
-                  className='text-sm font-semibold text-primary'
-                  aria-label={`${post.unreadCount} unread notifications`}
-                >
-                  Unread
-                </p>
-              )}
-              <p className='text-sm text-muted-foreground'>
-                {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
-              </p>
-            </article>
-          ))}
+          {!posts.page.length && !pinned?.length && <p>No posts yet.</p>}
+          {posts.page
+            .filter(post => !pinnedIds.has(post._id))
+            .map(post => (
+              <GroupPostCard key={post._id} post={post} groupId={groupId} />
+            ))}
           {!posts.isDone && (
             <Button
               variant='outline'
@@ -93,6 +100,92 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
         </>
       )}
     </section>
+  );
+}
+function GroupPostCard({
+  post,
+  groupId,
+}: {
+  post: NonNullable<ReturnType<typeof hooks.useGroupPosts>>['page'][number];
+  groupId: Id<'groups'>;
+}) {
+  return (
+    <article className='space-y-3 rounded-card border border-border p-4'>
+      <div className='flex min-w-0 flex-wrap items-start justify-between gap-2'>
+        <div className='min-w-0 flex-1 basis-40 space-y-2'>
+          {post.pinnedAt !== undefined && (
+            <p className='flex items-center gap-1 text-xs text-muted-foreground'>
+              <Pin className='size-3' aria-hidden />
+              Pinned
+            </p>
+          )}
+          <Link
+            className='break-words font-heading text-lg font-semibold text-primary underline'
+            href={`/groups/${groupId}/posts/${post._id}`}
+          >
+            {post.title}
+          </Link>
+        </div>
+        <GroupPostStateMenu post={post} />
+      </div>
+      <p className='break-words text-sm text-muted-foreground'>
+        {post.authorName} · {new Date(post.createdAt).toLocaleString()}
+      </p>
+      <DiscussionContent content={post.content} preview />
+      <AttachmentGallery attachments={post.attachments} />
+      {post.unreadCount > 0 && (
+        <p
+          className='text-sm font-semibold text-primary'
+          aria-label={`${post.unreadCount} unread notifications`}
+        >
+          Unread
+        </p>
+      )}
+      <p className='text-sm text-muted-foreground'>
+        {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
+        {post.repliesDisabled ? ' · Replies closed' : ''}
+      </p>
+    </article>
+  );
+}
+function GroupPostStateMenu({ post }: { post: PostState }) {
+  const menu = useActionMenu();
+  const state = usePostStateActions(post, () => menu.setSheetOpen(false));
+  if (!state.actions.length) return null;
+  return (
+    <div className='shrink-0'>
+      <ActionMenu
+        drawerTitle='Post actions'
+        drawerContent={
+          <div className='space-y-1 p-4'>
+            <PostStateMenuItems state={state} menu='drawer' />
+          </div>
+        }
+        contextMenuContent={<PostStateMenuItems state={state} menu='context' />}
+        sheetOpen={menu.sheetOpen}
+        onSheetOpenChange={menu.setSheetOpen}
+        onContextMenu={menu.handleContextMenu}
+        onClick={menu.handleClick}
+      >
+        <div>
+          <ActionMenuButton
+            label='Post actions'
+            onClick={menu.handleMoreClick}
+            onContextMenu={menu.handleContextMenu}
+            dropdownContent={
+              <PostStateMenuItems state={state} menu='dropdown' />
+            }
+          >
+            <MoreHorizontal className='size-4' aria-hidden />
+          </ActionMenuButton>
+        </div>
+      </ActionMenu>
+      {state.error && !menu.sheetOpen && (
+        <p role='alert' className='max-w-64 break-words text-sm text-error'>
+          {state.error}
+        </p>
+      )}
+    </div>
   );
 }
 export function GroupPostDetail({
@@ -137,9 +230,12 @@ function PostThread({
       <Button variant='ghost' asChild>
         <Link href={`/groups/${groupId}`}>Back to Group</Link>
       </Button>
-      <h1 className='break-words font-heading text-3xl font-bold'>
-        {post.title}
-      </h1>
+      <div className='flex min-w-0 flex-wrap items-start justify-between gap-2'>
+        <h1 className='min-w-0 flex-1 basis-40 break-words font-heading text-3xl font-bold'>
+          {post.title}
+        </h1>
+        <GroupPostStateMenu post={post} />
+      </div>
       <p className='text-sm text-muted-foreground'>
         {post.authorName} · {new Date(post.createdAt).toLocaleString()}
       </p>
@@ -176,7 +272,11 @@ function PostThread({
       </div>
       {error && <p role='alert'>{error}</p>}
       <TypingIndicator typingUsers={typing} />
-      <PostReplies groupId={groupId} postId={postId} />
+      <PostReplies
+        groupId={groupId}
+        postId={postId}
+        repliesDisabled={post.repliesDisabled ?? false}
+      />
     </main>
   );
 }
@@ -222,6 +322,7 @@ function PostEditorForm({
         {post ? 'Edit post' : 'New post'}
       </h1>
       <DiscussionComposer
+        canConfigureReplies={!post}
         initialTitle={post?.title}
         initialContent={post?.content}
         existingAttachments={post?.attachments}
@@ -233,6 +334,7 @@ function PostEditorForm({
           content,
           attachments,
           attachmentIdsToDelete,
+          repliesDisabled,
         }) => {
           const postId = post
             ? (await update({
@@ -243,7 +345,13 @@ function PostEditorForm({
                 attachmentIdsToDelete,
               }),
               post._id)
-            : await create({ groupId, title, content, attachments });
+            : await create({
+                groupId,
+                title,
+                content,
+                attachments,
+                repliesDisabled,
+              });
           router.push(`/groups/${groupId}/posts/${postId}`);
         }}
       />
@@ -253,10 +361,16 @@ function PostEditorForm({
 function PostReplies({
   groupId,
   postId,
+  repliesDisabled,
 }: {
   groupId: Id<'groups'>;
   postId: Id<'posts'>;
+  repliesDisabled: boolean;
 }) {
+  const repliesClosed = useRef(repliesDisabled);
+  useEffect(() => {
+    repliesClosed.current = repliesDisabled;
+  }, [repliesDisabled]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [editingReplyId, setEditingReplyId] = useState<Id<'replies'> | null>(
     null
@@ -296,7 +410,7 @@ function PostReplies({
                 setEditingReplyId(editing ? reply._id : null)
               }
               editDisabled={
-                newDraftDirty ||
+                (newDraftDirty && !repliesDisabled) ||
                 (editingReplyId !== null && editingReplyId !== reply._id)
               }
             />
@@ -321,14 +435,18 @@ function PostReplies({
           )}
         </>
       )}
-      {newDraftDirty && (
+      {newDraftDirty && !repliesDisabled && (
         <p className='text-sm text-muted-foreground'>
           Save or cancel your reply draft before editing another reply.
         </p>
       )}
-      <div hidden={editingReplyId !== null}>
+      {repliesDisabled && (
+        <p className='text-sm text-muted-foreground'>Replies are closed.</p>
+      )}
+      <div hidden={editingReplyId !== null || repliesDisabled}>
         <DiscussionComposer
           key={newDraftVersion}
+          disabled={repliesDisabled}
           reply
           mentionMembers={members}
           onDraftChange={setNewDraftDirty}
@@ -336,6 +454,8 @@ function PostReplies({
           submitLabel='Send reply'
           onContentChange={content => setTyping(content.length > 0)}
           onSave={async ({ content, attachments }) => {
+            if (repliesClosed.current)
+              throw new Error('Replies are closed. Your draft is preserved.');
             await create({ postId, content, attachments });
             setTyping(false);
           }}

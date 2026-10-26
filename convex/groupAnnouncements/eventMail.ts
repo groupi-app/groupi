@@ -1,3 +1,4 @@
+import { rejectAnnouncementSend } from './retirement';
 import {
   isEventExcludedForPerson,
   isGroupExcludedForPerson,
@@ -17,12 +18,7 @@ import { isEventComplete } from '../events/lifecycle';
 import { checkIsBlocked } from '../lib/privacy';
 import { collectEmailData, isPersonInDndMode } from '../lib/notifications';
 import { secretHash, denied } from '../authorization/model';
-import {
-  receiptBinding,
-  priorReceipt,
-  saveReceipt,
-  operationError,
-} from '../groups/operationReceipts';
+import { operationError } from '../groups/operationReceipts';
 type Ctx = QueryCtx | MutationCtx;
 const escape = (text: string) =>
   text.replace(
@@ -201,6 +197,7 @@ const receipt = v.object({
     cleanup: v.literal('not-requested'),
   }),
 });
+/** Compatibility endpoint: no new campaigns or receipt replay may enqueue mail. */
 export const announce = mutation({
   args: {
     groupId: v.id('groups'),
@@ -208,47 +205,10 @@ export const announce = mutation({
     operationId: v.string(),
   },
   returns: receipt,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Infer<typeof receipt>> => {
     const senderId = (await requireAuth(ctx)).person._id;
     await authority(ctx, args.groupId, args.eventId, senderId);
-    const branding = await brandBinding(ctx, args.groupId);
-    const binding = await receiptBinding({
-      senderId,
-      ...args,
-      operation: 'announce-event',
-      authority: 'native',
-    });
-    const now = Date.now();
-    const prior = await priorReceipt(ctx, args.operationId, binding, now);
-    if (prior) return JSON.parse(prior) as Infer<typeof receipt>;
-    const last = await ctx.db
-      .query('groupMemberships')
-      .withIndex('by_groupId', q => q.eq('groupId', args.groupId))
-      .order('desc')
-      .first();
-    const announcementId = await ctx.db.insert('groupEventAnnouncements', {
-      groupId: args.groupId,
-      eventId: args.eventId,
-      senderId,
-      brandBinding: branding,
-      createdAt: now,
-      cursor: null,
-      cutoff: last?._creationTime ?? now,
-      processed: false,
-    });
-    await ctx.scheduler.runAfter(
-      0,
-      internal.groupAnnouncements.eventMail.processPage,
-      { announcementId }
-    );
-    const result = {
-      operationId: args.operationId,
-      outcome: 'committed' as const,
-      result: { announcementId },
-      effects: { email: 'queued' as const, cleanup: 'not-requested' as const },
-    };
-    await saveReceipt(ctx, args.operationId, binding, result, now);
-    return result;
+    return rejectAnnouncementSend();
   },
 });
 export const processPage = internalMutation({
@@ -432,6 +392,7 @@ export const finish = internalMutation({
     return null;
   },
 });
+/** Public retry is retired too; it must not restart failed or interrupted delivery. */
 export const retry = mutation({
   args: { announcementId: v.id('groupEventAnnouncements') },
   returns: v.null(),
@@ -445,34 +406,7 @@ export const retry = mutation({
       (await requireAuth(ctx)).person._id,
       false
     );
-    if (Date.now() - row.createdAt >= 23 * 3600000)
-      operationError(
-        'CONFLICT',
-        'Safe provider retry window expired; inspect provider delivery.'
-      );
-    for await (const dispatch of ctx.db
-      .query('groupEventMail')
-      .withIndex('by_announcementId', q =>
-        q.eq('announcementId', announcementId)
-      )) {
-      if (dispatch.state === 'delivered' || dispatch.state === 'suppressed')
-        continue;
-      if (
-        dispatch.state === 'sending' &&
-        Date.now() - (dispatch.claimedAt ?? 0) < 300000
-      )
-        operationError(
-          'CONFLICT',
-          'Delivery in progress; retry after five minutes.'
-        );
-      await ctx.db.patch(dispatch._id, { state: 'queued' });
-      await ctx.scheduler.runAfter(
-        0,
-        internal.groupAnnouncements.eventMailActions.send,
-        { dispatchId: dispatch._id }
-      );
-    }
-    return null;
+    return rejectAnnouncementSend();
   },
 });
 import { liveGrant } from '../authorization/model';

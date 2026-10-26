@@ -1,3 +1,7 @@
+import {
+  seedEventAnnouncement,
+  requeueHistoricalDispatch,
+} from './announcement-history.helpers';
 import { expect, it } from 'vitest';
 import { applicant } from './community-applications.helpers';
 it('starts own per-Group announcement subscription off', async () => {
@@ -64,7 +68,7 @@ it('commits own opt-in once and rejects intent reuse after opt-out', async () =>
   expect((await f.read()).announcementPreference.subscribed).toBe(false);
 });
 import { api, internal } from '../_generated/api';
-it('requires both Group management and Event Organizer authority for explicit ordinary Event mail', async () => {
+it('preserves authority checks and historical status while rejecting retired Event mail sends', async () => {
   const f = await applicant();
   await expect(
     f.staff.auth.mutation(api.groupAnnouncements.eventMail.announce, {
@@ -95,18 +99,16 @@ it('requires both Group management and Event Organizer authority for explicit or
   });
   const operationId = crypto.randomUUID();
   const args = { groupId: f.groupId, eventId: f.event.eventId, operationId };
-  const first = await f.staff.auth.mutation(
-    api.groupAnnouncements.eventMail.announce,
-    args
-  );
-  expect(first).toMatchObject({
-    operationId,
-    outcome: 'committed',
-    effects: { email: 'queued' },
-  });
+  await expect(
+    f.staff.auth.mutation(api.groupAnnouncements.eventMail.announce, args)
+  ).rejects.toThrow('retired');
   expect(
-    await f.staff.auth.mutation(api.groupAnnouncements.eventMail.announce, args)
-  ).toEqual(first);
+    await f.t.run(ctx => ctx.db.query('groupEventAnnouncements').collect())
+  ).toEqual([]);
+  const first = await seedEventAnnouncement(f.t, f.staff.personId, args, false);
+  await expect(
+    f.staff.auth.mutation(api.groupAnnouncements.eventMail.announce, args)
+  ).rejects.toThrow('retired');
   const state = await f.staff.auth.query(
     api.groupAnnouncements.eventMail.status,
     { announcementId: first.result.announcementId }
@@ -161,14 +163,11 @@ async function mailFixture() {
   });
   await f.t.finishInProgressScheduledFunctions();
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-  const receipt = await f.staff.auth.mutation(
-    api.groupAnnouncements.eventMail.announce,
-    {
-      groupId: f.groupId,
-      eventId: f.event.eventId,
-      operationId: crypto.randomUUID(),
-    }
-  );
+  const receipt = await seedEventAnnouncement(f.t, f.staff.personId, {
+    groupId: f.groupId,
+    eventId: f.event.eventId,
+    operationId: crypto.randomUUID(),
+  });
   const announcementId = receipt.result.announcementId;
   await f.t.mutation(internal.groupAnnouncements.eventMail.processPage, {
     announcementId,
@@ -228,7 +227,7 @@ it.each(['opt-out', 'departure', 'dnd', 'global-disabled'] as const)(
     expect(await f.status()).toMatchObject({ suppressed: 1, queued: 0 });
   }
 );
-it('keeps provider failure independent and retries the exact frozen message without duplicate deliveries', async () => {
+it('retains historical internal delivery handling without allowing public retries', async () => {
   const f = await mailFixture();
   const provider = vi
     .fn()
@@ -242,18 +241,18 @@ it('keeps provider failure independent and retries the exact frozen message with
   const first = provider.mock.calls[0][1];
   expect(JSON.parse(first.body).to).toBe('member@example.test');
   expect(first.headers['Idempotency-Key']).toContain(f.dispatchId);
-  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
-    announcementId: f.announcementId,
-  });
+  await requeueHistoricalDispatch(f.t, f.dispatchId);
   provider.mockResolvedValue(new Response('{}', { status: 200 }));
   await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
     dispatchId: f.dispatchId,
   });
   expect(provider.mock.calls[1][1]).toEqual(first);
   expect(await f.status()).toMatchObject({ delivered: 1 });
-  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
-    announcementId: f.announcementId,
-  });
+  await expect(
+    f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
+      announcementId: f.announcementId,
+    })
+  ).rejects.toThrow('retired');
   await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
     dispatchId: f.dispatchId,
   });
@@ -374,14 +373,11 @@ it('uses only administrator-linked approved branding and disables an unsafe or s
     api.groupAnnouncements.eventMail.configureBrand,
     config
   );
-  const receipt = await f.staff.auth.mutation(
-    api.groupAnnouncements.eventMail.announce,
-    {
-      groupId: f.groupId,
-      eventId: f.event.eventId,
-      operationId: crypto.randomUUID(),
-    }
-  );
+  const receipt = await seedEventAnnouncement(f.t, f.staff.personId, {
+    groupId: f.groupId,
+    eventId: f.event.eventId,
+    operationId: crypto.randomUUID(),
+  });
   await f.t.mutation(internal.groupAnnouncements.eventMail.processPage, {
     announcementId: receipt.result.announcementId,
   });
@@ -531,7 +527,7 @@ it('stops uncertain provider retries before the provider idempotency retention e
     f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
       announcementId: f.announcementId,
     })
-  ).rejects.toThrow('Safe provider retry window expired');
+  ).rejects.toThrow('retired');
   expect(provider).toHaveBeenCalledTimes(1);
 });
 it('rechecks the delegated opt-in source grant and blocks a disconnected trusted return', async () => {
@@ -636,9 +632,7 @@ it('suppresses a frozen retry when its private destination was removed instead o
       },
     ],
   });
-  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
-    announcementId: f.announcementId,
-  });
+  await requeueHistoricalDispatch(f.t, f.dispatchId);
   await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
     dispatchId: f.dispatchId,
   });
@@ -705,7 +699,7 @@ it('requires fresh announcement opt-in after voluntary Leave and fresh invitatio
   ).toEqual({ subscribed: false });
 });
 
-it('recovers interrupted sending after its lease while retaining the exact provider message', async () => {
+it('retains the exact provider message for a historical internal queued retry', async () => {
   const f = await mailFixture();
   const claimed = await f.t.mutation(
     internal.groupAnnouncements.eventMail.claim,
@@ -716,12 +710,10 @@ it('recovers interrupted sending after its lease while retaining the exact provi
     f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
       announcementId: f.announcementId,
     })
-  ).rejects.toThrow('Delivery in progress');
+  ).rejects.toThrow('retired');
   vi.useFakeTimers();
   vi.setSystemTime(Date.now() + 300001);
-  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
-    announcementId: f.announcementId,
-  });
+  await requeueHistoricalDispatch(f.t, f.dispatchId);
   const retried = await f.t.mutation(
     internal.groupAnnouncements.eventMail.claim,
     { dispatchId: f.dispatchId }

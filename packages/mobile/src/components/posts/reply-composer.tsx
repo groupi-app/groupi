@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { discussionLengthAllowed } from '@groupi/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Id } from 'convex/_generated/dataModel';
@@ -20,11 +20,19 @@ export const MAX_REPLY_LENGTH = 5000;
 export const REPLY_EDITOR_HEIGHT = 76;
 
 interface ReplyComposerProps {
+  disabled?: boolean;
   postId: Id<'posts'>;
   onTypingChange: (isTyping: boolean) => void;
 }
 
-export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
+export function ReplyComposer({
+  postId,
+  onTypingChange,
+  disabled = false,
+}: ReplyComposerProps) {
+  // Preserve the draft when a reactive reply lock arrives, but block a queued send.
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
   const createReply = useCreateReply();
   const [content, setContent] = useState('');
   const [editorKey, setEditorKey] = useState(0);
@@ -58,7 +66,7 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
   );
 
   async function handleSubmit() {
-    if (!canSubmit || isBusy) {
+    if (disabledRef.current || !canSubmit || isBusy) {
       if (isTooLong) {
         toast.error('Replies must be 5000 characters or less');
       }
@@ -71,8 +79,10 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
       await createAfterUploading({
         expectedUploadCount: pendingUploads.length,
         uploadAll,
-        create: attachments =>
-          createReply({
+        create: attachments => {
+          if (disabledRef.current)
+            throw new Error('Replies are closed for this post');
+          return createReply({
             postId,
             text: hasText ? content.trim() : '',
             attachments: attachments.map(result => ({
@@ -83,7 +93,8 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
               width: result.width,
               height: result.height,
             })),
-          }),
+          });
+        },
       });
 
       clearAll();
@@ -98,6 +109,15 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
     }
   }
 
+  if (disabled) {
+    return (
+      <View className='border-t border-border px-4 py-4'>
+        <Text className='text-sm text-muted-foreground'>
+          Replies are closed for this post.
+        </Text>
+      </View>
+    );
+  }
   return (
     <View>
       <AttachmentPreview uploads={pendingUploads} onRemove={removeFile} />

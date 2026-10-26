@@ -1,3 +1,6 @@
+import { postControls, controlFields, pinnedPosts } from './controls';
+import { postDocument } from './model';
+import { requireDiscussionRole } from '../lib/discussionAccess';
 import { requireEventPost } from '../lib/discussionAccess';
 import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
@@ -20,6 +23,7 @@ const postFeedItemValidator = v.object({
   authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
   eventId: v.id('events'),
   updatedAt: v.optional(v.number()),
+  ...controlFields,
   author: v.object({
     kind: v.union(v.literal('user'), v.literal('integration')),
     name: v.union(v.string(), v.null()),
@@ -150,6 +154,11 @@ export const getPostDetail = query({
     return {
       post: {
         ...post,
+        ...postControls(
+          post,
+          currentPerson._id,
+          userMembership.role !== 'ATTENDEE'
+        ),
         author: postAuthorData
           ? {
               kind: postAuthorData.kind,
@@ -182,9 +191,10 @@ export const getPostDetail = query({
 export const getEventPostFeed = query({
   args: {
     eventId: v.id('events'),
+    excludePinned: v.optional(v.boolean()),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId }) => {
+  handler: async (ctx, { eventId, excludePinned }) => {
     const exclusionPerson = (await requireAuth(ctx)).person;
     await requireNoEventExclusion(ctx, eventId, exclusionPerson._id);
     // Require authentication and event membership
@@ -210,9 +220,16 @@ export const getEventPostFeed = query({
 
     // Get all posts and memberships for this event
     const [posts, eventMemberships] = await Promise.all([
-      ctx.db
-        .query('posts')
-        .withIndex('by_event', q => q.eq('eventId', eventId))
+      (excludePinned
+        ? ctx.db
+            .query('posts')
+            .withIndex('by_event_and_pinnedAt', q =>
+              q.eq('eventId', eventId).eq('pinnedAt', undefined)
+            )
+        : ctx.db
+            .query('posts')
+            .withIndex('by_event', q => q.eq('eventId', eventId))
+      )
         .order('desc')
         .collect(),
       ctx.db
@@ -310,6 +327,11 @@ export const getEventPostFeed = query({
 
       return {
         ...post,
+        ...postControls(
+          post,
+          currentPerson._id,
+          userMembership.role !== 'ATTENDEE'
+        ),
         author: authorData
           ? {
               kind: authorData.kind,
@@ -370,10 +392,11 @@ export const getEventPostFeed = query({
 export const getEventPostFeedPage = query({
   args: {
     eventId: v.id('events'),
+    excludePinned: v.optional(v.boolean()),
     paginationOpts: paginationOptsValidator,
   },
   returns: paginationResultValidator(postFeedItemValidator),
-  handler: async (ctx, { eventId, paginationOpts }) => {
+  handler: async (ctx, { eventId, paginationOpts, excludePinned }) => {
     const { person: currentPerson } = await requireAuth(ctx);
     const boundedPaginationOpts = {
       ...paginationOpts,
@@ -402,11 +425,16 @@ export const getEventPostFeedPage = query({
       throw new Error('You are not a member of this event');
     }
 
-    const result = await ctx.db
-      .query('posts')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .order('desc')
-      .paginate(boundedPaginationOpts);
+    const source = excludePinned
+      ? ctx.db
+          .query('posts')
+          .withIndex('by_event_and_pinnedAt', q =>
+            q.eq('eventId', eventId).eq('pinnedAt', undefined)
+          )
+      : ctx.db
+          .query('posts')
+          .withIndex('by_event', q => q.eq('eventId', eventId));
+    const result = await source.order('desc').paginate(boundedPaginationOpts);
 
     const authorIds = [...new Set(result.page.map(post => post.authorId))];
     const authors = await Promise.all(
@@ -426,6 +454,11 @@ export const getEventPostFeedPage = query({
         const author = authorMap.get(post.authorId);
         return {
           ...post,
+          ...postControls(
+            post,
+            currentPerson._id,
+            membership.role !== 'ATTENDEE'
+          ),
           author: {
             kind: author?.kind ?? 'user',
             name: author?.user.name ?? null,
@@ -466,7 +499,10 @@ export const getPost = query({
       throw new Error('Access denied to this post');
     }
 
-    return post;
+    return {
+      ...post,
+      ...postControls(post, currentPerson._id, membership.role !== 'ATTENDEE'),
+    };
   },
 });
 
@@ -533,5 +569,108 @@ export const getPostReplies = query({
     return {
       replies: repliesWithAuthors.filter(r => r.author !== null),
     };
+  },
+});
+
+const pinnedUser = v.object({
+  _id: v.string(),
+  name: v.union(v.string(), v.null()),
+  username: v.union(v.string(), v.null()),
+  email: v.union(v.string(), v.null()),
+  image: v.union(v.string(), v.null()),
+});
+const pinnedFeedPost = v.object({
+  ...postDocument.fields,
+  eventId: v.id('events'),
+  ...controlFields,
+  author: v.union(
+    v.object({
+      kind: v.union(v.literal('user'), v.literal('integration')),
+      user: pinnedUser,
+      person: v.object({
+        _id: v.union(v.id('persons'), v.id('authorizationPrincipals')),
+        user: pinnedUser,
+      }),
+    }),
+    v.null()
+  ),
+  replyCount: v.number(),
+  recentReplyAuthors: v.array(
+    v.object({
+      id: v.string(),
+      kind: v.union(v.literal('user'), v.literal('integration')),
+      _creationTime: v.number(),
+      user: v.object({
+        name: v.union(v.string(), v.null()),
+        email: v.string(),
+        image: v.union(v.string(), v.null()),
+      }),
+    })
+  ),
+});
+export const getPinnedEventPosts = query({
+  args: { eventId: v.id('events') },
+  returns: v.array(pinnedFeedPost),
+  handler: async (ctx, { eventId }) => {
+    const { person } = await requireAuth(ctx);
+    const membership = await requireDiscussionRole(
+      ctx,
+      eventId,
+      person._id,
+      'ATTENDEE'
+    );
+    return Promise.all(
+      (await pinnedPosts(ctx, { eventId })).map(async storedPost => {
+        const post = requireEventPost(storedPost);
+        const actor = await getDiscussionActorWithUser(ctx, post.authorId);
+        const user = actor
+          ? {
+              _id: actor.user._id,
+              name: actor.user.name ?? null,
+              username: actor.user.username ?? null,
+              email: actor.user.email ?? null,
+              image: actor.user.image ?? null,
+            }
+          : null;
+        const replies = await ctx.db
+          .query('replies')
+          .withIndex('by_post', q => q.eq('postId', post._id))
+          .order('desc')
+          .collect();
+        const seen = new Set<string>();
+        const recentReplyAuthors = [];
+        for (const reply of replies) {
+          if (seen.has(reply.authorId)) continue;
+          seen.add(reply.authorId);
+          const by = await getDiscussionActorWithUser(ctx, reply.authorId);
+          if (by)
+            recentReplyAuthors.push({
+              id: String(reply.authorId),
+              kind: by.kind,
+              _creationTime: reply._creationTime,
+              user: {
+                name: by.user.name ?? null,
+                email: by.user.email ?? '',
+                image: by.user.image ?? null,
+              },
+            });
+          if (recentReplyAuthors.length === 3) break;
+        }
+        return {
+          ...post,
+          ...postControls(post, person._id, membership.role !== 'ATTENDEE'),
+          author:
+            actor && user
+              ? {
+                  kind: actor.kind,
+                  user,
+                  person: { _id: actor.person._id, user },
+                }
+              : null,
+          replyCount: replies.length,
+          recentReplyAuthors,
+        };
+      })
+    );
   },
 });

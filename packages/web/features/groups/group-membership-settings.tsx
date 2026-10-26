@@ -25,12 +25,6 @@ export function GroupMembershipSettings({
         <GroupOwnershipTransfer groupId={groupId} />
       )}
       <GroupDiscordConnect groupId={groupId} />
-      <Link
-        className='text-sm font-medium text-primary underline underline-offset-4'
-        href={`/announcement-preferences/${groupId}`}
-      >
-        Your announcement subscription
-      </Link>
       {group.canLeave && (
         <GroupConfirmedAction
           label='Leave Group'

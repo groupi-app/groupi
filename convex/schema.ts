@@ -1025,6 +1025,10 @@ export default defineSchema({
     .index('by_membership_date', ['membershipId', 'potentialDateTimeId']),
 
   posts: defineTable({
+    repliesDisabled: v.optional(v.boolean()),
+    repliesRevision: v.optional(v.number()),
+    pinnedAt: v.optional(v.number()),
+    pinRevision: v.optional(v.number()),
     title: v.string(),
     content: v.string(),
     editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
@@ -1038,7 +1042,9 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_groupId', ['groupId'])
     .index('by_author', ['authorId'])
-    .index('by_membership', ['membershipId']),
+    .index('by_membership', ['membershipId'])
+    .index('by_event_and_pinnedAt', ['eventId', 'pinnedAt'])
+    .index('by_groupId_and_pinnedAt', ['groupId', 'pinnedAt']),
 
   replies: defineTable({
     text: v.string(),

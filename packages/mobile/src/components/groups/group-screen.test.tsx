@@ -21,7 +21,7 @@ vi.mock('./group-application-settings', () => ({
   GroupApplicationSettings: 'GroupApplicationSettings',
 }));
 vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
+  GroupAnnouncementComposer: 'GroupAnnouncementComposer',
 }));
 vi.mock('./group-leave-control', () => ({ GroupLeaveControl: () => null }));
 import {
@@ -158,4 +158,13 @@ it('shows native Discord settings to moderators without owner role controls', ()
   expect(tree.some(element => element.type === 'GroupDiscordSettings')).toBe(
     true
   );
+});
+
+it('does not mount the retired announcement sender for Group managers', () => {
+  mocks.group.viewerRole = 'OWNER';
+  mocks.group.canManageRoles = true;
+  const tree = elements(GroupDetailScreen());
+  expect(
+    tree.some(element => element.type === 'GroupAnnouncementComposer')
+  ).toBe(false);
 });

@@ -1,4 +1,4 @@
-import { usePaginatedQuery } from 'convex/react';
+import { usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 
@@ -9,9 +9,18 @@ export const POST_FEED_PAGE_SIZE = 15;
  * the screen only decides when the next chunk should be requested.
  */
 export function usePaginatedEventPosts(eventId: Id<'events'>) {
-  return usePaginatedQuery(
+  const pinned = useQuery(api.posts.queries.getPinnedEventPosts, { eventId });
+  const feed = usePaginatedQuery(
     api.posts.queries.getEventPostFeedPage,
-    { eventId },
+    { eventId, excludePinned: true },
     { initialNumItems: POST_FEED_PAGE_SIZE }
   );
+  const pinnedIds = new Set((pinned ?? []).map(post => post._id));
+  return {
+    ...feed,
+    results: [
+      ...(pinned ?? []),
+      ...feed.results.filter(post => !pinnedIds.has(post._id)),
+    ],
+  };
 }
