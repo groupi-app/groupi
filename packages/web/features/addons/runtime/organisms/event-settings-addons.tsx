@@ -1,5 +1,6 @@
 'use client';
 
+import { useOptionalEventSettingsDraft } from '@/features/event-settings';
 import type { AddonConfiguration } from '../../model/types';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,7 +40,9 @@ function resetExplanation(type: string, disabling: boolean) {
 export function EventSettingsAddons({ eventId }: { eventId: string }) {
   const typedEventId = eventId as Id<'events'>;
   const eventData = useEventHeader(typedEventId);
-  const configs = useEventAddons(typedEventId);
+  const liveConfigs = useEventAddons(typedEventId);
+  const draft = useOptionalEventSettingsDraft();
+  const configs = draft?.values.addons ?? liveConfigs;
   const enableAddon = useEnableAddon();
   const disableAddon = useDisableAddon();
   const updateConfig = useUpdateAddonConfig();
@@ -62,12 +65,45 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
       canRenderParticipantFeature(row.addonType, row.config) &&
       getAddonById(row.addonType, row.config as Record<string, unknown>)
   );
+  function stage(
+    type: string,
+    config: AddonConfiguration,
+    enabled = true,
+    confirmedDestructive = false
+  ) {
+    if (!draft || !manager) return;
+    const changes = draft.values.addons.filter(row => row.addonType !== type);
+    draft.setSection('addons', [
+      ...changes,
+      {
+        addonType: type,
+        config,
+        enabled,
+        ...(confirmedDestructive ? { confirmedDestructive: true } : {}),
+      },
+    ]);
+  }
   async function save(type: string, config: AddonConfiguration) {
+    const persisted = liveConfigs?.find(
+      row => row.addonType === type && row.enabled
+    );
+    if (draft && (!persisted || type === 'reminders')) {
+      stage(type, config);
+      return true;
+    }
     const existing = configs?.find(
       row => row.addonType === type && row.enabled
     );
     if (existing && JSON.stringify(existing.config) === JSON.stringify(config))
       return true;
+    if (draft)
+      return confirm(
+        'Change event feature?',
+        `${resetExplanation(type, false)} This takes effect when you save Event settings.`,
+        async () => {
+          stage(type, config, true, true);
+        }
+      );
     const perform = async () => {
       if (!manager) throw new Error('Event management access required.');
       if (existing) await updateConfig(typedEventId, type, config);
@@ -95,11 +131,25 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
     }
   }
   async function disable(type: string) {
+    if (
+      draft &&
+      !liveConfigs?.some(row => row.addonType === type && row.enabled)
+    ) {
+      const current = configs?.find(row => row.addonType === type);
+      if (current) stage(type, current.config as AddonConfiguration, false);
+      return true;
+    }
     return confirm(
       'Disable event feature?',
-      resetExplanation(type, true),
+      `${resetExplanation(type, true)}${draft ? ' This takes effect when you save Event settings.' : ''}`,
       async () => {
         if (!manager) throw new Error('Event management access required.');
+        if (draft) {
+          const current = configs?.find(row => row.addonType === type);
+          if (current)
+            stage(type, current.config as AddonConfiguration, false, true);
+          return;
+        }
         await disableAddon(typedEventId, type);
         toast.success('Event feature disabled');
       }
@@ -137,7 +187,7 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
                 return null;
               return (
                 <FeatureRenderingBoundary
-                  key={`${eventId}:${addon.id}:${row?.updatedAt ?? 'new'}`}
+                  key={`${eventId}:${addon.id}:${draft ? draft.epoch : (liveConfigs?.find(item => item.addonType === addon.id)?.updatedAt ?? 'new')}`}
                   title={
                     row
                       ? participantFeatureTitle(row.addonType, row.config)
@@ -153,7 +203,15 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
                     chosenDateTime={eventData?.event.chosenDateTime}
                     onSave={config => save(addon.id, config)}
                     onDisable={() => disable(addon.id)}
-                    isSaving={saving || confirming}
+                    onDraftChange={
+                      draft &&
+                      !liveConfigs?.some(
+                        item => item.addonType === addon.id && item.enabled
+                      )
+                        ? config => stage(addon.id, config)
+                        : undefined
+                    }
+                    isSaving={saving || confirming || !!draft?.busy}
                   />
                 </FeatureRenderingBoundary>
               );
@@ -176,7 +234,7 @@ export function EventSettingsAddons({ eventId }: { eventId: string }) {
                   </p>
                   <Button
                     variant='outline'
-                    disabled={saving || confirming}
+                    disabled={saving || confirming || !!draft?.busy}
                     onClick={() =>
                       void save(row.addonType, row.config as AddonConfiguration)
                     }

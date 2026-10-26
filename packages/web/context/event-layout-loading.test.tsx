@@ -33,9 +33,17 @@ vi.mock('@/app/(event)/event/[eventId]/context', () => ({
         ? null
         : fixture.loading
           ? undefined
-          : { userMembership: fixture.member ? { role: 'ATTENDEE' } : null },
+          : {
+              userMembership: fixture.member
+                ? { role: 'ATTENDEE', person: { _id: 'fixture-person' } }
+                : null,
+            },
     };
   },
+}));
+vi.mock('@/features/event-settings', () => ({
+  EventSettingsDraftProvider: ({ children }: { children: ReactNode }) =>
+    children,
 }));
 vi.mock('@/features/addons/gating', () => ({
   EventAddonGate: ({ children }: { children: ReactNode }) => children,

@@ -1,5 +1,7 @@
 'use client';
 
+import { classifyEventLifecycle } from '@groupi/shared/utils';
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import { formatDate, formatDateTimeRangeShort } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardAction, CardActions } from '@/components/ui/card';
@@ -42,6 +44,12 @@ export function EventCard({
   eventId: Id<'events'>;
   organizer: OrganizerData;
 }) {
+  const now = useLifecycleClock([
+    event.chosenEndDateTime,
+    ...(event.potentialDateTimes ?? []),
+  ]);
+  const needsNewDates =
+    classifyEventLifecycle(event, now) === 'NEEDS_NEW_DATES';
   const {
     _id: id,
     title,
@@ -346,7 +354,7 @@ export function EventCard({
                         )}
                       </span>
                     ) : (
-                      <span>TBD</span>
+                      <span>{needsNewDates ? 'Needs new dates' : 'TBD'}</span>
                     )}
                   </div>
                 </div>

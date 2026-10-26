@@ -249,6 +249,7 @@ function BringListEventCard({ eventId, config }: EventCardProps) {
 
 function BringListManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -327,25 +328,33 @@ function BringListManageConfig({
       <Collapsible open={isOn && expanded}>
         <CollapsibleContent>
           <div className='px-4 pb-4 pt-0 space-y-3'>
-            <ItemBuilder items={items} onChange={setItems} />
-            {(hasChanges || pendingEnable) && items.length > 0 && (
-              <>
-                <p className='text-sm text-warning'>
-                  Saving changes will reset all existing claims and notify
-                  members.
-                </p>
-                <Button
-                  icon={<ActionSave aria-hidden='true' className='size-4' />}
-                  type='button'
-                  size='sm'
-                  onClick={handleSaveItems}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                >
-                  Save Items
-                </Button>
-              </>
-            )}
+            <ItemBuilder
+              items={items}
+              onChange={next => {
+                setItems(next);
+                onDraftChange?.({ items: next });
+              }}
+            />
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
+              items.length > 0 && (
+                <>
+                  <p className='text-sm text-warning'>
+                    Saving changes will reset all existing claims and notify
+                    members.
+                  </p>
+                  <Button
+                    icon={<ActionSave aria-hidden='true' className='size-4' />}
+                    type='button'
+                    size='sm'
+                    onClick={handleSaveItems}
+                    disabled={isSaving}
+                    isLoading={isSaving}
+                  >
+                    Save Items
+                  </Button>
+                </>
+              )}
           </div>
         </CollapsibleContent>
       </Collapsible>

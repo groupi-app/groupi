@@ -1,5 +1,6 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import { Suspense } from 'react';
 
 import { EventGrid, EventMembershipData } from './components/event-grid';
@@ -231,6 +232,12 @@ function EventsPageContent({
     [userEventsAndInvites?.events]
   );
 
+  const now = useLifecycleClock(
+    memberships.flatMap(({ event }) => [
+      event.chosenEndDateTime,
+      ...(event.potentialDateTimes ?? []),
+    ])
+  );
   const pendingInvites = userEventsAndInvites?.pendingInvites || [];
   const pendingInviteCount = userEventsAndInvites?.pendingInviteCount || 0;
 
@@ -243,7 +250,8 @@ function EventsPageContent({
     memberships.forEach((m: EventMembershipData) => {
       const isPast = isEventPast(
         m.event.chosenDateTime,
-        m.event.chosenEndDateTime
+        m.event.chosenEndDateTime,
+        { ...m.event, now }
       );
 
       if (isPast) {
@@ -257,7 +265,7 @@ function EventsPageContent({
     });
 
     return { upcoming, past, hostingUpcoming };
-  }, [memberships]);
+  }, [memberships, now]);
 
   // Filter and sort events based on active tab
   const filteredEvents = useMemo(() => {
@@ -267,7 +275,8 @@ function EventsPageContent({
     const filtered = memberships.filter((m: EventMembershipData) => {
       const isPast = isEventPast(
         m.event.chosenDateTime,
-        m.event.chosenEndDateTime
+        m.event.chosenEndDateTime,
+        { ...m.event, now }
       );
 
       // Time filter based on tab
@@ -297,7 +306,7 @@ function EventsPageContent({
           return (b.event.updatedAt ?? 0) - (a.event.updatedAt ?? 0);
       }
     });
-  }, [memberships, activeTab, onlyMine, sortBy]);
+  }, [memberships, activeTab, onlyMine, sortBy, now]);
 
   // Get filter-specific empty state messages
   const getEmptyStateProps = () => {

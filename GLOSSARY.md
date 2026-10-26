@@ -120,6 +120,15 @@ Group until lifted. It is distinct from removal and event banning.
 A person who participates in an individual event, with an event role and a
 separate RSVP response.
 
+**Completed Event**:
+An Event whose end time has passed, or whose start date ended in its Event time
+zone when no end time was set; previously explicit completion remains recognized.
+Completion is distinct from an expired date poll.
+
+**Needs new dates**:
+An undecided Event whose proposed date options have all passed. Its memberships,
+discussion and previous votes remain, and future options can make it upcoming again.
+
 **Event audience**:
 The people eligible to discover or view an event under its visibility rules.
 Audience eligibility alone is independent of invitation, event membership,

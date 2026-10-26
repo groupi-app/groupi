@@ -338,3 +338,11 @@ credentials/target were configured and no backend was deployed. Matching runtime
 acceptance and rollout remain separately gated. Local source/browser/test
 evidence is recorded in the [updated design record](../../content-ui-refinement.md)
 and task artifact directory. No publication or shared data operation is implied.
+
+## Local management refinement — 2026-10-26
+
+Local continuation `codex/management-ui-refinement` starts from unpublished `62be9ebe98c7850f601d0048c1acdf80939f9e8e`. It implements the approved walkthrough: atomic Event settings draft Save/Revert, Shared With chips, compact admission/application configuration, automatic lifecycle and preserved expired-poll history, Account/Developer separation, collapsible builder and draft recovery, Discord setup/connection hierarchy, and applicant-first review. See [implementation plan](../../compact-management-ui-plan.md) and ADR0013. No remote branch, PR, backend deployment or shared data has changed.
+
+The proposed creator-timezone default is clearly provisional pending the parent-relayed answer; existing UTC records remain untouched. Reply locking, pinning and announcement-retirement/history policy remain pending and unimplemented. Earlier List rollout/testing/release-note approval is still separate. Checked-in Vercel suppression now names this continuation branch, but project-level enforcement remains unverified; pushing it is not authorized or presumed safe.
+
+Canonical Convex generation was attempted but is blocked by missing CONVEX_DEPLOYMENT; no target or credentials were configured. Local source-derived contract/types, synthetic component browser checks and test backends are distinct from authenticated deployed acceptance. Final results and commit identity are in sibling task artifacts/management-refinement/HANDOFF.md.

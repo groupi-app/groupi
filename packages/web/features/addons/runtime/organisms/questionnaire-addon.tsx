@@ -355,6 +355,7 @@ function QuestionnaireEventCard({ eventId }: EventCardProps) {
 
 function QuestionnaireManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -363,13 +364,17 @@ function QuestionnaireManageConfig({
   const [questions, setQuestions] = useState<Question[]>(currentQuestions);
   const enabled = config !== null;
   const [expanded, setExpanded] = useState(false);
+  const [pendingEnable, setPendingEnable] = useState(false);
+  const isOn = enabled || pendingEnable;
 
   const handleToggle = async (checked: boolean) => {
     if (!checked) {
       setExpanded(false);
+      setPendingEnable(false);
       await onDisable();
     } else {
       setExpanded(true);
+      setPendingEnable(true);
       if (questions.length > 0) {
         await onSave({ questions });
       }
@@ -381,7 +386,7 @@ function QuestionnaireManageConfig({
       toast.error('Add at least one question');
       return;
     }
-    await onSave({ questions });
+    if ((await onSave({ questions })) !== false) setPendingEnable(false);
   };
 
   const hasChanges =
@@ -391,7 +396,7 @@ function QuestionnaireManageConfig({
     <Card
       className={cn(
         'transition-all duration-normal',
-        enabled && 'ring-2 ring-primary/30'
+        isOn && 'ring-2 ring-primary/30'
       )}
     >
       <div className='flex items-center gap-3 p-4'>
@@ -404,7 +409,7 @@ function QuestionnaireManageConfig({
             Ask attendees questions before the event
           </p>
         </div>
-        {enabled && (
+        {isOn && (
           <button
             type='button'
             onClick={() => setExpanded(prev => !prev)}
@@ -420,34 +425,42 @@ function QuestionnaireManageConfig({
           </button>
         )}
         <Switch
-          checked={enabled}
+          checked={isOn}
           onCheckedChange={handleToggle}
           disabled={isSaving}
           data-test='addon-toggle-questionnaire'
         />
       </div>
-      <Collapsible open={enabled && expanded}>
+      <Collapsible open={isOn && expanded}>
         <CollapsibleContent>
           <div className='px-4 pb-4 pt-0 space-y-3'>
-            <QuestionBuilder questions={questions} onChange={setQuestions} />
-            {hasChanges && questions.length > 0 && (
-              <>
-                <p className='text-sm text-warning'>
-                  Saving changes will reset all existing responses and notify
-                  members.
-                </p>
-                <Button
-                  icon={<ActionSave aria-hidden='true' className='size-4' />}
-                  type='button'
-                  size='sm'
-                  onClick={handleSaveQuestions}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                >
-                  Save Questions
-                </Button>
-              </>
-            )}
+            <QuestionBuilder
+              questions={questions}
+              onChange={next => {
+                setQuestions(next);
+                onDraftChange?.({ questions: next });
+              }}
+            />
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
+              questions.length > 0 && (
+                <>
+                  <p className='text-sm text-warning'>
+                    Saving changes will reset all existing responses and notify
+                    members.
+                  </p>
+                  <Button
+                    icon={<ActionSave aria-hidden='true' className='size-4' />}
+                    type='button'
+                    size='sm'
+                    onClick={handleSaveQuestions}
+                    disabled={isSaving}
+                    isLoading={isSaving}
+                  >
+                    Save Questions
+                  </Button>
+                </>
+              )}
           </div>
         </CollapsibleContent>
       </Collapsible>

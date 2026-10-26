@@ -1,15 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import type { Monaco } from '@monaco-editor/react';
 import { useBuilder } from './builder-context';
-import {
-  templateToYaml,
-  yamlToTemplate,
-  validateTemplate,
-} from '../model/custom-addon-schema';
 import { registerVariableProviders } from './variable-input';
 import { getDataBlocks } from './building-blocks';
 
@@ -146,11 +141,14 @@ function defineGroupiTheme(monaco: Monaco, isDark: boolean) {
 }
 
 export function YamlEditor() {
-  const { template, setTemplate, lastEditor, setLastEditor } = useBuilder();
+  const {
+    template,
+    yamlValue,
+    yamlErrors: parseErrors,
+    yamlPending,
+    editYaml,
+  } = useBuilder();
   const { resolvedTheme } = useTheme();
-  const [yamlValue, setYamlValue] = useState(() => templateToYaml(template));
-  const [parseErrors, setParseErrors] = useState<string[]>([]);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const templateRef = useRef(template);
   useEffect(() => {
@@ -180,54 +178,6 @@ export function YamlEditor() {
     [isDark]
   );
 
-  // Sync from visual editor → YAML (when visual editor changes)
-  const yamlFromTemplate =
-    lastEditor !== 'yaml' ? templateToYaml(template) : null;
-  if (yamlFromTemplate !== null && yamlFromTemplate !== yamlValue) {
-    setYamlValue(yamlFromTemplate);
-    setParseErrors([]);
-  }
-
-  const handleEditorChange = useCallback(
-    (value: string | undefined) => {
-      if (!value) return;
-      setYamlValue(value);
-
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-
-      debounceRef.current = setTimeout(() => {
-        const result = yamlToTemplate(value);
-        if (result.error) {
-          setParseErrors([result.error]);
-          return;
-        }
-
-        if (!result.template) return;
-
-        const validation = validateTemplate(result.template);
-        if (!validation.valid) {
-          setParseErrors(validation.errorMessages);
-        } else {
-          setParseErrors([]);
-        }
-
-        setLastEditor('yaml');
-        setTemplate(result.template);
-      }, 300);
-    },
-    [setTemplate, setLastEditor]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className='space-y-2'>
       <MonacoEditor
@@ -235,7 +185,7 @@ export function YamlEditor() {
         language='yaml'
         theme={THEME_NAME}
         value={yamlValue}
-        onChange={handleEditorChange}
+        onChange={value => editYaml(value ?? '')}
         onMount={handleEditorMount}
         options={{
           minimap: { enabled: false },
@@ -251,8 +201,16 @@ export function YamlEditor() {
           cursorBlinking: 'smooth',
         }}
       />
+      {yamlPending && (
+        <p role='status' className='text-xs text-muted-foreground'>
+          Checking YAML…
+        </p>
+      )}
       {parseErrors.length > 0 && (
-        <div className='rounded-card border border-border-error bg-bg-error-subtle p-3'>
+        <div
+          role='alert'
+          className='rounded-card border border-border-error bg-bg-error-subtle p-3'
+        >
           <p className='mb-1 text-sm font-medium text-error'>
             {parseErrors.length === 1
               ? 'Error'

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMutation, useQuery } from 'convex/react';
@@ -11,6 +11,11 @@ vi.mock('@/convex/_generated/api', () => ({
     },
   },
 }));
+beforeEach(() => {
+  vi.stubGlobal('innerWidth', 1200);
+  Reflect.deleteProperty(window, 'ontouchstart');
+});
+afterEach(() => vi.unstubAllGlobals());
 describe('developer app registration', () => {
   beforeEach(() => {
     vi.mocked(useQuery).mockReturnValue([]);
@@ -21,6 +26,7 @@ describe('developer app registration', () => {
     vi.mocked(useMutation).mockReturnValue(register as never);
     const user = userEvent.setup();
     render(<DeveloperAppsSettings />);
+    await user.click(screen.getByRole('button', { name: 'Register app' }));
     await user.type(screen.getByLabelText('App name'), 'Calendar');
     await user.type(screen.getByLabelText('Purpose'), 'Show my event schedule');
     await user.click(screen.getByLabelText('Native app'));
@@ -31,7 +37,7 @@ describe('developer app registration', () => {
     expect(
       screen.getByText(/Only your own account can connect during testing/)
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Register app' }));
+    await user.click(screen.getByRole('button', { name: 'Register' }));
     expect(register).toHaveBeenCalledWith({
       name: 'Calendar',
       purpose: 'Show my event schedule',
@@ -49,6 +55,7 @@ it('limits the app purpose to the registration contract of one thousand characte
   vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
   const user = userEvent.setup();
   render(<DeveloperAppsSettings />);
+  await user.click(screen.getByRole('button', { name: 'Register app' }));
   const purpose = screen.getByLabelText('Purpose');
   await user.click(purpose);
   await user.paste('a'.repeat(1001));
@@ -74,10 +81,62 @@ it('lets a rejected app owner request another review while remaining in own-acco
   const user = userEvent.setup();
   render(<DeveloperAppsSettings />);
   await user.click(
-    screen.getByRole('button', { name: 'Request another review for Calendar' })
+    screen.getByRole('button', { name: 'Actions for Calendar' })
+  );
+  await user.click(
+    await screen.findByRole('menuitem', { name: 'Request another review' })
   );
   expect(request).toHaveBeenCalledWith({ appId: 'app-1' });
   expect(await screen.findByRole('status')).toHaveTextContent(
     'Review requested'
   );
+});
+
+it('retains registration input and exposes a failed registration inside the dialog', async () => {
+  vi.mocked(useQuery).mockReturnValue([]);
+  const register = vi.fn().mockRejectedValue(Error('Registration rejected'));
+  vi.mocked(useMutation).mockReturnValue(register as never);
+  const user = userEvent.setup();
+  render(<DeveloperAppsSettings />);
+  await user.click(screen.getByRole('button', { name: 'Register app' }));
+  await user.type(screen.getByLabelText('App name'), 'Retained draft');
+  await user.type(screen.getByLabelText('Purpose'), 'Personal schedule');
+  await user.click(screen.getByLabelText('Native app'));
+  await user.type(
+    screen.getByLabelText('Callback URIs'),
+    'com.example.schedule:/callback'
+  );
+  await user.click(screen.getByRole('button', { name: 'Register' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Registration rejected'
+  );
+  expect(screen.getByLabelText('App name')).toHaveValue('Retained draft');
+  expect(screen.getByLabelText('Callback URIs')).toHaveValue(
+    'com.example.schedule:/callback'
+  );
+});
+it('hides review requests for approved apps while retaining Details and Copy ID', async () => {
+  vi.mocked(useQuery).mockReturnValue([
+    {
+      _id: 'app-approved',
+      name: 'Approved app',
+      purpose: 'Read schedule',
+      status: 'approved',
+      reviewStatus: 'approved',
+      redirectUris: ['https://example.invalid/callback'],
+    },
+  ]);
+  vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
+  const user = userEvent.setup();
+  render(<DeveloperAppsSettings />);
+  await user.click(
+    screen.getByRole('button', { name: 'Actions for Approved app' })
+  );
+  expect(
+    await screen.findByRole('menuitem', { name: 'Copy ID' })
+  ).toBeInTheDocument();
+  expect(screen.getByRole('menuitem', { name: 'Details' })).toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: /Request.*review/ })
+  ).not.toBeInTheDocument();
 });

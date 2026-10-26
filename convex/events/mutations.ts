@@ -1,3 +1,8 @@
+import {
+  settingsSnapshot,
+  settingsPatch,
+  saveSettingsForPerson,
+} from './settings';
 import { updateAdmissionPolicyForPerson } from './admission';
 import {
   admissionPolicyValidator,
@@ -389,4 +394,15 @@ export const updateAdmissionPolicy = mutation({
       admissionPolicy
     );
   },
+});
+
+export const saveSettings = mutation({
+  args: {
+    eventId: v.id('events'),
+    expectedRevision: v.string(),
+    patch: settingsPatch,
+  },
+  returns: settingsSnapshot,
+  handler: async (ctx, args) =>
+    saveSettingsForPerson(ctx, (await requireAuth(ctx)).person._id, args),
 });

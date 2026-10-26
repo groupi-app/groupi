@@ -102,17 +102,24 @@ describe('create event payload', () => {
     vi.restoreAllMocks();
   });
 
-  it('normalizes a single-date form into the create mutation payload', async () => {
+  it('normalizes a single-date form and persists the creator timezone in the mutation payload', async () => {
+    const resolvedOptions = Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      ...resolvedOptions,
+      timeZone: 'Pacific/Auckland',
+    });
     mocks.formState = createFormState();
 
     await submitReview();
 
     expect(mocks.createEvent).toHaveBeenCalledWith({
       title: 'Launch Party',
+      timezone: 'Pacific/Auckland',
       description: 'Bring a friend',
       location: 'Community Hall',
       visibility: 'FRIENDS',
       imageStorageId: undefined,
+      imageFocalPoint: undefined,
       permissions: mocks.formState.permissions,
       addons: [
         { addonType: 'reminders', config: { reminderOffset: '1_HOUR' } },

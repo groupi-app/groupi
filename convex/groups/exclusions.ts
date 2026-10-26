@@ -1,3 +1,4 @@
+import { isScheduledEventComplete } from '@groupi/shared/utils';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
@@ -26,12 +27,7 @@ export async function isEventExcludedForPerson(
   now = Date.now()
 ) {
   const event = await ctx.db.get(eventId);
-  if (
-    !event ||
-    event.completedAt !== undefined ||
-    (event.chosenEndDateTime !== undefined && event.chosenEndDateTime <= now)
-  )
-    return false;
+  if (!event || isScheduledEventComplete(event, now)) return false;
   return matchesExclusion(ctx, eventId, personId);
 }
 async function matchesExclusion(

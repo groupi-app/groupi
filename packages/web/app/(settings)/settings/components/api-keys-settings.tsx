@@ -1,7 +1,8 @@
 'use client';
 
 import { Plus as ActionPlus, Trash2 as ActionTrash2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { SettingsActions } from '@/features/authorization';
+import { useState, useEffect, useRef } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,12 +45,14 @@ export function ApiKeysSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyExpiry, setNewKeyExpiry] = useState('365'); // days
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const actionTrigger = useRef<HTMLButtonElement | null>(null);
 
   // Load API keys on mount
   useEffect(() => {
@@ -123,7 +126,7 @@ export function ApiKeysSettings() {
         return;
       }
 
-      toast.success('API key deleted');
+      toast.success('API key revoked');
       setShowDeleteDialog(false);
       setSelectedKeyId(null);
       await loadKeys();
@@ -136,12 +139,17 @@ export function ApiKeysSettings() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Could not copy. Select and copy the key manually.');
+    }
   };
 
   const resetCreateDialog = () => {
+    if (isCreating) return;
     setShowCreateDialog(false);
     setNewKeyName('');
     setNewKeyExpiry('365');
@@ -196,43 +204,45 @@ export function ApiKeysSettings() {
                 {keys.map(key => (
                   <div
                     key={key.id}
-                    className='flex items-center justify-between p-4 rounded-lg border'
+                    className='flex min-w-0 items-start justify-between gap-3 border-b border-border py-3 last:border-0'
                   >
-                    <div className='space-y-1'>
-                      <div className='flex items-center gap-2'>
-                        <p className='font-medium'>
-                          {key.name || 'Unnamed Key'}
-                        </p>
-                        {isExpired(key.expiresAt) && (
-                          <span className='text-xs bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive px-2 py-0.5 rounded'>
-                            Expired
-                          </span>
-                        )}
-                      </div>
-                      <p className='text-sm text-muted-foreground font-mono'>
-                        {key.start}...
+                    <div className='min-w-0 space-y-1'>
+                      <p className='break-words text-sm font-semibold'>
+                        {key.name || 'Unnamed key'}
                       </p>
-                      <div className='flex gap-4 text-xs text-muted-foreground'>
-                        <span>Created: {formatDate(key.createdAt)}</span>
-                        {key.expiresAt && (
-                          <span>
-                            {isExpired(key.expiresAt) ? 'Expired' : 'Expires'}:{' '}
-                            {formatDate(key.expiresAt)}
-                          </span>
-                        )}
-                      </div>
+                      <p className='break-all font-mono text-xs text-muted-foreground'>
+                        {key.start}…
+                      </p>
+                      <p className='text-xs text-muted-foreground'>
+                        {isExpired(key.expiresAt) ? 'Expired' : 'Active'}
+                        {key.expiresAt
+                          ? ` · ${formatDate(key.expiresAt)}`
+                          : ' · No expiration'}
+                      </p>
                     </div>
-                    <Button
-                      variant='destructive-ghost'
-                      size='icon'
-                      onClick={() => {
-                        setSelectedKeyId(key.id);
-                        setShowDeleteDialog(true);
-                      }}
-                      className=''
-                    >
-                      <Icons.trash className='h-4 w-4' />
-                    </Button>
+                    <SettingsActions
+                      label={`Actions for ${key.name || 'Unnamed key'}`}
+                      actions={[
+                        {
+                          label: 'Details',
+                          onSelect: trigger => {
+                            actionTrigger.current = trigger;
+                            setSelectedKeyId(key.id);
+                            setShowDetails(true);
+                          },
+                        },
+                        {
+                          label: 'Revoke',
+                          destructive: true,
+                          disabled: isDeleting,
+                          onSelect: trigger => {
+                            actionTrigger.current = trigger;
+                            setSelectedKeyId(key.id);
+                            setShowDeleteDialog(true);
+                          },
+                        },
+                      ]}
+                    />
                   </div>
                 ))}
               </div>
@@ -249,7 +259,7 @@ export function ApiKeysSettings() {
 
       {/* Create Key Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={resetCreateDialog}>
-        <DialogContent>
+        <DialogContent preventClose={isCreating}>
           <DialogHeader>
             <DialogTitle>
               {newKeyValue ? 'Save Your API Key' : 'Create API Key'}
@@ -267,6 +277,7 @@ export function ApiKeysSettings() {
                 <Label htmlFor='key-name'>Key Name</Label>
                 <Input
                   id='key-name'
+                  disabled={isCreating}
                   placeholder='e.g., My Integration'
                   value={newKeyName}
                   onChange={e => setNewKeyName(e.target.value)}
@@ -274,7 +285,11 @@ export function ApiKeysSettings() {
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='key-expiry'>Expiration</Label>
-                <Select value={newKeyExpiry} onValueChange={setNewKeyExpiry}>
+                <Select
+                  value={newKeyExpiry}
+                  onValueChange={setNewKeyExpiry}
+                  disabled={isCreating}
+                >
                   <SelectTrigger id='key-expiry'>
                     <SelectValue />
                   </SelectTrigger>
@@ -287,7 +302,11 @@ export function ApiKeysSettings() {
                 </Select>
               </div>
               <DialogFooter>
-                <Button variant='outline' onClick={resetCreateDialog}>
+                <Button
+                  variant='outline'
+                  onClick={resetCreateDialog}
+                  disabled={isCreating}
+                >
                   Cancel
                 </Button>
                 <Button
@@ -311,6 +330,7 @@ export function ApiKeysSettings() {
                     size='icon'
                     onClick={() => copyToClipboard(newKeyValue)}
                     className='shrink-0'
+                    aria-label='Copy key'
                   >
                     <Icons.copy className='h-4 w-4' />
                   </Button>
@@ -330,14 +350,71 @@ export function ApiKeysSettings() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Key Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent
+          className='max-h-[90dvh] overflow-y-auto'
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
           <DialogHeader>
-            <DialogTitle>Delete API Key</DialogTitle>
+            <DialogTitle>
+              {keys.find(key => key.id === selectedKeyId)?.name ||
+                'API key details'}
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this API key? Any applications
-              using this key will no longer be able to authenticate.
+              Legacy account-wide credential.
+            </DialogDescription>
+          </DialogHeader>
+          {keys
+            .filter(key => key.id === selectedKeyId)
+            .map(key => (
+              <dl key={key.id} className='space-y-3 text-sm'>
+                <div>
+                  <dt className='font-medium'>Key prefix</dt>
+                  <dd className='break-all font-mono'>{key.start}…</dd>
+                </div>
+                <div>
+                  <dt className='font-medium'>Created</dt>
+                  <dd>{formatDate(key.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt className='font-medium'>Expiration</dt>
+                  <dd>
+                    {key.expiresAt
+                      ? formatDate(key.expiresAt)
+                      : 'No expiration'}
+                  </dd>
+                </div>
+              </dl>
+            ))}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Key Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onOpenChange={value => {
+          if (!isDeleting) setShowDeleteDialog(value);
+        }}
+      >
+        <DialogContent
+          preventClose={isDeleting}
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Revoke API key?</DialogTitle>
+            <DialogDescription>
+              Revoke this API key? Any applications using this key will no
+              longer be able to authenticate.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -353,9 +430,9 @@ export function ApiKeysSettings() {
               variant='destructive'
               onClick={deleteKey}
               isLoading={isDeleting}
-              loadingText='Deleting...'
+              loadingText='Revoking…'
             >
-              Delete Key
+              Confirm revocation
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -5,6 +5,7 @@ import { useEffect, use } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 import { EventDataProvider, useEventData } from './context';
 import { EventAddonGate } from '@/features/addons/gating';
+import { EventSettingsDraftProvider } from '@/features/event-settings';
 import { EventPageSkeleton } from '@/components/skeletons/event-page-skeleton';
 
 interface EventLayoutProps {
@@ -59,7 +60,16 @@ function EventLayoutContent({
 
   return (
     <EventAddonGate eventId={eventId as Id<'events'>}>
-      {children}
+      <EventSettingsDraftProvider
+        actorId={headerData!.userMembership!.person._id}
+        eventId={eventId as Id<'events'>}
+        enabled={
+          headerData?.userMembership?.role === 'ORGANIZER' ||
+          headerData?.userMembership?.role === 'MODERATOR'
+        }
+      >
+        {children}
+      </EventSettingsDraftProvider>
     </EventAddonGate>
   );
 }

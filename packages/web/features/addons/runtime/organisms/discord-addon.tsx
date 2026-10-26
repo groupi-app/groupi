@@ -344,6 +344,7 @@ function DiscordEventCard({ eventId, chosenDateTime }: EventCardProps) {
 
 function DiscordManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -376,6 +377,7 @@ function DiscordManageConfig({
   const handleSelect = (guild: DiscordGuild) => {
     setSelectedGuildId(guild.id);
     setSelectedGuildName(guild.name);
+    onDraftChange?.({ guildId: guild.id, guildName: guild.name });
   };
 
   const handleSave = async () => {
@@ -458,7 +460,8 @@ function DiscordManageConfig({
                 </Button>
               </>
             )}
-            {(hasChanges || pendingEnable) &&
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
               selectedGuildId &&
               !currentGuildId && (
                 <Button

@@ -1,0 +1,3 @@
+# Atomic Event settings saves
+
+The approved settings experience retains one draft across Event settings routes and saves non-destructive configuration through one Convex transaction. Reusing domain operations inside that transaction preserves authorization, validation and scheduled lifecycle effects while preventing the partial success possible when chaining independent mutations. An opaque snapshot revision rejects stale edits; separately confirmed destructive changes share the transaction when staged, while ownership consent and participation/review workflows keep their explicit domain operations.

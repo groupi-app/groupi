@@ -1,26 +1,21 @@
 'use client';
-
 import { use } from 'react';
-import { Id } from '@/convex/_generated/dataModel';
-import { EditEventMultiDate } from '../../../edit/components/edit-event-multi-date';
 import { SettingsPageTemplate } from '@/components/templates';
-
-export default function EventSettingsDateMultiPage(props: {
+import { EventDateFields } from '@/features/event-settings/dates';
+export default function DateSettingsPage({
+  params,
+}: {
   params: Promise<{ eventId: string }>;
 }) {
-  const { eventId } = use(props.params);
-
+  const { eventId } = use(params);
   return (
     <SettingsPageTemplate
-      title='Poll Attendees'
+      title='Poll attendees'
       backHref={`/event/${eventId}/settings/date`}
       backLabel='Date settings'
       maxWidth='md'
     >
-      <EditEventMultiDate
-        eventId={eventId as Id<'events'>}
-        backHref={`/event/${eventId}/settings/date`}
-      />
+      <EventDateFields mode='POLL' />
     </SettingsPageTemplate>
   );
 }

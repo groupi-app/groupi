@@ -50,7 +50,7 @@ it('returns absence, one undated Event, then a typed conflict instead of picking
     audienceConflicts: [{ groupId: f.groupId, name: 'Reading Circle' }],
   });
 });
-it('uses the exact end boundary, keeping past starts without an end and undated Events active', async () => {
+it('uses the exact end boundary, keeping same-day starts without an end and undated Events active', async () => {
   const f = await fixture();
   vi.useFakeTimers();
   vi.setSystemTime(now);
@@ -72,6 +72,13 @@ it('uses the exact end boundary, keeping past starts without an end and undated 
     kind: 'event',
     event: { ongoing: true },
   });
+  await f.t.run(ctx =>
+    ctx.db.patch(f.event.eventId, {
+      chosenDateTime: now - 2 * 86400000,
+      timezone: 'UTC',
+    })
+  );
+  expect(await f.read()).toEqual({ kind: 'none' });
   await f.t.run(ctx =>
     ctx.db.patch(f.event.eventId, { chosenDateTime: undefined })
   );
@@ -369,4 +376,92 @@ it('generated SDK retries a lost committed staff HTTP response without repeating
   await expect(sdk.updateEventLifecycle(intent, options)).rejects.toMatchObject(
     { status: 401 }
   );
+});
+
+it('excludes expired polls from current selection and active listings without changing saved participation', async () => {
+  const f = await fixture();
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { groupId: f.groupId, eventId: f.event.eventId }
+  );
+  const { membership, vote, postId } = await f.t.run(async ctx => {
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', f.owner.personId).eq('eventId', f.event.eventId)
+      )
+      .first();
+    if (!membership) throw new Error('Missing fixture membership');
+    const optionId = await ctx.db.insert('potentialDateTimes', {
+      eventId: f.event.eventId,
+      dateTime: Date.now() - 1000,
+    });
+    const voteId = await ctx.db.insert('availabilities', {
+      potentialDateTimeId: optionId,
+      membershipId: membership._id,
+      status: 'YES',
+      updatedAt: 1,
+    });
+    // An outdated legacy array must not keep an expired poll in the current slot.
+    await ctx.db.patch(f.event.eventId, {
+      potentialDateTimes: [Date.now() + 86400000],
+    });
+    const postId = await ctx.db.insert('posts', {
+      eventId: f.event.eventId,
+      authorId: f.owner.personId,
+      title: 'Planning',
+      content: 'Keep discussing',
+    });
+    return { membership, vote: await ctx.db.get(voteId), postId };
+  });
+  expect(await f.read()).toEqual({ kind: 'none' });
+  const list = () =>
+    f.owner.auth.query(api.groupEventAudiences.queries.listGroupSharedEvents, {
+      groupId: f.groupId,
+      paginationOpts: { numItems: 100, cursor: null },
+    });
+  expect((await list()).page).toEqual([]);
+  const future = await f.owner.auth.mutation(api.events.mutations.createEvent, {
+    title: 'Future event',
+    chosenDateTime: new Date(Date.now() + 86400000).toISOString(),
+  });
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { groupId: f.groupId, eventId: future.eventId }
+  );
+  expect(await f.read()).toMatchObject({
+    kind: 'event',
+    event: { id: future.eventId },
+  });
+  expect((await list()).page.map(row => row.event._id)).toEqual([
+    future.eventId,
+  ]);
+  // Saved route remains accessible despite being absent from the current slot.
+  expect(
+    (
+      await f.owner.auth.query(api.events.queries.getEventHeader, {
+        eventId: f.event.eventId,
+      })
+    ).event._id
+  ).toBe(f.event.eventId);
+  await f.t.run(async ctx => {
+    expect(await ctx.db.get(membership._id)).toEqual(membership);
+    expect(await ctx.db.get(vote!._id)).toEqual(vote);
+    expect(await ctx.db.get(postId)).not.toBeNull();
+    expect((await ctx.db.get(f.event.eventId))?.completedAt).toBeUndefined();
+  });
+  await f.owner.auth.mutation(
+    api.availability.mutations.addPotentialDateTimes,
+    { eventId: f.event.eventId, dateTimes: [Date.now() + 2 * 86400000] }
+  );
+  expect((await list()).page).toHaveLength(2);
+  expect(await f.read()).toMatchObject({ kind: 'conflict' });
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.withdrawGroupEventAudience,
+    { groupId: f.groupId, eventId: future.eventId }
+  );
+  expect(await f.read()).toMatchObject({
+    kind: 'event',
+    event: { id: f.event.eventId },
+  });
 });

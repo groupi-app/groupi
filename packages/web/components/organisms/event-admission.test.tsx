@@ -12,7 +12,15 @@ import type { Id } from '@/convex/_generated/dataModel';
 
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
-const navigation = vi.hoisted(() => ({ push: vi.fn() }));
+const navigation = vi.hoisted(() => ({ push: vi.fn(), stage: vi.fn() }));
+vi.mock('@/features/event-settings', () => ({
+  useEventSettingsDraft: () => ({
+    values: { admissionPolicy: 'INVITATION_ONLY' },
+    setSection: navigation.stage,
+    busy: false,
+    epoch: 0,
+  }),
+}));
 vi.mock('next/navigation', () => ({
   useRouter: () => navigation,
   useParams: () => ({ eventId: 'event-one' }),
@@ -287,7 +295,7 @@ describe('event logistics preview using the actual app SDK', () => {
 
 import { EventAdmissionSettings } from './event-admission-settings';
 describe('Organizer admission settings', () => {
-  it('lets the Organizer change admission independently of Public visibility', async () => {
+  it('stages Organizer admission changes without independent writes', async () => {
     const { client, mutation } = clientFor();
     const mounted = render(
       <ConvexProvider client={client}>
@@ -296,20 +304,14 @@ describe('Organizer admission settings', () => {
     );
     const user = userEvent.setup();
     await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Admission policy' }),
+      screen.getByRole('combobox', { name: 'Admission' }),
       'DIRECT'
     );
-    await user.click(
-      screen.getByRole('button', { name: 'Save admission policy' })
-    );
-    await screen.findByRole('status');
-    expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
-      'events/mutations:updateAdmissionPolicy'
-    );
-    expect(mutation.mock.calls[0][1]).toEqual({
-      eventId,
-      admissionPolicy: 'DIRECT',
-    });
+    expect(navigation.stage).toHaveBeenCalledWith('admissionPolicy', 'DIRECT');
+    expect(mutation).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: /Save/ })
+    ).not.toBeInTheDocument();
     mounted.unmount();
     await client.close();
   });
@@ -323,7 +325,7 @@ describe('Organizer admission settings', () => {
         </ConvexProvider>
       );
       expect(
-        screen.queryByRole('combobox', { name: 'Admission policy' })
+        screen.queryByRole('combobox', { name: 'Admission' })
       ).not.toBeInTheDocument();
       expect(mutation).not.toHaveBeenCalled();
       mounted.unmount();
