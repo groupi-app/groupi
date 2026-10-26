@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { contextFields } from '../groupTools/contracts';
 import { tool, visibility } from '../groupTools/contracts';
 export const config = {
   title: v.string(),
@@ -11,7 +12,7 @@ export const createInput = {
 };
 export const entryFields = {
   toolId: v.id('groupTools'),
-  groupId: v.id('groups'),
+  ...contextFields,
   personId: v.optional(v.id('persons')),
   actorId: v.optional(v.id('persons')),
   listTitle: v.string(),

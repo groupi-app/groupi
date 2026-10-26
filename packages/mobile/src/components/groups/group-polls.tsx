@@ -1,17 +1,22 @@
 import { useState, type ReactNode } from 'react';
 import { View, TextInput } from 'react-native';
-import { router } from 'expo-router';
+import {
+  useToolRouter,
+  useToolCommunity as useGroup,
+  useEventToolScope,
+  belongsToOwner,
+  type ContentOwnerId,
+} from '../content/event-tool-scope';
 import type { Id } from 'convex/_generated/dataModel';
 import { GROUP_POLL_TEMPLATES } from '@groupi/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useGroup } from '@/hooks/use-groups';
 import * as hooks from '@/hooks/use-group-polls';
 
 import { GroupPageControls } from './group-page-controls';
 type Poll = NonNullable<ReturnType<typeof hooks.usePoll>>;
-type GroupId = Id<'groups'>;
+type GroupId = ContentOwnerId;
 type ToolId = Id<'groupTools'>;
 export function OrdinaryPollGate({
   groupId,
@@ -22,6 +27,7 @@ export function OrdinaryPollGate({
   children: ReactNode;
   management?: boolean;
 }) {
+  const router = useToolRouter();
   const group = useGroup(groupId);
   const policy = hooks.usePollPolicy(group ? { groupId } : 'skip');
   if (group === undefined) return <Text>Loading Group…</Text>;
@@ -49,14 +55,18 @@ export function OrdinaryPollGate({
   return <>{children}</>;
 }
 export function GroupPollsHub({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
+  const eventId = useEventToolScope();
   return (
     <View className='gap-3'>
-      <Button
-        accessibilityLabel='Group poll policy'
-        onPress={() => router.push(`/groups/${groupId}/polls/policy`)}
-      >
-        Polls policy
-      </Button>
+      {!eventId && (
+        <Button
+          accessibilityLabel='Group poll policy'
+          onPress={() => router.push(`/groups/${groupId}/polls/policy`)}
+        >
+          Polls policy
+        </Button>
+      )}
       <OrdinaryPollGate groupId={groupId} management>
         <PollsList groupId={groupId} />
       </OrdinaryPollGate>
@@ -64,6 +74,7 @@ export function GroupPollsHub({ groupId }: { groupId: GroupId }) {
   );
 }
 function PollsList({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
   const [cursor, setCursor] = useState<string | null>(null);
   const page = hooks.usePolls({
     groupId,
@@ -80,9 +91,10 @@ function PollsList({ groupId }: { groupId: GroupId }) {
         </Text>
       )}
       {policy?.enabled &&
+      policy.canCreate !== false &&
       (policy.creation === 'MEMBERS' || group?.canManageMembers) ? (
         <Button
-          accessibilityLabel='Create Group poll'
+          accessibilityLabel='Create poll'
           onPress={() => router.push(`/groups/${groupId}/polls/create`)}
         >
           Create poll
@@ -205,11 +217,17 @@ function EditorLoader({
   const policy = hooks.usePollPolicy({ groupId });
   if (toolId && group && !group.canManageMembers)
     return <Text>Current eligible managers can manage this poll.</Text>;
+  if (!toolId && policy?.canCreate === false)
+    return (
+      <Text>
+        Creating content is unavailable under current Event permissions.
+      </Text>
+    );
   if (!toolId && policy && !policy.enabled)
     return <Text>Poll creation is unavailable while polls are disabled.</Text>;
   if (toolId && !poll) return <Text>Loading poll…</Text>;
-  if (poll && poll.groupId !== groupId)
-    return <Text>Poll belongs to another Group.</Text>;
+  if (poll && !belongsToOwner(poll, groupId))
+    return <Text>Poll belongs to another context.</Text>;
   if (
     poll
       ? !poll.canManage
@@ -227,6 +245,7 @@ function PollEditor({
   groupId: GroupId;
   poll?: NonNullable<ReturnType<typeof hooks.usePollManagement>>;
 }) {
+  const router = useToolRouter();
   const create = hooks.useCreatePoll();
   const configure = hooks.useConfigurePoll();
   const remove = hooks.useDeletePoll();
@@ -411,7 +430,7 @@ function PollEditor({
         again. Results visibility stays fixed.
       </Text>
       <Button
-        accessibilityLabel='Save Group poll'
+        accessibilityLabel='Save poll'
         disabled={busy}
         accessibilityState={{ busy, disabled: busy }}
         onPress={save}
@@ -420,7 +439,7 @@ function PollEditor({
       </Button>
       {poll ? (
         <Button
-          accessibilityLabel='Delete Group poll'
+          accessibilityLabel='Delete poll'
           disabled={busy}
           onPress={() =>
             showConfirmDialog({
@@ -458,6 +477,7 @@ export function GroupOrdinaryPoll({
   groupId: GroupId;
   toolId: ToolId;
 }) {
+  const router = useToolRouter();
   return (
     <View className='gap-3'>
       <Button
@@ -483,8 +503,8 @@ function AnswerLoader({
 }) {
   const poll = hooks.usePoll({ toolId });
   if (!poll) return <Text>Loading poll…</Text>;
-  if (poll.groupId !== groupId)
-    return <Text>Poll belongs to another Group.</Text>;
+  if (!belongsToOwner(poll, groupId))
+    return <Text>Poll belongs to another context.</Text>;
   return (
     <PollVotes
       key={`${poll.version}-${poll.voteRevision}`}
@@ -494,6 +514,7 @@ function AnswerLoader({
   );
 }
 function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
+  const router = useToolRouter();
   const submit = hooks.useSubmitPollVote();
   const remove = hooks.useRemovePollVote();
   const [selections, setSelections] = useState(poll.selections);
@@ -516,15 +537,15 @@ function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
     <View className='gap-3'>
       <Text accessibilityRole='header'>{poll.title}</Text>
       <Text>
-        Group polls do not choose Event dates or change RSVP. Votes save one
-        latest selection; editing uses the current revision. If choices or
-        voting rules change, review the new choices before voting again.
+        Polls do not choose Event dates or change RSVP. Votes save one latest
+        selection; editing uses the current revision. If choices or voting rules
+        change, review the new choices before voting again.
       </Text>
       <Text>{poll.description}</Text>
       <Text>
         {poll.resultsVisibility === 'MANAGERS'
-          ? 'Private votes are visible to you and current eligible Group managers. Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion purges your private votes and history.'
-          : 'Shared votes are visible to current eligible Group members. Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion preserves shared latest votes anonymously and purges private history.'}
+          ? 'Private votes are visible to you and current eligible managers. Leaving or being removed from this context retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion purges your private votes and history.'
+          : 'Shared votes are visible to current eligible members. Leaving or being removed from this context retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion preserves shared latest votes anonymously and purges private history.'}
       </Text>
       <Text>
         {poll.mode === 'SINGLE'
@@ -557,7 +578,7 @@ function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
         </Button>
       ))}
       <Button
-        accessibilityLabel='Save Group poll votes'
+        accessibilityLabel='Save poll votes'
         disabled={busy}
         accessibilityState={{ busy, disabled: busy }}
         onPress={() =>
@@ -611,7 +632,7 @@ function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
       ) : null}
       {poll.canManage ? (
         <Button
-          accessibilityLabel='Manage Group poll'
+          accessibilityLabel='Manage poll'
           onPress={() =>
             router.push(`/groups/${groupId}/polls/${poll._id}/manage`)
           }
@@ -621,7 +642,7 @@ function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
       ) : null}
       {poll.canReview ? (
         <Button
-          accessibilityLabel='View Group poll results'
+          accessibilityLabel='View poll results'
           onPress={() =>
             router.push(`/groups/${groupId}/polls/${poll._id}/results`)
           }
@@ -655,8 +676,8 @@ function ResultsLoader({
 }) {
   const poll = hooks.usePoll({ toolId });
   if (!poll) return <Text>Loading result permissions…</Text>;
-  if (poll.groupId !== groupId || !poll.canReview)
-    return <Text>Results are private to Group managers.</Text>;
+  if (!belongsToOwner(poll, groupId) || !poll.canReview)
+    return <Text>Results are private to current managers.</Text>;
   return <VoteRecords toolId={toolId} canManage={poll.canManage} />;
 }
 export function GroupOrdinaryPollHistory({ toolId }: { toolId: ToolId }) {

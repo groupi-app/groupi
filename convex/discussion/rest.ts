@@ -1,3 +1,4 @@
+import { requireEventPost } from '../lib/discussionAccess';
 import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import {
@@ -69,7 +70,7 @@ async function access(
 async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
   const author = await getDiscussionActorWithUser(ctx, row.authorId);
   const attachments = await (
-    'eventId' in row
+    'title' in row
       ? ctx.db
           .query('attachments')
           .withIndex('by_post', q => q.eq('postId', row._id))
@@ -80,7 +81,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
   return {
     id: row._id,
     createdAt: row._creationTime,
-    ...('eventId' in row
+    ...('title' in row
       ? {
           eventId: row.eventId,
           title: row.title,
@@ -125,7 +126,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
 }
 async function detail(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
   const result = await summary(ctx, row);
-  if ('eventId' in row) {
+  if ('title' in row) {
     const replies = await ctx.db
       .query('replies')
       .withIndex('by_post', q => q.eq('postId', row._id))
@@ -148,10 +149,10 @@ export const read = internalQuery({
         code: 'NOT_FOUND',
         message: 'Content not found',
       });
-    const post = 'eventId' in row ? row : await ctx.db.get(row.postId);
+    const post = 'title' in row ? row : await ctx.db.get(row.postId);
     if (!post)
       throw new ConvexError({ code: 'NOT_FOUND', message: 'Parent not found' });
-    await access(ctx, args.personId, post.eventId);
+    await access(ctx, args.personId, requireEventPost(post).eventId);
     return detail(ctx, row);
   },
 });
@@ -179,7 +180,11 @@ export const list = internalQuery({
     const post = postId ? await ctx.db.get(postId) : null;
     if (!eventId && !post)
       throw new ConvexError({ code: 'NOT_FOUND', message: 'Parent not found' });
-    await access(ctx, args.personId, eventId ?? post!.eventId);
+    await access(
+      ctx,
+      args.personId,
+      eventId ?? requireEventPost(post!).eventId
+    );
     const query =
       args.kind === 'posts'
         ? ctx.db
@@ -247,6 +252,26 @@ export const write = internalMutation({
   ),
   handler: async (ctx, a) => {
     const { personId, body } = a;
+    // Versioned REST discussion remains Event-scoped; native Group adapters use
+    // the canonical writes directly after validating their stored parent.
+    if (a.kind === 'posts' && a.operation !== 'create') {
+      const post = await ctx.db.get(a.id as Id<'posts'>);
+      if (post) requireEventPost(post);
+    } else if (a.kind === 'replies') {
+      const reply =
+        a.operation === 'create'
+          ? null
+          : await ctx.db.get(a.id as Id<'replies'>);
+      if (a.operation !== 'create' && !reply)
+        throw new ConvexError({
+          code: 'NOT_FOUND',
+          message: 'Reply not found',
+        });
+      const parentId =
+        a.operation === 'create' ? (a.id as Id<'posts'>) : reply!.postId;
+      const post = await ctx.db.get(parentId);
+      if (post) requireEventPost(post);
+    }
     if (a.kind === 'posts') {
       if (a.operation === 'create')
         return createPostForPerson(ctx, personId, {

@@ -10,7 +10,7 @@ export const groupFormTemplates: Array<{
   {
     id: 'feedback',
     title: 'Feedback',
-    description: 'Share feedback with your Group.',
+    description: 'Share feedback with everyone.',
     questions: [
       {
         id: 'feedback',

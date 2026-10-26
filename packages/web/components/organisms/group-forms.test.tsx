@@ -1,6 +1,7 @@
+import { EventToolScope } from '@/features/content';
 import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -110,10 +111,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
     onChange?.(true)
   );
   vi.spyOn(client, 'clearAuth').mockImplementation(() => {});
+  const listeners = new Set<() => void>();
   const watch = vi
     .spyOn(client, 'watchQuery')
     .mockImplementation((...[query]) => ({
-      onUpdate: () => () => {},
+      onUpdate: listener => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
       localQueryResult: () => {
         const name = getFunctionName(query);
         if (!(name in data)) throw new Error(`Unexpected query ${name}`);
@@ -131,7 +136,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
       </ConvexProviderWithAuth>
     );
   }
-  return { client, mutation, watch, Provider };
+  return {
+    client,
+    mutation,
+    watch,
+    Provider,
+    data,
+    refresh: () => listeners.forEach(listener => listener()),
+  };
 }
 it('creates a reusable template via real shared/app hooks and accessible editor controls', async () => {
   const sharedSdk = createRequire(import.meta.url)(
@@ -166,6 +178,7 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
   expect(mutation.mock.calls[0][1]).toMatchObject({
     groupId,
     title: 'Reading feedback',
+    description: 'Share feedback with everyone.',
     resultsVisibility: 'MEMBERS',
     questions: [{ id: 'feedback', type: 'LONG_ANSWER', required: true }],
   });
@@ -541,3 +554,167 @@ it.each([
     await client.close();
   }
 );
+
+it('creates an Event form through the shared editor without writing Group policy', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, mutation, watch, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: true,
+      canManage: false,
+    },
+  });
+  mutation.mockResolvedValue(toolId);
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(
+    screen.getByRole('button', { name: 'Use feedback template' })
+  );
+  await user.click(screen.getByRole('button', { name: 'Create form' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'eventContent/mutations:createForm'
+  );
+  expect(mutation.mock.calls[0][1]).toMatchObject({ eventId });
+  expect(mutation.mock.calls[0][1]).not.toHaveProperty('groupId');
+  expect(push).toHaveBeenCalledWith('/event/event-one/forms/tool-one');
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groups/queries:getGroup'
+  );
+  mounted.unmount();
+  await client.close();
+});
+it('keeps Event form discovery available when creation is restricted', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: false,
+    },
+    'eventContent/queries:listForms': {
+      ...emptyPage,
+      page: [{ ...form, groupId: undefined, eventId }],
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupForms groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('link', { name: 'Book feedback' })).toHaveAttribute(
+    'href',
+    '/event/event-one/forms/tool-one'
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Disable forms' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+it('rejects a Group-owned form reached under an Event URL', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture();
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormInteraction groupId={eventId} toolId={toolId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form unavailable in this context.'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Save response' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('denies Event moderator creation when only organizers may create content', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: true,
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form creation is unavailable'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('retains saved feedback through a reactive response revision while reseeding answers and isolating tools', async () => {
+  const f = fixture();
+  const m = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Favorite book'), 'Kindred');
+  await user.click(screen.getByRole('button', { name: 'Save response' }));
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Response saved.'
+  );
+  await act(async () => {
+    f.data['groupForms/queries:getForm'] = {
+      ...form,
+      responseRevision: 1,
+      savedVersion: 1,
+      answers: { book: 'Kindred' },
+    };
+    f.refresh();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Response saved.');
+  expect(screen.getByLabelText('Favorite book')).toHaveValue('Kindred');
+  await user.clear(screen.getByLabelText('Favorite book'));
+  await user.type(
+    screen.getByLabelText('Favorite book'),
+    'Unsaved local draft'
+  );
+  const otherId = 'tool-two' as Id<'groupTools'>;
+  f.data['groupForms/queries:getForm'] = {
+    ...form,
+    _id: otherId,
+    title: 'Another form',
+    responseRevision: 1,
+    answers: { book: 'Other saved answer' },
+  };
+  m.rerender(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={otherId} />
+    </f.Provider>
+  );
+  expect(screen.getByLabelText('Favorite book')).toHaveValue(
+    'Other saved answer'
+  );
+  expect(screen.queryByText('Response saved.')).not.toBeInTheDocument();
+  m.unmount();
+  await f.client.close();
+});

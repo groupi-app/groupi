@@ -328,7 +328,7 @@ function QuestionnaireEventCard({ eventId }: EventCardProps) {
           <Icons.listOrdered className='size-5' />
         </div>
         <div>
-          <p className='font-medium'>Questionnaire</p>
+          <p className='font-medium'>Your details</p>
           {isOrganizer ? (
             <p className='text-sm text-muted-foreground'>
               {responseCount} {responseCount === 1 ? 'response' : 'responses'}

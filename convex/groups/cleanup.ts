@@ -1,3 +1,4 @@
+import { removeForGroup as removePostsForGroup } from '../groupPosts/model';
 import { operationError } from './operationReceipts';
 import { removeAudiencesForGroup } from '../groupEventAudiences/cleanup';
 
@@ -34,6 +35,7 @@ export async function cascadeDeleteGroupData(
     .withIndex('by_groupId', q => q.eq('groupId', groupId)))
     await ctx.db.delete(membership._id);
   await removeToolsForGroup(ctx, groupId);
+  await removePostsForGroup(ctx, groupId);
   await removeInvitationsForGroup(ctx, groupId);
   await removeAudiencesForGroup(ctx, groupId);
   await removeModerationForGroup(ctx, groupId);

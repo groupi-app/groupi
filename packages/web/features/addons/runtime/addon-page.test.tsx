@@ -124,7 +124,9 @@ describe('AddonPage', () => {
   it('shows loading without rendering a form until configuration arrives', () => {
     config = undefined;
     render(page());
-    expect(screen.getByRole('status')).toHaveTextContent('Loading add-on');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Loading event feature'
+    );
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
@@ -139,7 +141,13 @@ describe('AddonPage', () => {
         customTemplate(config).settings!.cardOnly = true;
       render(page(eventId, addonId));
       expect(
-        screen.getByRole('heading', { name: 'Add-on unavailable' })
+        screen.getByRole('heading', {
+          name: config
+            ? addonId.startsWith('custom:')
+              ? 'Event A questions'
+              : 'Saved event feature'
+            : 'Event feature unavailable',
+        })
       ).toBeInTheDocument();
       expect(
         screen.getByRole('link', { name: 'Return to Event' })
@@ -150,6 +158,22 @@ describe('AddonPage', () => {
       ).not.toBeInTheDocument();
     }
   );
+
+  it('keeps malformed saved custom features named and reachable without exposing configuration', () => {
+    const template = customTemplate(config);
+    template.name = 'Picnic choices';
+    template.sections[0].fields =
+      null as unknown as (typeof template.sections)[0]['fields'];
+    render(page());
+    expect(
+      screen.getByRole('heading', { name: 'Picnic choices' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'No saved information is changed'
+    );
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(saveData).not.toHaveBeenCalled();
+  });
 
   it('renders a required custom add-on on a direct visit before any prior setup', () => {
     render(page());

@@ -126,6 +126,21 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTools/queries:getFormPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getListPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getPollPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
     'groupDiscord/enrollment:getStatus': null,
     'groupDiscord/queries:getConnection': null,
     'groups/expulsions:progress': null,

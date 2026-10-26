@@ -1,3 +1,4 @@
+import { EventToolScope } from '@/features/content';
 import GroupListSettingsPage from '@/app/(groups)/groups/[groupId]/lists/[toolId]/settings/page';
 import { createRequire } from 'node:module';
 import { act, render, screen, waitFor } from '@testing-library/react';
@@ -12,6 +13,7 @@ import { afterAll, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
+  GroupLists,
   GroupListEditor,
   GroupListInteraction,
   GroupListOwnEntries,
@@ -370,6 +372,39 @@ it('recovers a stale or expired add with a confirmed fresh request after inspect
     text: 'Keep this draft',
   });
   expect(mutation.mock.calls[2][1].requestId).not.toBe(first.requestId);
+  mounted.unmount();
+  await client.close();
+});
+
+it('discovers Event lists and preserves the existing Bring List link', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: true,
+      canManage: true,
+    },
+    'eventContent/queries:listLists': {
+      ...emptyPage,
+      page: [{ ...list, groupId: undefined, eventId }],
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupLists groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(
+    screen.getByRole('link', {
+      name: 'Open existing Bring List and item claims',
+    })
+  ).toHaveAttribute('href', '/event/event-one/addon/bring-list');
+  expect(screen.getByRole('link', { name: 'Reading ideas' })).toHaveAttribute(
+    'href',
+    '/event/event-one/lists/tool-one'
+  );
   mounted.unmount();
   await client.close();
 });

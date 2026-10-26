@@ -9,7 +9,11 @@ import {
   type ApplicationQuestion,
   type ApplicationAnswers,
 } from '@groupi/shared/hooks';
-import { useGroup } from '@/hooks/convex/use-groups';
+import {
+  useToolOwner as useGroup,
+  useContentBase,
+  type ContentOwnerId,
+} from '@/features/content/tool-scope';
 import {
   useForm,
   useFormManagement,
@@ -37,7 +41,8 @@ const failure = (error: unknown) =>
   error instanceof Error
     ? error.message
     : 'Operation failed. Inspect current state before repeating.';
-export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
+export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
+  const base = useContentBase(groupId);
   const group = useGroup(groupId);
   const policy = useFormPolicy({ groupId });
   const setPolicy = useConfigureFormPolicy();
@@ -55,11 +60,10 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading forms…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1 className='font-heading text-2xl font-bold'>Group forms</h1>
-      <p>
-        Independent ongoing forms. They do not change joining requirements or
-        enable tools on Events.
-      </p>
+      <h1 className='font-heading text-2xl font-bold'>
+        {base.startsWith('/event/') ? 'Event forms' : 'Group forms'}
+      </h1>
+      <p>Collect responses without changing joining requirements.</p>
       {policy.canConfigure && (
         <section
           className='rounded-card border border-border p-4 space-y-3'
@@ -116,14 +120,16 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
               preserved. Current eligible managers can manage preserved forms.
             </p>
           )}
-          {policy.enabled && (policy.creation === 'MEMBERS' || canManage) && (
-            <Link
-              className='text-primary underline'
-              href={`/groups/${groupId}/forms/new`}
-            >
-              Create form
-            </Link>
-          )}
+          {policy.enabled &&
+            policy.canCreate !== false &&
+            (policy.creation === 'MEMBERS' || canManage) && (
+              <Link
+                className='text-primary underline'
+                href={`${base}/forms/new`}
+              >
+                Create form
+              </Link>
+            )}
           {forms?.page.map(form => (
             <div
               key={form._id}
@@ -133,8 +139,8 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
                 className='text-primary underline'
                 href={
                   policy.enabled
-                    ? `/groups/${groupId}/forms/${form._id}`
-                    : `/groups/${groupId}/forms/${form._id}/settings`
+                    ? `${base}/forms/${form._id}`
+                    : `${base}/forms/${form._id}/settings`
                 }
               >
                 {policy.enabled ? form.title : `Manage ${form.title}`}
@@ -162,7 +168,7 @@ export function GroupFormEditor({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId?: Id<'groupTools'>;
 }) {
   const group = useGroup(groupId);
@@ -172,7 +178,7 @@ export function GroupFormEditor({
     (group.viewerRole === 'OWNER' || group.viewerRole === 'MODERATOR');
   const form = useFormManagement(toolId && eligible ? { toolId } : 'skip');
   if (!toolId) return <NewFormEditor groupId={groupId} />;
-  if (group === undefined) return <p role='status'>Loading Group…</p>;
+  if (group === undefined) return <p role='status'>Loading content access…</p>;
   if (!eligible)
     return (
       <p role='alert'>
@@ -181,8 +187,8 @@ export function GroupFormEditor({
       </p>
     );
   if (toolId && !form) return <p role='status'>Loading form settings…</p>;
-  if (form && form.groupId !== groupId)
-    return <p role='alert'>Form unavailable in this Group.</p>;
+  if (form && (form.groupId ?? form.eventId) !== groupId)
+    return <p role='alert'>Form unavailable in this context.</p>;
   if (form && !form.canManage)
     return (
       <p role='alert'>Only current eligible managers can manage this form.</p>
@@ -191,12 +197,12 @@ export function GroupFormEditor({
     <FormEditor key={form?.version ?? 'new'} groupId={groupId} initial={form} />
   );
 }
-function NewFormEditor({ groupId }: { groupId: Id<'groups'> }) {
+function NewFormEditor({ groupId }: { groupId: ContentOwnerId }) {
   const group = useGroup(groupId);
   const policy = useFormPolicy({ groupId });
   if (group === undefined || policy === undefined)
     return <p role='status'>Loading form creation policy…</p>;
-  if (!group) return <p role='alert'>Group unavailable.</p>;
+  if (!group) return <p role='alert'>Content unavailable.</p>;
   if (group.joiningQuestionnaire?.canAccessMemberContent === false)
     return (
       <p role='alert'>
@@ -204,12 +210,13 @@ function NewFormEditor({ groupId }: { groupId: Id<'groups'> }) {
       </p>
     );
   if (
+    policy.canCreate === false ||
     !policy.enabled ||
     (policy.creation === 'MANAGERS' && group.viewerRole === 'MEMBER')
   )
     return (
       <p role='alert'>
-        Form creation is unavailable under the current owner policy.
+        Form creation is unavailable under the current creation policy.
       </p>
     );
   return <FormEditor groupId={groupId} initial={undefined} />;
@@ -218,9 +225,10 @@ function FormEditor({
   groupId,
   initial,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   initial: ReturnType<typeof useFormManagement>;
 }) {
+  const base = useContentBase(groupId);
   const create = useCreateForm();
   const configure = useConfigureForm();
   const deleteForm = useDeleteForm();
@@ -272,7 +280,7 @@ function FormEditor({
                 description,
                 questions,
               });
-              router.push(`/groups/${groupId}/forms`);
+              router.push(`${base}/forms`);
             } else {
               const id = await create({
                 groupId,
@@ -281,7 +289,7 @@ function FormEditor({
                 questions,
                 resultsVisibility: visibility,
               });
-              router.push(`/groups/${groupId}/forms/${id}`);
+              router.push(`${base}/forms/${id}`);
             }
           } catch (e) {
             setError(
@@ -355,7 +363,7 @@ function FormEditor({
           explanation='This permanently removes the preserved form and all response history.'
           onConfirm={async () => {
             await deleteForm({ toolId: initial._id });
-            router.push(`/groups/${groupId}/forms`);
+            router.push(`${base}/forms`);
           }}
         />
       )}
@@ -366,43 +374,50 @@ export function GroupFormInteraction({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
 }) {
   const form = useForm({ toolId });
+  const [feedback, setFeedback] = useState({ toolId, message: '' });
   if (!form) return <p role='status'>Loading form…</p>;
-  if (form.groupId !== groupId)
-    return <p role='alert'>Form unavailable in this Group.</p>;
+  if ((form.groupId ?? form.eventId) !== groupId)
+    return <p role='alert'>Form unavailable in this context.</p>;
   return (
     <FormInteraction
-      key={`${form.version}:${form.responseRevision}`}
+      key={`${form._id}:${form.version}:${form.responseRevision}`}
       form={form}
       groupId={groupId}
+      message={feedback.toolId === toolId ? feedback.message : ''}
+      onMessage={message => setFeedback({ toolId, message })}
     />
   );
 }
 function FormInteraction({
   form,
   groupId,
+  message,
+  onMessage: setMessage,
 }: {
   form: NonNullable<ReturnType<typeof useForm>>;
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
+  message: string;
+  onMessage: (message: string) => void;
 }) {
+  const base = useContentBase(groupId);
   const submit = useSubmitFormResponse();
   const remove = useRemoveFormResponse();
   const deleteForm = useDeleteForm();
   const router = useRouter();
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
       <h1 className='font-heading'>{form.title}</h1>
       <p>{form.description}</p>
       <p>
         {form.resultsVisibility === 'MEMBERS'
-          ? 'Shared contribution: eligible Group members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-          : 'Personal answers: only you and current eligible Group managers can see them. Account deletion purges your answers and history.'}{' '}
+          ? 'Shared contribution: eligible members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
+          : 'Personal answers: only you and current eligible managers can see them. Account deletion purges your answers and history.'}{' '}
         Managers may moderate ordinary responses. Removing your response also
         removes its history.
       </p>
@@ -450,7 +465,7 @@ function FormInteraction({
       )}
       <Link
         className='text-primary underline'
-        href={`/groups/${groupId}/forms/${form._id}/history`}
+        href={`${base}/forms/${form._id}/history`}
       >
         My saved answer history
       </Link>
@@ -458,7 +473,7 @@ function FormInteraction({
         <>
           <Link
             className='text-primary underline'
-            href={`/groups/${groupId}/forms/${form._id}/settings`}
+            href={`${base}/forms/${form._id}/settings`}
           >
             Manage form settings
           </Link>
@@ -468,7 +483,7 @@ function FormInteraction({
             explanation='This permanently removes the form and all response history.'
             onConfirm={async () => {
               await deleteForm({ toolId: form._id });
-              router.push(`/groups/${groupId}/forms`);
+              router.push(`${base}/forms`);
             }}
           />
         </>
@@ -560,10 +575,8 @@ function GroupFormResults({
       {results?.page.map(row => (
         <div key={row._id} className='rounded-card border border-border p-4'>
           <p>
-            {row.personId
-              ? 'Group member contribution'
-              : 'Anonymous contribution'}{' '}
-            · form version {row.version}
+            {row.personId ? 'Member contribution' : 'Anonymous contribution'} ·
+            form version {row.version}
           </p>
           <SavedAnswers questions={row.questions} answers={row.answers} />
           {canManage && (

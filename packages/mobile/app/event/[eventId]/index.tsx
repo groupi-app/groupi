@@ -1,6 +1,8 @@
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
@@ -15,7 +17,10 @@ import { EventHeader } from '@/components/events/event-header';
 import { MemberList } from '@/components/events/member-list';
 import { PostFeed } from '@/components/posts/post-feed';
 import { EventDetailSkeleton } from '@/components/events/event-detail-skeleton';
-import { EventAddonsSection } from '@/components/addons/event-addons-section';
+import {
+  EventPlanningFeatures,
+  EventParticipationFeatures,
+} from '@/components/addons/event-features';
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -94,6 +99,10 @@ export default function EventDetailScreen() {
               eventId={eventId}
             />
 
+            {addons ? (
+              <EventPlanningFeatures addons={addons} eventId={eventId} />
+            ) : null}
+
             {canViewMembers && membersData ? (
               <MemberList
                 members={membersData}
@@ -106,6 +115,31 @@ export default function EventDetailScreen() {
               />
             ) : null}
 
+            <View className='gap-2 p-4'>
+              <Text
+                accessibilityRole='header'
+                className='text-lg font-semibold text-foreground'
+              >
+                Event content
+              </Text>
+              <View className='flex-row flex-wrap gap-2'>
+                {(['forms', 'lists', 'polls'] as const).map(kind => (
+                  <Button
+                    key={kind}
+                    variant='outline'
+                    accessibilityLabel={`Event ${kind}`}
+                    onPress={() => router.push(`/event/${eventId}/${kind}`)}
+                  >
+                    {kind === 'forms'
+                      ? 'Forms'
+                      : kind === 'lists'
+                        ? 'Lists'
+                        : 'Polls'}
+                  </Button>
+                ))}
+              </View>
+            </View>
+
             <EventOwnershipTransfer
               eventId={typedEventId}
               personId={headerData.userMembership.person._id}
@@ -113,7 +147,7 @@ export default function EventDetailScreen() {
             />
 
             {addons && addons.length > 0 ? (
-              <EventAddonsSection addons={addons} eventId={eventId} />
+              <EventParticipationFeatures addons={addons} eventId={eventId} />
             ) : null}
           </View>
         }

@@ -1,4 +1,5 @@
 import { requireNoEventExclusion } from '../groups/exclusions';
+import { requireEventPost } from '../lib/discussionAccess';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
@@ -26,17 +27,16 @@ export const getRepliesByPost = query({
       throw new Error('Post not found');
     }
 
-    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
-    const membership = await ctx.db
+    const eventPost = requireEventPost(post);
+    await requireNoEventExclusion(ctx, eventPost.eventId, currentPerson._id);
+    const eventId = eventPost.eventId;
+    const member = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+        q.eq('personId', currentPerson._id).eq('eventId', eventId)
       )
       .first();
-
-    if (!membership) {
-      throw new Error('Access denied to this post');
-    }
+    if (!member) throw new Error('Access denied to this post');
 
     // Get all replies for this post
     const replies = await ctx.db

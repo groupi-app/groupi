@@ -230,7 +230,7 @@ function BringListEventCard({ eventId, config }: EventCardProps) {
           <Icons.listChecks className='size-5' />
         </div>
         <div>
-          <p className='font-medium'>Bring List</p>
+          <p className='font-medium'>What to bring</p>
           <p className='text-sm text-muted-foreground'>
             {totalClaimed} / {totalNeeded} items claimed
           </p>
@@ -279,7 +279,7 @@ function BringListManageConfig({
       toast.error('Add at least one item');
       return;
     }
-    await onSave({ items });
+    if ((await onSave({ items })) === false) return;
     setPendingEnable(false);
   };
 

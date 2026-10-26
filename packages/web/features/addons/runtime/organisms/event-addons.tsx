@@ -1,80 +1,129 @@
 'use client';
 
-import Link from 'next/link';
-import { Icons } from '@/components/icons';
-import { Button } from '@/components/ui/button';
 import { useEventAddons } from '../../hooks/use-addons';
-import { useEventHeaderData } from '@/hooks/convex/use-events';
+import type { Id } from '@/convex/_generated/dataModel';
+import type { useEventHeaderData } from '@/hooks/convex/use-events';
+import {
+  FeatureRenderingBoundary,
+  UnavailableEventFeature,
+} from '../feature-rendering-boundary';
 import { getAddonById } from '../catalog';
-import type { AddonDefinition } from '../../model/types';
+import {
+  canRenderParticipantFeature,
+  isPlanningFeature,
+  featureInCollection,
+  participantFeatureTitle,
+} from '../participant-features';
 
 type HeaderData = NonNullable<ReturnType<typeof useEventHeaderData>>;
-
-interface EnabledAddon {
-  config: {
-    addonType: string;
-    enabled: boolean;
-    config: unknown;
-    eventId: string;
-  };
-  definition: AddonDefinition;
-}
-
-interface EventAddonsProps {
+interface EventFeaturesProps {
   data: HeaderData;
 }
 
-/**
- * Add-ons section on the event page.
- * Renders all enabled add-ons from the registry using their EventCardComponent.
- * Only rendered when the event has at least one active add-on.
- */
-export function EventAddons({ data }: EventAddonsProps) {
-  const { event, userMembership } = data;
-  const isOrganizer = userMembership.role === 'ORGANIZER';
-  const addonConfigs = useEventAddons(event._id);
+export type EventFeaturePlacement =
+  | 'planning'
+  | 'content'
+  | 'forms'
+  | 'lists'
+  | 'polls';
 
-  // Filter to enabled add-ons that have a registered handler
-  const enabledAddons: EnabledAddon[] = [];
-  for (const c of addonConfigs ?? []) {
-    if (!c.enabled) continue;
-    const definition = getAddonById(
-      c.addonType,
-      c.config as Record<string, unknown>
-    );
-    if (!definition) continue;
-    enabledAddons.push({ config: c, definition });
-  }
-
-  // Don't render if no add-ons are active
-  if (enabledAddons.length === 0) {
-    return null;
-  }
-
+/** Participant features mount in their Event context, without a management toolbar. */
+export function EventFeatureCards({
+  eventId,
+  chosenDateTime,
+  configs,
+  placement,
+}: {
+  eventId: Id<'events'>;
+  chosenDateTime?: number;
+  configs: NonNullable<ReturnType<typeof useEventAddons>>;
+  placement: EventFeaturePlacement;
+}) {
+  const features = configs.filter(
+    row =>
+      row.enabled &&
+      (placement === 'planning'
+        ? isPlanningFeature(row.addonType)
+        : placement === 'content'
+          ? !isPlanningFeature(row.addonType)
+          : featureInCollection(row.addonType, row.config, placement))
+  );
+  if (!features.length) return null;
   return (
-    <div>
-      <div className='flex items-center gap-2'>
-        <h2 className='text-xl font-heading font-medium'>Add-ons</h2>
-        {isOrganizer && (
-          <Link href={`/event/${event._id}/manage-addons`}>
-            <Button className='flex items-center gap-1' size='sm'>
-              <Icons.settings className='size-4' />
-              <span>Manage</span>
-            </Button>
-          </Link>
-        )}
-      </div>
-      <div className='mt-2 flex flex-wrap gap-2'>
-        {enabledAddons.map(({ config: addonConfig, definition }) => (
-          <definition.EventCardComponent
-            key={`${event._id}:${addonConfig.addonType}`}
-            addonType={addonConfig.addonType}
-            eventId={event._id}
-            config={addonConfig.config as Record<string, unknown>}
-            chosenDateTime={event.chosenDateTime}
-          />
-        ))}
-      </div>
+    <div className='flex flex-wrap items-start gap-3'>
+      {features.map(row => {
+        const definition = canRenderParticipantFeature(
+          row.addonType,
+          row.config
+        )
+          ? getAddonById(row.addonType, row.config as Record<string, unknown>)
+          : undefined;
+        if (!definition)
+          return (
+            <UnavailableEventFeature
+              key={row.addonType}
+              title={participantFeatureTitle(row.addonType, row.config)}
+            />
+          );
+        return (
+          <FeatureRenderingBoundary
+            key={`${eventId}:${row.addonType}:${row.updatedAt}`}
+            title={participantFeatureTitle(row.addonType, row.config)}
+          >
+            <definition.EventCardComponent
+              addonType={row.addonType}
+              eventId={eventId}
+              config={row.config as Record<string, unknown>}
+              chosenDateTime={chosenDateTime}
+            />
+          </FeatureRenderingBoundary>
+        );
+      })}
     </div>
+  );
+}
+function EventFeatures({
+  data,
+  placement,
+}: EventFeaturesProps & { placement: EventFeaturePlacement }) {
+  const configs = useEventAddons(data.event._id);
+  return (
+    <EventFeatureCards
+      eventId={data.event._id}
+      chosenDateTime={data.event.chosenDateTime}
+      configs={configs ?? []}
+      placement={placement}
+    />
+  );
+}
+export function EventPlanningFeatures(props: EventFeaturesProps) {
+  return <EventFeatures {...props} placement='planning' />;
+}
+export function EventContentFeatures(props: EventFeaturesProps) {
+  return <EventFeatures {...props} placement='content' />;
+}
+export function EventCollectionFeatures({
+  eventId,
+  collection,
+}: {
+  eventId: Id<'events'>;
+  collection: 'forms' | 'lists' | 'polls';
+}) {
+  const configs = useEventAddons(eventId);
+  return (
+    <EventFeatureCards
+      eventId={eventId}
+      configs={configs ?? []}
+      placement={collection}
+    />
+  );
+}
+/** Compatibility export for older page compositions; no generic Add-ons section. */
+export function EventAddons(props: EventFeaturesProps) {
+  return (
+    <>
+      <EventPlanningFeatures {...props} />
+      <EventContentFeatures {...props} />
+    </>
   );
 }

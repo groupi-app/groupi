@@ -19,7 +19,11 @@ vi.mock('@/app/(event)/event/[eventId]/context', () => ({
     headerData: fixture.missingHeader
       ? null
       : {
-          event: { title: fixture.title, description: fixture.description },
+          event: {
+            _id: 'event-one',
+            title: fixture.title,
+            description: fixture.description,
+          },
           userMembership: { role: 'ATTENDEE' },
           permissions: {},
         },
@@ -50,12 +54,15 @@ vi.mock('@/app/(event)/event/[eventId]/components/post-feed', () => ({
   ),
 }));
 vi.mock('@/features/addons/runtime', () => ({
-  EventAddons: () => (
-    <section aria-label='Private add-ons'>Add-on details</section>
+  EventPlanningFeatures: () => (
+    <section aria-label='Private planning'>Reminder choices</section>
+  ),
+  EventContentFeatures: () => (
+    <section aria-label='Private participation'>Participation details</section>
   ),
 }));
 vi.mock('@/components/new-post-button', () => ({
-  NewPostButton: () => <button>New Post</button>,
+  NewPostButton: () => <button aria-label='New content'>+ New</button>,
 }));
 
 function assertLoadingContent(container: HTMLElement) {
@@ -67,7 +74,10 @@ function assertLoadingContent(container: HTMLElement) {
   expect(screen.queryByRole('link')).not.toBeInTheDocument();
   expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Private roster')).not.toBeInTheDocument();
-  expect(screen.queryByLabelText('Private add-ons')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Private planning')).not.toBeInTheDocument();
+  expect(
+    screen.queryByLabelText('Private participation')
+  ).not.toBeInTheDocument();
 }
 
 beforeEach(() => {
@@ -118,7 +128,7 @@ describe('Event page loading content', () => {
       expect(
         screen.getByRole('region', { name: 'Private roster' })
       ).toBeVisible();
-      expect(screen.getByRole('button', { name: 'New Post' })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'New content' })).toBeVisible();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
       expect(view.container.querySelector('[aria-busy="true"]')).toBeNull();
     }

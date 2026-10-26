@@ -1,4 +1,5 @@
 'use client';
+import { GroupNewContent, ContentNavigation } from '@/features/content';
 import { GroupSharedEvents } from './group-shared-events';
 
 import { useEffect, useState } from 'react';
@@ -123,6 +124,15 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           </p>
         )}
         <div className='flex flex-wrap gap-2'>
+          <GroupNewContent
+            groupId={groupId}
+            manager={
+              group.viewerRole === 'OWNER' || group.viewerRole === 'MODERATOR'
+            }
+            eligible={
+              group.joiningQuestionnaire?.canAccessMemberContent !== false
+            }
+          />
           {(group.canManageMembers ||
             group.canManageIdentity ||
             group.canManageInvitations) && (
@@ -217,6 +227,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         </p>
       </div>
       <GroupJoiningQuestionnaire groupId={groupId} />
+      {group.joiningQuestionnaire?.canAccessMemberContent !== false && (
+        <ContentNavigation context='group' basePath={`/groups/${groupId}`} />
+      )}
       {group.joiningQuestionnaire?.canAccessMemberContent !== false ? (
         <GroupSharedEvents groupId={groupId} />
       ) : (

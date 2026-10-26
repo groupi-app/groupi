@@ -26,17 +26,21 @@ export interface PostCardProps {
     content: string;
     _creationTime: number;
     updatedAt?: number;
-    authorId: string;
+    authorId?: string;
     author?: {
       kind?: 'user' | 'integration';
       name?: string | null;
       image?: string | null;
-      person?: { _id: string; user?: { name: string; image?: string } };
-      user?: { name: string; image?: string } | null;
+      person?: {
+        _id: string;
+        user?: { name: string | null; image?: string | null };
+      };
+      user?: { name: string | null; image?: string | null } | null;
     } | null;
     replyCount?: number;
   };
-  eventId: string;
+  eventId?: string;
+  groupId?: string;
   currentPersonId: string;
   userRole?: string;
 }
@@ -44,6 +48,7 @@ export interface PostCardProps {
 export function PostCard({
   post,
   eventId,
+  groupId,
   currentPersonId,
   userRole,
 }: PostCardProps) {
@@ -62,7 +67,15 @@ export function PostCard({
   const isEdited =
     post.updatedAt !== undefined && post.updatedAt !== post._creationTime;
   const isAuthor = post.authorId === currentPersonId;
-  const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
+  const canModerate =
+    userRole === 'ORGANIZER' ||
+    userRole === 'MODERATOR' ||
+    userRole === 'OWNER';
+  const path = groupId
+    ? `/groups/${groupId}/posts/${post._id}`
+    : eventId
+      ? `/event/${eventId}/post/${post._id}`
+      : undefined;
   const mutedState = useIsPostMuted(post._id);
   const isMuted = mutedState?.isMuted ?? false;
   const togglePostMute = useTogglePostMute();
@@ -82,12 +95,12 @@ export function PostCard({
       },
     ];
 
-    if (isAuthor) {
+    if (isAuthor || (groupId && canModerate)) {
       options.push({
         label: 'Edit Post',
         icon: 'create-outline',
         showChevron: true,
-        onPress: () => router.push(`/event/${eventId}/post/${post._id}/edit`),
+        onPress: () => path && router.push(`${path}/edit`),
       });
     } else {
       options.push({
@@ -130,7 +143,7 @@ export function PostCard({
 
   return (
     <Pressable
-      onPress={() => router.push(`/event/${eventId}/post/${post._id}`)}
+      onPress={() => path && router.push(path)}
       onLongPress={handleLongPress}
       accessibilityRole='button'
       accessibilityLabel={`${post.title}, by ${authorName}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
@@ -139,7 +152,7 @@ export function PostCard({
       <Card>
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
-          {post.author?.kind === 'integration' ? (
+          {post.author?.kind === 'integration' || !post.authorId ? (
             <UserAvatar src={authorImage} name={authorName} size='sm' />
           ) : (
             <MemberAvatar

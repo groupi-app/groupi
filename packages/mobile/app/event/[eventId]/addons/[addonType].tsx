@@ -10,14 +10,7 @@ import { QuestionnaireAddon } from '@/components/addons/questionnaire-addon';
 import { BringListAddon } from '@/components/addons/bring-list-addon';
 import { DiscordAddon } from '@/components/addons/discord-addon';
 import { CustomAddonFallback } from '@/components/addons/custom-addon-fallback';
-import { getCustomAddonSummary } from '@/lib/addon-contracts';
-
-const ADDON_TITLES: Record<string, string> = {
-  reminders: 'Reminders',
-  questionnaire: 'Questionnaire',
-  'bring-list': 'Bring List',
-  discord: 'Discord',
-};
+import { eventFeaturePresentation } from '@/lib/event-feature-placement';
 
 export default function AddonDetailScreen() {
   const { eventId, addonType } = useLocalSearchParams<{
@@ -26,10 +19,8 @@ export default function AddonDetailScreen() {
   }>();
   const addonConfig = useAddonConfig(eventId, addonType);
 
-  const title =
-    ADDON_TITLES[addonType] ??
-    getCustomAddonSummary(addonConfig?.config)?.name ??
-    'Add-on';
+  const feature = eventFeaturePresentation(addonType, addonConfig?.config);
+  const title = feature.title;
 
   if (addonConfig === undefined) {
     return (
@@ -39,12 +30,12 @@ export default function AddonDetailScreen() {
     );
   }
 
-  if (addonConfig === null) {
+  if (addonConfig === null || !addonConfig.enabled) {
     return (
       <DetailScreenTemplate title={title}>
         <View className='items-center py-12'>
           <Text className='text-base text-muted-foreground'>
-            This add-on is not enabled
+            This Event feature is not enabled
           </Text>
         </View>
       </DetailScreenTemplate>
@@ -55,7 +46,13 @@ export default function AddonDetailScreen() {
 
   return (
     <DetailScreenTemplate title={title}>
-      {addonType === 'reminders' ? (
+      {feature.kind === 'unavailable' ? (
+        <Text accessibilityRole='alert'>
+          This saved Event feature is unavailable in this app version. Its
+          configuration and participant data are preserved. Event managers can
+          review it in Event Settings.
+        </Text>
+      ) : addonType === 'reminders' ? (
         <ReminderAddon eventId={eventId} config={config} />
       ) : addonType === 'questionnaire' ? (
         <QuestionnaireAddon eventId={eventId} config={config} />
@@ -72,7 +69,8 @@ export default function AddonDetailScreen() {
       ) : (
         <View className='items-center py-12'>
           <Text className='text-base text-muted-foreground'>
-            This add-on type is not yet supported on mobile
+            This saved Event feature is unavailable in this app version. Its
+            configuration and participant data are preserved.
           </Text>
         </View>
       )}

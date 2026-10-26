@@ -582,10 +582,13 @@ export function CustomAddonManageConfig({
 
   const handleSave = async () => {
     if (!editedTemplate || typeof config?.templateId !== 'string') return;
-    await onSave({
-      templateId: config.templateId,
-      template: editedTemplate,
-    });
+    if (
+      (await onSave({
+        templateId: config.templateId,
+        template: editedTemplate,
+      })) === false
+    )
+      return;
     setHasChanges(false);
   };
 

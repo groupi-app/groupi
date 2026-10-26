@@ -160,6 +160,8 @@ export const read = internalMutation({
       .unique();
     let eventId: Id<'events'> | undefined;
     if (attachment) {
+      if (Boolean(attachment.postId) === Boolean(attachment.replyId))
+        throw denied();
       const reply = attachment.replyId
         ? await ctx.db.get(attachment.replyId)
         : null;
@@ -168,13 +170,17 @@ export const read = internalMutation({
         : reply
           ? await ctx.db.get(reply.postId)
           : null;
-      eventId = post?.eventId;
+      // An attached file inherits only its current content parent. A bounded
+      // Event credential must never fall back to the upload's former Event when
+      // native clients attach that upload to Group content or remove its parent.
+      if (!post?.eventId || post.groupId) throw denied();
+      eventId = post.eventId;
     }
     const upload = await ctx.db
       .query('uploads')
       .withIndex('by_storage', q => q.eq('storageId', storageId))
       .unique();
-    eventId ??= upload?.eventId;
+    if (!attachment) eventId = upload?.eventId;
     if (!eventId) throw denied();
     const { principal, grant } = await authorizeCredential(
       ctx,

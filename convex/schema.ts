@@ -251,12 +251,15 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind']),
   groupTools: defineTable(toolFields)
+    .index('by_eventId', ['eventId'])
+    .index('by_eventId_and_kind', ['eventId', 'kind'])
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind'])
     .index('by_creatorId', ['creatorId']),
   groupLists: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     updatedAt: v.number(),
   })
@@ -270,7 +273,8 @@ export default defineSchema({
     .index('by_toolId_and_personId', ['toolId', 'personId']),
   groupListRequests: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     personId: v.id('persons'),
     requestId: v.string(),
     fingerprint: v.string(),
@@ -287,7 +291,8 @@ export default defineSchema({
     ]),
   groupForms: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     questions: v.array(questionValidator),
     updatedAt: v.number(),
@@ -307,7 +312,8 @@ export default defineSchema({
 
   groupPolls: defineTable({
     toolId: v.id('groupTools'),
-    groupId: v.id('groups'),
+    groupId: v.optional(v.id('groups')),
+    eventId: v.optional(v.id('events')),
     version: v.number(),
     semanticVersion: v.number(),
     mode: pollMode,
@@ -792,6 +798,11 @@ export default defineSchema({
     ),
   }).index('by_user_id', ['userId']),
 
+  // New room tokens bind to canonical content access; legacy tokens stay compatible.
+  presenceRoomAccess: defineTable({
+    roomToken: v.string(),
+    roomId: v.string(),
+  }).index('by_roomToken', ['roomToken']),
   personPresence: defineTable({
     personId: v.id('persons'),
     lastSeen: v.number(),
@@ -1008,10 +1019,12 @@ export default defineSchema({
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
     authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
-    eventId: v.id('events'),
+    eventId: v.optional(v.id('events')),
+    groupId: v.optional(v.id('groups')),
     updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
     .index('by_event', ['eventId'])
+    .index('by_groupId', ['groupId'])
     .index('by_author', ['authorId'])
     .index('by_membership', ['membershipId']),
 
@@ -1050,6 +1063,7 @@ export default defineSchema({
     .index('by_event_email', ['eventId', 'email']),
 
   notifications: defineTable({
+    discussionDispatched: v.optional(v.boolean()),
     personId: v.id('persons'),
     authorId: v.optional(v.id('persons')),
     type: v.union(
@@ -1219,7 +1233,8 @@ export default defineSchema({
       v.literal('event'),
       v.literal('eventApplications'),
       v.literal('eventApplication'),
-      v.literal('post')
+      v.literal('post'),
+      v.literal('groupPost')
     ),
     groupId: v.optional(v.id('groups')),
     eventId: v.optional(v.id('events')),

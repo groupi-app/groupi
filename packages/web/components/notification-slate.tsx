@@ -109,6 +109,8 @@ export function NotificationSlate({
         : '/events';
     if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
 
+    if (notification.group && post)
+      return `/groups/${notification.group.id}/posts/${post.id}`;
     if (!event) return '/';
 
     const eventId = event.id;
@@ -172,7 +174,7 @@ export function NotificationSlate({
     };
 
     const authorName = getAuthorName();
-    const eventTitle = event?.title || 'Event';
+    const eventTitle = notification.group?.title || event?.title || 'Event';
     const postTitle = post?.title || 'Post';
 
     switch (type) {
@@ -196,6 +198,12 @@ export function NotificationSlate({
           </>
         );
       case 'EVENT_EDITED':
+        if (notification.groupId && post)
+          return (
+            <>
+              <strong>{authorName}</strong> updated <strong>{postTitle}</strong>
+            </>
+          );
         return (
           <>
             Event Updated: <strong>{eventTitle}</strong>

@@ -1,5 +1,5 @@
+import { requireDiscussionParent } from '../lib/discussionAccess';
 import { uploadDetails } from './contracts';
-import { getEventMembershipForPerson } from '../auth';
 import { validateImageBytes } from './imageRules';
 import {
   internalMutation,
@@ -225,14 +225,12 @@ export const readRegisteredUpload = internalQuery({
         : reply
           ? await ctx.db.get(reply.postId)
           : null;
-      if (
-        !post ||
-        !(await getEventMembershipForPerson(ctx, post.eventId, personId))
-      )
+      if (!post)
         throw new ConvexError({
           code: 'FORBIDDEN',
           message: 'File access denied.',
         });
+      await requireDiscussionParent(ctx, post, personId);
     } else if (!upload || upload.personId !== personId || upload.claimed)
       throw new ConvexError({
         code: 'FORBIDDEN',

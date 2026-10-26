@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 
-import { useGroup } from '@/hooks/convex/use-groups';
+import {
+  useToolOwner as useGroup,
+  useContentBase,
+  type ContentOwnerId,
+} from '@/features/content/tool-scope';
 import {
   usePoll,
   usePollManagement,
@@ -31,7 +35,8 @@ const failure = (error: unknown) =>
   error instanceof Error
     ? error.message
     : 'Operation failed. Inspect current state before repeating.';
-export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
+export function GroupPolls({ groupId }: { groupId: ContentOwnerId }) {
+  const base = useContentBase(groupId);
   const group = useGroup(groupId);
   const policy = usePollPolicy({ groupId });
   const setPolicy = useConfigurePollPolicy();
@@ -64,7 +69,9 @@ export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
   if (!group || !policy) return <p role='status'>Loading polls…</p>;
   return (
     <main className='p-6 space-y-4'>
-      <h1 className='font-heading text-2xl font-bold'>Group polls</h1>
+      <h1 className='font-heading text-2xl font-bold'>
+        {base.startsWith('/event/') ? 'Event polls' : 'Group polls'}
+      </h1>
       <p>
         Independent ongoing polls. They do not choose Event dates or change
         Event RSVP or joining requirements.
@@ -111,14 +118,16 @@ export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
               Current eligible managers can manage preserved polls.
             </p>
           )}
-          {policy.enabled && (policy.creation === 'MEMBERS' || canManage) && (
-            <Link
-              className='text-primary underline'
-              href={`/groups/${groupId}/polls/new`}
-            >
-              Create poll
-            </Link>
-          )}
+          {policy.enabled &&
+            policy.canCreate !== false &&
+            (policy.creation === 'MEMBERS' || canManage) && (
+              <Link
+                className='text-primary underline'
+                href={`${base}/polls/new`}
+              >
+                Create poll
+              </Link>
+            )}
           {(policy.enabled || canManage) && polls === undefined ? (
             <p role='status'>Loading polls…</p>
           ) : polls?.page.length === 0 ? (
@@ -133,8 +142,8 @@ export function GroupPolls({ groupId }: { groupId: Id<'groups'> }) {
                 className='text-primary underline'
                 href={
                   policy.enabled
-                    ? `/groups/${groupId}/polls/${poll._id}`
-                    : `/groups/${groupId}/polls/${poll._id}/settings`
+                    ? `${base}/polls/${poll._id}`
+                    : `${base}/polls/${poll._id}/settings`
                 }
               >
                 {policy.enabled ? poll.title : `Manage ${poll.title}`}
@@ -162,7 +171,7 @@ export function GroupPollEditor({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId?: Id<'groupTools'>;
 }) {
   const group = useGroup(groupId);
@@ -172,7 +181,7 @@ export function GroupPollEditor({
     (group.viewerRole === 'OWNER' || group.viewerRole === 'MODERATOR');
   const poll = usePollManagement(toolId && eligible ? { toolId } : 'skip');
   if (!toolId) return <NewPollEditor groupId={groupId} />;
-  if (group === undefined) return <p role='status'>Loading Group…</p>;
+  if (group === undefined) return <p role='status'>Loading content access…</p>;
   if (!eligible)
     return (
       <p role='alert'>
@@ -181,8 +190,8 @@ export function GroupPollEditor({
       </p>
     );
   if (toolId && !poll) return <p role='status'>Loading poll settings…</p>;
-  if (poll && poll.groupId !== groupId)
-    return <p role='alert'>Poll unavailable in this Group.</p>;
+  if (poll && (poll.groupId ?? poll.eventId) !== groupId)
+    return <p role='alert'>Poll unavailable in this context.</p>;
   if (poll && !poll.canManage)
     return (
       <p role='alert'>Only current eligible managers can manage this poll.</p>
@@ -191,12 +200,12 @@ export function GroupPollEditor({
     <PollEditor key={poll?.version ?? 'new'} groupId={groupId} initial={poll} />
   );
 }
-function NewPollEditor({ groupId }: { groupId: Id<'groups'> }) {
+function NewPollEditor({ groupId }: { groupId: ContentOwnerId }) {
   const group = useGroup(groupId);
   const policy = usePollPolicy({ groupId });
   if (group === undefined || policy === undefined)
     return <p role='status'>Loading poll creation policy…</p>;
-  if (!group) return <p role='alert'>Group unavailable.</p>;
+  if (!group) return <p role='alert'>Content unavailable.</p>;
   if (group.joiningQuestionnaire?.canAccessMemberContent === false)
     return (
       <p role='alert'>
@@ -204,12 +213,13 @@ function NewPollEditor({ groupId }: { groupId: Id<'groups'> }) {
       </p>
     );
   if (
+    policy.canCreate === false ||
     !policy.enabled ||
     (policy.creation === 'MANAGERS' && group.viewerRole === 'MEMBER')
   )
     return (
       <p role='alert'>
-        Poll creation is unavailable under the current owner policy.
+        Poll creation is unavailable under the current creation policy.
       </p>
     );
   return <PollEditor groupId={groupId} initial={undefined} />;
@@ -218,9 +228,10 @@ function PollEditor({
   groupId,
   initial,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   initial: ReturnType<typeof usePollManagement>;
 }) {
+  const base = useContentBase(groupId);
   const create = useCreatePoll();
   const configure = useConfigurePoll();
   const deletePoll = useDeletePoll();
@@ -278,7 +289,7 @@ function PollEditor({
                 options,
                 mode,
               });
-              router.push(`/groups/${groupId}/polls`);
+              router.push(`${base}/polls`);
             } else {
               const id = await create({
                 groupId,
@@ -288,7 +299,7 @@ function PollEditor({
                 mode,
                 resultsVisibility: visibility,
               });
-              router.push(`/groups/${groupId}/polls/${id}`);
+              router.push(`${base}/polls/${id}`);
             }
           } catch (e) {
             setError(
@@ -445,7 +456,7 @@ function PollEditor({
           explanation='This permanently removes the preserved poll and all vote history.'
           onConfirm={async () => {
             await deletePoll({ toolId: initial._id });
-            router.push(`/groups/${groupId}/polls`);
+            router.push(`${base}/polls`);
           }}
         />
       )}
@@ -456,48 +467,55 @@ export function GroupPollInteraction({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
 }) {
   const poll = usePoll({ toolId });
+  const [feedback, setFeedback] = useState({ toolId, message: '' });
   if (!poll) return <p role='status'>Loading poll…</p>;
-  if (poll.groupId !== groupId)
-    return <p role='alert'>Poll unavailable in this Group.</p>;
+  if ((poll.groupId ?? poll.eventId) !== groupId)
+    return <p role='alert'>Poll unavailable in this context.</p>;
   return (
     <PollInteraction
-      key={`${poll.version}:${poll.voteRevision}`}
+      key={`${poll._id}:${poll.version}:${poll.voteRevision}`}
       poll={poll}
       groupId={groupId}
+      message={feedback.toolId === toolId ? feedback.message : ''}
+      onMessage={message => setFeedback({ toolId, message })}
     />
   );
 }
 function PollInteraction({
   poll,
   groupId,
+  message,
+  onMessage: setMessage,
 }: {
   poll: NonNullable<ReturnType<typeof usePoll>>;
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
+  message: string;
+  onMessage: (message: string) => void;
 }) {
+  const base = useContentBase(groupId);
   const submit = useSubmitPollVote();
   const remove = useRemovePollVote();
   const deletePoll = useDeletePoll();
   const router = useRouter();
   const [selections, setSelections] = useState(poll.selections);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
       <h1 className='font-heading'>{poll.title}</h1>
       <p>{poll.description}</p>
       <p>
-        Group polls do not choose Event dates or change Event RSVP. One latest
-        vote is saved; repeat saves are safe and concurrent edits require
-        current revision review.
+        Polls do not choose Event dates or change Event RSVP. One latest vote is
+        saved; repeat saves are safe and concurrent edits require current
+        revision review.
       </p>
       <p>
         {poll.resultsVisibility === 'MEMBERS'
-          ? 'Shared contribution: eligible Group members can see your latest votes. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-          : 'Personal votes: only you and current eligible Group managers can see them. Account deletion purges your votes and history.'}{' '}
+          ? 'Shared contribution: eligible members can see your latest votes. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
+          : 'Personal votes: only you and current eligible managers can see them. Account deletion purges your votes and history.'}{' '}
         Managers may moderate ordinary votes. Removing your vote also removes
         its history.
       </p>
@@ -573,7 +591,7 @@ function PollInteraction({
       )}
       <Link
         className='text-primary underline'
-        href={`/groups/${groupId}/polls/${poll._id}/history`}
+        href={`${base}/polls/${poll._id}/history`}
       >
         My saved vote history
       </Link>
@@ -581,7 +599,7 @@ function PollInteraction({
         <>
           <Link
             className='text-primary underline'
-            href={`/groups/${groupId}/polls/${poll._id}/settings`}
+            href={`${base}/polls/${poll._id}/settings`}
           >
             Manage poll settings
           </Link>
@@ -591,7 +609,7 @@ function PollInteraction({
             explanation='This permanently removes the poll and all vote history.'
             onConfirm={async () => {
               await deletePoll({ toolId: poll._id });
-              router.push(`/groups/${groupId}/polls`);
+              router.push(`${base}/polls`);
             }}
           />
         </>
@@ -600,7 +618,7 @@ function PollInteraction({
       {poll.canReview && (
         <Link
           className='text-primary underline'
-          href={`/groups/${groupId}/polls/${poll._id}/results`}
+          href={`${base}/polls/${poll._id}/results`}
         >
           View poll results
         </Link>
@@ -691,7 +709,7 @@ function PollResultsRecords({
     <section className='space-y-3'>
       <h2 className='font-heading'>Latest votes</h2>
       <p>
-        Latest votes on this page; this is not a Group-wide total. Historical
+        Latest votes on this page; this is not an overall total. Historical
         votes do not count under the current rule.
       </p>
       {results === undefined ? (
@@ -702,10 +720,8 @@ function PollResultsRecords({
       {results?.page.map(row => (
         <div key={row._id} className='rounded-card border border-border p-4'>
           <p>
-            {row.personId
-              ? 'Group member contribution'
-              : 'Anonymous contribution'}{' '}
-            · poll version {row.version}
+            {row.personId ? 'Member contribution' : 'Anonymous contribution'} ·
+            poll version {row.version}
           </p>
           <p>
             {row.removed
@@ -743,13 +759,13 @@ export function GroupPollResults({
   groupId,
   toolId,
 }: {
-  groupId: Id<'groups'>;
+  groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
 }) {
   const poll = usePoll({ toolId });
   if (poll === undefined)
     return <p role='status'>Loading result permissions…</p>;
-  if (poll.groupId !== groupId || !poll.canReview)
+  if ((poll.groupId ?? poll.eventId) !== groupId || !poll.canReview)
     return (
       <p role='alert'>Poll results are unavailable under current access.</p>
     );
