@@ -45,9 +45,16 @@ if (
   window.addEventListener(
     'load',
     () => {
-      setTimeout(async () => {
-        const replay = await Sentry.lazyLoadIntegration('replayIntegration');
-        Sentry.addIntegration(replay());
+      setTimeout(() => {
+        void import('./lib/sentry-replay')
+          .then(({ replayIntegration }) => {
+            Sentry.addIntegration(replayIntegration());
+          })
+          .catch(error => {
+            Sentry.captureException(error, {
+              tags: { optionalIntegration: 'replay' },
+            });
+          });
       }, 3000);
     },
     { once: true }
