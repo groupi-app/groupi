@@ -94,3 +94,21 @@ The prior proposed release-note summary is superseded by one proposed
 `@groupi/web` patch: “Streamline Form, List and Poll editing and participation;
 save Poll votes and List completion directly, and keep compact inline results.”
 No changeset is created without exact batch approval.
+
+## Form actions and response access
+
+The participant Form header now uses the shared ActionMenu/ActionMenuButton:
+desktop dropdown/context menu and mobile drawer. Eligible managers see View
+responses, which opens the existing results component in a dialog, and Edit form.
+Saved-response authors retain their own confirmed removal action. Ordinary
+participants have no response-view item, heading, result count, placeholder or
+results subscription, even when the legacy shared-visibility canReview flag is
+true. Both the action and dialog mount require canManage and canReview. Existing
+backend result APIs and saved sharing contracts remain unchanged; no role is
+broadened. Dialog close returns focus to the menu trigger.
+
+The Poll results action uses 12px horizontal and 4px vertical padding. The shared
+Button touch-target treatment retains a 44px browser target. Local browser checks
+cover desktop and 320/375/390px drawers, keyboard/Escape, focus return, clean
+drawer-to-dialog replacement, viewport bounds and unauthorized UI/query absence.
+Screenshots remain local; none were uploaded for this correction.

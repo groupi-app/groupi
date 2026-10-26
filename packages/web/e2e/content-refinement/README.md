@@ -35,3 +35,17 @@ article height/width measurements, both owner contexts, and revised Form/List
 editor/participant screenshots. Revision interaction checks cover direct Poll
 voting and keyboard behavior, independent radio groups, results reusing the same option rows,
 private review gating, repeated saves and synthetic persistence.
+
+## Shared Form actions correction
+
+Run `node packages/web/e2e/content-refinement/run.mjs --action-menu` for the
+shared Form action menu and manager response dialog regression. Evidence is stored
+in `../artifacts/content-refinement/action-menu-correction/after`.
+
+This fixture uses the real shared `ActionMenu`, `ActionMenuButton`, `useActionMenu`,
+`useMobile`, Radix and Vaul components. Only data/owner hooks and Next boundaries
+are synthetic. It verifies the desktop dropdown and responsive mobile drawers,
+keyboard opening, Escape dismissal, focus restoration, lazy manager response
+queries, drawer-to-dialog replacement, dialog closure and three denied response
+review cases. Screenshots and bounds wait for actual UI animations to finish.
+Poll result action measurements include computed inline/block padding and bounds.

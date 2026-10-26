@@ -732,7 +732,8 @@ function PollInteraction({
           <Button
             type='button'
             variant='ghost'
-            className='h-auto min-h-10 max-w-full whitespace-normal px-0 text-xs text-primary'
+            size='sm'
+            className='h-9 min-h-9 max-w-full whitespace-normal px-3 py-1 text-xs text-primary'
             aria-expanded={showResults}
             onClick={onResults}
           >

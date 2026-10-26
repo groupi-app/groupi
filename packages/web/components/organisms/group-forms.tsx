@@ -1,5 +1,18 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ActionMenu } from '@/components/ui/action-menu';
+import { ActionMenuButton } from '@/components/ui/action-menu-button';
+import { useActionMenu } from '@/hooks/use-action-menu';
+import { ContextMenuItem } from '@/components/ui/context-menu';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -429,15 +442,27 @@ function FormInteraction({
 }) {
   const base = useContentBase(groupId);
   const submit = useSubmitFormResponse();
-  const remove = useRemoveFormResponse();
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const actionAnchor = useRef<HTMLDivElement>(null);
   return (
     <main className={formSurface}>
-      <h1 className='font-heading text-lg font-semibold leading-snug'>
-        {form.title}
-      </h1>
+      <header className='flex min-w-0 items-start justify-between gap-2'>
+        <h1 className='min-w-0 flex-1 font-heading text-lg font-semibold leading-snug'>
+          {form.title}
+        </h1>
+        {(form.savedVersion !== null || form.canManage) && (
+          <FormActions
+            anchor={actionAnchor}
+            form={form}
+            base={base}
+            busy={busy}
+            onViewResponses={() => setShowResults(true)}
+            onMessage={setMessage}
+          />
+        )}
+      </header>
       {form.description && (
         <p className='text-sm leading-relaxed'>{form.description}</p>
       )}
@@ -480,53 +505,209 @@ function FormInteraction({
           {form.savedVersion === null ? 'Submit response' : 'Update response'}
         </Button>
       </form>
-      {(form.savedVersion !== null || form.canManage) && (
-        <details className='text-sm'>
-          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
-            Actions
-          </summary>
-          <fieldset disabled={busy} className='space-y-3'>
-            {form.savedVersion !== null && (
-              <GroupConfirmedAction
-                label='Remove my response'
-                confirmation='Confirm removing my response and its history'
-                explanation='Your response and its history will be removed.'
-                onConfirm={() => remove({ toolId: form._id })}
-              />
-            )}
-            {form.canManage && (
-              <Link
-                className='inline-flex min-h-10 items-center text-primary underline'
-                href={`${base}/forms/${form._id}/settings`}
-              >
-                Edit form
-              </Link>
-            )}
-          </fieldset>
-        </details>
-      )}
       {message && (
         <p role='status' className='text-sm'>
           {message}
         </p>
       )}
-      {form.canReview && (
-        <>
-          <Button
-            type='button'
-            variant='ghost'
-            className='px-0'
-            aria-expanded={showResults}
-            onClick={() => setShowResults(!showResults)}
+      {form.canManage && form.canReview && (
+        <Dialog open={showResults} onOpenChange={setShowResults}>
+          <DialogContent
+            onCloseAutoFocus={event => {
+              event.preventDefault();
+              actionAnchor.current?.querySelector('button')?.focus();
+            }}
+            aria-describedby={undefined}
+            className='max-h-[80dvh] min-w-0 overflow-y-auto [&_button]:h-auto [&_button]:min-h-10 [&_button]:whitespace-normal'
           >
-            {showResults ? 'Hide responses' : 'Responses'}
-          </Button>
-          {showResults && (
-            <GroupFormResults toolId={form._id} canManage={form.canManage} />
-          )}
-        </>
+            <DialogTitle>Responses</DialogTitle>
+            {showResults && (
+              <GroupFormResults toolId={form._id} canManage={form.canManage} />
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </main>
+  );
+}
+/** The same action inventory drives desktop dropdown/context menu and mobile drawer. */
+function FormActions({
+  form,
+  anchor,
+  base,
+  busy,
+  onViewResponses,
+  onMessage,
+}: {
+  form: NonNullable<ReturnType<typeof useForm>>;
+  anchor: RefObject<HTMLDivElement | null>;
+  base: string;
+  busy: boolean;
+  onViewResponses: () => void;
+  onMessage: (message: string) => void;
+}) {
+  const menu = useActionMenu();
+  const remove = useRemoveFormResponse();
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  function choose(action: 'responses' | 'remove') {
+    menu.setSheetOpen(false);
+    if (action === 'responses') onViewResponses();
+    else {
+      setError('');
+      setConfirming(true);
+    }
+  }
+  const actions = [
+    ...(form.canManage && form.canReview
+      ? [{ id: 'responses' as const, label: 'View responses', Icon: Eye }]
+      : []),
+    ...(form.savedVersion !== null
+      ? [{ id: 'remove' as const, label: 'Remove my response', Icon: Trash2 }]
+      : []),
+  ];
+  const dropdownContent = (
+    <>
+      {actions.map(({ id, label, Icon }) => (
+        <DropdownMenuItem key={id} disabled={busy} onSelect={() => choose(id)}>
+          <Icon aria-hidden='true' className='size-4' />
+          {label}
+        </DropdownMenuItem>
+      ))}
+      {form.canManage && (
+        <DropdownMenuItem disabled={busy} asChild>
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4' />
+            Edit form
+          </Link>
+        </DropdownMenuItem>
+      )}
+    </>
+  );
+  const contextMenuContent = (
+    <>
+      {actions.map(({ id, label, Icon }) => (
+        <ContextMenuItem key={id} disabled={busy} onSelect={() => choose(id)}>
+          <Icon aria-hidden='true' className='size-4' />
+          {label}
+        </ContextMenuItem>
+      ))}
+      {form.canManage && (
+        <ContextMenuItem disabled={busy} asChild>
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4' />
+            Edit form
+          </Link>
+        </ContextMenuItem>
+      )}
+    </>
+  );
+  const drawerContent = (
+    <div className='flex min-w-0 flex-col gap-1 px-4 pb-4 pt-2'>
+      {actions.map(({ id, label, Icon }) => (
+        <Button
+          key={id}
+          variant='ghost'
+          disabled={busy}
+          className='h-auto min-h-11 justify-start whitespace-normal text-left'
+          onClick={() => choose(id)}
+        >
+          <Icon aria-hidden='true' className='size-4 shrink-0' />
+          {label}
+        </Button>
+      ))}
+      {form.canManage && (
+        <Button
+          asChild
+          variant='ghost'
+          className='h-auto min-h-11 justify-start whitespace-normal text-left'
+          onClick={() => menu.setSheetOpen(false)}
+        >
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4 shrink-0' />
+            Edit form
+          </Link>
+        </Button>
+      )}
+    </div>
+  );
+  return (
+    <>
+      <ActionMenu
+        drawerTitle='Form actions'
+        drawerContent={drawerContent}
+        contextMenuContent={contextMenuContent}
+        sheetOpen={menu.sheetOpen}
+        onSheetOpenChange={menu.setSheetOpen}
+        onContextMenu={menu.handleContextMenu}
+        onClick={menu.handleClick}
+        disabled={busy}
+      >
+        <div ref={anchor} className='shrink-0'>
+          <ActionMenuButton
+            label='Form actions'
+            className='size-10 shrink-0'
+            onClick={menu.handleMoreClick}
+            onContextMenu={menu.handleContextMenu}
+            dropdownContent={dropdownContent}
+          >
+            <MoreHorizontal className='size-4' aria-hidden='true' />
+          </ActionMenuButton>
+        </div>
+      </ActionMenu>
+      <Dialog
+        open={confirming}
+        onOpenChange={open => {
+          if (!pending) setConfirming(open);
+        }}
+      >
+        <DialogContent
+          preventClose={pending}
+          onCloseAutoFocus={event => {
+            event.preventDefault();
+            anchor.current?.querySelector('button')?.focus();
+          }}
+        >
+          <DialogTitle>Remove your response?</DialogTitle>
+          <DialogDescription>
+            Your response and its history will be removed.
+          </DialogDescription>
+          <div className='flex flex-wrap justify-end gap-2'>
+            <DialogClose asChild>
+              <Button variant='outline' disabled={pending}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              variant='destructive'
+              disabled={pending}
+              isLoading={pending}
+              onClick={async () => {
+                setPending(true);
+                setError('');
+                try {
+                  await remove({ toolId: form._id });
+                  setConfirming(false);
+                  onMessage('Response removed.');
+                } catch (e) {
+                  setError(failure(e));
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              Remove response
+            </Button>
+          </div>
+          {error && (
+            <p role='alert' className='text-sm text-error'>
+              {error}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 function SavedAnswers({

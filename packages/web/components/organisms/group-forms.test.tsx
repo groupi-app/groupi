@@ -1,7 +1,7 @@
 import { EventToolScope } from '@/features/content';
 import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -9,7 +9,7 @@ import {
   useMutation,
 } from 'convex/react';
 import { getFunctionName } from 'convex/server';
-import { afterAll, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, afterEach, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
@@ -20,6 +20,19 @@ import {
 } from './group-forms';
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
+const originalTouchDescriptor = Object.getOwnPropertyDescriptor(
+  window,
+  'ontouchstart'
+);
+beforeEach(() => {
+  vi.stubGlobal('innerWidth', 1200);
+  Reflect.deleteProperty(window, 'ontouchstart');
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  if (originalTouchDescriptor)
+    Object.defineProperty(window, 'ontouchstart', originalTouchDescriptor);
+});
 const push = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
@@ -249,13 +262,16 @@ it('explains personal visibility before submitting and confirms own removal', as
     expectedRevision: 2,
     answers: { book: 'Kindred' },
   });
-  await user.click(screen.getByText('Actions'));
-  await user.click(screen.getByRole('button', { name: 'Remove my response' }));
+  await user.click(screen.getByRole('button', { name: 'Form actions' }));
+  await user.click(
+    screen.getByRole('menuitem', { name: 'Remove my response' })
+  );
+  const confirmation = await screen.findByRole('dialog', {
+    name: 'Remove your response?',
+  });
   expect(mutation).toHaveBeenCalledTimes(1);
   await user.click(
-    screen.getByRole('button', {
-      name: 'Confirm removing my response and its history',
-    })
+    within(confirmation).getByRole('button', { name: 'Remove response' })
   );
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
   expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
@@ -420,8 +436,8 @@ it('uses all seven accessible form answer primitives with typed values', async (
   mounted.unmount();
   await client.close();
 });
-it('opens shared results on demand and moderates by persistent result identity', async () => {
-  const { client, mutation, Provider } = fixture({
+it('opens manager responses lazily from the action menu and moderates by persistent result identity', async () => {
+  const { client, mutation, watch, Provider } = fixture({
     'groupForms/queries:getForm': {
       ...form,
       resultsVisibility: 'MEMBERS',
@@ -447,7 +463,22 @@ it('opens shared results on demand and moderates by persistent result identity',
   );
   expect(screen.getByText('Shared responses')).toBeInTheDocument();
   expect(screen.queryByText(/Anonymous contribution/)).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Responses' }));
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groupForms/queries:listResults'
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Form actions' }));
+  expect(screen.getByRole('menuitem', { name: 'Edit form' })).toHaveAttribute(
+    'href',
+    `/groups/${groupId}/forms/${toolId}/settings`
+  );
+  await userEvent.click(
+    screen.getByRole('menuitem', { name: 'View responses' })
+  );
+  const responses = await screen.findByRole('dialog', { name: 'Responses' });
+  expect(within(responses).getByText('Shared Dune')).toBeInTheDocument();
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).toContain(
+    'groupForms/queries:listResults'
+  );
   expect(screen.getByText(/Anonymous contribution/)).toBeInTheDocument();
   await userEvent.click(
     screen.getByRole('button', { name: 'Remove response' })
@@ -461,6 +492,15 @@ it('opens shared results on demand and moderates by persistent result identity',
     'groupForms/mutations:removeResult'
   );
   expect(mutation.mock.calls[0][1]).toEqual({ responseId: 'response-one' });
+  await userEvent.click(
+    within(responses).getByRole('button', { name: 'Close' })
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('dialog', { name: 'Responses' })
+    ).not.toBeInTheDocument()
+  );
+  expect(screen.queryByText('Shared Dune')).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();
 });
@@ -799,5 +839,88 @@ it('requires an explicit complete submission and prevents duplicate pending subm
     'Response saved.'
   );
   m.unmount();
+  await f.client.close();
+});
+
+it('keeps other shared responses out of ordinary participant actions even when the API permits review', async () => {
+  const f = fixture({
+    'groupForms/queries:getForm': {
+      ...form,
+      resultsVisibility: 'MEMBERS',
+      canReview: true,
+      canManage: false,
+      savedVersion: 1,
+    },
+  });
+  const mounted = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  expect(
+    screen.queryByRole('heading', { name: 'Responses' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Responses' })
+  ).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Form actions' }));
+  expect(
+    await screen.findByRole('menuitem', { name: 'Remove my response' })
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: 'View responses' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: 'Edit form' })
+  ).not.toBeInTheDocument();
+  expect(f.watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groupForms/queries:listResults'
+  );
+  await userEvent.keyboard('{Escape}');
+  await waitFor(() =>
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  );
+  expect(screen.getByRole('button', { name: 'Form actions' })).toHaveFocus();
+  mounted.unmount();
+  await f.client.close();
+});
+
+it('cancels response removal without mutation and restores focus to the shared action trigger', async () => {
+  const f = fixture({
+    'groupForms/queries:getForm': {
+      ...form,
+      savedVersion: 1,
+      responseRevision: 2,
+      answers: { book: 'Kindred' },
+    },
+  });
+  const mounted = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Form actions' }));
+  await user.click(
+    await screen.findByRole('menuitem', { name: 'Remove my response' })
+  );
+  const confirmation = await screen.findByRole('dialog', {
+    name: 'Remove your response?',
+  });
+  expect(f.mutation).not.toHaveBeenCalled();
+  await user.click(
+    within(confirmation).getByRole('button', { name: 'Cancel' })
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('dialog', { name: 'Remove your response?' })
+    ).not.toBeInTheDocument()
+  );
+  expect(f.mutation).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Favorite book')).toHaveValue('Kindred');
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Form actions' })).toHaveFocus()
+  );
+  mounted.unmount();
   await f.client.close();
 });
