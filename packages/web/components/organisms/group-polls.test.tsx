@@ -136,6 +136,24 @@ function fixture(overrides: Record<string, unknown> = {}) {
   };
 }
 
+async function acknowledgeVote(
+  f: ReturnType<typeof fixture>,
+  revision: number,
+  selections: string[],
+  extra: Record<string, unknown> = {}
+) {
+  await act(async () => {
+    f.data['groupPolls/queries:getPoll'] = {
+      ...poll,
+      voteRevision: revision,
+      savedVersion: 3,
+      selections,
+      ...extra,
+    };
+    f.refresh();
+  });
+}
+
 it('creates directly from editable poll choices with immutable disclosed visibility', async () => {
   const f = fixture();
   f.mutation.mockResolvedValue(toolId);
@@ -179,7 +197,7 @@ it('creates directly from editable poll choices with immutable disclosed visibil
   m.unmount();
   await f.client.close();
 });
-it('votes through actual consuming SDK with single choice and latest revision', async () => {
+it('persists a single choice immediately through the consuming SDK and latest revision', async () => {
   const f = fixture();
   const m = render(
     <f.Provider>
@@ -187,9 +205,10 @@ it('votes through actual consuming SDK with single choice and latest revision', 
     </f.Provider>
   );
   const u = userEvent.setup();
+  expect(
+    screen.queryByRole('button', { name: 'Save vote' })
+  ).not.toBeInTheDocument();
   await u.click(screen.getByLabelText('Books'));
-  await u.click(screen.getByLabelText('Films'));
-  await u.click(screen.getByRole('button', { name: 'Save vote' }));
   expect(getFunctionName(f.mutation.mock.calls[0][0])).toBe(
     'groupPolls/mutations:submitVote'
   );
@@ -197,6 +216,14 @@ it('votes through actual consuming SDK with single choice and latest revision', 
     toolId,
     version: 3,
     expectedRevision: 0,
+    selections: ['books'],
+  });
+  await acknowledgeVote(f, 1, ['books']);
+  await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation.mock.calls[1][1]).toEqual({
+    toolId,
+    version: 3,
+    expectedRevision: 1,
     selections: ['films'],
   });
   expect(
@@ -207,7 +234,7 @@ it('votes through actual consuming SDK with single choice and latest revision', 
   m.unmount();
   await f.client.close();
 });
-it('supports multiple choices without creating duplicate selections', async () => {
+it('persists successive multiple choice toggles without duplicate selections', async () => {
   const f = fixture({
     'groupPolls/queries:getPoll': { ...poll, mode: 'MULTIPLE' },
   });
@@ -218,14 +245,26 @@ it('supports multiple choices without creating duplicate selections', async () =
   );
   const u = userEvent.setup();
   await u.click(screen.getByLabelText('Books'));
+  expect(f.mutation.mock.calls[0][1]).toMatchObject({
+    expectedRevision: 0,
+    selections: ['books'],
+  });
+  await acknowledgeVote(f, 1, ['books'], { mode: 'MULTIPLE' });
   await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation.mock.calls[1][1]).toMatchObject({
+    expectedRevision: 1,
+    selections: ['books', 'films'],
+  });
+  await acknowledgeVote(f, 2, ['books', 'films'], { mode: 'MULTIPLE' });
   await u.click(screen.getByLabelText('Books'));
-  await u.click(screen.getByRole('button', { name: 'Save vote' }));
-  expect(f.mutation.mock.calls[0][1]).toMatchObject({ selections: ['films'] });
+  expect(f.mutation.mock.calls[2][1]).toMatchObject({
+    expectedRevision: 2,
+    selections: ['films'],
+  });
   m.unmount();
   await f.client.close();
 });
-it('shows stale failure and recovers after current revision update', async () => {
+it('rolls back failed selection and retries deliberately after an authoritative update', async () => {
   const f = fixture();
   f.mutation.mockRejectedValueOnce(
     new Error('Vote changed; inspect current state')
@@ -237,22 +276,84 @@ it('shows stale failure and recovers after current revision update', async () =>
   );
   const u = userEvent.setup();
   await u.click(screen.getByLabelText('Books'));
-  await u.click(screen.getByRole('button', { name: 'Save vote' }));
-  expect(
-    screen.getByText('Vote changed; inspect current state')
-  ).toBeInTheDocument();
-  await act(async () => {
-    f.data['groupPolls/queries:getPoll'] = {
-      ...poll,
-      voteRevision: 2,
-      selections: ['films'],
-    };
-    f.refresh();
-  });
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Vote changed; inspect current state'
+  );
+  expect(screen.getByLabelText('Books')).not.toBeChecked();
+  expect(screen.getByLabelText('Books')).not.toBeDisabled();
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  await acknowledgeVote(f, 2, ['films']);
   expect(screen.getByLabelText('Films')).toBeChecked();
-  await u.click(screen.getByRole('button', { name: 'Save vote' }));
+  await u.click(screen.getByLabelText('Books'));
   expect(f.mutation.mock.calls[1][1]).toMatchObject({
     expectedRevision: 2,
+    selections: ['books'],
+  });
+  m.unmount();
+  await f.client.close();
+});
+it('guards rapid input until both mutation completion and authoritative acknowledgement', async () => {
+  const f = fixture();
+  let complete!: (value: { revision: number }) => void;
+  f.mutation.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        complete = resolve;
+      })
+  );
+  const m = render(
+    <f.Provider>
+      <GroupPollInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const u = userEvent.setup();
+  await u.dblClick(screen.getByLabelText('Books'));
+  await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  expect(screen.getByLabelText('Books')).toBeDisabled();
+  expect(screen.getByLabelText('Films')).toBeDisabled();
+  await act(async () => {
+    complete({ revision: 1 });
+  });
+  expect(screen.getByLabelText('Films')).toBeDisabled();
+  await acknowledgeVote(f, 1, ['books']);
+  expect(screen.getByLabelText('Books')).not.toBeDisabled();
+  await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation).toHaveBeenCalledTimes(2);
+  expect(f.mutation.mock.calls[1][1]).toMatchObject({
+    expectedRevision: 1,
+    selections: ['films'],
+  });
+  m.unmount();
+  await f.client.close();
+});
+it('keeps options locked when the subscription acknowledges before the mutation promise settles', async () => {
+  const f = fixture();
+  let complete!: (value: { revision: number }) => void;
+  f.mutation.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        complete = resolve;
+      })
+  );
+  const m = render(
+    <f.Provider>
+      <GroupPollInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const u = userEvent.setup();
+  await u.click(screen.getByLabelText('Books'));
+  await acknowledgeVote(f, 1, ['books']);
+  expect(screen.getByLabelText('Films')).toBeDisabled();
+  await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    complete({ revision: 1 });
+  });
+  expect(screen.getByLabelText('Films')).not.toBeDisabled();
+  await u.click(screen.getByLabelText('Films'));
+  expect(f.mutation.mock.calls[1][1]).toMatchObject({
+    expectedRevision: 1,
     selections: ['films'],
   });
   m.unmount();
@@ -445,10 +546,7 @@ it('cosmetic or semantic config updates re-read authoritative choices before ano
   expect(screen.queryByLabelText('Books')).toBeNull();
   expect(screen.getByLabelText('New choice')).not.toBeChecked();
   await userEvent.setup().click(screen.getByLabelText('New choice'));
-  await userEvent
-    .setup()
-    .click(screen.getByRole('button', { name: 'Save vote' }));
-  expect(f.mutation.mock.calls[0][1]).toMatchObject({
+  expect(f.mutation.mock.calls[1][1]).toMatchObject({
     version: 4,
     selections: ['new'],
   });
@@ -516,7 +614,7 @@ it('failed removal keeps confirmation for deliberate retry and updates revision 
   await f.client.close();
 });
 
-it('retains saved feedback through a reactive vote revision while reseeding selections and isolating tools', async () => {
+it('reseeds acknowledged choices while isolating another tool from pending state', async () => {
   const f = fixture();
   const m = render(
     <f.Provider>
@@ -525,19 +623,10 @@ it('retains saved feedback through a reactive vote revision while reseeding sele
   );
   const user = userEvent.setup();
   await user.click(screen.getByRole('radio', { name: 'Books' }));
-  await user.click(screen.getByRole('button', { name: 'Save vote' }));
-  expect(await screen.findByRole('status')).toHaveTextContent('Vote saved.');
-  await act(async () => {
-    f.data['groupPolls/queries:getPoll'] = {
-      ...poll,
-      voteRevision: 1,
-      savedVersion: 3,
-      selections: ['books'],
-    };
-    f.refresh();
-  });
-  expect(screen.getByRole('status')).toHaveTextContent('Vote saved.');
+  expect(screen.getByRole('radio', { name: 'Books' })).toBeDisabled();
+  await acknowledgeVote(f, 1, ['books']);
   expect(screen.getByRole('radio', { name: 'Books' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Books' })).not.toBeDisabled();
   await user.click(screen.getByRole('radio', { name: 'Films' }));
   const otherId = 'tool-two' as Id<'groupTools'>;
   f.data['groupPolls/queries:getPoll'] = {
@@ -553,7 +642,7 @@ it('retains saved feedback through a reactive vote revision while reseeding sele
     </f.Provider>
   );
   expect(screen.getByRole('radio', { name: 'Books' })).toBeChecked();
-  expect(screen.queryByText('Vote saved.')).not.toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: 'Books' })).not.toBeDisabled();
   m.unmount();
   await f.client.close();
 });
@@ -562,6 +651,41 @@ it('votes and opens permitted results inside the feed without routing to a poll 
   push.mockClear();
   const f = fixture({
     'groupPolls/queries:getPoll': { ...poll, canReview: true },
+    'groupPolls/queries:listResults': {
+      ...emptyPage,
+      page: [
+        {
+          _id: 'vote-current',
+          personId: 'person-one',
+          options: poll.options,
+          selections: ['books'],
+          revision: 1,
+          version: 3,
+          isCurrent: true,
+          removed: false,
+        },
+        {
+          _id: 'vote-historic',
+          personId: 'person-two',
+          options: poll.options,
+          selections: ['films'],
+          revision: 1,
+          version: 1,
+          isCurrent: false,
+          removed: false,
+        },
+        {
+          _id: 'vote-removed',
+          personId: 'person-three',
+          options: poll.options,
+          selections: ['films'],
+          revision: 2,
+          version: 3,
+          isCurrent: true,
+          removed: true,
+        },
+      ],
+    },
   });
   const m = render(
     <f.Provider>
@@ -570,6 +694,12 @@ it('votes and opens permitted results inside the feed without routing to a poll 
   );
   const u = userEvent.setup();
   const card = screen.getByRole('article');
+  expect(
+    within(card).queryByRole('button', { name: 'Save vote' })
+  ).not.toBeInTheDocument();
+  expect(
+    within(card).queryByRole('link', { name: /history/i })
+  ).not.toBeInTheDocument();
   expect(
     within(card).getByRole('heading', { name: 'Reading choice' })
   ).toHaveProperty('tagName', 'H2');
@@ -580,7 +710,6 @@ it('votes and opens permitted results inside the feed without routing to a poll 
   radio.focus();
   await u.keyboard('[Space]');
   expect(radio).toBeChecked();
-  await u.click(within(card).getByRole('button', { name: 'Save vote' }));
   expect(f.mutation.mock.calls[0][1]).toMatchObject({
     toolId,
     selections: ['books'],
@@ -590,12 +719,23 @@ it('votes and opens permitted results inside the feed without routing to a poll 
     within(card).getByRole('button', { name: 'View poll results' })
   );
   expect(
-    within(card).getByRole('heading', { name: 'Latest votes' })
-  ).toBeInTheDocument();
-  expect(within(card).getByText('No votes on this page.')).toBeInTheDocument();
+    within(card).getByRole('button', { name: 'Hide poll results' })
+  ).toHaveAttribute('aria-expanded', 'true');
   expect(f.watch.mock.calls.map(([ref]) => getFunctionName(ref))).toContain(
     'groupPolls/queries:listResults'
   );
+  expect(
+    within(card).getByRole('progressbar', { name: 'Books: votes on this page' })
+  ).toHaveAttribute('aria-valuenow', '1');
+  expect(
+    within(card).getByRole('progressbar', { name: 'Books: votes on this page' })
+  ).toHaveAttribute('aria-valuemax', '1');
+  expect(
+    within(card).getByRole('progressbar', { name: 'Films: votes on this page' })
+  ).toHaveAttribute('aria-valuenow', '0');
+  expect(
+    within(card).queryByRole('heading', { name: 'Latest votes' })
+  ).not.toBeInTheDocument();
   expect(push).not.toHaveBeenCalled();
   m.unmount();
   await f.client.close();
@@ -655,7 +795,6 @@ it('renders Event feed polls through the shared card while preserving Event disc
   );
   const u = userEvent.setup();
   await u.click(screen.getByRole('radio', { name: 'Films' }));
-  await u.click(screen.getByRole('button', { name: 'Save vote' }));
   expect(f.mutation.mock.calls[0][1]).toMatchObject({
     toolId,
     version: 3,

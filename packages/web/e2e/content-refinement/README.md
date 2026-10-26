@@ -23,3 +23,15 @@ real backend persistence, authenticated permissions, native behavior or observed
 screen reader announcements. Headings load the bundled Geologica font. Body text uses the system fallback
 because Inter is loaded through Next. Existing unit tests remain the
 source of coverage for revisions, stale requests and access restrictions.
+
+## Compact content revision
+
+Use `node packages/web/e2e/content-refinement/run.mjs --compact --before` for
+baseline `f941bb6c`, then omit `--before` for the current revision. These runs write
+only to `../artifacts/content-refinement/compact-poll/{before,after}` and preserve
+the earlier refinement evidence. The compact matrix adds the reference-sized
+pizza question with four short options alongside the existing long content,
+article height/width measurements, both owner contexts, and revised Form/List
+editor/participant screenshots. Revision interaction checks cover direct Poll
+voting and keyboard behavior, independent radio groups, results reusing the same option rows,
+private review gating, repeated saves and synthetic persistence.

@@ -16,8 +16,9 @@ Title and description fields occupy the finished content's hierarchy. Form
 questions include answer-shaped controls and individually editable choice rows.
 Poll choices use the same full-width rows when authored and voted on. Lists use
 readable multiline entry fields, clear completion controls and separated actions.
-Secondary visibility, identifiers and retention explanations live in keyboard
-operable disclosures. All content preset selection is removed; unrelated add-on
+Creator visibility and identifiers stay under settings; participant cards show
+only essential actions. Poll choices persist directly, List completion persists
+directly, and Forms retain one explicit complete-response submission. All content preset selection is removed; unrelated add-on
 templates remain intact.
 
 [Discord's official Polls FAQ](https://support.discord.com/hc/en-us/articles/22163184112407-Polls-FAQ)
@@ -58,3 +59,35 @@ authoring and participation, remove content presets, and support inline Poll
 voting and results in Event and Group feeds.” It is prepared for confirmation;
 no changeset file has been created because repository workflow requires approval
 of the exact summary/package/bump.
+
+## Compact revision from supplied references
+
+The two supplied Library images, resolved as `IMG_4348.jpeg` and `IMG_4349.jpeg`,
+were materialized and visually inspected before revision. Their question-first
+composition, trailing selection indicators, consistent option rows and concise
+footer replace the earlier page-like card's badge, large spacing and disclosures.
+The user subsequently removed the separate voting step: option selection now
+saves directly, without a visible Save or History control. Results share the same
+option rows instead of adding a second stack. Scope also includes compact Form
+and List editing/participation. Historical data and compatibility routes remain.
+
+Poll requests lock pending interactions until both the mutation completes and
+authoritative revision updates; failure restores the acknowledged choice for a
+deliberate retry. Version changes invalidate the lock appropriately. List edits
+persist on Enter/blur, Escape cancels, and IME composition Enter does not submit.
+Completion updates only after successful acknowledgement. Incomplete Forms do
+not auto-submit.
+
+The local comparison against `f941bb6c` records 64 layouts and 26 browser
+assertions at desktop and 320/375/390px, with no overflow or browser errors. At
+320px the four-option Poll shrank from 712px to 348px and its result state from
+1334px to 417px. Long options still wrap, and touch targets remain usable.
+Authenticated acceptance and publication remain unapproved. The earlier standalone
+real Next navigation report applies to `f941bb6c`; it is not acceptance of this
+new direct-save behavior. New local evidence is in `compact-poll/` beside the
+original artifacts. No new screenshots were uploaded to Library.
+
+The prior proposed release-note summary is superseded by one proposed
+`@groupi/web` patch: “Streamline Form, List and Poll editing and participation;
+save Poll votes and List completion directly, and keep compact inline results.”
+No changeset is created without exact batch approval.

@@ -1,7 +1,13 @@
 import { EventToolScope } from '@/features/content';
 import GroupListSettingsPage from '@/app/(groups)/groups/[groupId]/lists/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -163,7 +169,7 @@ it('creates a list through consuming SDK and real accessible controls', async ()
   mounted.unmount();
   await client.close();
 });
-it('discloses privacy and retries the original request after uncertain add', async () => {
+it('omits redundant participant chrome and retries the original request after uncertain add', async () => {
   const { client, mutation, Provider } = fixture();
   mutation
     .mockRejectedValueOnce(Error('Uncertain'))
@@ -174,7 +180,10 @@ it('discloses privacy and retries the original request after uncertain add', asy
     </Provider>
   );
   const user = userEvent.setup();
-  expect(screen.getByText(/Account deletion purges/)).toBeInTheDocument();
+  expect(screen.queryByText(/Account deletion purges/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'My saved list entries' })
+  ).not.toBeInTheDocument();
   await user.type(screen.getByLabelText('New entry'), 'Kindred');
   await user.click(screen.getByRole('button', { name: 'Add entry' }));
   await screen.findByRole('button', { name: 'Retry original entry' });
@@ -258,33 +267,49 @@ it('edits completion and confirms revision-bound removal using production contro
   const { client, mutation, Provider } = fixture({
     'groupLists/queries:listEntries': { ...emptyPage, page: [entry] },
   });
+  mutation
+    .mockResolvedValueOnce({ revision: 4 })
+    .mockResolvedValueOnce({ revision: 5 });
   const mounted = render(
     <Provider>
       <GroupListInteraction groupId={groupId} toolId={toolId} />
     </Provider>
   );
   const user = userEvent.setup();
+  expect(screen.queryByLabelText('Entry text')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Save entry' })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Edit entry: Saved' }));
   await user.clear(screen.getByLabelText('Entry text'));
-  await user.type(screen.getByLabelText('Entry text'), 'Edited');
-  await user.click(screen.getByLabelText('Completed'));
-  await user.click(screen.getByRole('button', { name: 'Save entry' }));
+  await user.type(screen.getByLabelText('Entry text'), 'Edited{Enter}');
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(mutation.mock.calls[0][1]).toMatchObject({
     entryId: 'entry-one',
     version: 1,
     expectedRevision: 3,
     text: 'Edited',
+    completed: false,
+  });
+  await user.click(screen.getByLabelText('Completed: Edited'));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
+  expect(mutation.mock.calls[1][1]).toMatchObject({
+    entryId: 'entry-one',
+    version: 1,
+    expectedRevision: 4,
+    text: 'Edited',
     completed: true,
   });
+  await user.click(screen.getByLabelText('Entry actions: Edited'));
   await user.click(screen.getByRole('button', { name: 'Remove entry' }));
-  expect(mutation).toHaveBeenCalledTimes(1);
+  expect(mutation).toHaveBeenCalledTimes(2);
   await user.click(
     screen.getByRole('button', { name: 'Confirm removing this entry' })
   );
-  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
-  expect(mutation.mock.calls[1][1]).toEqual({
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(3));
+  expect(mutation.mock.calls[2][1]).toEqual({
     entryId: 'entry-one',
-    expectedRevision: 3,
+    expectedRevision: 5,
   });
   mounted.unmount();
   await client.close();
@@ -407,4 +432,138 @@ it('discovers Event lists and preserves the existing Bring List link', async () 
   );
   mounted.unmount();
   await client.close();
+});
+
+it('locks rapid completion changes until the server acknowledges the update and keeps failures truthful', async () => {
+  const entry = {
+    _id: 'entry-one',
+    _creationTime: 1,
+    toolId,
+    groupId,
+    personId: 'person-one',
+    listTitle: 'Original',
+    text: 'Saved',
+    completed: false,
+    revision: 3,
+    createdAt: 1,
+    updatedAt: 1,
+    canEdit: true,
+    canRemove: false,
+  };
+  const f = fixture({
+    'groupLists/queries:listEntries': { ...emptyPage, page: [entry] },
+  });
+  let resolve!: (value: { revision: number }) => void;
+  f.mutation
+    .mockImplementationOnce(
+      () =>
+        new Promise(done => {
+          resolve = done;
+        })
+    )
+    .mockRejectedValueOnce(Error('Revision changed'));
+  const mounted = render(
+    <f.Provider>
+      <GroupListInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  const checkbox = screen.getByLabelText('Completed: Saved');
+  await user.dblClick(checkbox);
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  expect(checkbox).not.toBeChecked();
+  expect(checkbox).toBeDisabled();
+  await act(async () => resolve({ revision: 4 }));
+  expect(checkbox).toBeChecked();
+  expect(checkbox).not.toBeDisabled();
+  await user.click(checkbox);
+  await screen.findByRole('alert');
+  expect(checkbox).toBeChecked();
+  expect(f.mutation.mock.calls[1][1]).toMatchObject({
+    expectedRevision: 4,
+    completed: false,
+  });
+  mounted.unmount();
+  await f.client.close();
+});
+it('keeps failed text edits and allows Escape to cancel without another write', async () => {
+  const entry = {
+    _id: 'entry-one',
+    _creationTime: 1,
+    toolId,
+    groupId,
+    text: 'Saved',
+    completed: false,
+    revision: 3,
+    createdAt: 1,
+    updatedAt: 1,
+    canEdit: true,
+    canRemove: false,
+  };
+  const f = fixture({
+    'groupLists/queries:listEntries': { ...emptyPage, page: [entry] },
+  });
+  f.mutation.mockRejectedValueOnce(Error('Unable to update'));
+  const mounted = render(
+    <f.Provider>
+      <GroupListInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Edit entry: Saved' }));
+  await user.clear(screen.getByLabelText('Entry text'));
+  await user.type(screen.getByLabelText('Entry text'), 'Keep draft{Enter}');
+  await screen.findByRole('alert');
+  expect(screen.getByLabelText('Entry text')).toHaveValue('Keep draft');
+  await user.click(screen.getByLabelText('Entry text'));
+  await user.keyboard('{Escape}');
+  expect(screen.queryByLabelText('Entry text')).not.toBeInTheDocument();
+  expect(screen.getByText('Saved')).toBeInTheDocument();
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  mounted.unmount();
+  await f.client.close();
+});
+
+it('keeps IME confirmation Enter in the text editor until an ordinary Enter commits it', async () => {
+  const entry = {
+    _id: 'entry-one',
+    _creationTime: 1,
+    toolId,
+    groupId,
+    text: 'Saved',
+    completed: false,
+    revision: 3,
+    createdAt: 1,
+    updatedAt: 1,
+    canEdit: true,
+    canRemove: false,
+  };
+  const f = fixture({
+    'groupLists/queries:listEntries': { ...emptyPage, page: [entry] },
+  });
+  f.mutation.mockResolvedValue({ revision: 4 });
+  const mounted = render(
+    <f.Provider>
+      <GroupListInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Edit entry: Saved' }));
+  const input = screen.getByLabelText('Entry text');
+  fireEvent.change(input, { target: { value: '東京' } });
+  fireEvent.compositionStart(input);
+  fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', isComposing: true });
+  expect(f.mutation).not.toHaveBeenCalled();
+  expect(input).toHaveValue('東京');
+  expect(input).toHaveFocus();
+  fireEvent.compositionEnd(input);
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(f.mutation).toHaveBeenCalledTimes(1));
+  expect(f.mutation.mock.calls[0][1]).toMatchObject({
+    text: '東京',
+    expectedRevision: 3,
+    completed: false,
+  });
+  mounted.unmount();
+  await f.client.close();
 });

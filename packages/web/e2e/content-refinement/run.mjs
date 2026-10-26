@@ -1,3 +1,7 @@
+if (process.argv.includes('--compact')) {
+  await import('./run-compact.mjs');
+  process.exit(process.exitCode ?? 0);
+}
 import { createRequire } from 'node:module';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';

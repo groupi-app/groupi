@@ -173,24 +173,38 @@ export function ApplicationQuestionEditor({
     );
   return (
     <fieldset disabled={disabled} className='space-y-4'>
-      <legend className='font-semibold'>{title}</legend>
+      <legend className={contentLayout ? 'sr-only' : 'font-semibold'}>
+        {title}
+      </legend>
       {questions.map((q, index) => (
         <fieldset
           key={q.id}
           className={cn(
             'min-w-0 rounded-card border border-border p-4 space-y-3',
-            contentLayout && 'bg-bg-sunken/30'
+            contentLayout &&
+              'rounded-input border-0 bg-transparent p-0 space-y-2'
           )}
         >
-          <legend className='px-2 text-sm font-semibold text-muted-foreground'>
+          <legend
+            className={
+              contentLayout
+                ? 'sr-only'
+                : 'px-2 text-sm font-semibold text-muted-foreground'
+            }
+          >
             Question {index + 1}
           </legend>
-          <Label htmlFor={`question-label-${q.id}`}>Question text</Label>
+          <Label
+            className={contentLayout ? 'sr-only' : undefined}
+            htmlFor={`question-label-${q.id}`}
+          >
+            Question text
+          </Label>
           <Textarea
             rows={1}
             className={
               contentLayout
-                ? 'min-h-12 resize-y border-transparent bg-transparent px-0 text-lg font-semibold field-sizing-content'
+                ? 'min-h-6 resize-y border-transparent bg-transparent px-0 text-base font-medium leading-snug field-sizing-content'
                 : undefined
             }
             placeholder='Write your question…'
@@ -200,7 +214,12 @@ export function ApplicationQuestionEditor({
             value={q.label}
             onChange={event => update(index, { label: event.target.value })}
           />
-          <Label htmlFor={`question-type-${q.id}`}>Question type</Label>
+          <Label
+            className={contentLayout ? 'sr-only' : undefined}
+            htmlFor={`question-type-${q.id}`}
+          >
+            Question type
+          </Label>
           <select
             id={`question-type-${q.id}`}
             className={selectClass}
@@ -242,19 +261,17 @@ export function ApplicationQuestionEditor({
           {choices(q.type) &&
             (contentLayout ? (
               <fieldset className='min-w-0 space-y-2'>
-                <legend className='mb-2 text-sm text-muted-foreground'>
-                  Answer options
-                </legend>
+                <legend className='sr-only'>Answer options</legend>
                 {(q.options ?? []).map((option, optionIndex) => (
                   <div key={optionIndex} className='space-y-1'>
-                    <div className={contentChoice}>
+                    <div className='flex min-w-0 items-center gap-2 rounded-input bg-bg-sunken px-3 py-2'>
                       <span
                         aria-hidden='true'
                         className={cn(
-                          'mt-3 size-4 shrink-0 border border-border',
+                          'size-4 shrink-0 border border-border',
                           q.type === 'MULTIPLE_CHOICE'
                             ? 'rounded-full'
-                            : 'rounded-subtle'
+                            : 'rounded-sm'
                         )}
                       />
                       <Label
@@ -266,7 +283,7 @@ export function ApplicationQuestionEditor({
                       <Textarea
                         id={`question-${q.id}-option-${optionIndex}`}
                         rows={1}
-                        className='min-h-10 min-w-0 flex-1 resize-y border-transparent bg-transparent px-0 field-sizing-content'
+                        className='min-h-6 min-w-0 flex-1 resize-y border-transparent bg-transparent p-0 text-sm field-sizing-content'
                         required
                         value={option}
                         onChange={event =>
@@ -277,12 +294,11 @@ export function ApplicationQuestionEditor({
                           })
                         }
                       />
-                    </div>
-                    <div className='flex justify-end'>
                       <Button
                         type='button'
                         variant='ghost'
-                        size='sm'
+                        size='icon'
+                        className='size-8 min-h-8 shrink-0'
                         aria-label={`Remove question ${index + 1} option ${optionIndex + 1}`}
                         onClick={() =>
                           update(index, {
@@ -293,7 +309,6 @@ export function ApplicationQuestionEditor({
                         }
                       >
                         <X className='size-3' aria-hidden='true' />
-                        Remove option
                       </Button>
                     </div>
                   </div>
@@ -324,26 +339,18 @@ export function ApplicationQuestionEditor({
                 />
               </>
             ))}
-          {contentLayout && !choices(q.type) && (
-            <div
-              aria-hidden='true'
-              className='min-h-12 rounded-input border border-dashed border-border bg-background p-3 text-sm text-muted-foreground'
-            >
-              {q.type === 'YES_NO'
-                ? 'Yes / No'
-                : q.type === 'NUMBER'
-                  ? 'Enter a number'
-                  : q.type === 'LONG_ANSWER'
-                    ? 'Long answer'
-                    : 'Short answer'}
-            </div>
-          )}
           <Button
             type='button'
-            variant='outline'
+            variant={contentLayout ? 'ghost' : 'outline'}
+            size={contentLayout ? 'sm' : 'default'}
+            aria-label={`Remove question ${index + 1}`}
             onClick={() => onChange(questions.filter((_, i) => i !== index))}
           >
-            Remove question {index + 1}
+            {contentLayout ? (
+              <X className='size-4' aria-hidden='true' />
+            ) : (
+              `Remove question ${index + 1}`
+            )}
           </Button>
         </fieldset>
       ))}

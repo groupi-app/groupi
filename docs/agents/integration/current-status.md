@@ -308,3 +308,16 @@ persistence remain open gates for a separately authorized isolated runtime.
 No branch has been pushed, merged or deployed. Automatic Vercel deployment is
 suppressed for this exact branch; the exact web patch changeset batch is prepared
 but awaits the confirmation required by repository workflow.
+
+### Compact content revision — local follow-up
+
+The supplied poll reference images were visually inspected before a material
+compact revision. Polls now save on selection; Lists persist completion directly
+and expose text editing only when requested; Forms retain one explicit complete
+response submission. Visible History links, redundant participant Save controls
+and explanatory chrome are removed without deleting history or changing backend
+contracts. Compact inline results reuse option rows and disclose page-scoped
+counts. Source and synthetic responsive checks are recorded in the updated
+[content design record](../../content-ui-refinement.md). Publication, authenticated
+fixture writes and release-note approval remain pending; nothing has been pushed
+or deployed.

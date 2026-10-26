@@ -1,6 +1,6 @@
 'use client';
-import { ArrowUp, Trash2, Save as ActionSave } from 'lucide-react';
-import { useState } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -32,14 +32,20 @@ import {
   ContentPage,
   ContentKind,
   ContentSettings,
-  contentCanvas,
-  contentTitleField,
-  contentDescriptionField,
-  contentChoice,
 } from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { GroupConfirmedAction } from './group-confirmed-action';
+const pollCardClass =
+  'w-full min-w-0 max-w-md space-y-3 rounded-card border border-border bg-card p-4 text-foreground';
+const pollChoiceClass =
+  'flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-input border border-transparent bg-bg-sunken px-3 py-2 text-sm leading-snug has-[:checked]:border-primary has-[:checked]:bg-primary/5 focus-within:ring-2 focus-within:ring-ring';
 const failure = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -264,12 +270,12 @@ function PollEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <ContentPage>
-      <h1 className='font-heading'>
+    <main className='mx-auto w-full max-w-md space-y-3 px-4 py-6'>
+      <h1 className='font-heading text-lg font-semibold'>
         {initial ? 'Manage poll' : 'Create poll'}
       </h1>
       <form
-        className={contentCanvas}
+        className={pollCardClass}
         onSubmit={async event => {
           event.preventDefault();
           setBusy(true);
@@ -305,13 +311,12 @@ function PollEditor({
           }
         }}
       >
-        <ContentKind kind='Poll' editing />
         <Label className='sr-only' htmlFor='ordinary-poll-title'>
           Poll title
         </Label>
         <Textarea
-          rows={2}
-          className={contentTitleField}
+          rows={1}
+          className='min-h-6 resize-none border-transparent bg-transparent px-0 font-heading text-base font-semibold leading-snug field-sizing-content'
           id='ordinary-poll-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -323,9 +328,9 @@ function PollEditor({
           Description
         </Label>
         <Textarea
-          rows={2}
-          placeholder='Add a description…'
-          className={contentDescriptionField}
+          rows={1}
+          placeholder='Description (optional)'
+          className='min-h-6 resize-y border-transparent bg-transparent px-0 text-sm leading-snug field-sizing-content'
           id='ordinary-poll-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -333,8 +338,11 @@ function PollEditor({
           disabled={busy}
         />
 
-        <Label htmlFor='poll-mode'>Voting rule</Label>
+        <Label className='sr-only' htmlFor='poll-mode'>
+          Voting rule
+        </Label>
         <select
+          className='min-h-10 w-full rounded-input border border-input bg-background p-2 text-sm'
           id='poll-mode'
           value={mode}
           disabled={busy}
@@ -345,25 +353,18 @@ function PollEditor({
           <option value='SINGLE'>Choose one</option>
           <option value='MULTIPLE'>Choose several</option>
         </select>
-        <fieldset disabled={busy} className='space-y-3'>
-          <legend>Poll options</legend>
+        <fieldset disabled={busy} className='space-y-2'>
+          <legend className='sr-only'>Poll options</legend>
           {options.map((option, index) => (
-            <div
-              key={index}
-              className='space-y-2 rounded-input border border-border bg-bg-sunken/50 p-3'
-            >
-              <div className='flex min-w-0 items-start gap-2'>
-                <span
-                  aria-hidden='true'
-                  className='mt-3 size-4 shrink-0 rounded-full border-2 border-border'
-                />
+            <div key={index} className='flex min-w-0 items-start gap-1'>
+              <div className={`${pollChoiceClass} flex-1`}>
                 <Label className='sr-only' htmlFor={`option-label-${index}`}>
                   Option {index + 1} label
                 </Label>
                 <Textarea
-                  rows={1}
-                  className='min-h-10 min-w-0 flex-1 resize-y bg-transparent field-sizing-content'
                   id={`option-label-${index}`}
+                  rows={1}
+                  className='min-h-6 min-w-0 flex-1 resize-y border-transparent bg-transparent p-0 text-sm leading-snug field-sizing-content'
                   value={option.label}
                   onChange={e =>
                     setOptions(
@@ -373,79 +374,63 @@ function PollEditor({
                     )
                   }
                 />
+                <span
+                  aria-hidden='true'
+                  className='size-4 shrink-0 rounded-full border border-border'
+                />
               </div>
-              <div className='flex flex-wrap justify-end gap-1'>
-                <Button
-                  type='button'
-                  size='icon'
-                  className='shrink-0'
-                  variant='ghost'
-                  aria-label={`Remove option ${index + 1}`}
-                  onClick={() =>
-                    setOptions(options.filter((_, i) => i !== index))
-                  }
-                >
-                  <Trash2 aria-hidden='true' className='size-4' />
-                </Button>
-                {index > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     type='button'
                     size='icon'
-                    className='shrink-0'
                     variant='ghost'
-                    aria-label={`Move option ${index + 1} up`}
-                    onClick={() =>
-                      setOptions(
-                        options.toSpliced(
-                          index - 1,
-                          2,
-                          option,
-                          options[index - 1]
+                    disabled={busy}
+                    aria-label={`Option ${index + 1} actions`}
+                  >
+                    <MoreHorizontal className='size-4' aria-hidden='true' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  {index > 0 && (
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        setOptions(
+                          options.toSpliced(
+                            index - 1,
+                            2,
+                            option,
+                            options[index - 1]
+                          )
                         )
-                      )
+                      }
+                    >
+                      Move option {index + 1} up
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      setOptions(options.filter((_, i) => i !== index))
                     }
                   >
-                    <ArrowUp aria-hidden='true' className='size-4' />
-                  </Button>
-                )}
-              </div>
-              <ContentSettings title={`Option ${index + 1} identifier`}>
-                <Label htmlFor={`option-id-${index}`}>
-                  Option {index + 1} stable ID
-                </Label>
-                <Input
-                  id={`option-id-${index}`}
-                  value={option.id}
-                  onChange={e =>
-                    setOptions(
-                      options.map((o, i) =>
-                        i === index ? { ...o, id: e.target.value } : o
-                      )
-                    )
-                  }
-                />
-              </ContentSettings>
+                    Remove option {index + 1}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
           <Button
             type='button'
+            variant='ghost'
+            className='h-auto min-h-10 text-sm'
             onClick={() =>
-              setOptions([
-                ...options,
-                { id: `option-${Date.now()}`, label: '' },
-              ])
+              setOptions([...options, { id: crypto.randomUUID(), label: '' }])
             }
           >
             Add poll option
           </Button>
         </fieldset>
-
         <ContentSettings>
-          <p>
-            Stable IDs identify choices. Label and order changes retain valid
-            votes. Changing the rule or option IDs makes earlier votes
-            historical; members must vote again. Results visibility stays fixed.
-          </p>
           {!initial && (
             <>
               <Label htmlFor='ordinary-poll-visibility'>
@@ -468,11 +453,25 @@ function PollEditor({
               </select>
             </>
           )}{' '}
-          <p>
-            Configuration changes preserve saved votes and their original option
-            definitions. Current-version choices require review before saving.
-            This is not the joining questionnaire.
-          </p>{' '}
+          {options.map((option, index) => (
+            <div key={index} className='space-y-1'>
+              <Label htmlFor={`option-id-${index}`}>
+                Option {index + 1} stable ID
+              </Label>
+              <Input
+                id={`option-id-${index}`}
+                value={option.id}
+                disabled={busy}
+                onChange={e =>
+                  setOptions(
+                    options.map((o, i) =>
+                      i === index ? { ...o, id: e.target.value } : o
+                    )
+                  )
+                }
+              />
+            </div>
+          ))}
         </ContentSettings>
         <Button disabled={busy}>
           {initial ? 'Save poll settings' : 'Create poll'}
@@ -505,7 +504,7 @@ function PollEditor({
           }}
         />
       )}
-    </ContentPage>
+    </main>
   );
 }
 export function GroupPollInteraction({
@@ -518,197 +517,303 @@ export function GroupPollInteraction({
   embedded?: boolean;
 }) {
   const poll = usePoll({ toolId });
-  const [feedback, setFeedback] = useState({ toolId, message: '' });
+  const submit = useSubmitPollVote();
+  const sequence = useRef(0);
+  const lock = useRef<{
+    toolId: string;
+    revision: number;
+    version: number;
+    sequence: number;
+    running: boolean;
+  } | null>(null);
+  const [request, setRequest] = useState<{
+    toolId: string;
+    version: number;
+    revision: number;
+    state: 'saving' | 'saved' | 'error';
+    message: string;
+  } | null>(null);
+  const [reset, setReset] = useState(0);
+  const [results, setResults] = useState({ toolId, show: false });
   if (!poll) return <p role='status'>Loading poll…</p>;
   if ((poll.groupId ?? poll.eventId) !== groupId)
     return <p role='alert'>Poll unavailable in this context.</p>;
+  const currentRequest = request?.toolId === toolId ? request : null;
+  // A fulfilled mutation is not permission to submit its stale revision again.
+  const busy =
+    currentRequest?.state === 'saving' ||
+    (currentRequest?.state === 'saved' &&
+      currentRequest.revision === poll.voteRevision &&
+      currentRequest.version === poll.version);
+  async function vote(selections: string[]) {
+    if (!poll) return;
+    if (
+      lock.current?.toolId === toolId &&
+      (lock.current.running ||
+        (lock.current.revision === poll.voteRevision &&
+          lock.current.version === poll.version))
+    )
+      return;
+    const id = ++sequence.current;
+    lock.current = {
+      toolId,
+      revision: poll.voteRevision,
+      version: poll.version,
+      sequence: id,
+      running: true,
+    };
+    setRequest({
+      toolId,
+      version: poll.version,
+      revision: poll.voteRevision,
+      state: 'saving',
+      message: '',
+    });
+    try {
+      await submit({
+        toolId,
+        version: poll.version,
+        expectedRevision: poll.voteRevision,
+        selections,
+      });
+      if (lock.current?.sequence !== id) return;
+      lock.current.running = false;
+      setRequest({
+        toolId,
+        version: poll.version,
+        revision: poll.voteRevision,
+        state: 'saved',
+        message: 'Vote saved.',
+      });
+    } catch (error) {
+      if (lock.current?.sequence !== id) return;
+      lock.current = null;
+      setReset(value => value + 1);
+      setRequest({
+        toolId,
+        version: poll.version,
+        revision: poll.voteRevision,
+        state: 'error',
+        message: failure(error),
+      });
+    }
+  }
   return (
     <PollInteraction
-      key={`${poll._id}:${poll.version}:${poll.voteRevision}`}
+      key={`${poll._id}:${poll.version}:${poll.voteRevision}:${reset}`}
       poll={poll}
-      embedded={embedded}
       groupId={groupId}
-      message={feedback.toolId === toolId ? feedback.message : ''}
-      onMessage={message => setFeedback({ toolId, message })}
+      embedded={embedded}
+      busy={Boolean(busy)}
+      onVote={vote}
+      showResults={results.toolId === toolId && results.show}
+      onResults={() =>
+        setResults({
+          toolId,
+          show: !(results.toolId === toolId && results.show),
+        })
+      }
+      message={
+        currentRequest?.state === 'error'
+          ? currentRequest.message
+          : !busy && currentRequest?.state === 'saved'
+            ? currentRequest.message
+            : ''
+      }
+      error={currentRequest?.state === 'error'}
     />
   );
 }
 function PollInteraction({
   poll,
-  embedded,
   groupId,
+  embedded,
+  busy,
+  onVote,
+  showResults,
+  onResults,
   message,
-  onMessage: setMessage,
+  error,
 }: {
   poll: NonNullable<ReturnType<typeof usePoll>>;
-  embedded?: boolean;
   groupId: ContentOwnerId;
+  embedded?: boolean;
+  busy: boolean;
+  onVote: (selections: string[]) => Promise<void>;
+  showResults: boolean;
+  onResults: () => void;
   message: string;
-  onMessage: (message: string) => void;
+  error: boolean;
 }) {
   const base = useContentBase(groupId);
-  const submit = useSubmitPollVote();
   const remove = useRemovePollVote();
-  const deletePoll = useDeletePoll();
-  const router = useRouter();
   const [selections, setSelections] = useState(poll.selections);
-  const [busy, setBusy] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const results = usePollResults(
+    showResults && poll.canReview
+      ? { toolId: poll._id, paginationOpts: { numItems: 20, cursor } }
+      : 'skip'
+  );
+  const current =
+    results?.page.filter(row => row.isCurrent && !row.removed) ?? [];
+  const Tag = embedded ? 'article' : 'main';
+  const Heading = embedded ? 'h2' : 'h1';
   return (
-    <ContentPage embedded={embedded}>
-      <ContentKind kind='Poll' />
-      {embedded ? (
-        <h2 className='font-heading'>{poll.title}</h2>
-      ) : (
-        <h1 className='font-heading'>{poll.title}</h1>
+    <Tag className={pollCardClass} aria-busy={busy || undefined}>
+      <Heading className='break-words font-heading text-base font-semibold leading-snug'>
+        {poll.title}
+      </Heading>
+      {poll.description && (
+        <p className='break-words text-sm leading-snug text-muted-foreground'>
+          {poll.description}
+        </p>
       )}
-      <p>{poll.description}</p>
-      <p className='text-sm text-muted-foreground'>
-        {poll.resultsVisibility === 'MEMBERS'
-          ? 'Shared with eligible members'
-          : 'Visible to you and current managers'}
-      </p>
-      <form
-        className='space-y-4'
-        onSubmit={async e => {
-          e.preventDefault();
-          setBusy(true);
-          setMessage('');
-          try {
-            await submit({
-              toolId: poll._id,
-              version: poll.version,
-              expectedRevision: poll.voteRevision,
-              selections,
-            });
-            setMessage('Vote saved.');
-          } catch (error) {
-            setMessage(failure(error));
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <fieldset disabled={busy} className='space-y-2'>
-          <legend>
-            {poll.mode === 'SINGLE'
-              ? 'Choose one option'
-              : 'Choose one or more options'}
-          </legend>
-          {poll.options.map(option => (
-            <Label key={option.id} className={contentChoice}>
+      <fieldset disabled={busy} className='min-w-0 space-y-2'>
+        <legend className='mb-2 text-xs text-muted-foreground'>
+          {poll.mode === 'SINGLE' ? 'Choose one' : 'Choose several'}
+        </legend>
+        {poll.options.map(option => {
+          const count = current.filter(row =>
+            row.selections.includes(option.id)
+          ).length;
+          return (
+            <Label key={option.id} className={pollChoiceClass}>
+              <span className='min-w-0 flex-1 break-words'>
+                <span>{option.label}</span>
+                {showResults && poll.canReview && results && (
+                  <span className='mt-1 block space-y-1 text-xs text-muted-foreground'>
+                    <span>
+                      {current.length
+                        ? Math.round((count / current.length) * 100)
+                        : 0}
+                      % · {count} {count === 1 ? 'vote' : 'votes'}
+                    </span>
+                    <span
+                      role='progressbar'
+                      aria-label={`${option.label}: votes on this page`}
+                      aria-valuemin={0}
+                      aria-valuemax={Math.max(1, current.length)}
+                      aria-valuenow={count}
+                      aria-valuetext={`${count} of ${current.length} votes on this page`}
+                      className='block h-1 overflow-hidden rounded-badge bg-border'
+                    >
+                      <span
+                        className='block h-full rounded-badge bg-primary'
+                        style={{
+                          width: `${current.length ? (count / current.length) * 100 : 0}%`,
+                        }}
+                      />
+                    </span>
+                  </span>
+                )}
+              </span>
               <input
+                className='size-4 shrink-0 accent-primary'
                 type={poll.mode === 'SINGLE' ? 'radio' : 'checkbox'}
                 name={`poll-vote-${poll._id}`}
-                className='mt-1 size-4 shrink-0 accent-primary'
                 checked={selections.includes(option.id)}
-                onChange={() =>
-                  setSelections(
+                onChange={() => {
+                  const next =
                     poll.mode === 'SINGLE'
                       ? [option.id]
                       : selections.includes(option.id)
                         ? selections.filter(id => id !== option.id)
-                        : [...selections, option.id]
-                  )
-                }
+                        : [...selections, option.id];
+                  setSelections(next);
+                  void onVote(next);
+                }}
               />
-              <span className='min-w-0 flex-1 break-words'>{option.label}</span>
             </Label>
-          ))}
-        </fieldset>
-        <Button
-          icon={<ActionSave aria-hidden='true' className='size-4' />}
-          disabled={busy}
-        >
-          Save vote
-        </Button>
-      </form>
-      <ContentSettings title='Privacy & saved history'>
-        <p>
-          Polls do not choose Event dates or change Event RSVP. One latest vote
-          is saved; repeat saves are safe and concurrent edits require current
-          revision review.
-        </p>
-        <p>
-          {poll.resultsVisibility === 'MEMBERS'
-            ? 'Shared contribution: eligible members can see your latest votes. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-            : 'Personal votes: only you and current eligible managers can see them. Account deletion purges your votes and history.'}{' '}
-          Managers may moderate ordinary votes. Removing your vote also removes
-          its history.
-        </p>
-      </ContentSettings>
-      <ContentSettings title='Vote actions & history'>
-        {poll.savedVersion !== null && (
-          <p>
-            Original saved options remain in your private history. Review
-            current choices before resubmitting after voting rules or option IDs
-            change.
-          </p>
-        )}
-        {poll.savedVersion !== null && (
-          <GroupConfirmedAction
-            label='Remove my vote'
-            confirmation='Confirm removing my vote and its history'
-            explanation='Your latest vote and private revision history will be removed.'
-            onConfirm={() =>
-              remove({ toolId: poll._id, expectedRevision: poll.voteRevision })
-            }
-          />
-        )}
-        <Link
-          className='text-primary underline'
-          href={`${base}/polls/${poll._id}/history`}
-        >
-          My saved vote history
-        </Link>
-        {poll.canManage && (
-          <>
-            <Link
-              className='text-primary underline'
-              href={`${base}/polls/${poll._id}/settings`}
-            >
-              Manage poll settings
-            </Link>
-            <GroupConfirmedAction
-              label='Delete poll'
-              confirmation='Confirm deleting poll and all votes'
-              explanation='This permanently removes the poll and all vote history.'
-              onConfirm={async () => {
-                await deletePoll({ toolId: poll._id });
-                router.push(`${base}/polls`);
-              }}
-            />
-          </>
-        )}
-      </ContentSettings>
-      {message && (
-        <p
-          role='status'
-          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
-        >
-          {message}
-        </p>
-      )}
-      {poll.canReview && (
-        <>
+          );
+        })}
+      </fieldset>
+      <div className='flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground'>
+        {poll.canReview && (
           <Button
-            variant='ghost'
             type='button'
+            variant='ghost'
+            className='h-auto min-h-10 max-w-full whitespace-normal px-0 text-xs text-primary'
             aria-expanded={showResults}
-            onClick={() => setShowResults(!showResults)}
+            onClick={onResults}
           >
             {showResults ? 'Hide poll results' : 'View poll results'}
           </Button>
-          {showResults && (
-            <PollResultsRecords
-              toolId={poll._id}
-              canManage={poll.canManage}
-              options={poll.options}
-            />
-          )}
-        </>
+        )}
+        {showResults && poll.canReview && <span>Votes on this page</span>}
+        {busy && <span role='status'>Saving…</span>}
+        <details className='relative ml-auto text-xs'>
+          <summary
+            aria-label='Poll actions'
+            className='flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center rounded-input focus-visible:outline-2 focus-visible:outline-ring'
+          >
+            <MoreHorizontal aria-hidden='true' className='size-4' />
+          </summary>
+          <div className='mt-1 space-y-2 rounded-input border border-border bg-bg-sunken p-3'>
+            <p>
+              {poll.resultsVisibility === 'MEMBERS'
+                ? 'Votes are shared with eligible members.'
+                : 'Votes are visible to you and current managers.'}
+            </p>
+            {poll.savedVersion !== null && (
+              <GroupConfirmedAction
+                label='Remove my vote'
+                confirmation='Confirm removing my vote and its history'
+                explanation='Your latest vote and private revision history will be removed.'
+                onConfirm={() =>
+                  remove({
+                    toolId: poll._id,
+                    expectedRevision: poll.voteRevision,
+                  })
+                }
+              />
+            )}
+            {poll.canManage && (
+              <Link
+                className='block text-primary underline'
+                href={`${base}/polls/${poll._id}/settings`}
+              >
+                Edit poll
+              </Link>
+            )}
+            {poll.canReview && (
+              <Link
+                className='block text-primary underline'
+                href={`${base}/polls/${poll._id}/results`}
+              >
+                Review votes
+              </Link>
+            )}
+          </div>
+        </details>
+      </div>
+      {showResults && poll.canReview && !results && (
+        <p role='status' className='text-xs text-muted-foreground'>
+          Loading results…
+        </p>
       )}
-    </ContentPage>
+      {showResults && results && !results.isDone && (
+        <Button
+          variant='ghost'
+          onClick={() => setCursor(results.continueCursor)}
+        >
+          Next votes
+        </Button>
+      )}
+      {showResults && cursor && (
+        <Button variant='ghost' onClick={() => setCursor(null)}>
+          First results page
+        </Button>
+      )}
+      {message && (
+        <p
+          role={error ? 'alert' : 'status'}
+          className={error ? 'text-xs text-error' : 'sr-only'}
+        >
+          {message}
+          {error && ' Select an option to try again.'}
+        </p>
+      )}
+    </Tag>
   );
 }
 function SavedVotes({

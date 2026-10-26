@@ -1,6 +1,6 @@
 'use client';
-import { Save as ActionSave } from 'lucide-react';
-import { useState } from 'react';
+import { MoreHorizontal, Pencil, Plus, Settings } from 'lucide-react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -13,16 +13,15 @@ import {
 import * as hooks from '@/hooks/convex/use-group-lists';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  ContentPage,
-  ContentKind,
-  ContentSettings,
-  contentCanvas,
-  contentTitleField,
-  contentDescriptionField,
-} from '@/features/content/content-design';
+import { ContentPage } from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 import { GroupConfirmedAction } from './group-confirmed-action';
+const listCard =
+  'mx-auto w-full min-w-0 max-w-md space-y-3 rounded-card border border-border bg-card p-4 text-foreground';
+const titleField =
+  'min-h-8 resize-none border-transparent bg-transparent px-0 font-heading text-base font-semibold leading-snug field-sizing-content';
+const descriptionField =
+  'min-h-8 resize-y border-transparent bg-transparent px-0 text-sm leading-relaxed field-sizing-content';
 function failure(error: unknown) {
   return error instanceof Error
     ? error.message
@@ -231,10 +230,10 @@ function ListEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return (
-    <ContentPage>
-      <h1 className='font-heading'>{list ? 'Manage list' : 'Create list'}</h1>
+    <main className='mx-auto w-full max-w-md px-4 py-4'>
+      <h1 className='sr-only'>{list ? 'Manage list' : 'Create list'}</h1>
       <form
-        className={contentCanvas}
+        className={listCard}
         onSubmit={async e => {
           e.preventDefault();
           setBusy(true);
@@ -266,13 +265,12 @@ function ListEditor({
           }
         }}
       >
-        <ContentKind kind='List' editing />
         <Label className='sr-only' htmlFor='community-list-title'>
           List title
         </Label>
         <Textarea
-          rows={2}
-          className={contentTitleField}
+          rows={1}
+          className={titleField}
           id='community-list-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -284,9 +282,9 @@ function ListEditor({
           List description
         </Label>
         <Textarea
-          rows={2}
+          rows={1}
           placeholder='Add a description…'
-          className={contentDescriptionField}
+          className={descriptionField}
           id='community-list-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -294,35 +292,28 @@ function ListEditor({
           disabled={busy}
         />
 
-        <ContentSettings>
-          {!list && (
-            <>
-              <Label htmlFor='community-list-visibility'>
-                Entry visibility (fixed)
-              </Label>
-              <select
-                id='community-list-visibility'
-                value={visibility}
-                onChange={e =>
-                  setVisibility(
-                    e.target.value === 'MANAGERS' ? 'MANAGERS' : 'MEMBERS'
-                  )
-                }
-                disabled={busy}
-              >
-                <option value='MEMBERS'>Shared with eligible members</option>
-                <option value='MANAGERS'>
-                  Personal to authors and managers
-                </option>
-              </select>
-            </>
-          )}{' '}
-          <p>
-            Title/description edits preserve entries and their original saved
-            list title. Authors edit their entries; eligible managers can edit
-            or remove any entry.
-          </p>{' '}
-        </ContentSettings>
+        {!list && (
+          <>
+            <Label className='sr-only' htmlFor='community-list-visibility'>
+              Entry visibility (fixed)
+            </Label>
+            <select
+              className='w-full min-w-0 rounded-input border border-input bg-background p-2 text-sm'
+              id='community-list-visibility'
+              value={visibility}
+              onChange={e =>
+                setVisibility(
+                  e.target.value === 'MANAGERS' ? 'MANAGERS' : 'MEMBERS'
+                )
+              }
+              disabled={busy}
+            >
+              <option value='MEMBERS'>Shared with eligible members</option>
+              <option value='MANAGERS'>Personal to authors and managers</option>
+            </select>
+          </>
+        )}
+
         <Button disabled={busy}>
           {list ? 'Save list settings' : 'Create list'}
         </Button>
@@ -336,15 +327,20 @@ function ListEditor({
         </Button>
       </form>
       {list && (
-        <GroupConfirmedAction
-          label='Delete list'
-          confirmation='Confirm deleting list and all entries'
-          explanation='All list configuration, entries and retry records are permanently removed.'
-          onConfirm={async () => {
-            await remove({ toolId: list._id });
-            router.push(`${base}/lists`);
-          }}
-        />
+        <details className='mt-2 text-sm'>
+          <summary className='cursor-pointer p-2 text-muted-foreground'>
+            More
+          </summary>
+          <GroupConfirmedAction
+            label='Delete list'
+            confirmation='Confirm deleting list and all entries'
+            explanation='All list configuration, entries and retry records are permanently removed.'
+            onConfirm={async () => {
+              await remove({ toolId: list._id });
+              router.push(`${base}/lists`);
+            }}
+          />
+        </details>
       )}
       {error && (
         <p
@@ -354,7 +350,7 @@ function ListEditor({
           {error}
         </p>
       )}
-    </ContentPage>
+    </main>
   );
 }
 export function GroupListInteraction({
@@ -364,20 +360,13 @@ export function GroupListInteraction({
   groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
 }) {
-  const base = useContentBase(groupId);
   const group = useGroup(groupId);
   const policy = hooks.useListPolicy({ groupId });
   const eligible =
     group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
   const list = hooks.useList(eligible && policy?.enabled ? { toolId } : 'skip');
   return (
-    <ContentPage>
-      <Link
-        className='text-primary underline'
-        href={`${base}/lists/${toolId}/own`}
-      >
-        My saved list entries
-      </Link>
+    <main className={listCard}>
       {!eligible || (policy && !policy.enabled) ? (
         <p role='alert'>
           Complete required onboarding and use enabled lists to contribute. Own
@@ -390,7 +379,7 @@ export function GroupListInteraction({
       ) : (
         <ListInteraction groupId={groupId} list={list} />
       )}
-    </ContentPage>
+    </main>
   );
 }
 function ListInteraction({
@@ -407,21 +396,42 @@ function ListInteraction({
     null
   );
   const [busy, setBusy] = useState(false);
+  const addPending = useRef(false);
   const [message, setMessage] = useState('');
   return (
-    <section className='space-y-4'>
-      <ContentKind kind='List' />
-      <h1 className='font-heading'>{list.title}</h1>
-      <p>{list.description}</p>
-      <p className='text-sm text-muted-foreground'>
-        {list.resultsVisibility === 'MEMBERS'
-          ? 'Shared with eligible members'
-          : 'Visible to you and current managers'}
-      </p>
+    <section className='min-w-0 space-y-3'>
+      <header className='flex items-start justify-between gap-2'>
+        <h1 className='min-w-0 break-words font-heading text-base font-semibold leading-snug'>
+          {list.title}
+        </h1>
+        {list.canManage && (
+          <Button
+            asChild
+            variant='ghost'
+            size='icon'
+            className='size-10 shrink-0'
+          >
+            <Link
+              href={`${base}/lists/${list._id}/settings`}
+              aria-label='Manage list settings'
+            >
+              <Settings className='size-4' aria-hidden='true' />
+            </Link>
+          </Button>
+        )}
+      </header>
+      {list.description && (
+        <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
+          {list.description}
+        </p>
+      )}
+      <GroupListEntries toolId={list._id} version={list.version} />
       <form
-        className={contentCanvas}
+        className='flex min-w-0 items-start gap-2'
         onSubmit={async e => {
           e.preventDefault();
+          if (addPending.current) return;
+          addPending.current = true;
           const input = attempt ?? {
             toolId: list._id,
             version: list.version,
@@ -434,7 +444,7 @@ function ListInteraction({
             const result = await add(input);
             setMessage(
               result.state === 'PRESENT'
-                ? 'Entry saved.'
+                ? ''
                 : 'Original entry was removed; it was not recreated.'
             );
             setAttempt(null);
@@ -445,15 +455,18 @@ function ListInteraction({
                 ' Retry preserves the same request and original content. Inspect saved entries before starting another request.'
             );
           } finally {
+            addPending.current = false;
             setBusy(false);
           }
         }}
       >
-        <Label htmlFor='community-list-entry'>New entry</Label>
+        <Label className='sr-only' htmlFor='community-list-entry'>
+          New entry
+        </Label>
         <Textarea
-          rows={2}
-          placeholder='Add something to the list…'
-          className='field-sizing-content'
+          rows={1}
+          placeholder='Add an entry…'
+          className='min-h-10 min-w-0 flex-1 resize-y field-sizing-content'
           id='community-list-entry'
           value={text}
           onChange={e => setText(e.target.value)}
@@ -461,19 +474,16 @@ function ListInteraction({
           required
           disabled={busy || Boolean(attempt)}
         />
-        <Button disabled={busy}>
-          {attempt ? 'Retry original entry' : 'Add entry'}
+        <Button
+          disabled={busy}
+          size={attempt ? 'default' : 'icon'}
+          className='shrink-0'
+          aria-label={attempt ? 'Retry original entry' : 'Add entry'}
+        >
+          {attempt ? 'Retry' : <Plus className='size-4' aria-hidden='true' />}
         </Button>
       </form>
-      <ContentSettings title='Privacy & saved history'>
-        <p>
-          {list.resultsVisibility === 'MEMBERS'
-            ? 'Shared entries are visible to eligible members. On account deletion, latest shared entries survive anonymously; retry records are purged.'
-            : 'Personal entries are visible only to their author and current eligible managers. Account deletion purges personal entries and retry records.'}{' '}
-          Authors edit/remove their entries. Managers may moderate any entry.
-          Completion is a list status, with no Event commitment.
-        </p>
-      </ContentSettings>
+
       {attempt && !busy && (
         <>
           <p>
@@ -497,22 +507,10 @@ function ListInteraction({
         </>
       )}
       {message && (
-        <p
-          role='status'
-          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
-        >
+        <p role='status' className='text-xs text-muted-foreground'>
           {message}
         </p>
       )}
-      {list.canManage && (
-        <Link
-          className='text-primary underline'
-          href={`${base}/lists/${list._id}/settings`}
-        >
-          Manage list settings
-        </Link>
-      )}
-      <GroupListEntries toolId={list._id} version={list.version} />
     </section>
   );
 }
@@ -529,12 +527,14 @@ function GroupListEntries({
     paginationOpts: { numItems: 20, cursor },
   });
   return (
-    <section className='space-y-3'>
-      <h2 className='font-heading'>Current entries</h2>
+    <section
+      className='min-w-0 divide-y divide-border'
+      aria-label='List entries'
+    >
       {entries === undefined ? (
         <p role='status'>Loading entries…</p>
       ) : entries.page.length === 0 ? (
-        <p className='rounded-input border border-dashed border-border p-6 text-sm text-muted-foreground'>
+        <p className='py-2 text-sm text-muted-foreground'>
           No entries on this page.
         </p>
       ) : null}
@@ -562,82 +562,186 @@ function EntryEditor({
 }) {
   const edit = hooks.useEditListEntry();
   const remove = hooks.useRemoveListEntry();
+  const [saved, setSaved] = useState({
+    text: entry.text,
+    completed: entry.completed,
+    revision: entry.revision,
+  });
   const [text, setText] = useState(entry.text);
-  const [completed, setCompleted] = useState(entry.completed);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [retry, setRetry] = useState<{
+    text: string;
+    completed: boolean;
+  } | null>(null);
+  const pending = useRef(false);
+  const accepted = useRef(saved);
+  async function persist(next: { text: string; completed: boolean }) {
+    if (pending.current) return;
+    if (
+      next.text === accepted.current.text &&
+      next.completed === accepted.current.completed
+    ) {
+      setEditing(false);
+      return;
+    }
+    pending.current = true;
+    setBusy(true);
+    setError('');
+    setRetry(null);
+    try {
+      const result = await edit({
+        entryId: entry._id,
+        version,
+        expectedRevision: accepted.current.revision,
+        ...next,
+      });
+      const confirmed = { ...next, revision: result.revision };
+      accepted.current = confirmed;
+      setSaved(confirmed);
+      setText(confirmed.text);
+      setEditing(false);
+    } catch (error) {
+      setError(failure(error));
+      setRetry(next);
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
   return (
-    <article className='rounded-card border border-border p-4 space-y-3'>
-      <p className='text-xs text-muted-foreground'>
-        {entry.personId ? 'Member contribution' : 'Anonymous contribution'} ·
-        revision {entry.revision}
-      </p>
-      {entry.canEdit ? (
-        <form
-          className='space-y-3'
-          onSubmit={async e => {
-            e.preventDefault();
-            setBusy(true);
-            try {
-              await edit({
-                entryId: entry._id,
-                version,
-                expectedRevision: entry.revision,
-                text,
-                completed,
-              });
-              setError('Entry updated.');
-            } catch (error) {
-              setError(failure(error));
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <Label htmlFor={`entry-${entry._id}`}>Entry text</Label>
+    <article className='min-w-0 py-1' aria-busy={busy || undefined}>
+      <div className='flex min-w-0 items-start gap-1'>
+        <label className='flex min-h-11 min-w-0 flex-1 items-start gap-3 py-3 text-sm leading-relaxed'>
+          <input
+            className='mt-1 size-4 shrink-0 accent-primary'
+            type='checkbox'
+            aria-label={`Completed: ${saved.text}`}
+            checked={saved.completed}
+            disabled={!entry.canEdit || busy}
+            onChange={e => {
+              void persist({ text: saved.text, completed: e.target.checked });
+            }}
+          />
+          {!editing && (
+            <span
+              className={
+                saved.completed
+                  ? 'min-w-0 break-words text-muted-foreground line-through'
+                  : 'min-w-0 break-words'
+              }
+            >
+              {saved.text}
+            </span>
+          )}
+        </label>
+        {entry.canEdit && !editing && (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='size-11 shrink-0'
+            disabled={busy}
+            aria-label={`Edit entry: ${saved.text}`}
+            onClick={() => {
+              setText(saved.text);
+              setEditing(true);
+              setError('');
+              setRetry(null);
+            }}
+          >
+            <Pencil className='size-4' aria-hidden='true' />
+          </Button>
+        )}
+        {entry.canRemove && (
+          <details className='relative shrink-0 text-sm'>
+            <summary
+              className='flex min-h-11 cursor-pointer list-none items-center justify-center rounded-input px-3 focus-visible:outline-2 focus-visible:outline-ring'
+              aria-label={`Entry actions: ${saved.text}`}
+            >
+              <MoreHorizontal className='size-4' aria-hidden='true' />
+            </summary>
+            <div className='absolute right-0 z-popover w-56 rounded-input border border-border bg-card p-2 shadow-floating'>
+              <GroupConfirmedAction
+                label='Remove entry'
+                confirmation='Confirm removing this entry'
+                explanation='Remove this entry?'
+                onConfirm={() =>
+                  remove({
+                    entryId: entry._id,
+                    expectedRevision: accepted.current.revision,
+                  })
+                }
+              />
+            </div>
+          </details>
+        )}
+      </div>
+      {editing && (
+        <div className='pb-2'>
+          <Label htmlFor={`entry-${entry._id}`} className='sr-only'>
+            Entry text
+          </Label>
           <Textarea
-            rows={2}
-            className='field-sizing-content'
             id={`entry-${entry._id}`}
+            autoFocus
+            rows={1}
+            className='min-h-10 text-sm field-sizing-content'
             value={text}
             onChange={e => setText(e.target.value)}
             required
             maxLength={2000}
             disabled={busy}
+            onBlur={e => {
+              if (e.currentTarget.validity.valid)
+                void persist({ text, completed: saved.completed });
+            }}
+            onKeyDown={e => {
+              if (e.nativeEvent.isComposing) return;
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                setText(saved.text);
+                setEditing(false);
+                setError('');
+                setRetry(null);
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (e.currentTarget.reportValidity())
+                  void persist({ text, completed: saved.completed });
+              }
+            }}
+            aria-describedby={`entry-help-${entry._id}`}
           />
-          <label className='flex items-center gap-3 rounded-input bg-bg-sunken p-3 text-sm font-medium'>
-            <input
-              className='size-4 shrink-0 accent-primary'
-              type='checkbox'
-              checked={completed}
-              onChange={e => setCompleted(e.target.checked)}
-              disabled={busy}
-            />
-            Completed
-          </label>
-          <Button
-            icon={<ActionSave aria-hidden='true' className='size-4' />}
-            disabled={busy}
-          >
-            Save entry
-          </Button>
-        </form>
-      ) : (
-        <p className='whitespace-pre-wrap break-words'>
-          {entry.text} · {entry.completed ? 'Completed' : 'Open'}
-        </p>
+          <span id={`entry-help-${entry._id}`} className='sr-only'>
+            Press Enter or leave this field to update. Press Escape to cancel.
+          </span>
+        </div>
       )}
-      {entry.canRemove && (
-        <GroupConfirmedAction
-          label='Remove entry'
-          confirmation='Confirm removing this entry'
-          explanation='This contribution is removed. Its original add request will recover as removed until expiry.'
-          onConfirm={() =>
-            remove({ entryId: entry._id, expectedRevision: entry.revision })
-          }
-        />
-      )}{' '}
-      {error && <p role='status'>{error}</p>}
+      {busy && (
+        <span role='status' className='text-xs text-muted-foreground'>
+          Updating…
+        </span>
+      )}
+      {error && (
+        <div className='flex flex-wrap items-center gap-2 pb-2'>
+          <p role='alert' className='text-xs text-error'>
+            {error}
+          </p>
+          {retry && (
+            <Button
+              type='button'
+              size='sm'
+              variant='ghost'
+              onClick={() => {
+                void persist(retry);
+              }}
+            >
+              Retry update
+            </Button>
+          )}
+        </div>
+      )}
     </article>
   );
 }

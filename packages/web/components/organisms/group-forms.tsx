@@ -1,5 +1,4 @@
 'use client';
-import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,20 +29,20 @@ import {
 } from '@/hooks/convex/use-group-forms';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  ContentPage,
-  ContentKind,
-  ContentSettings,
-  contentCanvas,
-  contentTitleField,
-  contentDescriptionField,
-} from '@/features/content/content-design';
+import { ContentPage } from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 import {
   ApplicationQuestionEditor,
   ApplicationQuestionFields,
 } from './application-question-fields';
 import { GroupConfirmedAction } from './group-confirmed-action';
+const formSurface =
+  'mx-auto w-full min-w-0 max-w-md space-y-4 rounded-card border border-border bg-card p-4 text-sm break-words';
+const formTitleField =
+  'min-h-8 resize-none border-transparent bg-transparent px-0 font-heading text-lg font-semibold leading-snug field-sizing-content';
+const formDescriptionField =
+  'min-h-10 resize-y border-transparent bg-transparent px-0 text-sm leading-relaxed field-sizing-content';
+
 const failure = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -70,13 +69,14 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
       <h1 className='font-heading text-2xl font-bold'>
         {base.startsWith('/event/') ? 'Event forms' : 'Group forms'}
       </h1>
-      <p>Collect responses without changing joining requirements.</p>
       {policy.canConfigure && (
-        <section
-          className='rounded-card border border-border p-4 space-y-3'
+        <details
+          className='space-y-3 text-sm'
           aria-label='Form availability policy'
         >
-          <h2 className='font-heading'>Owner settings</h2>
+          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+            Settings
+          </summary>
           <Button
             onClick={async () => {
               try {
@@ -112,21 +112,13 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
             <option value='MANAGERS'>Owners and moderators</option>
             <option value='MEMBERS'>Any eligible member</option>
           </select>
-        </section>
+        </details>
       )}
       {!canAccess ? (
-        <p>
-          Complete required onboarding before using ordinary forms. Your own
-          saved history remains available by its original form link.
-        </p>
+        <p>Complete required onboarding to use forms.</p>
       ) : (
         <>
-          {!policy.enabled && (
-            <p>
-              Forms are disabled. Configuration and saved responses are
-              preserved. Current eligible managers can manage preserved forms.
-            </p>
-          )}
+          {!policy.enabled && <p>Forms are disabled.</p>}
           {policy.enabled &&
             policy.canCreate !== false &&
             (policy.creation === 'MEMBERS' || canManage) && (
@@ -141,7 +133,7 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
             <p role='status'>Loading forms…</p>
           ) : forms?.page.length === 0 ? (
             <p className='rounded-card border border-dashed border-border p-6 text-muted-foreground'>
-              No forms yet. Create a form to collect responses.
+              No forms yet.
             </p>
           ) : null}
           {forms?.page.map(form => (
@@ -159,11 +151,11 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
               >
                 {policy.enabled ? form.title : `Manage ${form.title}`}
               </Link>
-              <p>{form.description}</p>
+              {form.description && <p>{form.description}</p>}
               <p>
                 {form.resultsVisibility === 'MEMBERS'
-                  ? 'Shared responses visible to eligible members'
-                  : 'Personal answers visible to you and current managers'}
+                  ? 'Shared responses'
+                  : 'Personal responses'}
               </p>
             </div>
           ))}
@@ -265,12 +257,10 @@ function FormEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <ContentPage>
-      <h1 className='font-heading'>
-        {initial ? 'Manage form' : 'Create form'}
-      </h1>
+    <main className='mx-auto w-full min-w-0 max-w-md space-y-3 px-4 py-4'>
+      <h1 className='sr-only'>{initial ? 'Manage form' : 'Create form'}</h1>
       <form
-        className={contentCanvas}
+        className={formSurface}
         onSubmit={async event => {
           event.preventDefault();
           setBusy(true);
@@ -296,21 +286,18 @@ function FormEditor({
               router.push(`${base}/forms/${id}`);
             }
           } catch (e) {
-            setError(
-              `${failure(e)} Creation is not automatically retried; inspect the form list before repeating an uncertain creation.`
-            );
+            setError(`${failure(e)} Check forms before retrying.`);
           } finally {
             setBusy(false);
           }
         }}
       >
-        <ContentKind kind='Form' editing />
         <Label className='sr-only' htmlFor='ordinary-form-title'>
           Form title
         </Label>
         <Textarea
-          rows={2}
-          className={contentTitleField}
+          rows={1}
+          className={formTitleField}
           id='ordinary-form-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -322,9 +309,9 @@ function FormEditor({
           Description
         </Label>
         <Textarea
-          rows={2}
+          rows={1}
           placeholder='Add a description…'
-          className={contentDescriptionField}
+          className={formDescriptionField}
           id='ordinary-form-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -340,46 +327,45 @@ function FormEditor({
           onChange={setQuestions}
           disabled={busy}
         />
-        <ContentSettings>
-          {!initial && (
-            <>
-              <Label htmlFor='ordinary-form-visibility'>
-                Response visibility (fixed for this form)
-              </Label>
-              <select
-                id='ordinary-form-visibility'
-                value={visibility}
-                onChange={e =>
-                  setVisibility(
-                    e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
-                  )
-                }
-                disabled={busy}
-              >
-                <option value='MANAGERS'>
-                  Personal: you and current managers
-                </option>
-                <option value='MEMBERS'>Shared: all eligible members</option>
-              </select>
-            </>
-          )}{' '}
-          <p>
-            Configuration changes preserve saved answers and their original
-            question definitions. Current-version answers require review before
-            saving. This is not the joining questionnaire.
-          </p>{' '}
-        </ContentSettings>
-        <Button disabled={busy}>
-          {initial ? 'Save form settings' : 'Create form'}
-        </Button>
-        <Button
-          variant='ghost'
-          type='button'
-          disabled={busy}
-          onClick={() => router.push(`${base}/forms`)}
-        >
-          Cancel
-        </Button>
+        {!initial && (
+          <details className='text-sm'>
+            <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+              Visibility · {visibility === 'MANAGERS' ? 'Personal' : 'Shared'}
+            </summary>
+            <Label className='sr-only' htmlFor='ordinary-form-visibility'>
+              Response visibility (fixed for this form)
+            </Label>
+            <select
+              className='w-full min-w-0 rounded-input border border-input bg-background p-2'
+              id='ordinary-form-visibility'
+              value={visibility}
+              onChange={e =>
+                setVisibility(
+                  e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
+                )
+              }
+              disabled={busy}
+            >
+              <option value='MANAGERS'>
+                Personal: you and current managers
+              </option>
+              <option value='MEMBERS'>Shared: all eligible members</option>
+            </select>
+          </details>
+        )}
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button disabled={busy}>
+            {initial ? 'Save changes' : 'Create form'}
+          </Button>
+          <Button
+            variant='ghost'
+            type='button'
+            disabled={busy}
+            onClick={() => router.push(`${base}/forms`)}
+          >
+            Cancel
+          </Button>
+        </div>
         {error && (
           <p
             role='alert'
@@ -390,17 +376,22 @@ function FormEditor({
         )}
       </form>
       {initial && (
-        <GroupConfirmedAction
-          label='Delete form'
-          confirmation='Confirm deleting form and all responses'
-          explanation='This permanently removes the preserved form and all response history.'
-          onConfirm={async () => {
-            await deleteForm({ toolId: initial._id });
-            router.push(`${base}/forms`);
-          }}
-        />
+        <details className='text-sm'>
+          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+            Actions
+          </summary>
+          <GroupConfirmedAction
+            label='Delete form'
+            confirmation='Confirm deleting form and all responses'
+            explanation='This permanently removes the preserved form and all response history.'
+            onConfirm={async () => {
+              await deleteForm({ toolId: initial._id });
+              router.push(`${base}/forms`);
+            }}
+          />
+        </details>
       )}
-    </ContentPage>
+    </main>
   );
 }
 export function GroupFormInteraction({
@@ -439,24 +430,27 @@ function FormInteraction({
   const base = useContentBase(groupId);
   const submit = useSubmitFormResponse();
   const remove = useRemoveFormResponse();
-  const deleteForm = useDeleteForm();
-  const router = useRouter();
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   return (
-    <ContentPage>
-      <ContentKind kind='Form' />
-      <h1 className='font-heading'>{form.title}</h1>
-      <p>{form.description}</p>
-      <p className='text-sm text-muted-foreground'>
+    <main className={formSurface}>
+      <h1 className='font-heading text-lg font-semibold leading-snug'>
+        {form.title}
+      </h1>
+      {form.description && (
+        <p className='text-sm leading-relaxed'>{form.description}</p>
+      )}
+      <p className='text-xs text-muted-foreground'>
         {form.resultsVisibility === 'MEMBERS'
-          ? 'Shared with eligible members'
-          : 'Visible to you and current managers'}
+          ? 'Shared responses'
+          : 'Only you and managers can see your response'}
       </p>
       <form
-        className={contentCanvas}
+        className='space-y-4'
         onSubmit={async e => {
           e.preventDefault();
+          if (busy) return;
           setBusy(true);
           setMessage('');
           try {
@@ -474,73 +468,65 @@ function FormInteraction({
           }
         }}
       >
-        <ApplicationQuestionFields
-          questions={form.questions}
-          answers={answers}
-          onChange={setAnswers}
-          disabled={busy}
-        />
-        <Button
-          icon={<ActionSave aria-hidden='true' className='size-4' />}
-          disabled={busy}
-        >
-          Save response
+        <div className='[&>div>div]:border-0 [&>div>div]:p-0 [&>div>fieldset]:border-0 [&>div>fieldset]:p-0'>
+          <ApplicationQuestionFields
+            questions={form.questions}
+            answers={answers}
+            onChange={setAnswers}
+            disabled={busy}
+          />
+        </div>
+        <Button disabled={busy} isLoading={busy} loadingText='Submitting…'>
+          {form.savedVersion === null ? 'Submit response' : 'Update response'}
         </Button>
       </form>
-      <ContentSettings title='Privacy & saved history'>
-        <p>
-          {form.resultsVisibility === 'MEMBERS'
-            ? 'Shared contribution: eligible members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-            : 'Personal answers: only you and current eligible managers can see them. Account deletion purges your answers and history.'}{' '}
-          Managers may moderate ordinary responses. Removing your response also
-          removes its history.
-        </p>
-      </ContentSettings>
-      {form.savedVersion !== null && (
-        <GroupConfirmedAction
-          label='Remove my response'
-          confirmation='Confirm removing my response and its history'
-          explanation='Your latest response and private revision history will be removed.'
-          onConfirm={() => remove({ toolId: form._id })}
-        />
-      )}
-      <Link
-        className='text-primary underline'
-        href={`${base}/forms/${form._id}/history`}
-      >
-        My saved answer history
-      </Link>
-      {form.canManage && (
-        <>
-          <Link
-            className='text-primary underline'
-            href={`${base}/forms/${form._id}/settings`}
-          >
-            Manage form settings
-          </Link>
-          <GroupConfirmedAction
-            label='Delete form'
-            confirmation='Confirm deleting form and all responses'
-            explanation='This permanently removes the form and all response history.'
-            onConfirm={async () => {
-              await deleteForm({ toolId: form._id });
-              router.push(`${base}/forms`);
-            }}
-          />
-        </>
+      {(form.savedVersion !== null || form.canManage) && (
+        <details className='text-sm'>
+          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+            Actions
+          </summary>
+          <fieldset disabled={busy} className='space-y-3'>
+            {form.savedVersion !== null && (
+              <GroupConfirmedAction
+                label='Remove my response'
+                confirmation='Confirm removing my response and its history'
+                explanation='Your response and its history will be removed.'
+                onConfirm={() => remove({ toolId: form._id })}
+              />
+            )}
+            {form.canManage && (
+              <Link
+                className='inline-flex min-h-10 items-center text-primary underline'
+                href={`${base}/forms/${form._id}/settings`}
+              >
+                Edit form
+              </Link>
+            )}
+          </fieldset>
+        </details>
       )}
       {message && (
-        <p
-          role='status'
-          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
-        >
+        <p role='status' className='text-sm'>
           {message}
         </p>
       )}
       {form.canReview && (
-        <GroupFormResults toolId={form._id} canManage={form.canManage} />
+        <>
+          <Button
+            type='button'
+            variant='ghost'
+            className='px-0'
+            aria-expanded={showResults}
+            onClick={() => setShowResults(!showResults)}
+          >
+            {showResults ? 'Hide responses' : 'Responses'}
+          </Button>
+          {showResults && (
+            <GroupFormResults toolId={form._id} canManage={form.canManage} />
+          )}
+        </>
       )}
-    </ContentPage>
+    </main>
   );
 }
 function SavedAnswers({
@@ -551,7 +537,7 @@ function SavedAnswers({
   answers: ApplicationAnswers;
 }) {
   return (
-    <dl className='space-y-4'>
+    <dl className='space-y-3'>
       {questions.map(q => {
         const value = answers[q.id];
         return (
@@ -626,7 +612,7 @@ function GroupFormResults({
   const remove = useRemoveFormResult();
   return (
     <section className='space-y-3'>
-      <h2 className='font-heading'>Latest responses</h2>
+      <h2 className='sr-only'>Latest responses</h2>
       {results === undefined ? (
         <p role='status'>Loading responses…</p>
       ) : results.page.length === 0 ? (
@@ -635,8 +621,8 @@ function GroupFormResults({
         </p>
       ) : null}
       {results?.page.map(row => (
-        <div key={row._id} className='rounded-card border border-border p-4'>
-          <p>
+        <div key={row._id} className='space-y-3 border-t border-border pt-3'>
+          <p className='text-xs text-muted-foreground'>
             {row.personId ? 'Member contribution' : 'Anonymous contribution'} ·
             form version {row.version}
           </p>
