@@ -1,7 +1,7 @@
 import { EventToolScope } from '@/features/content';
 import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -111,10 +111,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
     onChange?.(true)
   );
   vi.spyOn(client, 'clearAuth').mockImplementation(() => {});
+  const listeners = new Set<() => void>();
   const watch = vi
     .spyOn(client, 'watchQuery')
     .mockImplementation((...[query]) => ({
-      onUpdate: () => () => {},
+      onUpdate: listener => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
       localQueryResult: () => {
         const name = getFunctionName(query);
         if (!(name in data)) throw new Error(`Unexpected query ${name}`);
@@ -132,7 +136,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
       </ConvexProviderWithAuth>
     );
   }
-  return { client, mutation, watch, Provider };
+  return {
+    client,
+    mutation,
+    watch,
+    Provider,
+    data,
+    refresh: () => listeners.forEach(listener => listener()),
+  };
 }
 it('creates a reusable template via real shared/app hooks and accessible editor controls', async () => {
   const sharedSdk = createRequire(import.meta.url)(
@@ -167,6 +178,7 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
   expect(mutation.mock.calls[0][1]).toMatchObject({
     groupId,
     title: 'Reading feedback',
+    description: 'Share feedback with everyone.',
     resultsVisibility: 'MEMBERS',
     questions: [{ id: 'feedback', type: 'LONG_ANSWER', required: true }],
   });
@@ -655,4 +667,54 @@ it('denies Event moderator creation when only organizers may create content', as
   ).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();
+});
+
+it('retains saved feedback through a reactive response revision while reseeding answers and isolating tools', async () => {
+  const f = fixture();
+  const m = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Favorite book'), 'Kindred');
+  await user.click(screen.getByRole('button', { name: 'Save response' }));
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Response saved.'
+  );
+  await act(async () => {
+    f.data['groupForms/queries:getForm'] = {
+      ...form,
+      responseRevision: 1,
+      savedVersion: 1,
+      answers: { book: 'Kindred' },
+    };
+    f.refresh();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Response saved.');
+  expect(screen.getByLabelText('Favorite book')).toHaveValue('Kindred');
+  await user.clear(screen.getByLabelText('Favorite book'));
+  await user.type(
+    screen.getByLabelText('Favorite book'),
+    'Unsaved local draft'
+  );
+  const otherId = 'tool-two' as Id<'groupTools'>;
+  f.data['groupForms/queries:getForm'] = {
+    ...form,
+    _id: otherId,
+    title: 'Another form',
+    responseRevision: 1,
+    answers: { book: 'Other saved answer' },
+  };
+  m.rerender(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={otherId} />
+    </f.Provider>
+  );
+  expect(screen.getByLabelText('Favorite book')).toHaveValue(
+    'Other saved answer'
+  );
+  expect(screen.queryByText('Response saved.')).not.toBeInTheDocument();
+  m.unmount();
+  await f.client.close();
 });

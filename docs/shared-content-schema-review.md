@@ -29,17 +29,19 @@ Group API names solely as canonical storage adapters.
    durable alias adapter. Attachments, notification links, mutes and unread state
    must follow the identity map. Copying must be resumable and idempotent, with
    counts and per-record verification before any retirement decision.
-5. Request approval for the exact target, migration procedure and rollback/data
-   preservation plan. The current feature approval does not authorize executing
-   that migration or deploying the backend.
+5. Confirm approval for the exact target, procedure and rollback/data preservation
+   plan. The later authorization covers additive test-only rollout and isolated
+   fixture access; destructive rewriting, retirement or restoring over current
+   data still requires exact separate confirmation.
 6. Run real Convex codegen against the approved target, then matching authenticated
    web/native acceptance checks. Legacy Event clients/URLs, Event-only API grants,
    Group onboarding revocation, attachments, queued notification privacy and Bring
    List quantities/claims are explicit acceptance cases.
 
-Existing draft-branch deployment suppression must remain in place until an
-explicit deployment decision is made. Merging this PR would target `test`, whose
-existing automatic workflow can deploy Convex; no merge is authorized here.
+The feature-branch deployment suppression remains in place. The later test-only
+merge authorization applies only after verified backup and passing acceptance/CI.
+The existing `test` workflow deploys the matching preview backend; production is
+outside scope.
 
 ## Test rollout preflight — 2026-10-25
 
@@ -64,13 +66,44 @@ schema/index evolution only, with no data migration, deletion or table retiremen
 Configured `pnpm generate` passed against the verified preview; it changes generated
 declaration ordering only and does not activate the new application deployment.
 
-Authenticated acceptance is blocked: the preview has `E2E_TESTING=true` but no
+At that preflight, authenticated acceptance was blocked: the preview had
+`E2E_TESTING=true` but no
 configured `E2E_FIXTURE_KEY`; the GitHub repository also has no fixture-key secret.
-Creating or configuring this authentication capability requires separate approval.
-Do not merge until isolated fixture authentication and provider isolation are ready.
+Creating this authentication capability required separate approval, subsequently
+provided for test only. Isolated fixture authentication and provider isolation
+remain required acceptance gates.
 
 Rollback must preserve the additive schema after any new Group-parent records are
 created. Do not revert to a schema requiring Event parents, overwrite current data,
 or import the backup without separate confirmation. Prefer a compatible forward
 fix or retain the union schema with the last compatible application code. The backup
 provides a recovery source, not permission to discard intervening writes.
+
+## Approved test-only continuation — 2026-10-26
+
+The user approved configuring the test-backend/GitHub fixture key and creating
+labelled isolated users/sessions with external delivery suppressed. The key was
+configured through secure standard input; its value is not stored in source,
+logs or reports. There are no fixture notification methods, push tokens or
+provider connections, and authentication uses direct test-token verification
+rather than requesting an email.
+
+Authenticated identity was rechecked against the same non-default `preview/test`.
+Fresh backup reference `groupi-test-pre436-1792978139892319883` has SHA-256
+`252b9332ad930c77531bddea08bd00e75ac6bbebd58d321739a51917d0f07128`.
+All 147 document files passed archive integrity, JSON and identity checks:
+532 data records, 133 catalog records and zero file payloads. Component data and
+a private per-table count/hash manifest are retained with the local export.
+
+The candidate deployment dry run validated the schema and confirmed no index
+deletions. Candidate functions/schema were then deployed only to the verified test
+preview. A separate post-candidate export confirmed protected Events, Post IDs,
+replies/attachments, notifications, add-on configuration/data and ordinary tools
+were unchanged. No Post data migration or record rewrite was performed.
+
+Real authenticated acceptance uses a matching candidate frontend and this backend.
+Its scoped cleanup retires created Events/Groups through canonical operations,
+then deletes only the exact newly created fixture account with its confirmation.
+Uncertain cleanup retains an ID-only recovery manifest instead of broad deletion.
+Final acceptance, exact-head CI and a still-current verified backup are merge gates;
+PR #436 records their final results and deployed frontend/alias identity.

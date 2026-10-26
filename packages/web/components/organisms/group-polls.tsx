@@ -471,23 +471,30 @@ export function GroupPollInteraction({
   toolId: Id<'groupTools'>;
 }) {
   const poll = usePoll({ toolId });
+  const [feedback, setFeedback] = useState({ toolId, message: '' });
   if (!poll) return <p role='status'>Loading poll…</p>;
   if ((poll.groupId ?? poll.eventId) !== groupId)
     return <p role='alert'>Poll unavailable in this context.</p>;
   return (
     <PollInteraction
-      key={`${poll.version}:${poll.voteRevision}`}
+      key={`${poll._id}:${poll.version}:${poll.voteRevision}`}
       poll={poll}
       groupId={groupId}
+      message={feedback.toolId === toolId ? feedback.message : ''}
+      onMessage={message => setFeedback({ toolId, message })}
     />
   );
 }
 function PollInteraction({
   poll,
   groupId,
+  message,
+  onMessage: setMessage,
 }: {
   poll: NonNullable<ReturnType<typeof usePoll>>;
   groupId: ContentOwnerId;
+  message: string;
+  onMessage: (message: string) => void;
 }) {
   const base = useContentBase(groupId);
   const submit = useSubmitPollVote();
@@ -496,7 +503,6 @@ function PollInteraction({
   const router = useRouter();
   const [selections, setSelections] = useState(poll.selections);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
       <h1 className='font-heading'>{poll.title}</h1>

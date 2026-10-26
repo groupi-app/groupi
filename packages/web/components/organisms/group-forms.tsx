@@ -378,23 +378,30 @@ export function GroupFormInteraction({
   toolId: Id<'groupTools'>;
 }) {
   const form = useForm({ toolId });
+  const [feedback, setFeedback] = useState({ toolId, message: '' });
   if (!form) return <p role='status'>Loading form…</p>;
   if ((form.groupId ?? form.eventId) !== groupId)
     return <p role='alert'>Form unavailable in this context.</p>;
   return (
     <FormInteraction
-      key={`${form.version}:${form.responseRevision}`}
+      key={`${form._id}:${form.version}:${form.responseRevision}`}
       form={form}
       groupId={groupId}
+      message={feedback.toolId === toolId ? feedback.message : ''}
+      onMessage={message => setFeedback({ toolId, message })}
     />
   );
 }
 function FormInteraction({
   form,
   groupId,
+  message,
+  onMessage: setMessage,
 }: {
   form: NonNullable<ReturnType<typeof useForm>>;
   groupId: ContentOwnerId;
+  message: string;
+  onMessage: (message: string) => void;
 }) {
   const base = useContentBase(groupId);
   const submit = useSubmitFormResponse();
@@ -403,7 +410,6 @@ function FormInteraction({
   const router = useRouter();
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
   return (
     <main className='p-6 space-y-4'>
       <h1 className='font-heading'>{form.title}</h1>

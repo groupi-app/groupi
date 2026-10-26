@@ -501,3 +501,45 @@ it('failed removal keeps confirmation for deliberate retry and updates revision 
   m.unmount();
   await f.client.close();
 });
+
+it('retains saved feedback through a reactive vote revision while reseeding selections and isolating tools', async () => {
+  const f = fixture();
+  const m = render(
+    <f.Provider>
+      <GroupPollInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('radio', { name: 'Books' }));
+  await user.click(screen.getByRole('button', { name: 'Save vote' }));
+  expect(await screen.findByRole('status')).toHaveTextContent('Vote saved.');
+  await act(async () => {
+    f.data['groupPolls/queries:getPoll'] = {
+      ...poll,
+      voteRevision: 1,
+      savedVersion: 3,
+      selections: ['books'],
+    };
+    f.refresh();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Vote saved.');
+  expect(screen.getByRole('radio', { name: 'Books' })).toBeChecked();
+  await user.click(screen.getByRole('radio', { name: 'Films' }));
+  const otherId = 'tool-two' as Id<'groupTools'>;
+  f.data['groupPolls/queries:getPoll'] = {
+    ...poll,
+    _id: otherId,
+    title: 'Another poll',
+    voteRevision: 1,
+    selections: ['books'],
+  };
+  m.rerender(
+    <f.Provider>
+      <GroupPollInteraction groupId={groupId} toolId={otherId} />
+    </f.Provider>
+  );
+  expect(screen.getByRole('radio', { name: 'Books' })).toBeChecked();
+  expect(screen.queryByText('Vote saved.')).not.toBeInTheDocument();
+  m.unmount();
+  await f.client.close();
+});

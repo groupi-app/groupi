@@ -247,41 +247,47 @@ override only after all checks are green. This does not authorize production
 release. Browser/native verification has not run for this candidate; matching
 runtimes and an isolated signed-in session remain unverified.
 
-## Shared content creation — 2026-10-25
+## Shared content creation — 2026-10-26
 
-Isolated branch `codex/shared-content-creation` starts at test `8fdbc932` and now
-integrates test `f28087b6`, preserving PR435's settings/navigation and shared Event
-loading shell. [Feature disposition and compatibility](../../shared-content-creation.md)
-and [review-only schema rollout plan](../../shared-content-schema-review.md)
-describe canonical Event/Group Posts, reused Forms/Lists/Polls, contextual Event
-participation, and Settings-owned add-on management.
+[PR #436](https://github.com/groupi-app/groupi/pull/436) integrates test `f28087b6`,
+preserving PR435's navigation and loading shell. [Feature disposition](../../shared-content-creation.md)
+and [schema rollout review](../../shared-content-schema-review.md) describe the
+canonical Post parent model, reused tools and contextual Event participation.
 
-`posts` and `replies` are the canonical storage; existing Event IDs, attachments,
-URLs and clients remain compatible. Group-facing APIs are scoped adapters.
-Bring List configuration, quantities, claims and original links are preserved.
-No backend deployment, live notification, data deletion or migration was run.
+The user authorized test-only rollout and isolated fixture access, conditional on
+verified backup and acceptance. Authenticated metadata confirms the backend is a
+non-default `preview/test`, deployment 6295733 in project 1513112, matching the
+public test frontend. Production is outside scope. The branch-specific Vercel
+suppression remains in place; it does not disable the existing `test` rollout.
 
-Final source verification passed: `pnpm check` (830 API contracts), local frontend
-build with fixture-only configuration, backend 141 files / 1,325 tests, web 152
-files / 1,512 tests, native 93 files / 655 tests, shared 17 files / 466 tests, and
-unchanged coverage thresholds. Web coverage: 49.86% statements, 48.44% branches,
-49.34% functions, 50.49% lines. Native coverage: 49.13%, 46.51%, 45.20%, 50.04%.
-Shared coverage: 65.84%, 57.92%, 73.18%, 67.51%. Remaining package suites passed
-separately. Reports are under `/tmp`; tracked report artifacts remain unchanged.
+A fresh private data-and-file export, reference
+`groupi-test-pre436-1792978139892319883`, passed archive/JSON/identity checks:
+532 data records, 133 catalog records, component data included, zero file payloads.
+The test backend has no separate Group Post tables, so no record rewrite or data
+migration is needed. Configured codegen passed. The candidate backend was deployed
+only to the verified preview; protected Event posts, Events, notifications, add-on
+configuration/data and saved tools match the pre-candidate backup exactly.
 
-The approved exact minor note covers convex/shared/web/mobile. The approved
-`vercel.json` deployment guard is scoped only to this feature branch, preventing
-its publication from invoking the existing Convex deployment workflow. Neither
-remote PR merge nor backend deployment is authorized.
+The approved fixture key is configured only on this backend and in GitHub's
+existing E2E workflow secret. Acceptance uses new UUID-labelled `example.invalid`
+users, direct fixture-token authentication, no notification methods/push tokens or
+provider connections, and canonical retirement of only its own fixtures. Secrets,
+authentication state, traces and videos are not persisted in reports.
 
-Backend codegen remains blocked by absent `CONVEX_DEPLOYMENT`; API module
-declarations were updated without configuring an environment. The root test
-command therefore stops at its existing codegen prerequisite; the full offline
-backend suite passed separately. Real codegen, matching authenticated backend/
-frontend acceptance, physical native testing and observed VoiceOver behavior
-remain open gates. Native custom templates use the existing browser handoff;
-native mention autocomplete remains absent in both Event and Group editors.
+The browser suite checks desktop/narrow creation and reload persistence of all
+four content types in both parents, plus legacy Bring List configuration and claim
+preservation. Real reactive updates exposed Form/Poll acknowledgments resetting
+on revision refresh; stable owner feedback now survives while saved values reseed
+and cross-tool drafts remain isolated. Thirty focused tests cover those flows.
+Optional Replay loads only when a Sentry DSN is configured, avoiding errors in
+unconfigured verification builds without filtering browser errors.
 
-Browser fixtures use local transports and no real application data. Creation
-menus, rich discussion composition and contextual participant features are the
-scoped fixture acceptance surfaces; they do not establish live backend acceptance.
+Earlier full source suites passed: backend 1,325, web 1,512, native 655 and shared
+466 tests, with unchanged coverage thresholds. Exact-head CI for `f7c942b5` passed
+all 22 checks. The rollout checkpoint adds the feedback regressions and real
+fixture acceptance; final exact-head checks and authenticated acceptance must
+pass before merge. PR #436 records their results and the eventual rollout SHA.
+Physical native and observed VoiceOver acceptance remain unverified. Native custom
+templates retain browser handoff and native mention autocomplete remains absent
+in both editors. No production operation, destructive rewrite or restore is
+permitted by this rollout authorization.

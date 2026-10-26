@@ -37,7 +37,11 @@ Sentry.init({
 });
 
 // Lazy-load Replay after page is interactive to reduce initial bundle size (~30-50KB)
-if (!isDev && typeof window !== 'undefined') {
+if (
+  !isDev &&
+  process.env.NEXT_PUBLIC_SENTRY_DSN &&
+  typeof window !== 'undefined'
+) {
   window.addEventListener(
     'load',
     () => {
