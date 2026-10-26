@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
+import { GroupPollFeed } from '@/components/organisms/group-polls';
 import { Button } from '@/components/ui/button';
 import { GroupConfirmedAction } from '@/components/organisms/group-confirmed-action';
 import { AttachmentGallery } from '@/components/attachments';
@@ -41,6 +42,7 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
       <h2 id='group-posts-heading' className='font-heading text-2xl font-bold'>
         Posts
       </h2>
+      <GroupPollFeed groupId={groupId} />
       {posts === undefined ? (
         <p role='status'>Loading posts…</p>
       ) : (

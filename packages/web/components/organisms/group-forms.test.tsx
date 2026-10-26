@@ -145,7 +145,7 @@ function fixture(overrides: Record<string, unknown> = {}) {
     refresh: () => listeners.forEach(listener => listener()),
   };
 }
-it('creates a reusable template via real shared/app hooks and accessible editor controls', async () => {
+it('creates directly with authored questions via real shared/app hooks and accessible editor controls', async () => {
   const sharedSdk = createRequire(import.meta.url)(
     '../../../shared/node_modules/convex/react'
   );
@@ -158,14 +158,29 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
     </Provider>
   );
   const user = userEvent.setup();
-  await user.click(
-    screen.getByRole('button', { name: 'Use feedback template' })
+  expect(
+    screen.queryByRole('button', { name: /template/i })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Add question' }));
+  await user.type(
+    screen.getByLabelText('Question text'),
+    'What did you think?'
   );
+  await user.selectOptions(
+    screen.getByLabelText('Question type'),
+    'LONG_ANSWER'
+  );
+  await user.click(screen.getByLabelText('Answer required'));
   expect(
     screen.getByRole('group', { name: 'Form questions' })
   ).toBeInTheDocument();
   await user.clear(screen.getByLabelText('Form title'));
   await user.type(screen.getByLabelText('Form title'), 'Reading feedback');
+  await user.type(
+    screen.getByLabelText('Description'),
+    'Share feedback with everyone.'
+  );
+  await user.click(screen.getByText('Settings & details'));
   await user.selectOptions(
     screen.getByLabelText('Response visibility (fixed for this form)'),
     'MEMBERS'
@@ -180,7 +195,14 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
     title: 'Reading feedback',
     description: 'Share feedback with everyone.',
     resultsVisibility: 'MEMBERS',
-    questions: [{ id: 'feedback', type: 'LONG_ANSWER', required: true }],
+    questions: [
+      {
+        id: expect.any(String),
+        label: 'What did you think?',
+        type: 'LONG_ANSWER',
+        required: true,
+      },
+    ],
   });
   expect(push).toHaveBeenCalledWith('/groups/group-one/forms/tool-one');
   mounted.unmount();
@@ -573,9 +595,19 @@ it('creates an Event form through the shared editor without writing Group policy
     </Provider>
   );
   const user = userEvent.setup();
-  await user.click(
-    screen.getByRole('button', { name: 'Use feedback template' })
+  expect(
+    screen.queryByRole('button', { name: /template/i })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Add question' }));
+  await user.type(
+    screen.getByLabelText('Question text'),
+    'What did you think?'
   );
+  await user.selectOptions(
+    screen.getByLabelText('Question type'),
+    'LONG_ANSWER'
+  );
+  await user.click(screen.getByLabelText('Answer required'));
   await user.click(screen.getByRole('button', { name: 'Create form' }));
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(

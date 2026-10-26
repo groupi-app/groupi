@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
-import { groupListTemplates, listEntryRequestId } from '@groupi/shared/utils';
+import { listEntryRequestId } from '@groupi/shared/utils';
 import {
   useToolOwner as useGroup,
   useContentBase,
@@ -12,7 +12,15 @@ import {
 } from '@/features/content/tool-scope';
 import * as hooks from '@/hooks/convex/use-group-lists';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  ContentPage,
+  ContentKind,
+  ContentSettings,
+  contentCanvas,
+  contentTitleField,
+  contentDescriptionField,
+} from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 import { GroupConfirmedAction } from './group-confirmed-action';
 function failure(error: unknown) {
@@ -38,7 +46,7 @@ export function GroupLists({ groupId }: { groupId: ContentOwnerId }) {
   );
   if (!group || !policy) return <p role='status'>Loading lists…</p>;
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading'>
         {base.startsWith('/event/') ? 'Event lists' : 'Community lists'}
       </h1>
@@ -117,6 +125,13 @@ export function GroupLists({ groupId }: { groupId: ContentOwnerId }) {
                 Create list
               </Link>
             )}
+          {lists === undefined && (policy.enabled || manager) ? (
+            <p role='status'>Loading lists…</p>
+          ) : lists?.page.length === 0 ? (
+            <p className='rounded-card border border-dashed border-border p-6 text-muted-foreground'>
+              No lists yet. Create a list to gather contributions.
+            </p>
+          ) : null}
           {lists?.page.map(list => (
             <div
               className='rounded-card border border-border p-4'
@@ -146,8 +161,15 @@ export function GroupLists({ groupId }: { groupId: ContentOwnerId }) {
           )}
         </>
       )}
-      {error && <p role='alert'>{error}</p>}
-    </main>
+      {error && (
+        <p
+          role='alert'
+          className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+        >
+          {error}
+        </p>
+      )}
+    </ContentPage>
   );
 }
 export function GroupListEditor({
@@ -209,26 +231,10 @@ function ListEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading'>{list ? 'Manage list' : 'Create list'}</h1>
-      {!list && (
-        <div aria-label='Reusable list templates'>
-          {groupListTemplates.map(template => (
-            <Button
-              key={template.id}
-              variant='outline'
-              onClick={() => {
-                setTitle(template.title);
-                setDescription(template.description);
-              }}
-            >
-              Use {template.id} template
-            </Button>
-          ))}
-        </div>
-      )}
       <form
-        className='space-y-3'
+        className={contentCanvas}
         onSubmit={async e => {
           e.preventDefault();
           setBusy(true);
@@ -260,8 +266,13 @@ function ListEditor({
           }
         }}
       >
-        <Label htmlFor='community-list-title'>List title</Label>
-        <Input
+        <ContentKind kind='List' editing />
+        <Label className='sr-only' htmlFor='community-list-title'>
+          List title
+        </Label>
+        <Textarea
+          rows={2}
+          className={contentTitleField}
           id='community-list-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -269,41 +280,59 @@ function ListEditor({
           maxLength={100}
           disabled={busy}
         />
-        <Label htmlFor='community-list-description'>List description</Label>
-        <Input
+        <Label className='sr-only' htmlFor='community-list-description'>
+          List description
+        </Label>
+        <Textarea
+          rows={2}
+          placeholder='Add a description…'
+          className={contentDescriptionField}
           id='community-list-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
           maxLength={2000}
           disabled={busy}
         />
-        {!list && (
-          <>
-            <Label htmlFor='community-list-visibility'>
-              Entry visibility (fixed)
-            </Label>
-            <select
-              id='community-list-visibility'
-              value={visibility}
-              onChange={e =>
-                setVisibility(
-                  e.target.value === 'MANAGERS' ? 'MANAGERS' : 'MEMBERS'
-                )
-              }
-              disabled={busy}
-            >
-              <option value='MEMBERS'>Shared with eligible members</option>
-              <option value='MANAGERS'>Personal to authors and managers</option>
-            </select>
-          </>
-        )}
-        <p>
-          Title/description edits preserve entries and their original saved list
-          title. Authors edit their entries; eligible managers can edit or
-          remove any entry.
-        </p>
+
+        <ContentSettings>
+          {!list && (
+            <>
+              <Label htmlFor='community-list-visibility'>
+                Entry visibility (fixed)
+              </Label>
+              <select
+                id='community-list-visibility'
+                value={visibility}
+                onChange={e =>
+                  setVisibility(
+                    e.target.value === 'MANAGERS' ? 'MANAGERS' : 'MEMBERS'
+                  )
+                }
+                disabled={busy}
+              >
+                <option value='MEMBERS'>Shared with eligible members</option>
+                <option value='MANAGERS'>
+                  Personal to authors and managers
+                </option>
+              </select>
+            </>
+          )}{' '}
+          <p>
+            Title/description edits preserve entries and their original saved
+            list title. Authors edit their entries; eligible managers can edit
+            or remove any entry.
+          </p>{' '}
+        </ContentSettings>
         <Button disabled={busy}>
           {list ? 'Save list settings' : 'Create list'}
+        </Button>
+        <Button
+          variant='ghost'
+          type='button'
+          disabled={busy}
+          onClick={() => router.push(`${base}/lists`)}
+        >
+          Cancel
         </Button>
       </form>
       {list && (
@@ -317,8 +346,15 @@ function ListEditor({
           }}
         />
       )}
-      {error && <p role='alert'>{error}</p>}
-    </main>
+      {error && (
+        <p
+          role='alert'
+          className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+        >
+          {error}
+        </p>
+      )}
+    </ContentPage>
   );
 }
 export function GroupListInteraction({
@@ -335,7 +371,7 @@ export function GroupListInteraction({
     group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
   const list = hooks.useList(eligible && policy?.enabled ? { toolId } : 'skip');
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <Link
         className='text-primary underline'
         href={`${base}/lists/${toolId}/own`}
@@ -354,7 +390,7 @@ export function GroupListInteraction({
       ) : (
         <ListInteraction groupId={groupId} list={list} />
       )}
-    </main>
+    </ContentPage>
   );
 }
 function ListInteraction({
@@ -374,17 +410,16 @@ function ListInteraction({
   const [message, setMessage] = useState('');
   return (
     <section className='space-y-4'>
+      <ContentKind kind='List' />
       <h1 className='font-heading'>{list.title}</h1>
       <p>{list.description}</p>
-      <p>
+      <p className='text-sm text-muted-foreground'>
         {list.resultsVisibility === 'MEMBERS'
-          ? 'Shared entries are visible to eligible members. On account deletion, latest shared entries survive anonymously; retry records are purged.'
-          : 'Personal entries are visible only to their author and current eligible managers. Account deletion purges personal entries and retry records.'}{' '}
-        Authors edit/remove their entries. Managers may moderate any entry.
-        Completion is a list status, with no Event commitment.
+          ? 'Shared with eligible members'
+          : 'Visible to you and current managers'}
       </p>
       <form
-        className='space-y-3'
+        className={contentCanvas}
         onSubmit={async e => {
           e.preventDefault();
           const input = attempt ?? {
@@ -415,7 +450,10 @@ function ListInteraction({
         }}
       >
         <Label htmlFor='community-list-entry'>New entry</Label>
-        <Input
+        <Textarea
+          rows={2}
+          placeholder='Add something to the list…'
+          className='field-sizing-content'
           id='community-list-entry'
           value={text}
           onChange={e => setText(e.target.value)}
@@ -427,6 +465,15 @@ function ListInteraction({
           {attempt ? 'Retry original entry' : 'Add entry'}
         </Button>
       </form>
+      <ContentSettings title='Privacy & saved history'>
+        <p>
+          {list.resultsVisibility === 'MEMBERS'
+            ? 'Shared entries are visible to eligible members. On account deletion, latest shared entries survive anonymously; retry records are purged.'
+            : 'Personal entries are visible only to their author and current eligible managers. Account deletion purges personal entries and retry records.'}{' '}
+          Authors edit/remove their entries. Managers may moderate any entry.
+          Completion is a list status, with no Event commitment.
+        </p>
+      </ContentSettings>
       {attempt && !busy && (
         <>
           <p>
@@ -449,7 +496,14 @@ function ListInteraction({
           />
         </>
       )}
-      {message && <p role='status'>{message}</p>}
+      {message && (
+        <p
+          role='status'
+          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
+        >
+          {message}
+        </p>
+      )}
       {list.canManage && (
         <Link
           className='text-primary underline'
@@ -477,6 +531,13 @@ function GroupListEntries({
   return (
     <section className='space-y-3'>
       <h2 className='font-heading'>Current entries</h2>
+      {entries === undefined ? (
+        <p role='status'>Loading entries…</p>
+      ) : entries.page.length === 0 ? (
+        <p className='rounded-input border border-dashed border-border p-6 text-sm text-muted-foreground'>
+          No entries on this page.
+        </p>
+      ) : null}
       {entries?.page.map(entry => (
         <EntryEditor
           key={`${entry._id}:${entry.revision}:${version}`}
@@ -507,7 +568,7 @@ function EntryEditor({
   const [error, setError] = useState('');
   return (
     <article className='rounded-card border border-border p-4 space-y-3'>
-      <p>
+      <p className='text-xs text-muted-foreground'>
         {entry.personId ? 'Member contribution' : 'Anonymous contribution'} ·
         revision {entry.revision}
       </p>
@@ -534,7 +595,9 @@ function EntryEditor({
           }}
         >
           <Label htmlFor={`entry-${entry._id}`}>Entry text</Label>
-          <Input
+          <Textarea
+            rows={2}
+            className='field-sizing-content'
             id={`entry-${entry._id}`}
             value={text}
             onChange={e => setText(e.target.value)}
@@ -542,8 +605,9 @@ function EntryEditor({
             maxLength={2000}
             disabled={busy}
           />
-          <label>
+          <label className='flex items-center gap-3 rounded-input bg-bg-sunken p-3 text-sm font-medium'>
             <input
+              className='size-4 shrink-0 accent-primary'
               type='checkbox'
               checked={completed}
               onChange={e => setCompleted(e.target.checked)}
@@ -559,7 +623,7 @@ function EntryEditor({
           </Button>
         </form>
       ) : (
-        <p>
+        <p className='whitespace-pre-wrap break-words'>
           {entry.text} · {entry.completed ? 'Completed' : 'Open'}
         </p>
       )}
@@ -585,12 +649,19 @@ export function GroupListOwnEntries({ toolId }: { toolId: Id<'groupTools'> }) {
   });
   const remove = hooks.useRemoveListEntry();
   return (
-    <main className='p-6 space-y-3'>
+    <ContentPage>
       <h1 className='font-heading'>My saved list entries</h1>
       <p>
         Your own retained contributions and their original list title. Current
         private list settings are not loaded.
       </p>
+      {entries === undefined ? (
+        <p role='status'>Loading entries…</p>
+      ) : entries.page.length === 0 ? (
+        <p className='rounded-input border border-dashed border-border p-6 text-sm text-muted-foreground'>
+          No entries on this page.
+        </p>
+      ) : null}
       {entries?.page.map(entry => (
         <article
           key={entry._id}
@@ -615,6 +686,6 @@ export function GroupListOwnEntries({ toolId }: { toolId: Id<'groupTools'> }) {
           Next saved entries
         </Button>
       )}
-    </main>
+    </ContentPage>
   );
 }

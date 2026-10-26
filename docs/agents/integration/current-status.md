@@ -291,3 +291,20 @@ Physical native and observed VoiceOver acceptance remain unverified. Native cust
 templates retain browser handoff and native mention autocomplete remains absent
 in both editors. No production operation, destructive rewrite or restore is
 permitted by this rollout authorization.
+
+## Content UI refinement — 2026-10-26, local only
+
+`codex/content-pages-refinement` starts from freshly fetched test
+`5832fe64e0ad96c8322b850befada4b8a2cf27f5` in an isolated worktree. It refines
+Form/List/Poll authoring and actual participation, removes creator presets, and
+embeds self-contained Poll voting/results cards in Event and Group post feeds.
+Deep links and existing backend/data contracts remain intact. See
+[the design and verification boundaries](../../content-ui-refinement.md).
+
+The fully local browser fixture exercises actual components/CSS with synthetic
+router/data boundaries at desktop and 320/375/390px; it sends no external
+notifications or mutations. Authenticated Next route lifecycle and real backend
+persistence remain open gates for a separately authorized isolated runtime.
+No branch has been pushed, merged or deployed. Automatic Vercel deployment is
+suppressed for this exact branch; the exact web patch changeset batch is prepared
+but awaits the confirmation required by repository workflow.

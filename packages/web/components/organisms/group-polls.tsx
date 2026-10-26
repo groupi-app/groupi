@@ -1,7 +1,6 @@
 'use client';
-import { Save as ActionSave } from 'lucide-react';
+import { ArrowUp, Trash2, Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
-import { GROUP_POLL_TEMPLATES } from '@groupi/shared/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -28,6 +27,16 @@ import {
 } from '@/hooks/convex/use-group-polls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  ContentPage,
+  ContentKind,
+  ContentSettings,
+  contentCanvas,
+  contentTitleField,
+  contentDescriptionField,
+  contentChoice,
+} from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 
 import { GroupConfirmedAction } from './group-confirmed-action';
@@ -68,7 +77,7 @@ export function GroupPolls({ groupId }: { groupId: ContentOwnerId }) {
   );
   if (!group || !policy) return <p role='status'>Loading polls…</p>;
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading text-2xl font-bold'>
         {base.startsWith('/event/') ? 'Event polls' : 'Group polls'}
       </h1>
@@ -133,29 +142,24 @@ export function GroupPolls({ groupId }: { groupId: ContentOwnerId }) {
           ) : polls?.page.length === 0 ? (
             <p>No polls on this page. Eligible creators can create a poll.</p>
           ) : null}
-          {polls?.page.map(poll => (
-            <div
-              key={poll._id}
-              className='rounded-card border border-border p-4'
-            >
+          {polls?.page.map(poll =>
+            policy.enabled ? (
+              <GroupPollInteraction
+                key={poll._id}
+                groupId={groupId}
+                toolId={poll._id}
+                embedded
+              />
+            ) : (
               <Link
-                className='text-primary underline'
-                href={
-                  policy.enabled
-                    ? `${base}/polls/${poll._id}`
-                    : `${base}/polls/${poll._id}/settings`
-                }
+                key={poll._id}
+                className='block rounded-card border border-border p-4 font-semibold text-primary'
+                href={`${base}/polls/${poll._id}/settings`}
               >
-                {policy.enabled ? poll.title : `Manage ${poll.title}`}
+                Manage {poll.title}
               </Link>
-              <p>{poll.description}</p>
-              <p>
-                {poll.resultsVisibility === 'MEMBERS'
-                  ? 'Shared votes visible to eligible members'
-                  : 'Personal votes visible to you and current managers'}
-              </p>
-            </div>
-          ))}
+            )
+          )}
           {polls && !polls.isDone && (
             <Button onClick={() => setCursor(polls.continueCursor)}>
               Next polls
@@ -163,8 +167,15 @@ export function GroupPolls({ groupId }: { groupId: ContentOwnerId }) {
           )}
         </>
       )}
-      {error && <p role='alert'>{error}</p>}
-    </main>
+      {error && (
+        <p
+          role='alert'
+          className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+        >
+          {error}
+        </p>
+      )}
+    </ContentPage>
   );
 }
 export function GroupPollEditor({
@@ -253,28 +264,12 @@ function PollEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading'>
         {initial ? 'Manage poll' : 'Create poll'}
       </h1>
-      {!initial &&
-        GROUP_POLL_TEMPLATES.map(template => (
-          <Button
-            key={template.id}
-            variant='outline'
-            disabled={busy}
-            onClick={() => {
-              setTitle(template.title);
-              setDescription(template.description);
-              setOptions(template.options.map(o => ({ ...o })));
-              setMode(template.mode);
-            }}
-          >
-            Use {template.title} template
-          </Button>
-        ))}
       <form
-        className='space-y-4'
+        className={contentCanvas}
         onSubmit={async event => {
           event.preventDefault();
           setBusy(true);
@@ -310,8 +305,13 @@ function PollEditor({
           }
         }}
       >
-        <Label htmlFor='ordinary-poll-title'>Poll title</Label>
-        <Input
+        <ContentKind kind='Poll' editing />
+        <Label className='sr-only' htmlFor='ordinary-poll-title'>
+          Poll title
+        </Label>
+        <Textarea
+          rows={2}
+          className={contentTitleField}
           id='ordinary-poll-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -319,41 +319,20 @@ function PollEditor({
           required
           disabled={busy}
         />
-        <Label htmlFor='ordinary-poll-description'>Description</Label>
-        <Input
+        <Label className='sr-only' htmlFor='ordinary-poll-description'>
+          Description
+        </Label>
+        <Textarea
+          rows={2}
+          placeholder='Add a description…'
+          className={contentDescriptionField}
           id='ordinary-poll-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
           maxLength={2000}
           disabled={busy}
         />
-        {!initial && (
-          <>
-            <Label htmlFor='ordinary-poll-visibility'>
-              Vote visibility (fixed for this poll)
-            </Label>
-            <select
-              id='ordinary-poll-visibility'
-              value={visibility}
-              onChange={e =>
-                setVisibility(
-                  e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
-                )
-              }
-              disabled={busy}
-            >
-              <option value='MANAGERS'>
-                Personal: you and current managers
-              </option>
-              <option value='MEMBERS'>Shared: all eligible members</option>
-            </select>
-          </>
-        )}
-        <p>
-          Configuration changes preserve saved votes and their original option
-          definitions. Current-version choices require review before saving.
-          This is not the joining questionnaire.
-        </p>
+
         <Label htmlFor='poll-mode'>Voting rule</Label>
         <select
           id='poll-mode'
@@ -369,62 +348,83 @@ function PollEditor({
         <fieldset disabled={busy} className='space-y-3'>
           <legend>Poll options</legend>
           {options.map((option, index) => (
-            <div key={index} className='space-y-2'>
-              <Label htmlFor={`option-id-${index}`}>
-                Option {index + 1} stable ID
-              </Label>
-              <Input
-                id={`option-id-${index}`}
-                value={option.id}
-                onChange={e =>
-                  setOptions(
-                    options.map((o, i) =>
-                      i === index ? { ...o, id: e.target.value } : o
-                    )
-                  )
-                }
-              />
-              <Label htmlFor={`option-label-${index}`}>
-                Option {index + 1} label
-              </Label>
-              <Input
-                id={`option-label-${index}`}
-                value={option.label}
-                onChange={e =>
-                  setOptions(
-                    options.map((o, i) =>
-                      i === index ? { ...o, label: e.target.value } : o
-                    )
-                  )
-                }
-              />
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() =>
-                  setOptions(options.filter((_, i) => i !== index))
-                }
-              >
-                Remove option {index + 1}
-              </Button>
-              {index > 0 && (
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() =>
+            <div
+              key={index}
+              className='space-y-2 rounded-input border border-border bg-bg-sunken/50 p-3'
+            >
+              <div className='flex min-w-0 items-start gap-2'>
+                <span
+                  aria-hidden='true'
+                  className='mt-3 size-4 shrink-0 rounded-full border-2 border-border'
+                />
+                <Label className='sr-only' htmlFor={`option-label-${index}`}>
+                  Option {index + 1} label
+                </Label>
+                <Textarea
+                  rows={1}
+                  className='min-h-10 min-w-0 flex-1 resize-y bg-transparent field-sizing-content'
+                  id={`option-label-${index}`}
+                  value={option.label}
+                  onChange={e =>
                     setOptions(
-                      options.toSpliced(
-                        index - 1,
-                        2,
-                        option,
-                        options[index - 1]
+                      options.map((o, i) =>
+                        i === index ? { ...o, label: e.target.value } : o
                       )
                     )
                   }
+                />
+              </div>
+              <div className='flex flex-wrap justify-end gap-1'>
+                <Button
+                  type='button'
+                  size='icon'
+                  className='shrink-0'
+                  variant='ghost'
+                  aria-label={`Remove option ${index + 1}`}
+                  onClick={() =>
+                    setOptions(options.filter((_, i) => i !== index))
+                  }
                 >
-                  Move option {index + 1} up
+                  <Trash2 aria-hidden='true' className='size-4' />
                 </Button>
-              )}
+                {index > 0 && (
+                  <Button
+                    type='button'
+                    size='icon'
+                    className='shrink-0'
+                    variant='ghost'
+                    aria-label={`Move option ${index + 1} up`}
+                    onClick={() =>
+                      setOptions(
+                        options.toSpliced(
+                          index - 1,
+                          2,
+                          option,
+                          options[index - 1]
+                        )
+                      )
+                    }
+                  >
+                    <ArrowUp aria-hidden='true' className='size-4' />
+                  </Button>
+                )}
+              </div>
+              <ContentSettings title={`Option ${index + 1} identifier`}>
+                <Label htmlFor={`option-id-${index}`}>
+                  Option {index + 1} stable ID
+                </Label>
+                <Input
+                  id={`option-id-${index}`}
+                  value={option.id}
+                  onChange={e =>
+                    setOptions(
+                      options.map((o, i) =>
+                        i === index ? { ...o, id: e.target.value } : o
+                      )
+                    )
+                  }
+                />
+              </ContentSettings>
             </div>
           ))}
           <Button
@@ -439,15 +439,60 @@ function PollEditor({
             Add poll option
           </Button>
         </fieldset>
-        <p>
-          Stable IDs identify choices. Label and order changes retain valid
-          votes. Changing the rule or option IDs makes earlier votes historical;
-          members must vote again. Results visibility stays fixed.
-        </p>
+
+        <ContentSettings>
+          <p>
+            Stable IDs identify choices. Label and order changes retain valid
+            votes. Changing the rule or option IDs makes earlier votes
+            historical; members must vote again. Results visibility stays fixed.
+          </p>
+          {!initial && (
+            <>
+              <Label htmlFor='ordinary-poll-visibility'>
+                Vote visibility (fixed for this poll)
+              </Label>
+              <select
+                id='ordinary-poll-visibility'
+                value={visibility}
+                onChange={e =>
+                  setVisibility(
+                    e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
+                  )
+                }
+                disabled={busy}
+              >
+                <option value='MANAGERS'>
+                  Personal: you and current managers
+                </option>
+                <option value='MEMBERS'>Shared: all eligible members</option>
+              </select>
+            </>
+          )}{' '}
+          <p>
+            Configuration changes preserve saved votes and their original option
+            definitions. Current-version choices require review before saving.
+            This is not the joining questionnaire.
+          </p>{' '}
+        </ContentSettings>
         <Button disabled={busy}>
           {initial ? 'Save poll settings' : 'Create poll'}
         </Button>
-        {error && <p role='alert'>{error}</p>}
+        <Button
+          variant='ghost'
+          type='button'
+          disabled={busy}
+          onClick={() => router.push(`${base}/polls`)}
+        >
+          Cancel
+        </Button>
+        {error && (
+          <p
+            role='alert'
+            className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+          >
+            {error}
+          </p>
+        )}
       </form>
       {initial && (
         <GroupConfirmedAction
@@ -460,15 +505,17 @@ function PollEditor({
           }}
         />
       )}
-    </main>
+    </ContentPage>
   );
 }
 export function GroupPollInteraction({
   groupId,
   toolId,
+  embedded = false,
 }: {
   groupId: ContentOwnerId;
   toolId: Id<'groupTools'>;
+  embedded?: boolean;
 }) {
   const poll = usePoll({ toolId });
   const [feedback, setFeedback] = useState({ toolId, message: '' });
@@ -479,6 +526,7 @@ export function GroupPollInteraction({
     <PollInteraction
       key={`${poll._id}:${poll.version}:${poll.voteRevision}`}
       poll={poll}
+      embedded={embedded}
       groupId={groupId}
       message={feedback.toolId === toolId ? feedback.message : ''}
       onMessage={message => setFeedback({ toolId, message })}
@@ -487,11 +535,13 @@ export function GroupPollInteraction({
 }
 function PollInteraction({
   poll,
+  embedded,
   groupId,
   message,
   onMessage: setMessage,
 }: {
   poll: NonNullable<ReturnType<typeof usePoll>>;
+  embedded?: boolean;
   groupId: ContentOwnerId;
   message: string;
   onMessage: (message: string) => void;
@@ -503,21 +553,20 @@ function PollInteraction({
   const router = useRouter();
   const [selections, setSelections] = useState(poll.selections);
   const [busy, setBusy] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   return (
-    <main className='p-6 space-y-4'>
-      <h1 className='font-heading'>{poll.title}</h1>
+    <ContentPage embedded={embedded}>
+      <ContentKind kind='Poll' />
+      {embedded ? (
+        <h2 className='font-heading'>{poll.title}</h2>
+      ) : (
+        <h1 className='font-heading'>{poll.title}</h1>
+      )}
       <p>{poll.description}</p>
-      <p>
-        Polls do not choose Event dates or change Event RSVP. One latest vote is
-        saved; repeat saves are safe and concurrent edits require current
-        revision review.
-      </p>
-      <p>
+      <p className='text-sm text-muted-foreground'>
         {poll.resultsVisibility === 'MEMBERS'
-          ? 'Shared contribution: eligible members can see your latest votes. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-          : 'Personal votes: only you and current eligible managers can see them. Account deletion purges your votes and history.'}{' '}
-        Managers may moderate ordinary votes. Removing your vote also removes
-        its history.
+          ? 'Shared with eligible members'
+          : 'Visible to you and current managers'}
       </p>
       <form
         className='space-y-4'
@@ -540,17 +589,18 @@ function PollInteraction({
           }
         }}
       >
-        <fieldset disabled={busy}>
+        <fieldset disabled={busy} className='space-y-2'>
           <legend>
             {poll.mode === 'SINGLE'
               ? 'Choose one option'
               : 'Choose one or more options'}
           </legend>
           {poll.options.map(option => (
-            <Label key={option.id} className='block'>
+            <Label key={option.id} className={contentChoice}>
               <input
                 type={poll.mode === 'SINGLE' ? 'radio' : 'checkbox'}
-                name='poll-vote'
+                name={`poll-vote-${poll._id}`}
+                className='mt-1 size-4 shrink-0 accent-primary'
                 checked={selections.includes(option.id)}
                 onChange={() =>
                   setSelections(
@@ -562,7 +612,7 @@ function PollInteraction({
                   )
                 }
               />
-              {option.label}
+              <span className='min-w-0 flex-1 break-words'>{option.label}</span>
             </Label>
           ))}
         </fieldset>
@@ -573,57 +623,92 @@ function PollInteraction({
           Save vote
         </Button>
       </form>
-      {poll.savedVersion !== null && (
+      <ContentSettings title='Privacy & saved history'>
         <p>
-          Original saved options remain in your private history. Review current
-          choices before resubmitting after voting rules or option IDs change.
+          Polls do not choose Event dates or change Event RSVP. One latest vote
+          is saved; repeat saves are safe and concurrent edits require current
+          revision review.
         </p>
-      )}
-      {poll.savedVersion !== null && (
-        <GroupConfirmedAction
-          label='Remove my vote'
-          confirmation='Confirm removing my vote and its history'
-          explanation='Your latest vote and private revision history will be removed.'
-          onConfirm={() =>
-            remove({ toolId: poll._id, expectedRevision: poll.voteRevision })
-          }
-        />
-      )}
-      <Link
-        className='text-primary underline'
-        href={`${base}/polls/${poll._id}/history`}
-      >
-        My saved vote history
-      </Link>
-      {poll.canManage && (
-        <>
-          <Link
-            className='text-primary underline'
-            href={`${base}/polls/${poll._id}/settings`}
-          >
-            Manage poll settings
-          </Link>
+        <p>
+          {poll.resultsVisibility === 'MEMBERS'
+            ? 'Shared contribution: eligible members can see your latest votes. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
+            : 'Personal votes: only you and current eligible managers can see them. Account deletion purges your votes and history.'}{' '}
+          Managers may moderate ordinary votes. Removing your vote also removes
+          its history.
+        </p>
+      </ContentSettings>
+      <ContentSettings title='Vote actions & history'>
+        {poll.savedVersion !== null && (
+          <p>
+            Original saved options remain in your private history. Review
+            current choices before resubmitting after voting rules or option IDs
+            change.
+          </p>
+        )}
+        {poll.savedVersion !== null && (
           <GroupConfirmedAction
-            label='Delete poll'
-            confirmation='Confirm deleting poll and all votes'
-            explanation='This permanently removes the poll and all vote history.'
-            onConfirm={async () => {
-              await deletePoll({ toolId: poll._id });
-              router.push(`${base}/polls`);
-            }}
+            label='Remove my vote'
+            confirmation='Confirm removing my vote and its history'
+            explanation='Your latest vote and private revision history will be removed.'
+            onConfirm={() =>
+              remove({ toolId: poll._id, expectedRevision: poll.voteRevision })
+            }
           />
-        </>
-      )}
-      {message && <p role='status'>{message}</p>}
-      {poll.canReview && (
+        )}
         <Link
           className='text-primary underline'
-          href={`${base}/polls/${poll._id}/results`}
+          href={`${base}/polls/${poll._id}/history`}
         >
-          View poll results
+          My saved vote history
         </Link>
+        {poll.canManage && (
+          <>
+            <Link
+              className='text-primary underline'
+              href={`${base}/polls/${poll._id}/settings`}
+            >
+              Manage poll settings
+            </Link>
+            <GroupConfirmedAction
+              label='Delete poll'
+              confirmation='Confirm deleting poll and all votes'
+              explanation='This permanently removes the poll and all vote history.'
+              onConfirm={async () => {
+                await deletePoll({ toolId: poll._id });
+                router.push(`${base}/polls`);
+              }}
+            />
+          </>
+        )}
+      </ContentSettings>
+      {message && (
+        <p
+          role='status'
+          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
+        >
+          {message}
+        </p>
       )}
-    </main>
+      {poll.canReview && (
+        <>
+          <Button
+            variant='ghost'
+            type='button'
+            aria-expanded={showResults}
+            onClick={() => setShowResults(!showResults)}
+          >
+            {showResults ? 'Hide poll results' : 'View poll results'}
+          </Button>
+          {showResults && (
+            <PollResultsRecords
+              toolId={poll._id}
+              canManage={poll.canManage}
+              options={poll.options}
+            />
+          )}
+        </>
+      )}
+    </ContentPage>
   );
 }
 function SavedVotes({
@@ -695,9 +780,11 @@ export function GroupPollHistory({ toolId }: { toolId: Id<'groupTools'> }) {
 function PollResultsRecords({
   toolId,
   canManage,
+  options = [],
 }: {
   toolId: Id<'groupTools'>;
   canManage: boolean;
+  options?: NonNullable<ReturnType<typeof usePoll>>['options'];
 }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const results = usePollResults({
@@ -705,6 +792,8 @@ function PollResultsRecords({
     paginationOpts: { numItems: 20, cursor },
   });
   const remove = useRemovePollResult();
+  const current =
+    results?.page.filter(row => row.isCurrent && !row.removed) ?? [];
   return (
     <section className='space-y-3'>
       <h2 className='font-heading'>Latest votes</h2>
@@ -717,6 +806,36 @@ function PollResultsRecords({
       ) : results.page.length === 0 ? (
         <p>No votes on this page.</p>
       ) : null}
+      {results && options.length > 0 && (
+        <div
+          className='space-y-3 rounded-input bg-bg-sunken p-4'
+          aria-label='Current votes on this page'
+        >
+          {options.map(option => {
+            const count = current.filter(row =>
+              row.selections.includes(option.id)
+            ).length;
+            return (
+              <div key={option.id} className='space-y-2'>
+                <div className='flex items-start justify-between gap-4 text-sm'>
+                  <span className='min-w-0 break-words font-medium'>
+                    {option.label}
+                  </span>
+                  <span className='shrink-0 tabular-nums'>
+                    {count} / {current.length}
+                  </span>
+                </div>
+                <progress
+                  aria-label={`${option.label}: votes on this page`}
+                  className='h-2 w-full accent-primary'
+                  max={Math.max(1, current.length)}
+                  value={count}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
       {results?.page.map(row => (
         <div key={row._id} className='rounded-card border border-border p-4'>
           <p>
@@ -769,5 +888,51 @@ export function GroupPollResults({
     return (
       <p role='alert'>Poll results are unavailable under current access.</p>
     );
-  return <PollResultsRecords toolId={toolId} canManage={poll.canManage} />;
+  return (
+    <ContentPage>
+      <ContentKind kind='Poll' />
+      <h1>{poll.title}</h1>
+      <PollResultsRecords
+        toolId={toolId}
+        canManage={poll.canManage}
+        options={poll.options}
+      />
+    </ContentPage>
+  );
+}
+
+/** Ordinary participation stays in the feed; original detail/history URLs remain valid. */
+export function GroupPollFeed({ groupId }: { groupId: ContentOwnerId }) {
+  const group = useGroup(groupId);
+  const policy = usePollPolicy({ groupId });
+  const [cursor, setCursor] = useState<string | null>(null);
+  const eligible =
+    group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
+  const polls = usePolls(
+    eligible && policy?.enabled
+      ? { groupId, paginationOpts: { numItems: 10, cursor } }
+      : 'skip'
+  );
+  if (!eligible || !policy?.enabled) return null;
+  return (
+    <section aria-label='Polls' className='min-w-0 space-y-4'>
+      {polls === undefined && <p role='status'>Loading polls…</p>}
+      {polls?.page.map(poll => (
+        <GroupPollInteraction
+          key={poll._id}
+          groupId={groupId}
+          toolId={poll._id}
+          embedded
+        />
+      ))}
+      {polls && !polls.isDone && (
+        <Button
+          variant='outline'
+          onClick={() => setCursor(polls.continueCursor)}
+        >
+          More polls
+        </Button>
+      )}
+    </section>
+  );
 }

@@ -5,7 +5,8 @@
   "framework": "nextjs",
   "git": {
     "deploymentEnabled": {
-      "codex/shared-content-creation": false
+      "codex/shared-content-creation": false,
+      "codex/content-pages-refinement": false
     }
   }
 }

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
-  groupFormTemplates,
   type ApplicationQuestion,
   type ApplicationAnswers,
 } from '@groupi/shared/hooks';
@@ -30,7 +29,15 @@ import {
   useDeleteForm,
 } from '@/hooks/convex/use-group-forms';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  ContentPage,
+  ContentKind,
+  ContentSettings,
+  contentCanvas,
+  contentTitleField,
+  contentDescriptionField,
+} from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 import {
   ApplicationQuestionEditor,
@@ -59,7 +66,7 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
   );
   if (!group || !policy) return <p role='status'>Loading forms…</p>;
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading text-2xl font-bold'>
         {base.startsWith('/event/') ? 'Event forms' : 'Group forms'}
       </h1>
@@ -130,6 +137,13 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
                 Create form
               </Link>
             )}
+          {forms === undefined && (policy.enabled || canManage) ? (
+            <p role='status'>Loading forms…</p>
+          ) : forms?.page.length === 0 ? (
+            <p className='rounded-card border border-dashed border-border p-6 text-muted-foreground'>
+              No forms yet. Create a form to collect responses.
+            </p>
+          ) : null}
           {forms?.page.map(form => (
             <div
               key={form._id}
@@ -160,8 +174,15 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
           )}
         </>
       )}
-      {error && <p role='alert'>{error}</p>}
-    </main>
+      {error && (
+        <p
+          role='alert'
+          className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+        >
+          {error}
+        </p>
+      )}
+    </ContentPage>
   );
 }
 export function GroupFormEditor({
@@ -244,29 +265,12 @@ function FormEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading'>
         {initial ? 'Manage form' : 'Create form'}
       </h1>
-      {!initial && (
-        <div aria-label='Reusable form templates'>
-          {groupFormTemplates.map(template => (
-            <Button
-              key={template.id}
-              variant='outline'
-              onClick={() => {
-                setTitle(template.title);
-                setDescription(template.description);
-                setQuestions(template.questions.map(q => ({ ...q })));
-              }}
-            >
-              Use {template.id} template
-            </Button>
-          ))}
-        </div>
-      )}
       <form
-        className='space-y-4'
+        className={contentCanvas}
         onSubmit={async event => {
           event.preventDefault();
           setBusy(true);
@@ -300,8 +304,13 @@ function FormEditor({
           }
         }}
       >
-        <Label htmlFor='ordinary-form-title'>Form title</Label>
-        <Input
+        <ContentKind kind='Form' editing />
+        <Label className='sr-only' htmlFor='ordinary-form-title'>
+          Form title
+        </Label>
+        <Textarea
+          rows={2}
+          className={contentTitleField}
           id='ordinary-form-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -309,52 +318,76 @@ function FormEditor({
           required
           disabled={busy}
         />
-        <Label htmlFor='ordinary-form-description'>Description</Label>
-        <Input
+        <Label className='sr-only' htmlFor='ordinary-form-description'>
+          Description
+        </Label>
+        <Textarea
+          rows={2}
+          placeholder='Add a description…'
+          className={contentDescriptionField}
           id='ordinary-form-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
           maxLength={2000}
           disabled={busy}
         />
-        {!initial && (
-          <>
-            <Label htmlFor='ordinary-form-visibility'>
-              Response visibility (fixed for this form)
-            </Label>
-            <select
-              id='ordinary-form-visibility'
-              value={visibility}
-              onChange={e =>
-                setVisibility(
-                  e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
-                )
-              }
-              disabled={busy}
-            >
-              <option value='MANAGERS'>
-                Personal: you and current managers
-              </option>
-              <option value='MEMBERS'>Shared: all eligible members</option>
-            </select>
-          </>
-        )}
-        <p>
-          Configuration changes preserve saved answers and their original
-          question definitions. Current-version answers require review before
-          saving. This is not the joining questionnaire.
-        </p>
+
         <ApplicationQuestionEditor
+          contentLayout
           title='Form questions'
           requiredLabel='Answer required'
           questions={questions}
           onChange={setQuestions}
           disabled={busy}
         />
+        <ContentSettings>
+          {!initial && (
+            <>
+              <Label htmlFor='ordinary-form-visibility'>
+                Response visibility (fixed for this form)
+              </Label>
+              <select
+                id='ordinary-form-visibility'
+                value={visibility}
+                onChange={e =>
+                  setVisibility(
+                    e.target.value === 'MEMBERS' ? 'MEMBERS' : 'MANAGERS'
+                  )
+                }
+                disabled={busy}
+              >
+                <option value='MANAGERS'>
+                  Personal: you and current managers
+                </option>
+                <option value='MEMBERS'>Shared: all eligible members</option>
+              </select>
+            </>
+          )}{' '}
+          <p>
+            Configuration changes preserve saved answers and their original
+            question definitions. Current-version answers require review before
+            saving. This is not the joining questionnaire.
+          </p>{' '}
+        </ContentSettings>
         <Button disabled={busy}>
           {initial ? 'Save form settings' : 'Create form'}
         </Button>
-        {error && <p role='alert'>{error}</p>}
+        <Button
+          variant='ghost'
+          type='button'
+          disabled={busy}
+          onClick={() => router.push(`${base}/forms`)}
+        >
+          Cancel
+        </Button>
+        {error && (
+          <p
+            role='alert'
+            className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+          >
+            {error}
+          </p>
+        )}
       </form>
       {initial && (
         <GroupConfirmedAction
@@ -367,7 +400,7 @@ function FormEditor({
           }}
         />
       )}
-    </main>
+    </ContentPage>
   );
 }
 export function GroupFormInteraction({
@@ -411,18 +444,17 @@ function FormInteraction({
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
+      <ContentKind kind='Form' />
       <h1 className='font-heading'>{form.title}</h1>
       <p>{form.description}</p>
-      <p>
+      <p className='text-sm text-muted-foreground'>
         {form.resultsVisibility === 'MEMBERS'
-          ? 'Shared contribution: eligible members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-          : 'Personal answers: only you and current eligible managers can see them. Account deletion purges your answers and history.'}{' '}
-        Managers may moderate ordinary responses. Removing your response also
-        removes its history.
+          ? 'Shared with eligible members'
+          : 'Visible to you and current managers'}
       </p>
       <form
-        className='space-y-4'
+        className={contentCanvas}
         onSubmit={async e => {
           e.preventDefault();
           setBusy(true);
@@ -455,6 +487,15 @@ function FormInteraction({
           Save response
         </Button>
       </form>
+      <ContentSettings title='Privacy & saved history'>
+        <p>
+          {form.resultsVisibility === 'MEMBERS'
+            ? 'Shared contribution: eligible members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
+            : 'Personal answers: only you and current eligible managers can see them. Account deletion purges your answers and history.'}{' '}
+          Managers may moderate ordinary responses. Removing your response also
+          removes its history.
+        </p>
+      </ContentSettings>
       {form.savedVersion !== null && (
         <GroupConfirmedAction
           label='Remove my response'
@@ -488,11 +529,18 @@ function FormInteraction({
           />
         </>
       )}
-      {message && <p role='status'>{message}</p>}
+      {message && (
+        <p
+          role='status'
+          className='rounded-input bg-bg-sunken p-3 text-sm font-medium'
+        >
+          {message}
+        </p>
+      )}
       {form.canReview && (
         <GroupFormResults toolId={form._id} canManage={form.canManage} />
       )}
-    </main>
+    </ContentPage>
   );
 }
 function SavedAnswers({
@@ -503,13 +551,15 @@ function SavedAnswers({
   answers: ApplicationAnswers;
 }) {
   return (
-    <dl>
+    <dl className='space-y-4'>
       {questions.map(q => {
         const value = answers[q.id];
         return (
           <div key={q.id}>
-            <dt>{q.label}</dt>
-            <dd>
+            <dt className='text-sm font-semibold text-muted-foreground'>
+              {q.label}
+            </dt>
+            <dd className='mt-1 whitespace-pre-wrap break-words'>
               {Array.isArray(value)
                 ? value.join(', ')
                 : String(value ?? 'No answer')}
@@ -534,6 +584,11 @@ export function GroupFormHistory({ toolId }: { toolId: Id<'groupTools'> }) {
         Only your retained answers and original definitions are shown. Current
         private questions are not exposed by this recovery view.
       </p>
+      {history === undefined ? (
+        <p role='status'>Loading saved history…</p>
+      ) : history.page.length === 0 ? (
+        <p>No saved responses on this page.</p>
+      ) : null}
       {history?.page.map(row => (
         <div className='rounded-card border border-border p-4' key={row._id}>
           <p>
@@ -572,6 +627,13 @@ function GroupFormResults({
   return (
     <section className='space-y-3'>
       <h2 className='font-heading'>Latest responses</h2>
+      {results === undefined ? (
+        <p role='status'>Loading responses…</p>
+      ) : results.page.length === 0 ? (
+        <p className='rounded-input bg-bg-sunken p-4 text-sm text-muted-foreground'>
+          No responses yet.
+        </p>
+      ) : null}
       {results?.page.map(row => (
         <div key={row._id} className='rounded-card border border-border p-4'>
           <p>

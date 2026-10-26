@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { contentChoice } from '@/features/content/content-design';
 const selectClass =
   'w-full rounded-input border border-input bg-background p-2 text-foreground';
 const choices = (type: ApplicationQuestion['type']) =>
@@ -35,14 +38,19 @@ export function ApplicationQuestionFields({
         const value = answers[q.id];
         if (q.type === 'CHECKBOXES')
           return (
-            <fieldset key={q.id} disabled={disabled} className='space-y-2'>
-              <legend>
+            <fieldset
+              key={q.id}
+              disabled={disabled}
+              className='min-w-0 space-y-3 rounded-input border border-border p-4'
+            >
+              <legend className='px-1 font-semibold'>
                 {q.label}
                 {q.required && ' (required)'}
               </legend>
               {q.options?.map(option => (
-                <label key={option} className='flex items-center gap-2'>
+                <label key={option} className={contentChoice}>
                   <input
+                    className='mt-1 size-4 shrink-0 accent-primary'
                     type='checkbox'
                     checked={Array.isArray(value) && value.includes(option)}
                     onChange={event =>
@@ -56,13 +64,16 @@ export function ApplicationQuestionFields({
                       )
                     }
                   />
-                  {option}
+                  <span className='min-w-0 break-words'>{option}</span>
                 </label>
               ))}
             </fieldset>
           );
         return (
-          <div key={q.id} className='space-y-2'>
+          <div
+            key={q.id}
+            className='min-w-0 space-y-3 rounded-input border border-border p-4'
+          >
             <Label htmlFor={id}>{q.label}</Label>
             {q.required && (
               <span className='text-sm text-muted-foreground'> (required)</span>
@@ -145,12 +156,14 @@ export function ApplicationQuestionEditor({
   disabled,
   title = 'Admission questions',
   requiredLabel = 'Required',
+  contentLayout = false,
 }: {
   questions: ApplicationQuestion[];
   onChange: (questions: ApplicationQuestion[]) => void;
   disabled?: boolean;
   title?: string;
   requiredLabel?: string;
+  contentLayout?: boolean;
 }) {
   const update = (index: number, patch: Partial<ApplicationQuestion>) =>
     onChange(
@@ -164,11 +177,23 @@ export function ApplicationQuestionEditor({
       {questions.map((q, index) => (
         <fieldset
           key={q.id}
-          className='rounded-card border border-border p-3 space-y-2'
+          className={cn(
+            'min-w-0 rounded-card border border-border p-4 space-y-3',
+            contentLayout && 'bg-bg-sunken/30'
+          )}
         >
-          <legend>Question {index + 1}</legend>
+          <legend className='px-2 text-sm font-semibold text-muted-foreground'>
+            Question {index + 1}
+          </legend>
           <Label htmlFor={`question-label-${q.id}`}>Question text</Label>
-          <Input
+          <Textarea
+            rows={1}
+            className={
+              contentLayout
+                ? 'min-h-12 resize-y border-transparent bg-transparent px-0 text-lg font-semibold field-sizing-content'
+                : undefined
+            }
+            placeholder='Write your question…'
             id={`question-label-${q.id}`}
             required
             maxLength={1000}
@@ -214,20 +239,104 @@ export function ApplicationQuestionEditor({
             />
             {requiredLabel}
           </label>
-          {choices(q.type) && (
-            <>
-              <Label htmlFor={`question-options-${q.id}`}>
-                Options (one per line)
-              </Label>
-              <Textarea
-                id={`question-options-${q.id}`}
-                required
-                value={q.options?.join('\n') ?? ''}
-                onChange={event =>
-                  update(index, { options: event.target.value.split('\n') })
-                }
-              />
-            </>
+          {choices(q.type) &&
+            (contentLayout ? (
+              <fieldset className='min-w-0 space-y-2'>
+                <legend className='mb-2 text-sm text-muted-foreground'>
+                  Answer options
+                </legend>
+                {(q.options ?? []).map((option, optionIndex) => (
+                  <div key={optionIndex} className='space-y-1'>
+                    <div className={contentChoice}>
+                      <span
+                        aria-hidden='true'
+                        className={cn(
+                          'mt-3 size-4 shrink-0 border border-border',
+                          q.type === 'MULTIPLE_CHOICE'
+                            ? 'rounded-full'
+                            : 'rounded-subtle'
+                        )}
+                      />
+                      <Label
+                        className='sr-only'
+                        htmlFor={`question-${q.id}-option-${optionIndex}`}
+                      >
+                        Question {index + 1} option {optionIndex + 1}
+                      </Label>
+                      <Textarea
+                        id={`question-${q.id}-option-${optionIndex}`}
+                        rows={1}
+                        className='min-h-10 min-w-0 flex-1 resize-y border-transparent bg-transparent px-0 field-sizing-content'
+                        required
+                        value={option}
+                        onChange={event =>
+                          update(index, {
+                            options: q.options?.map((value, i) =>
+                              i === optionIndex ? event.target.value : value
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className='flex justify-end'>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        aria-label={`Remove question ${index + 1} option ${optionIndex + 1}`}
+                        onClick={() =>
+                          update(index, {
+                            options: q.options?.filter(
+                              (_, i) => i !== optionIndex
+                            ),
+                          })
+                        }
+                      >
+                        <X className='size-3' aria-hidden='true' />
+                        Remove option
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() =>
+                    update(index, { options: [...(q.options ?? []), ''] })
+                  }
+                >
+                  Add answer option
+                </Button>
+              </fieldset>
+            ) : (
+              <>
+                <Label htmlFor={`question-options-${q.id}`}>
+                  Options (one per line)
+                </Label>
+                <Textarea
+                  id={`question-options-${q.id}`}
+                  className={contentLayout ? 'field-sizing-content' : undefined}
+                  required
+                  value={q.options?.join('\n') ?? ''}
+                  onChange={event =>
+                    update(index, { options: event.target.value.split('\n') })
+                  }
+                />
+              </>
+            ))}
+          {contentLayout && !choices(q.type) && (
+            <div
+              aria-hidden='true'
+              className='min-h-12 rounded-input border border-dashed border-border bg-background p-3 text-sm text-muted-foreground'
+            >
+              {q.type === 'YES_NO'
+                ? 'Yes / No'
+                : q.type === 'NUMBER'
+                  ? 'Enter a number'
+                  : q.type === 'LONG_ANSWER'
+                    ? 'Long answer'
+                    : 'Short answer'}
+            </div>
           )}
           <Button
             type='button'
@@ -238,6 +347,11 @@ export function ApplicationQuestionEditor({
           </Button>
         </fieldset>
       ))}
+      {contentLayout && questions.length === 0 && (
+        <p className='rounded-input border border-dashed border-border p-6 text-sm text-muted-foreground'>
+          Add your first question. Members will answer here.
+        </p>
+      )}
       <Button
         type='button'
         variant='outline'

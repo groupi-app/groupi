@@ -1,15 +1,17 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConvexProviderWithAuth, ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
 import { afterAll, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
+import { EventToolScope } from '@/features/content/tool-scope';
 import {
   GroupPollEditor,
   GroupPollInteraction,
   GroupPollHistory,
   GroupPolls,
+  GroupPollFeed,
 } from './group-polls';
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
@@ -134,7 +136,7 @@ function fixture(overrides: Record<string, unknown> = {}) {
   };
 }
 
-it('creates from shared reusable template with immutable disclosed visibility', async () => {
+it('creates directly from editable poll choices with immutable disclosed visibility', async () => {
   const f = fixture();
   f.mutation.mockResolvedValue(toolId);
   const m = render(
@@ -143,7 +145,19 @@ it('creates from shared reusable template with immutable disclosed visibility', 
     </f.Provider>
   );
   const u = userEvent.setup();
-  await u.click(screen.getByRole('button', { name: 'Use Topics template' }));
+  expect(
+    screen.queryByRole('button', { name: /template/i })
+  ).not.toBeInTheDocument();
+  await u.clear(screen.getByLabelText('Poll title'));
+  await u.type(screen.getByLabelText('Poll title'), 'Next meetup');
+  await u.selectOptions(screen.getByLabelText('Voting rule'), 'MULTIPLE');
+  await u.clear(screen.getByLabelText('Option 1 label'));
+  await u.type(screen.getByLabelText('Option 1 label'), 'Discussion');
+  await u.clear(screen.getByLabelText('Option 2 label'));
+  await u.type(screen.getByLabelText('Option 2 label'), 'Workshop');
+  await u.click(screen.getByRole('button', { name: 'Add poll option' }));
+  await u.type(screen.getByLabelText('Option 3 label'), 'Social');
+  await u.click(screen.getByText('Settings & details'));
   await u.selectOptions(
     screen.getByLabelText('Vote visibility (fixed for this poll)'),
     'MEMBERS'
@@ -157,9 +171,9 @@ it('creates from shared reusable template with immutable disclosed visibility', 
     mode: 'MULTIPLE',
     resultsVisibility: 'MEMBERS',
     options: [
-      { id: 'discussion', label: 'Discussion' },
-      { id: 'workshop', label: 'Workshop' },
-      { id: 'social', label: 'Social' },
+      { id: 'yes', label: 'Discussion' },
+      { id: 'no', label: 'Workshop' },
+      { id: expect.any(String), label: 'Social' },
     ],
   });
   m.unmount();
@@ -540,6 +554,118 @@ it('retains saved feedback through a reactive vote revision while reseeding sele
   );
   expect(screen.getByRole('radio', { name: 'Books' })).toBeChecked();
   expect(screen.queryByText('Vote saved.')).not.toBeInTheDocument();
+  m.unmount();
+  await f.client.close();
+});
+
+it('votes and opens permitted results inside the feed without routing to a poll page', async () => {
+  push.mockClear();
+  const f = fixture({
+    'groupPolls/queries:getPoll': { ...poll, canReview: true },
+  });
+  const m = render(
+    <f.Provider>
+      <GroupPollFeed groupId={groupId} />
+    </f.Provider>
+  );
+  const u = userEvent.setup();
+  const card = screen.getByRole('article');
+  expect(
+    within(card).getByRole('heading', { name: 'Reading choice' })
+  ).toHaveProperty('tagName', 'H2');
+  expect(f.watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groupPolls/queries:listResults'
+  );
+  const radio = within(card).getByRole('radio', { name: 'Books' });
+  radio.focus();
+  await u.keyboard('[Space]');
+  expect(radio).toBeChecked();
+  await u.click(within(card).getByRole('button', { name: 'Save vote' }));
+  expect(f.mutation.mock.calls[0][1]).toMatchObject({
+    toolId,
+    selections: ['books'],
+    expectedRevision: 0,
+  });
+  await u.click(
+    within(card).getByRole('button', { name: 'View poll results' })
+  );
+  expect(
+    within(card).getByRole('heading', { name: 'Latest votes' })
+  ).toBeInTheDocument();
+  expect(within(card).getByText('No votes on this page.')).toBeInTheDocument();
+  expect(f.watch.mock.calls.map(([ref]) => getFunctionName(ref))).toContain(
+    'groupPolls/queries:listResults'
+  );
+  expect(push).not.toHaveBeenCalled();
+  m.unmount();
+  await f.client.close();
+});
+
+it('keeps radio selections independent across two inline poll cards', async () => {
+  const otherId = 'tool-two' as Id<'groupTools'>;
+  const first = fixture();
+  const second = fixture({
+    'groupPolls/queries:getPoll': {
+      ...poll,
+      _id: otherId,
+      title: 'Second poll',
+    },
+  });
+  const m = render(
+    <>
+      <first.Provider>
+        <GroupPollInteraction groupId={groupId} toolId={toolId} embedded />
+      </first.Provider>
+      <second.Provider>
+        <GroupPollInteraction groupId={groupId} toolId={otherId} embedded />
+      </second.Provider>
+    </>
+  );
+  const u = userEvent.setup();
+  const [one, two] = screen.getAllByRole('article');
+  const firstOption = within(one).getByRole('radio', { name: 'Books' });
+  const secondOption = within(two).getByRole('radio', { name: 'Films' });
+  expect(firstOption.getAttribute('name')).not.toBe(
+    secondOption.getAttribute('name')
+  );
+  await u.click(firstOption);
+  await u.click(secondOption);
+  expect(firstOption).toBeChecked();
+  expect(secondOption).toBeChecked();
+  m.unmount();
+  await Promise.all([first.client.close(), second.client.close()]);
+});
+
+it('renders Event feed polls through the shared card while preserving Event discovery and vote contracts', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const f = fixture({
+    'eventContent/queries:getContext': { canCreate: true, canManage: false },
+    'eventContent/queries:listPolls': {
+      ...emptyPage,
+      page: [{ ...poll, groupId: undefined, eventId }],
+    },
+    'groupPolls/queries:getPoll': { ...poll, groupId: undefined, eventId },
+  });
+  const m = render(
+    <f.Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupPollFeed groupId={eventId} />
+      </EventToolScope>
+    </f.Provider>
+  );
+  const u = userEvent.setup();
+  await u.click(screen.getByRole('radio', { name: 'Films' }));
+  await u.click(screen.getByRole('button', { name: 'Save vote' }));
+  expect(f.mutation.mock.calls[0][1]).toMatchObject({
+    toolId,
+    version: 3,
+    expectedRevision: 0,
+    selections: ['films'],
+  });
+  const queries = f.watch.mock.calls.map(([ref]) => getFunctionName(ref));
+  expect(queries).toContain('eventContent/queries:listPolls');
+  expect(queries).not.toContain('groupTools/queries:getPollPolicy');
+  expect(queries).not.toContain('groups/queries:getGroup');
   m.unmount();
   await f.client.close();
 });

@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Type casts needed for data transformations between Convex query result and PostCard props
 
+import { GroupPollFeed } from '@/components/organisms/group-polls';
+import { EventToolScope } from '@/features/content';
 import { PostCard } from '@/components/post-card';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useEventPostFeed } from '@/hooks/convex';
@@ -51,6 +53,9 @@ export function PostFeed({ data }: PostFeedProps) {
     <MutedPostsProvider>
       <div>
         <h2 className='text-xl font-heading font-medium'>Posts</h2>
+        <EventToolScope eventId={event._id}>
+          <GroupPollFeed groupId={event._id} />
+        </EventToolScope>
         {posts.length > 0 ? (
           <motion.div
             variants={container}
