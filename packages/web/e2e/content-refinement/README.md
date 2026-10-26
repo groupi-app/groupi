@@ -49,3 +49,17 @@ keyboard opening, Escape dismissal, focus restoration, lazy manager response
 queries, drawer-to-dialog replacement, dialog closure and three denied response
 review cases. Screenshots and bounds wait for actual UI animations to finish.
 Poll result action measurements include computed inline/block padding and bounds.
+
+## List types and quantity claims
+
+Run `node packages/web/e2e/content-refinement/run.mjs --list-types`. Evidence is
+stored in `../artifacts/content-refinement/list-types/after`. The matrix renders
+Simple, Checklist and Bring lists with long known contributor names in both owner
+contexts at desktop, 320, 375 and 390 pixels, including their settings dialogs.
+
+The synthetic boundary distinguishes configuration, deletion, addition, completion
+and text-edit permissions. It models revision acknowledgements and named Bring
+claims, including pending mutations and one deliberate failed claim. These tests
+exercise actual web controls and local reload persistence; they do not establish
+backend permission enforcement, cross-account concurrency or authenticated native
+Bring-list acceptance. Backend contract tests remain independent.

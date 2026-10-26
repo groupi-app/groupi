@@ -1,3 +1,7 @@
+if (process.argv.includes('--list-types')) {
+  await import('./run-list-types.mjs');
+  process.exit(process.exitCode ?? 0);
+}
 if (process.argv.includes('--action-menu')) {
   await import('./run-action-menu.mjs');
   process.exit(process.exitCode ?? 0);

@@ -1,7 +1,9 @@
 # Form, List and Poll composition
 
 Local UI refinement from test `5832fe64e0ad96c8322b850befada4b8a2cf27f5`, on
-`codex/content-pages-refinement`. No backend contracts, data or migrations change.
+`codex/content-pages-refinement`. The original UI pass preserved backend
+contracts; the later List feature below adds compatible optional fields and
+owner-scoped claim APIs. No existing data is rewritten or deployed here.
 
 ## Design
 
@@ -112,3 +114,52 @@ Button touch-target treatment retains a 44px browser target. Local browser check
 cover desktop and 320/375/390px drawers, keyboard/Escape, focus return, clean
 drawer-to-dialog replacement, viewport bounds and unauthorized UI/query absence.
 Screenshots remain local; none were uploaded for this correction.
+
+## List types and participation settings
+
+One creator-accessible settings dialog selects Simple list, Checklist or Bring
+list. Active creators may configure their own list; managers retain oversight
+and whole-list deletion authority. Who can add is Participants or Creator and
+managers. Shared Checklists also choose who can complete: Participants, Item
+authors and managers, or Creator and managers. Personal entry isolation always
+wins over broader list options. Every write checks current membership, context,
+list type, policy, version and applicable revision.
+
+Missing list type resolves to Checklist; missing add policy preserves participant
+adds. Shared completion defaults to Participants, the intentional expansion
+requested by the user. Ordinary text editing/removal remains author/manager-only.
+New completion metadata identifies the actual completing actor; reopening clears
+active completion attribution, and old completed entries get no invented actor.
+Simple mode hides completion and its attribution while preserving stored state.
+Added-by text remains subtle and wraps with long names.
+
+New native Bring Lists reuse groupListEntries with optional quantities and a
+separate groupListClaims ledger scoped by tool/item/person. Multiple Event and
+Group Bring Lists are supported. They use shared visibility, integer quantities,
+transactional capacity checks and per-person revision guards; zero-quantity
+tombstones prevent stale reclaims. Totals/own claims are exact; claimant names
+are a bounded preview. Remote total or quantity changes do not unlock pending
+claim requests. Account, item, list, Event and Group cleanup reaches the new
+ledger. Former authors cannot delete Bring commitments after losing access.
+
+Simple and Checklist switch in place without losing completion. Crossing the
+Bring boundary requires an empty list; a populated list offers an explicitly
+separate list with the requested type, retaining the source entries/claims. No
+quantity or claim conversion is guessed. Existing Event Bring Lists still render
+through EventCollectionFeatures under Lists and keep their original provider,
+storage, item IDs, claims and deep links. Native List creation does not call the
+legacy enable/update/disable lifecycle or send its reset notifications.
+
+The additive schema uses optional state/entry fields plus one new claim table;
+there is no data rewrite/migration. Published v2 REST payload projections remain
+unchanged. Native web supports the new settings/claims; old clients are still
+checked server-side. Code generation was attempted but the local environment has
+no configured CONVEX_DEPLOYMENT. No target/credentials were configured and no
+backend was deployed. Existing generated types derive from current source/schema;
+type and contract checks cover the additive APIs. Canonical codegen and matching
+authenticated runtime acceptance remain gates for separately authorized rollout.
+
+The pending release-note batch now includes the shared ActionMenu/Poll-spacing
+web patch and an additive List feature entry for Convex, shared hooks and web.
+Exact summaries/package bumps still require approval; no release-note files have
+been created.

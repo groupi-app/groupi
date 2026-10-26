@@ -321,3 +321,20 @@ counts. Source and synthetic responsive checks are recorded in the updated
 [content design record](../../content-ui-refinement.md). Publication, authenticated
 fixture writes and release-note approval remain pending; nothing has been pushed
 or deployed.
+
+### List types and collaborative participation — local source
+
+List settings now select Simple/Checklist/Bring, with active creator configuration
+rights, manager oversight, scoped add/completion policies and subtle actor
+attribution. New owner-scoped Bring ledgers support multiple Events/Groups without
+rewriting legacy Event add-on claims. Simple/Checklist switching preserves state;
+populated Bring conversions offer a separate list. Shared completion defaults to
+participating members as requested; private entry isolation and revoked-membership
+checks remain enforced. Published REST shapes are projected compatibly.
+
+The local schema addition is optional metadata plus a new claim table, with no
+performed data migration. Codegen is blocked by missing CONVEX_DEPLOYMENT; no
+credentials/target were configured and no backend was deployed. Matching runtime
+acceptance and rollout remain separately gated. Local source/browser/test
+evidence is recorded in the [updated design record](../../content-ui-refinement.md)
+and task artifact directory. No publication or shared data operation is implied.

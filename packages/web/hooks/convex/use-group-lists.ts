@@ -13,6 +13,9 @@ export const {
   useEditListEntry,
   useRemoveListEntry,
   useDeleteList,
+  useBringListClaims,
+  useSetBringListClaim,
+  useSetListEntryCompleted,
   useListPolicy: groupUseListPolicy,
   useConfigureListPolicy: groupUseConfigureListPolicy,
 } = createGroupListHooks(api, { useQuery, useMutation });

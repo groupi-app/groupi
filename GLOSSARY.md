@@ -133,8 +133,24 @@ membership in a Group.
 A Groupi user with an accepted personal friendship relationship to another user.
 Friendship is independent of shared Group membership.
 
+**Simple list**:
+An Event- or Group-owned list of text entries without completion controls.
+Switching from a checklist hides completion state without deleting it.
+
+**Checklist**:
+An Event- or Group-owned list whose entries can be completed under the list's
+participation policy. Completion is one shared status per entry, not one status
+per viewer. Personal entries remain restricted to their author and managers.
+
+**Bring list**:
+A list of required items and quantities, with participants claiming their own
+quantities. New Bring Lists have independent Event or Group ownership. The
+legacy Event Bring List remains backed by its original event add-on and claims.
+A claim is distinct from checklist completion or an Event RSVP.
+
 **Add-on**:
-An optional event capability, such as reminders, a questionnaire, or a bring list.
+An optional event capability, such as reminders, a questionnaire, or the legacy
+Event Bring List.
 
 **Add-on template**:
 A reusable definition of a custom add-on. Editing it does not automatically
