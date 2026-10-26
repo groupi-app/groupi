@@ -84,8 +84,11 @@ assertions at desktop and 320/375/390px, with no overflow or browser errors. At
 1334px to 417px. Long options still wrap, and touch targets remain usable.
 Authenticated acceptance and publication remain unapproved. The earlier standalone
 real Next navigation report applies to `f941bb6c`; it is not acceptance of this
-new direct-save behavior. New local evidence is in `compact-poll/` beside the
-original artifacts. No new screenshots were uploaded to Library.
+new direct-save behavior. Refreshed real Next checks on `ddceaeee` passed 24
+assertions with synthetic data; authenticated acceptance remains unverified. New
+local evidence is in `compact-poll/` beside the original artifacts. Following the
+user’s explicit image request, four current participant component captures were
+saved to Library; their ids are retained in the delivery manifest.
 
 The prior proposed release-note summary is superseded by one proposed
 `@groupi/web` patch: “Streamline Form, List and Poll editing and participation;

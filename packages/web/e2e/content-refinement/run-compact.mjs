@@ -22,6 +22,11 @@ const output = join(
   phase
 );
 await mkdir(output, { recursive: true });
+const delivery = join(
+  repo,
+  '../artifacts/content-refinement/compact-poll/delivery'
+);
+await mkdir(delivery, { recursive: true });
 const boundary = join(root, 'compact-boundaries.tsx');
 const result = await esbuild.build({
   entryPoints: [join(root, 'entry.tsx')],
@@ -163,6 +168,16 @@ try {
             path: join(output, `${stem}-${mode}.png`),
             fullPage: true,
           });
+          if (
+            phase === 'after' &&
+            owner === 'group' &&
+            scenario === 'short' &&
+            width === 390
+          )
+            await page
+              .locator('article')
+              .first()
+              .screenshot({ path: join(delivery, `poll-${mode}.png`) });
         };
         await measure('vote');
         await page
@@ -219,6 +234,16 @@ try {
             path: join(output, `${owner}-${kind}-${view}-${width}.png`),
             fullPage: true,
           });
+          if (
+            phase === 'after' &&
+            owner === 'group' &&
+            width === 390 &&
+            view === 'participant'
+          )
+            await page
+              .locator('main')
+              .first()
+              .screenshot({ path: join(delivery, `${kind}-participant.png`) });
         }
   if (phase === 'after') {
     await page.goto(
