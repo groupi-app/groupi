@@ -4967,6 +4967,18 @@ Canonical passage: /v2/reference/api#get-events-parentId-posts
                     },
                     "replyCount": {
                       "type": "number"
+                    },
+                    "repliesDisabled": {
+                      "type": "boolean"
+                    },
+                    "repliesRevision": {
+                      "type": "number"
+                    },
+                    "pinnedAt": {
+                      "type": "number"
+                    },
+                    "pinRevision": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -5096,6 +5108,18 @@ Canonical passage: /v2/reference/api#get-events-parentId-posts
                           "nullable": true
                         },
                         "replyCount": {
+                          "type": "number"
+                        },
+                        "repliesDisabled": {
+                          "type": "boolean"
+                        },
+                        "repliesRevision": {
+                          "type": "number"
+                        },
+                        "pinnedAt": {
+                          "type": "number"
+                        },
+                        "pinRevision": {
                           "type": "number"
                         }
                       },
@@ -5262,6 +5286,18 @@ Canonical passage: /v2/reference/api#get-posts-id
                 "nullable": true
               },
               "replyCount": {
+                "type": "number"
+              },
+              "repliesDisabled": {
+                "type": "boolean"
+              },
+              "repliesRevision": {
+                "type": "number"
+              },
+              "pinnedAt": {
+                "type": "number"
+              },
+              "pinRevision": {
                 "type": "number"
               },
               "replies": {
@@ -5433,6 +5469,13 @@ Canonical passage: /v2/reference/api#patch-posts-id
             },
             "content": {
               "type": "string"
+            },
+            "repliesDisabled": {
+              "type": "boolean"
+            },
+            "expectedRepliesRevision": {
+              "type": "integer",
+              "minimum": 0
             },
             "text": {
               "type": "string"
@@ -5652,6 +5695,18 @@ Canonical passage: /v2/reference/api#patch-posts-id
                   "replyCount": {
                     "type": "number"
                   },
+                  "repliesDisabled": {
+                    "type": "boolean"
+                  },
+                  "repliesRevision": {
+                    "type": "number"
+                  },
+                  "pinnedAt": {
+                    "type": "number"
+                  },
+                  "pinRevision": {
+                    "type": "number"
+                  },
                   "replies": {
                     "type": "array",
                     "items": {
@@ -5859,6 +5914,13 @@ Canonical passage: /v2/reference/api#post-events-id-posts
             },
             "content": {
               "type": "string"
+            },
+            "repliesDisabled": {
+              "type": "boolean"
+            },
+            "expectedRepliesRevision": {
+              "type": "integer",
+              "minimum": 0
             },
             "text": {
               "type": "string"
@@ -6471,6 +6533,13 @@ Canonical passage: /v2/reference/api#patch-replies-id
             "content": {
               "type": "string"
             },
+            "repliesDisabled": {
+              "type": "boolean"
+            },
+            "expectedRepliesRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
             "text": {
               "type": "string"
             },
@@ -6768,6 +6837,13 @@ Canonical passage: /v2/reference/api#post-posts-id-replies
             },
             "content": {
               "type": "string"
+            },
+            "repliesDisabled": {
+              "type": "boolean"
+            },
+            "expectedRepliesRevision": {
+              "type": "integer",
+              "minimum": 0
             },
             "text": {
               "type": "string"
@@ -8930,7 +9006,7 @@ Remove friend Remove a friend from your friends list Source-generated operation;
 ## POST /api/v2/groups/{groupId}/announcements
 Canonical passage: /v2/reference/api#post-groups-groupId-announcements
 
-Explicitly announce to permitted Group members  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
+Retired: use a post to share an update New announcement sends and retries are retired. This compatibility endpoint rejects valid send requests; existing status reads remain available. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
 ```json
 {

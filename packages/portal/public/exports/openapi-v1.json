@@ -316,7 +316,7 @@
           "timezone": {
             "type": "string",
             "example": "America/New_York",
-            "description": "IANA timezone used to interpret GDL. Defaults to UTC when omitted."
+            "description": "Stable IANA Event timezone for GDL and automatic completion at the next local day when no end is set. Defaults to UTC when omitted."
           },
           "gdl": {
             "type": "string",
@@ -599,6 +599,18 @@
             "example": 1704067200000,
             "description": "Unix timestamp in milliseconds"
           },
+          "repliesDisabled": {
+            "type": "boolean"
+          },
+          "repliesRevision": {
+            "type": "number"
+          },
+          "pinnedAt": {
+            "type": "number"
+          },
+          "pinRevision": {
+            "type": "number"
+          },
           "author": {
             "type": "object",
             "nullable": true,
@@ -665,6 +677,9 @@
       "CreatePostRequest": {
         "type": "object",
         "properties": {
+          "repliesDisabled": {
+            "type": "boolean"
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -729,6 +744,18 @@
             "exclusiveMinimum": true,
             "example": 1704067200000,
             "description": "Unix timestamp in milliseconds"
+          },
+          "repliesDisabled": {
+            "type": "boolean"
+          },
+          "repliesRevision": {
+            "type": "number"
+          },
+          "pinnedAt": {
+            "type": "number"
+          },
+          "pinRevision": {
+            "type": "number"
           },
           "eventId": {
             "type": "string"
@@ -833,6 +860,13 @@
       "UpdatePostRequest": {
         "type": "object",
         "properties": {
+          "repliesDisabled": {
+            "type": "boolean"
+          },
+          "expectedRepliesRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "title": {
             "type": "string",
             "minLength": 1,
