@@ -1,5 +1,6 @@
 import { createAuthAccount } from './auth.helpers';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import presenceTest from '@convex-dev/presence/test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import betterAuthSchema from '../betterAuth/schema';
 import { createTestInstance } from './test_helpers';
 
@@ -13,6 +14,7 @@ const betterAuthModules = import.meta.glob('../betterAuth/**/*.ts');
 function createE2ETestInstance() {
   const t = createTestInstance();
   t.registerComponent('betterAuth', betterAuthSchema, betterAuthModules);
+  presenceTest.register(t);
   return t;
 }
 
@@ -191,5 +193,209 @@ describe('native E2E fixtures', () => {
     });
     expect(session).toBeNull();
     expect(user).toBeNull();
+  });
+  it('cleans only listed deleted-parent rooms and listed app users, preserving other rooms and shared tokens', async () => {
+    vi.useFakeTimers();
+    const t = createE2ETestInstance();
+    const roomsToClean = new Set<string>();
+    try {
+      const ids = await t.run(async ctx => {
+        const own = await ctx.db.insert('persons', {
+          userId: 'fixture-presence-user',
+        });
+        const other = await ctx.db.insert('persons', {
+          userId: 'unlisted-presence-user',
+        });
+        const eventId = await ctx.db.insert('events', {
+          title: 'Owned fixture',
+          creatorId: own,
+          timezone: 'UTC',
+          potentialDateTimes: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        const postId = await ctx.db.insert('posts', {
+          eventId,
+          authorId: own,
+          title: 'Owned post',
+          content: 'Fixture',
+        });
+        const unlistedPostId = await ctx.db.insert('posts', {
+          eventId,
+          authorId: other,
+          title: 'Unlisted post',
+          content: 'Keep',
+        });
+        return { own, other, eventId, postId, unlistedPostId };
+      });
+      const heartbeat = (roomId: string, userId: string, sessionId: string) => {
+        roomsToClean.add(roomId);
+        return t.mutation(components.presence.public.heartbeat, {
+          roomId,
+          userId,
+          sessionId,
+          interval: 10000,
+        });
+      };
+      const postRoom = `post:${ids.postId}`,
+        eventRoom = `event:${ids.eventId}`,
+        unlistedRoom = `post:${ids.unlistedPostId}`;
+      const selectedPostToken = await heartbeat(
+        postRoom,
+        ids.own,
+        'selected-post'
+      );
+      await heartbeat(postRoom, ids.other, 'other-in-selected-post');
+      const selectedEventToken = await heartbeat(
+        eventRoom,
+        ids.own,
+        'selected-event'
+      );
+      const retainedToken = await heartbeat(
+        unlistedRoom,
+        ids.own,
+        'owned-user-unlisted-room'
+      );
+      const appToken = await heartbeat('app', ids.own, 'own-app-session');
+      const otherAppToken = await heartbeat(
+        'app',
+        ids.other,
+        'other-app-session'
+      );
+      const invalidPost = await heartbeat(
+        'post:new',
+        ids.other,
+        'invalid-post-placeholder'
+      );
+      const invalidEvent = await heartbeat(
+        'event:new',
+        ids.other,
+        'invalid-event-placeholder'
+      );
+      expect(otherAppToken.roomToken).toBe(appToken.roomToken);
+      await t.run(async ctx => {
+        for (const [roomId, roomToken] of [
+          [postRoom, selectedPostToken.roomToken],
+          [eventRoom, selectedEventToken.roomToken],
+          [unlistedRoom, retainedToken.roomToken],
+          ['app', appToken.roomToken],
+          ['post:new', invalidPost.roomToken],
+          ['event:new', invalidEvent.roomToken],
+        ])
+          await ctx.db.insert('presenceRoomAccess', { roomId, roomToken });
+        // The cleanup must also recover leaked presence after prior canonical deletion.
+        await ctx.db.delete(ids.postId);
+        await ctx.db.delete(ids.eventId);
+        await ctx.db.delete(ids.own);
+      });
+      const list = (roomId: string) =>
+        t.query(components.presence.public.listRoom, { roomId });
+      const registry = () =>
+        t.run(ctx => ctx.db.query('presenceRoomAccess').collect());
+      const retainedBefore = await list(unlistedRoom),
+        appBefore = await list('app'),
+        registryBefore = await registry();
+      const args = {
+        fixtureKey: FIXTURE_KEY,
+        userIds: [],
+        personIds: [ids.own],
+        eventIds: [ids.eventId],
+        postIds: [ids.postId],
+        inviteIds: [],
+        membershipIds: [],
+      };
+      await expect(
+        t.mutation(api.e2e.mutations.cleanupTestData, {
+          ...args,
+          fixtureKey: 'wrong-fixture-key',
+        })
+      ).rejects.toThrow('unavailable');
+      expect(await list(postRoom)).toHaveLength(2);
+      expect(await list('app')).toEqual(appBefore);
+      expect(await registry()).toEqual(registryBefore);
+      expect(await list('post:new')).toHaveLength(1);
+      expect(await list('event:new')).toHaveLength(1);
+      await t.mutation(api.e2e.mutations.cleanupTestData, {
+        ...args,
+        personIds: ['new'],
+        eventIds: ['new', ids.own],
+        postIds: ['new', ids.eventId],
+      });
+      expect(await list(postRoom)).toHaveLength(2);
+      expect(await list('app')).toEqual(appBefore);
+      expect(await registry()).toEqual(registryBefore);
+      expect(await list('post:new')).toHaveLength(1);
+      expect(await list('event:new')).toHaveLength(1);
+      await t.mutation(api.e2e.mutations.cleanupTestData, args);
+      expect(await list(postRoom)).toEqual([]);
+      expect(await list(eventRoom)).toEqual([]);
+      expect(await list(unlistedRoom)).toEqual(retainedBefore);
+      expect(await list('app')).toEqual(
+        appBefore.filter(row => row.userId === ids.other)
+      );
+      expect(
+        await t.query(components.presence.public.list, {
+          roomToken: appToken.roomToken,
+        })
+      ).toEqual(appBefore.filter(row => row.userId === ids.other));
+      expect((await registry()).map(row => row.roomId).sort()).toEqual(
+        ['app', unlistedRoom, 'post:new', 'event:new'].sort()
+      );
+      // Repeating cleanup after parent/user deletion is harmless.
+      const once = {
+        app: await list('app'),
+        retained: await list(unlistedRoom),
+        registry: await registry(),
+      };
+      await t.mutation(api.e2e.mutations.cleanupTestData, args);
+      expect({
+        app: await list('app'),
+        retained: await list(unlistedRoom),
+        registry: await registry(),
+      }).toEqual(once);
+      // Component room tokens are deleted, not merely left behind with an empty list.
+      const replacementPost = await heartbeat(
+        postRoom,
+        ids.other,
+        'replacement-post'
+      );
+      const replacementEvent = await heartbeat(
+        eventRoom,
+        ids.other,
+        'replacement-event'
+      );
+      expect(replacementPost.roomToken).not.toBe(selectedPostToken.roomToken);
+      expect(replacementEvent.roomToken).not.toBe(selectedEventToken.roomToken);
+      const preservedApp = await heartbeat(
+        'app',
+        ids.other,
+        'other-app-session'
+      );
+      expect(preservedApp.roomToken).toBe(appToken.roomToken);
+      expect(preservedApp.sessionToken).toBe(otherAppToken.sessionToken);
+      const preservedUnlisted = await heartbeat(
+        unlistedRoom,
+        ids.own,
+        'owned-user-unlisted-room'
+      );
+      expect(preservedUnlisted).toEqual(retainedToken);
+    } finally {
+      // Cancel heartbeat leases through the component API before restoring timers.
+      // Running the component's timeout job cancels itself, which convex-test
+      // cannot model as an in-progress scheduled function.
+      for (const roomId of roomsToClean) {
+        const users = await t.query(components.presence.public.listRoom, {
+          roomId,
+        });
+        for (const user of users)
+          await t.mutation(components.presence.public.removeRoomUser, {
+            roomId,
+            userId: user.userId,
+          });
+      }
+      await t.finishInProgressScheduledFunctions();
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
   });
 });

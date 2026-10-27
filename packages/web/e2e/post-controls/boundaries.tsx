@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useSyncExternalStore } from 'react';
+import { ConvexError } from 'convex/values';
 const listeners = new Set<() => void>();
 let version = 0;
 function emit() {
@@ -55,7 +56,10 @@ async function mutate(kind: string, args: any) {
   if (failure) {
     const message = failure;
     failure = '';
-    throw new Error(message);
+    throw new ConvexError({
+      code: kind === 'pin' ? 'PIN_LIMIT' : 'FORBIDDEN',
+      message,
+    });
   }
   if (kind === 'replies') {
     post = {

@@ -18,6 +18,33 @@ export type PostState = {
   canSetRepliesDisabled?: boolean;
   canPin?: boolean;
 };
+/** Convex transports may decorate Error.message with a request ID and stack. */
+function postActionError(cause: unknown) {
+  const fallback = 'Unable to update this post. Try again.';
+  if (
+    !cause ||
+    typeof cause !== 'object' ||
+    Reflect.get(cause, Symbol.for('ConvexError')) !== true ||
+    !('data' in cause)
+  )
+    return fallback;
+  let data: unknown = cause.data;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return fallback;
+    }
+  }
+  return data &&
+    typeof data === 'object' &&
+    'message' in data &&
+    typeof data.message === 'string' &&
+    data.message.trim()
+    ? data.message
+    : fallback;
+}
+
 export function usePostStateActions(post: PostState, onComplete?: () => void) {
   const setReplies = useSetPostRepliesDisabled();
   const setPinned = useSetPostPinned();
@@ -90,10 +117,7 @@ export function usePostStateActions(post: PostState, onComplete?: () => void) {
       if (latestPostId.current === postId)
         setFailure({
           postId,
-          message:
-            cause instanceof Error
-              ? cause.message
-              : 'Unable to update this post. Try again.',
+          message: postActionError(cause),
         });
     } finally {
       pending.current = false;

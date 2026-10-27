@@ -814,7 +814,9 @@ export default defineSchema({
   presenceRoomAccess: defineTable({
     roomToken: v.string(),
     roomId: v.string(),
-  }).index('by_roomToken', ['roomToken']),
+  })
+    .index('by_roomToken', ['roomToken'])
+    .index('by_roomId', ['roomId']),
   personPresence: defineTable({
     personId: v.id('persons'),
     lastSeen: v.number(),

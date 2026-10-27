@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import type { ComponentProps } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
@@ -130,7 +131,12 @@ describe('Post card merged attribution and actions', () => {
   });
   it('offers the same controls and actionable errors in the mobile drawer', async () => {
     controls.mobile = true;
-    controls.pin.mockRejectedValueOnce(new Error('Unpin another post first.'));
+    controls.pin.mockRejectedValueOnce(
+      new ConvexError({
+        code: 'PIN_LIMIT',
+        message: 'Unpin another post first.',
+      })
+    );
     renderPost('user', { canSetRepliesDisabled: true, canPin: true });
     const user = userEvent.setup();
     await user.click(

@@ -12,6 +12,7 @@ import {
   usePostStateActions,
   type PostState,
 } from './post-state-actions';
+import { ConvexError } from 'convex/values';
 import type { Id } from '@/convex/_generated/dataModel';
 const fixture = vi.hoisted(() => ({ replies: vi.fn(), pin: vi.fn() }));
 vi.mock('@/hooks/convex/use-post-controls', () => ({
@@ -168,7 +169,10 @@ describe('post reply and pin actions', () => {
   });
   it('retains old state and offers retry after a denied pin or capacity failure', async () => {
     fixture.pin.mockRejectedValueOnce(
-      new Error('Unpin another post before pinning this one.')
+      new ConvexError({
+        code: 'PIN_LIMIT',
+        message: 'Unpin another post before pinning this one.',
+      })
     );
     render(<Menu />);
     fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
@@ -179,6 +183,39 @@ describe('post reply and pin actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
     await screen.findByRole('button', { name: 'Unpin post' });
     expect(fixture.pin).toHaveBeenCalledTimes(2);
+  });
+  it.each([false, true])(
+    'shows only the structured server message for a transported Convex failure (serialized=%s)',
+    async serialized => {
+      const data = {
+        code: 'PIN_LIMIT',
+        message:
+          'Three posts are already pinned. Unpin one before pinning another.',
+      };
+      const error = new ConvexError(serialized ? JSON.stringify(data) : data);
+      error.message =
+        '[CONVEX M(posts/mutations:setPinned)] [Request ID: synthetic] Server Error Uncaught ConvexError at controls.ts Called by client';
+      fixture.pin.mockRejectedValueOnce(error);
+      render(<Menu />);
+      fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(data.message);
+      expect(screen.getByRole('alert').textContent).toBe(data.message);
+      expect(screen.getByRole('button', { name: 'Pin post' })).toBeEnabled();
+      expect(
+        screen.queryByText(/CONVEX|Request ID|controls\.ts/)
+      ).not.toBeInTheDocument();
+    }
+  );
+  it('uses concise recovery text for an unexpected technical error', async () => {
+    fixture.pin.mockRejectedValueOnce(
+      new Error('Internal transport failure at private-server-file.ts')
+    );
+    render(<Menu />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to update this post. Try again.'
+    );
+    expect(screen.queryByText(/private-server-file/)).not.toBeInTheDocument();
   });
   it('uses a newer authoritative revision over an older local acknowledgement', async () => {
     const { rerender } = render(<Menu />);

@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import {
   act,
   fireEvent,
@@ -193,7 +194,10 @@ describe('canonical Group Posts', () => {
     state.mobile = true;
     state.post = { ...(state.post as object), canPin: true, pinRevision: 2 };
     state.pin.mockRejectedValue(
-      new Error('Unpin a post before pinning another.')
+      new ConvexError({
+        code: 'PIN_LIMIT',
+        message: 'Unpin a post before pinning another.',
+      })
     );
     render(<GroupPostDetail groupId={groupId} postId={postId} />);
     const user = userEvent.setup();
