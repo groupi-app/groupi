@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import type { Monaco } from '@monaco-editor/react';
 import { useBuilder } from './builder-context';
+import { normalizeMonacoHexColor } from './monaco-color';
 import { registerVariableProviders } from './variable-input';
 import { getDataBlocks } from './building-blocks';
 
@@ -39,7 +40,7 @@ function cssVar(name: string, fallback: string): string {
     const inner = raw.replace(/hsl\(([^)]+)\)/, '$1');
     return hslToHex(inner);
   }
-  if (raw.startsWith('#')) return raw;
+  if (raw.startsWith('#')) return normalizeMonacoHexColor(raw) ?? fallback;
   return fallback;
 }
 

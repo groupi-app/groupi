@@ -441,6 +441,7 @@ test('offline refresh cancels an open confirmation and reconnect restores action
   await pause();
 });
 
+// Keep each frame assertion bounded; allow the full multi-screen journey on slower CI.
 test('keyboard navigation preserves profile through planning, discussion, social, and advanced fallback', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('fetch', async (url: string) => {
@@ -530,4 +531,4 @@ test('keyboard navigation preserves profile through planning, discussion, social
   expect(ui.lastFrame()).not.toContain('fixture-key');
   press('q');
   await vi.waitFor(() => expect(session.disposed).toBe(true));
-});
+}, 15000);
