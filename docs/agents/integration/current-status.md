@@ -362,3 +362,45 @@ Real matching local Next acceptance passed 95 checks with 76 screenshots across 
 Runtime verification found two small repairs: concise structured post-action errors instead of raw transport stacks, and existing fixture cleanup now removes owned presence metadata after parent/account deletion while preserving the shared app room. The latter passed 55 focused tests and independent review before the final backed-up deployment. Final web tests passed 1,619; full quality/contracts/formatting and web build passed. Earlier full backend/shared/mobile/CLI/SDK results remain recorded in the local handoff; they were not unnecessarily repeated after this bounded repair.
 
 Private data/component/storage and source archives were verified before each deployment. Final independent export reconciliation reports all 32 fixture actors cleaned, no fixture references, no pre-existing deletions, and no missing/changed stored files. The only existing record changes are normal Discord observer timestamp fields on four rows; the only added row is the new table catalogue entry. No destructive restore was exercised. Logs, manifests, screenshots, backup hashes and explicit unrun cases are retained in sibling task `artifacts/runtime-acceptance/HANDOFF.md` and `cleanup-verification-final.json`. Local servers/browsers are stopped. Live historical-mail receipt retries, Integration/SDK credential-specific acceptance, arbitrary historical DST transitions, physical devices and screen readers remain outside observed runtime coverage. Push, versions/changesets, hosted frontend rollout and merge still require separate authorization.
+
+## Verified TEST UI and release conflict candidate — 2026-10-27
+
+PR #438 and its focused acceptance follow-up PR #440 are merged into test. Hosted
+`https://test.groupi.gg` serves `3a77cf3a25a2ebb7076c88c80b0cfcc9456bd692` against
+existing preview `zany-rooster-824`; the guarded frontend-only build made no
+backend/configuration/credential writes. All 22 applicable exact-head checks passed
+before each explicitly approved review-only admin override, and merged-head
+application/CLI checks and public staging readiness passed. No rule was edited.
+The last reviewed backend deployment remains `a4c41d9f`; no backend source changed
+in either publication follow-up.
+
+Authenticated hosted content/navigation acceptance passed 99 checks/80 screenshots
+on 9c560334. Final 3a77cf3a acceptance passed eight Light/Dark registration-focus
+cases at 1440/320/375/390 and two complete real Monaco-model draft scenarios with
+both editors at all four widths. The report distinguishes model editing from the
+multiline keyboard harness autoindent failure. A Dark YAML syntax-contrast
+observation remains for user review; no full contrast audit is claimed. Native
+devices/VoiceOver, live Discord installation/linking and add-on server publication
+were not exercised. All 54 disposable actor records across the runtime phases are
+cleaned. Final fresh exports 733→733 show no fixture references, pre-existing
+deletions or storage changes; only scheduled Discord polling timestamps changed.
+Private source/data/component/storage backups are verified and retained in the
+task artifacts. No destructive restore was performed.
+
+Draft release PR #439 remains unmerged; main is untouched. Its test source has a
+lockfile conflict against main a9204102. Local release candidate
+`codex/release-lock-resolution` integrates those two pinned sources in a separate
+worktree, preserving verified TEST. Only pnpm-lock.yaml conflicts; manifests merge
+cleanly. Initial pnpm generation ignored malformed duplicate YAML and attempted a
+broad graph refresh; that result is quarantined, not accepted. Source-based lock
+reconstruction and pinned pnpm 10.12.1 reconciliation retain main Sharp 0.35.5 and
+Joi 17.13.8, test auth/Storybook/override pins, all eight workspaces and compatible
+source transitive updates. The generated graph has no missing edges, new package
+versions, outside-source importer versions or integrity conflicts. Clean frozen
+installation preserves its lock hash. Local quality/contracts, all seven package
+test suites and web/portal builds passed. Candidate automatic Vercel deployment is
+suppressed before review publication; no manual candidate deployment is allowed.
+Because GitHub PR heads are immutable, preserving verified test requires a
+separate replacement draft PR rather than changing PR #439's source. The candidate
+has not been runtime-deployed. Main/production merge, registry publication, new
+credentials and backend rollout remain outside authorization.
