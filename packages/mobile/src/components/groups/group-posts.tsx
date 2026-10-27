@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from 'convex/_generated/api';
 import { View } from 'react-native';
 import type { Id } from 'convex/_generated/dataModel';
 import { Text } from '@/components/ui/text';
@@ -16,9 +18,24 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const eligible =
     group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
-  const posts = hooks.useGroupPosts(
-    eligible ? { groupId, paginationOpts: { numItems: 20, cursor } } : 'skip'
+  const pinned = useQuery(
+    api.groupPosts.queries.listPinnedPosts,
+    eligible ? { groupId } : 'skip'
   );
+  const posts = hooks.useGroupPosts(
+    eligible
+      ? {
+          groupId,
+          excludePinned: true,
+          paginationOpts: { numItems: 20, cursor },
+        }
+      : 'skip'
+  );
+  const pinnedIds = new Set((pinned ?? []).map(post => post._id));
+  const visiblePosts = [
+    ...(pinned ?? []),
+    ...(posts?.page ?? []).filter(post => !pinnedIds.has(post._id)),
+  ];
   if (group === undefined) return <Text>Loading Group…</Text>;
   if (!eligible)
     return (
@@ -39,8 +56,8 @@ export function GroupPosts({ groupId }: { groupId: Id<'groups'> }) {
         <Text>Loading posts…</Text>
       ) : (
         <>
-          {!posts.page.length && <Text>No posts yet.</Text>}
-          {posts.page.map(post => (
+          {!visiblePosts.length && <Text>No posts yet.</Text>}
+          {visiblePosts.map(post => (
             <PostCard
               key={post._id}
               post={post}

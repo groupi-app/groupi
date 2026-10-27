@@ -120,6 +120,15 @@ Group until lifted. It is distinct from removal and event banning.
 A person who participates in an individual event, with an event role and a
 separate RSVP response.
 
+**Completed Event**:
+An Event whose end time has passed, or whose start date ended in its Event time
+zone when no end time was set; previously explicit completion remains recognized.
+Completion is distinct from an expired date poll.
+
+**Needs new dates**:
+An undecided Event whose proposed date options have all passed. Its memberships,
+discussion and previous votes remain, and future options can make it upcoming again.
+
 **Event audience**:
 The people eligible to discover or view an event under its visibility rules.
 Audience eligibility alone is independent of invitation, event membership,
@@ -133,8 +142,24 @@ membership in a Group.
 A Groupi user with an accepted personal friendship relationship to another user.
 Friendship is independent of shared Group membership.
 
+**Simple list**:
+An Event- or Group-owned list of text entries without completion controls.
+Switching from a checklist hides completion state without deleting it.
+
+**Checklist**:
+An Event- or Group-owned list whose entries can be completed under the list's
+participation policy. Completion is one shared status per entry, not one status
+per viewer. Personal entries remain restricted to their author and managers.
+
+**Bring list**:
+A list of required items and quantities, with participants claiming their own
+quantities. New Bring Lists have independent Event or Group ownership. The
+legacy Event Bring List remains backed by its original event add-on and claims.
+A claim is distinct from checklist completion or an Event RSVP.
+
 **Add-on**:
-An optional event capability, such as reminders, a questionnaire, or a bring list.
+An optional event capability, such as reminders, a questionnaire, or the legacy
+Event Bring List.
 
 **Add-on template**:
 A reusable definition of a custom add-on. Editing it does not automatically

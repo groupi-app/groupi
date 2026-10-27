@@ -59,6 +59,8 @@ export const request = v.object({
         )
       ),
       content: v.optional(v.string()),
+      repliesDisabled: v.optional(v.boolean()),
+      expectedRepliesRevision: v.optional(v.number()),
       text: v.optional(v.string()),
       attachments: v.optional(v.array(attachmentInputValidator)),
       attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
@@ -102,6 +104,10 @@ async function discussionSummary(
           title: row.title,
           content: row.content,
           editedAt: row.editedAt ?? null,
+          repliesDisabled: row.repliesDisabled ?? false,
+          repliesRevision: row.repliesRevision ?? 0,
+          pinnedAt: row.pinnedAt,
+          pinRevision: row.pinRevision ?? 0,
         }
       : {
           postId: row.postId,
@@ -458,7 +464,16 @@ export const execute = internalMutation({
         operation === 'delete'
           ? []
           : [
-              ...(input.kind === 'posts' ? ['title', 'content'] : ['text']),
+              ...(input.kind === 'posts'
+                ? [
+                    'title',
+                    'content',
+                    'repliesDisabled',
+                    ...(operation === 'edit'
+                      ? ['expectedRepliesRevision']
+                      : []),
+                  ]
+                : ['text']),
               ...(operation === 'create'
                 ? ['attachments']
                 : ['attachmentsToAdd', 'attachmentIdsToDelete']),
@@ -530,6 +545,8 @@ export const execute = internalMutation({
           replyId: reply?._id,
           title: body.title,
           content: body.content,
+          repliesDisabled: body.repliesDisabled,
+          expectedRepliesRevision: body.expectedRepliesRevision,
           text: body.text,
           hasAttachments: remainingFileCount > 0,
         });
@@ -575,6 +592,8 @@ export const execute = internalMutation({
           body: {
             title: body.title,
             content: body.content,
+            repliesDisabled: body.repliesDisabled,
+            expectedRepliesRevision: body.expectedRepliesRevision,
             text: body.text,
             attachments: body.attachments,
             attachmentsToAdd: body.attachmentsToAdd,

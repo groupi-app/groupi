@@ -1,4 +1,10 @@
 import {
+  audienceOptionsArgs,
+  audienceOptionsPage,
+  audienceOptionsForPerson,
+} from './settings';
+import { settingsSnapshot, settingsForPerson } from './settings';
+import {
   requireNoEventExclusion,
   isEventExcludedForPerson,
 } from '../groups/exclusions';
@@ -75,6 +81,12 @@ export const getEventHeader = query({
     return {
       event: {
         ...event,
+        potentialDateTimes: (
+          await ctx.db
+            .query('potentialDateTimes')
+            .withIndex('by_event', q => q.eq('eventId', event._id))
+            .collect()
+        ).map(option => option.dateTime),
         imageUrl,
         chosenDateTime: event.chosenDateTime,
       },
@@ -280,6 +292,13 @@ export const getUserEvents = query({
         return {
           event: {
             ...event,
+            // Date-option records are authoritative; legacy arrays may lag old clients.
+            potentialDateTimes: (
+              await ctx.db
+                .query('potentialDateTimes')
+                .withIndex('by_event', q => q.eq('eventId', event._id))
+                .collect()
+            ).map(option => option.dateTime),
             imageUrl,
             chosenDateTime: event.chosenDateTime,
             memberCount: event.memberCount ?? 0,
@@ -543,6 +562,13 @@ export const getUserEventsAndInvites = query({
         return {
           event: {
             ...event,
+            // Date-option records are authoritative; legacy arrays may lag old clients.
+            potentialDateTimes: (
+              await ctx.db
+                .query('potentialDateTimes')
+                .withIndex('by_event', q => q.eq('eventId', event._id))
+                .collect()
+            ).map(option => option.dateTime),
             imageUrl,
             chosenDateTime: event.chosenDateTime,
             memberCount: event.memberCount ?? 0,
@@ -892,4 +918,18 @@ export const getEventById = internalQuery({
       await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     return await ctx.db.get(eventId);
   },
+});
+
+export const getSettings = query({
+  args: { eventId: v.id('events') },
+  returns: settingsSnapshot,
+  handler: async (ctx, { eventId }) =>
+    settingsForPerson(ctx, eventId, (await requireAuth(ctx)).person._id),
+});
+
+export const getSettingsAudienceOptions = query({
+  args: audienceOptionsArgs,
+  returns: audienceOptionsPage,
+  handler: async (ctx, args) =>
+    audienceOptionsForPerson(ctx, (await requireAuth(ctx)).person._id, args),
 });

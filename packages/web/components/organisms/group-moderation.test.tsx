@@ -10,12 +10,6 @@ vi.mock('./community-expulsion-progress', () => ({
 vi.mock('./community-expulsion-action', () => ({
   CommunityExpulsionAction: () => null,
 }));
-vi.mock('@/features/group-announcements/event-mail', () => ({
-  EventMail: () => null,
-}));
-vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
-}));
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {

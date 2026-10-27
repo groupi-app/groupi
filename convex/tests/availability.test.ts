@@ -302,7 +302,7 @@ describe('Availability Domain', () => {
       const { potentialDateTimeIds } = await t.run(async ctx => {
         const id = await ctx.db.insert('potentialDateTimes', {
           eventId: setup.eventId,
-          dateTime: Date.now(),
+          dateTime: Date.now() + 86400000,
         });
         return { potentialDateTimeIds: [id] };
       });

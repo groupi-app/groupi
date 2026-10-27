@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMutation, useQuery } from 'convex/react';
@@ -22,6 +22,20 @@ vi.mock('@/convex/_generated/api', () => ({
     },
   },
 }));
+
+beforeEach(() => {
+  vi.stubGlobal('innerWidth', 1200);
+  Reflect.deleteProperty(window, 'ontouchstart');
+});
+afterEach(() => vi.unstubAllGlobals());
+async function openKeyAction(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+  action: string
+) {
+  await user.click(screen.getByRole('button', { name: `Actions for ${name}` }));
+  await user.click(await screen.findByRole('menuitem', { name: action }));
+}
 
 describe('bounded API key settings', () => {
   beforeEach(() => {
@@ -100,7 +114,7 @@ describe('bounded API key settings', () => {
     vi.mocked(useMutation).mockReturnValue(revoke as never);
     const user = userEvent.setup();
     render(<BoundedKeysSettings />);
-    await user.click(screen.getByRole('button', { name: 'Revoke Calendar' }));
+    await openKeyAction(user, 'Calendar', 'Revoke');
     expect(
       screen.queryByText('Key revoked. New requests will be denied.')
     ).not.toBeInTheDocument();
@@ -137,9 +151,7 @@ describe('bounded API key settings', () => {
     vi.mocked(useMutation).mockReturnValue(replace as never);
     const user = userEvent.setup();
     render(<BoundedKeysSettings />);
-    await user.click(
-      screen.getByRole('button', { name: 'Edit access for Calendar' })
-    );
+    await openKeyAction(user, 'Calendar', 'Edit access');
     await user.click(
       screen.getByLabelText(
         'All current and future events within my current authority'
@@ -160,8 +172,11 @@ describe('bounded API key settings', () => {
     vi.mocked(useMutation).mockReturnValue(recover as never);
     const user = userEvent.setup();
     render(<BoundedKeysSettings />);
+    await user.click(screen.getByRole('button', { name: 'Key settings' }));
     await user.click(
-      screen.getByRole('button', { name: 'Revoke my user credentials' })
+      await screen.findByRole('menuitem', {
+        name: 'Revoke my user credentials',
+      })
     );
     expect(
       screen.getByText(/Integration keys keep their separate controls/)
@@ -242,4 +257,73 @@ it('creates an identity-only user key without events while event actions still r
       selector: { kind: 'selected', eventIds: [] },
     })
   );
+});
+
+it('keeps revoked key actions read-only and returns focus after closing Details', async () => {
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('list' as never)
+      ? [
+          {
+            grantId: 'grant-1',
+            name: 'Retired long key identity',
+            principalKind: 'user',
+            actions: ['events.read'],
+            selector: { kind: 'selected', eventIds: [] },
+            expiresAt: null,
+            revokedAt: 10,
+          },
+        ]
+      : []
+  );
+  const user = userEvent.setup();
+  render(<BoundedKeysSettings />);
+  const trigger = screen.getByRole('button', {
+    name: 'Actions for Retired long key identity',
+  });
+  await user.click(trigger);
+  expect(
+    screen.queryByRole('menuitem', { name: 'Revoke' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: 'Edit access' })
+  ).not.toBeInTheDocument();
+  await user.click(await screen.findByRole('menuitem', { name: 'Details' }));
+  expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  expect(trigger).toHaveFocus();
+});
+it('uses the mobile action drawer for owner key actions without revoking on open or dismissal', async () => {
+  vi.stubGlobal('innerWidth', 320);
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('list' as never)
+      ? [
+          {
+            grantId: 'grant-1',
+            name: 'Mobile key',
+            principalKind: 'user',
+            actions: [],
+            selector: { kind: 'selected', eventIds: [] },
+            expiresAt: null,
+            revokedAt: null,
+          },
+        ]
+      : []
+  );
+  const revoke = vi.fn();
+  vi.mocked(useMutation).mockReturnValue(revoke as never);
+  const user = userEvent.setup();
+  render(
+    <>
+      <style>{'* { animation-name: none !important; }'}</style>
+      <BoundedKeysSettings />
+    </>
+  );
+  await user.click(
+    screen.getByRole('button', { name: 'Actions for Mobile key' })
+  );
+  expect(
+    await screen.findByRole('dialog', { name: 'Actions for Mobile key' })
+  ).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  expect(revoke).not.toHaveBeenCalled();
 });

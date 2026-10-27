@@ -58,6 +58,7 @@ export interface PostActionApi {
           title: string;
           content: string;
           attachments?: AttachmentMutationInput[];
+          repliesDisabled?: boolean;
         },
         { postId: ConvexId<'posts'>; post: unknown }
       >;
@@ -66,6 +67,8 @@ export interface PostActionApi {
           postId: ConvexId<'posts'>;
           title?: string;
           content?: string;
+          repliesDisabled?: boolean;
+          expectedRepliesRevision?: number;
         },
         { post: unknown }
       >;

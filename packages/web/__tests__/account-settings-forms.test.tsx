@@ -91,26 +91,15 @@ vi.mock('@/app/(settings)/settings/components/delete-account-modal', () => ({
   DeleteAccountModal: () => null,
 }));
 
-it('keeps app registration separate from profile submission on the composed account page', async () => {
-  calls.register.mockResolvedValue('app-one');
+it('keeps everyday Account independent from Developer and preserves username dirty Save/Revert', async () => {
   calls.profile.mockResolvedValue(null);
   const user = userEvent.setup();
   const { container } = render(<AccountSettings />);
   expect(container.querySelector('form form')).toBeNull();
-  const appName = screen.getByLabelText('App name');
-  expect(appName.closest('form')).not.toBe(
-    container.querySelector('#account-form')
-  );
-  await user.type(appName, 'Reading companion');
-  await user.type(screen.getByLabelText('Purpose'), 'Read selected community');
-  await user.click(screen.getByLabelText('Native app'));
-  await user.type(
-    screen.getByLabelText('Callback URIs'),
-    'com.example.reading:/callback'
-  );
-  await user.click(screen.getByRole('button', { name: 'Register app' }));
-  await waitFor(() => expect(calls.register).toHaveBeenCalledTimes(1));
-  expect(calls.profile).not.toHaveBeenCalled();
+  expect(screen.queryByLabelText('App name')).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: 'Developer settings' })
+  ).toHaveAttribute('href', '/settings/developer');
   await user.clear(screen.getByPlaceholderText('Enter username'));
   await user.type(screen.getByPlaceholderText('Enter username'), 'newreader');
   expect(
@@ -127,10 +116,9 @@ it('keeps app registration separate from profile submission on the composed acco
     username: 'newreader',
     name: 'reader@example.test',
   });
-  expect(calls.register).toHaveBeenCalledTimes(1);
+  expect(calls.register).not.toHaveBeenCalled();
   await user.click(screen.getByRole('button', { name: 'Revert' }));
   expect(screen.getByPlaceholderText('Enter username')).toHaveValue('reader');
-  expect(calls.profile).toHaveBeenCalledTimes(1);
   expect(
     screen.queryByText('You have unsaved changes!')
   ).not.toBeInTheDocument();

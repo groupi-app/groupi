@@ -186,3 +186,44 @@ it('prevents saving empty content after removing the final retained attachment',
   expect(screen.getByRole('button', { name: 'Save post' })).toBeDisabled();
   expect(state.save).not.toHaveBeenCalled();
 });
+
+it('includes the new-post reply preference and preserves it after failed publication', async () => {
+  state.save.mockRejectedValue(new Error('Offline'));
+  render(
+    <DiscussionComposer
+      initialTitle='Update'
+      initialContent='<p>News</p>'
+      canConfigureReplies
+      submitLabel='Publish post'
+      onSave={state.save}
+    />
+  );
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Allow replies' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Publish post' }));
+  await screen.findByRole('alert');
+  expect(state.save).toHaveBeenCalledWith(
+    expect.objectContaining({ repliesDisabled: true })
+  );
+  expect(
+    screen.getByRole('checkbox', { name: 'Allow replies' })
+  ).not.toBeChecked();
+});
+it('never offers post reply controls on reply composers and blocks a remotely locked draft', () => {
+  render(
+    <DiscussionComposer
+      reply
+      disabled
+      canConfigureReplies
+      initialContent='<p>Preserved</p>'
+      submitLabel='Send reply'
+      onSave={state.save}
+    />
+  );
+  expect(
+    screen.queryByRole('checkbox', { name: 'Allow replies' })
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send reply' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Send reply' }));
+  expect(state.save).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Body')).toHaveValue('<p>Preserved</p>');
+});

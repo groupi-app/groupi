@@ -19,7 +19,11 @@ import {
   mode as pollMode,
   option as pollOption,
 } from './groupPolls/contracts';
-import { entryFields as groupListEntryFields } from './groupLists/contracts';
+import {
+  entryFields as groupListEntryFields,
+  optionFields as groupListOptionFields,
+  claimFields as groupListClaimFields,
+} from './groupLists/contracts';
 import { toolFields, policyFields } from './groupTools/contracts';
 import { responseFields as formResponseFields } from './groupForms/contracts';
 import { transferStatus } from './groupTransfers/contracts';
@@ -257,6 +261,7 @@ export default defineSchema({
     .index('by_groupId_and_kind', ['groupId', 'kind'])
     .index('by_creatorId', ['creatorId']),
   groupLists: defineTable({
+    ...groupListOptionFields,
     toolId: v.id('groupTools'),
     groupId: v.optional(v.id('groups')),
     eventId: v.optional(v.id('events')),
@@ -270,7 +275,14 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_actorId', ['actorId'])
+    .index('by_completedById', ['completedById'])
     .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupListClaims: defineTable(groupListClaimFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_entryId', ['entryId'])
+    .index('by_entryId_and_personId', ['entryId', 'personId'])
+    .index('by_entryId_and_quantity', ['entryId', 'quantity'])
+    .index('by_personId', ['personId']),
   groupListRequests: defineTable({
     toolId: v.id('groupTools'),
     groupId: v.optional(v.id('groups')),
@@ -802,7 +814,9 @@ export default defineSchema({
   presenceRoomAccess: defineTable({
     roomToken: v.string(),
     roomId: v.string(),
-  }).index('by_roomToken', ['roomToken']),
+  })
+    .index('by_roomToken', ['roomToken'])
+    .index('by_roomId', ['roomId']),
   personPresence: defineTable({
     personId: v.id('persons'),
     lastSeen: v.number(),
@@ -1013,6 +1027,10 @@ export default defineSchema({
     .index('by_membership_date', ['membershipId', 'potentialDateTimeId']),
 
   posts: defineTable({
+    repliesDisabled: v.optional(v.boolean()),
+    repliesRevision: v.optional(v.number()),
+    pinnedAt: v.optional(v.number()),
+    pinRevision: v.optional(v.number()),
     title: v.string(),
     content: v.string(),
     editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
@@ -1026,7 +1044,9 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_groupId', ['groupId'])
     .index('by_author', ['authorId'])
-    .index('by_membership', ['membershipId']),
+    .index('by_membership', ['membershipId'])
+    .index('by_event_and_pinnedAt', ['eventId', 'pinnedAt'])
+    .index('by_groupId_and_pinnedAt', ['groupId', 'pinnedAt']),
 
   replies: defineTable({
     text: v.string(),

@@ -1,4 +1,4 @@
-import { ConvexError } from 'convex/values';
+import { rejectAnnouncementSend } from './retirement';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
@@ -6,7 +6,6 @@ import { requireManager } from '../groups/policy';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import { checkIsBlocked } from '../lib/privacy';
 import { isPersonInDndMode } from '../lib/notifications';
-import { requestExpiry } from '../lib/requestId';
 export const summary = (row: Doc<'groupAnnouncements'>) => ({
   announcementId: row._id,
   state: row.state,
@@ -48,6 +47,7 @@ export async function canDeliverAnnouncement(
     return false;
   }
 }
+/** Retained callable signature rejects new sends and replay-triggered dispatch. */
 export async function send(
   ctx: MutationCtx,
   senderId: Id<'persons'>,
@@ -57,76 +57,9 @@ export async function send(
     title: string;
     message: string;
   }
-) {
+): Promise<ReturnType<typeof summary>> {
   await requireManager(ctx, args.groupId, senderId);
-  requestExpiry(
-    args.requestId,
-    'Inspect announcement status before using a new identifier.'
-  );
-  const title = args.title.trim(),
-    message = args.message.trim();
-  if (!title || title.length > 100 || !message || message.length > 2000)
-    throw new ConvexError({
-      code: 'VALIDATION_ERROR',
-      message:
-        'Announcement title must contain 1–100 characters and message 1–2000 characters.',
-    });
-  const existing = await ctx.db
-    .query('groupAnnouncements')
-    .withIndex('by_groupId_and_senderId_and_requestId', q =>
-      q
-        .eq('groupId', args.groupId)
-        .eq('senderId', senderId)
-        .eq('requestId', args.requestId)
-    )
-    .unique();
-  if (existing) {
-    if (existing.title !== title || existing.message !== message)
-      throw new ConvexError({
-        code: 'CONFLICT',
-        message:
-          'Request identifier was already used for different announcement content.',
-      });
-    if (existing.state === 'PROCESSING')
-      await ctx.scheduler.runAfter(
-        0,
-        internal.groupAnnouncements.mutations.processPage,
-        { announcementId: existing._id }
-      );
-    return summary(existing);
-  }
-  const now = Date.now();
-  const announcementId = await ctx.db.insert('groupAnnouncements', {
-    ...args,
-    title,
-    message,
-    senderId,
-    state: 'PROCESSING',
-    notified: 0,
-    skipped: 0,
-    cursor: null,
-    cutoff:
-      (
-        await ctx.db
-          .query('groupMemberships')
-          .withIndex('by_groupId', q => q.eq('groupId', args.groupId))
-          .order('desc')
-          .first()
-      )?._creationTime ?? now,
-    createdAt: now,
-    updatedAt: now,
-  });
-  await ctx.scheduler.runAfter(
-    0,
-    internal.groupAnnouncements.mutations.processPage,
-    { announcementId }
-  );
-  return {
-    announcementId,
-    state: 'PROCESSING' as const,
-    notified: 0,
-    skipped: 0,
-  };
+  return rejectAnnouncementSend();
 }
 export async function get(
   ctx: QueryCtx | MutationCtx,

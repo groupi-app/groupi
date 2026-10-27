@@ -1,3 +1,4 @@
+import { postControls } from '../posts/controls';
 import { ConvexError } from 'convex/values';
 import type { Doc, Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -71,6 +72,7 @@ export async function present(
   const canEdit = row.authorId === personId || permissions.canManage;
   return {
     ...row,
+    ...postControls(row, personId, permissions.canManage),
     createdAt: row._creationTime,
     author: by,
     authorName: by?.user.name || by?.user.username || 'Former member',
@@ -110,6 +112,7 @@ export async function create(
     groupId: Id<'groups'>;
     title: string;
     content: string;
+    repliesDisabled?: boolean;
     attachments?: AttachmentInput[];
   }
 ) {
@@ -122,6 +125,8 @@ export async function update(
     postId: Id<'posts'>;
     title?: string;
     content?: string;
+    repliesDisabled?: boolean;
+    expectedRepliesRevision?: number;
     attachmentsToAdd?: AttachmentInput[];
     attachmentIdsToDelete?: Id<'attachments'>[];
   }

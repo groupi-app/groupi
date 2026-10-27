@@ -38,6 +38,8 @@ export interface PostCardProps {
       user?: { name: string | null; image?: string | null } | null;
     } | null;
     replyCount?: number;
+    pinnedAt?: number;
+    repliesDisabled?: boolean;
   };
   eventId?: string;
   groupId?: string;
@@ -146,10 +148,15 @@ export function PostCard({
       onPress={() => path && router.push(path)}
       onLongPress={handleLongPress}
       accessibilityRole='button'
-      accessibilityLabel={`${post.title}, by ${authorName}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
+      accessibilityLabel={`${post.pinnedAt === undefined ? '' : 'Pinned, '}${post.title}, by ${authorName}${post.repliesDisabled ? ', replies closed' : ''}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
       accessibilityHint='Opens post and replies. Long press for post actions.'
     >
       <Card>
+        {post.pinnedAt !== undefined ? (
+          <Text className='mb-2 text-xs font-semibold text-muted-foreground'>
+            Pinned
+          </Text>
+        ) : null}
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
           {post.author?.kind === 'integration' || !post.authorId ? (
@@ -186,6 +193,11 @@ export function PostCard({
           {plainContent || post.content}
         </Text>
 
+        {post.repliesDisabled ? (
+          <Text className='mt-2 text-xs text-muted-foreground'>
+            Replies closed
+          </Text>
+        ) : null}
         {/* Reply count */}
         {replyCount !== undefined && replyCount > 0 ? (
           <View className='mt-3 flex-row items-center gap-1'>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { useQuery, useAction, useMutation } from 'convex/react';
 import type { FunctionArgs, FunctionReference } from 'convex/server';
 interface GroupDiscordApi {
@@ -36,7 +36,8 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
     );
   }
   function useGroupDiscordSettings(
-    args: FunctionArgs<Api['groupDiscord']['queries']['getConnection']>
+    args: FunctionArgs<Api['groupDiscord']['queries']['getConnection']>,
+    options: { refreshMetadataOnMount?: boolean } = {}
   ) {
     const connection = useGroupDiscordConnection(args);
     const configure = useConfigureGroupDiscord();
@@ -93,6 +94,37 @@ export function createGroupDiscordHooks<Api extends GroupDiscordApi>(
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const refreshed = useRef(new Set<string>());
+    const groupId = args.groupId;
+    const generation = connection?.generation;
+    const active = connection?.status === 'active';
+    useEffect(() => {
+      if (
+        !options.refreshMetadataOnMount ||
+        !active ||
+        generation === undefined
+      )
+        return;
+      const key = `${groupId}:${generation}`;
+      if (refreshed.current.has(key)) return;
+      refreshed.current.add(key);
+      // Metadata-only action rechecks Group and Discord authority. One attempt per
+      // generation; subscription updates and failures must not cause retry loops.
+      void refreshMetadata(args).catch(cause => {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Unable to update Discord server details.'
+        );
+      });
+    }, [
+      options.refreshMetadataOnMount,
+      active,
+      generation,
+      groupId,
+      refreshMetadata,
+      args,
+    ]);
     const guildId = guildDraft ?? connection?.guildId ?? '';
     const mode = modeDraft ?? connection?.mode ?? 'role';
     const roleId =

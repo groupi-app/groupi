@@ -46,12 +46,15 @@ export type MentionMember = {
 export type ComposerValues = Pick<
   FunctionArgs<typeof api.posts.mutations.createPost>,
   'title' | 'content' | 'attachments'
-> & { attachmentIdsToDelete: Id<'attachments'>[] };
+> & { repliesDisabled?: boolean; attachmentIdsToDelete: Id<'attachments'>[] };
 
 /** Parent-independent editor. Uploads and previews use the same attachment pipeline as Event posts. */
 export function DiscussionComposer({
   initialTitle = '',
   initialContent = '',
+  initialRepliesDisabled = false,
+  canConfigureReplies = false,
+  disabled = false,
   existingAttachments = [],
   mentionMembers,
   eventMembers,
@@ -66,6 +69,9 @@ export function DiscussionComposer({
 }: {
   initialTitle?: string;
   initialContent?: string;
+  initialRepliesDisabled?: boolean;
+  canConfigureReplies?: boolean;
+  disabled?: boolean;
   existingAttachments?: ServerAttachment[];
   mentionMembers?: MentionMember[];
   eventMembers?: BlockNoteEditorProps['members'];
@@ -78,6 +84,9 @@ export function DiscussionComposer({
   onDraftChange?: (dirty: boolean) => void;
   children?: ReactNode;
 }) {
+  const [repliesDisabled, setRepliesDisabled] = useState(
+    initialRepliesDisabled
+  );
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [deleted, setDeleted] = useState<Id<'attachments'>[]>([]);
@@ -94,6 +103,7 @@ export function DiscussionComposer({
     !saved &&
     (title !== initialTitle ||
       content !== initialContent ||
+      (canConfigureReplies && repliesDisabled !== initialRepliesDisabled) ||
       deleted.length > 0 ||
       uploads.pendingUploads.length > 0);
   useEffect(() => {
@@ -114,7 +124,7 @@ export function DiscussionComposer({
       uploads.pendingUploads.length > 0) &&
     discussionLengthAllowed(content, reply ? 5000 : 3000, initialContent);
   async function submit() {
-    if (saving || uploads.isUploading || !valid) return;
+    if (disabled || saving || uploads.isUploading || !valid) return;
     setSaving(true);
     setError('');
     try {
@@ -148,6 +158,7 @@ export function DiscussionComposer({
           })
         ),
         attachmentIdsToDelete: deleted,
+        ...(!reply && canConfigureReplies ? { repliesDisabled } : {}),
       });
       setSaved(true);
       uploads.clearAll();
@@ -183,7 +194,7 @@ export function DiscussionComposer({
               data-test='post-editor-title'
               id='discussion-title'
               value={title}
-              disabled={saving}
+              disabled={saving || disabled}
               onChange={event => {
                 setSaved(false);
                 setTitle(event.target.value);
@@ -210,7 +221,7 @@ export function DiscussionComposer({
             mentionMembers={mentionMembers}
             members={eventMembers}
             maxLength={reply ? 5000 : 3000}
-            disabled={saving}
+            disabled={saving || disabled}
             onSubmit={() => void submit()}
           />
         </div>
@@ -226,6 +237,7 @@ export function DiscussionComposer({
             if (result.errors.length) setError(result.errors.join(' '));
           }}
           disabled={
+            disabled ||
             saving ||
             uploads.isUploading ||
             attachments.length + uploads.pendingUploads.length >= 10
@@ -278,10 +290,25 @@ export function DiscussionComposer({
           </p>
         )}
         {children}
+        {!reply && canConfigureReplies && (
+          <label className='flex min-h-11 items-center gap-2 text-sm'>
+            <input
+              type='checkbox'
+              className='size-4 accent-primary'
+              checked={!repliesDisabled}
+              disabled={saving || disabled}
+              onChange={event => {
+                setSaved(false);
+                setRepliesDisabled(!event.target.checked);
+              }}
+            />
+            Allow replies
+          </label>
+        )}
         <div className='flex flex-wrap gap-2'>
           <Button
             data-test='post-editor-submit'
-            disabled={saving || uploads.isUploading || !valid}
+            disabled={disabled || saving || uploads.isUploading || !valid}
             type='submit'
           >
             {saving ? 'Saving…' : submitLabel}
@@ -290,7 +317,7 @@ export function DiscussionComposer({
             <Button
               type='button'
               variant='outline'
-              disabled={saving}
+              disabled={saving || disabled}
               onClick={() => (dirty ? setLeave(() => onCancel) : onCancel())}
             >
               {cancelLabel}

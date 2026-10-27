@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
   push: vi.fn(),
+  canConfigureReplies: false,
   save: undefined as ((values: ComposerValues) => Promise<unknown>) | undefined,
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: state.push }) }));
@@ -19,8 +20,10 @@ vi.mock('@/hooks/convex/use-events', () => ({
 vi.mock('./composer', () => ({
   DiscussionComposer: (props: {
     onSave: (values: ComposerValues) => Promise<unknown>;
+    canConfigureReplies?: boolean;
   }) => {
     state.save = props.onSave;
+    state.canConfigureReplies = Boolean(props.canConfigureReplies);
     return null;
   },
 }));
@@ -62,4 +65,35 @@ it('keeps canonical Event post IDs and attachment edits in one update', async ()
     attachmentIdsToDelete: [],
   });
   expect(state.push).toHaveBeenCalledWith('/event/event-one/post/post-one');
+});
+
+it('lets new Event posts publish with replies disabled but excludes lock state from later content edits', async () => {
+  const created = render(<Editor eventId='event-one' />);
+  expect(state.canConfigureReplies).toBe(true);
+  await state.save?.({
+    title: 'Read only update',
+    content: '<p>News</p>',
+    attachments: [],
+    attachmentIdsToDelete: [],
+    repliesDisabled: true,
+  });
+  expect(state.create).toHaveBeenCalledWith(
+    expect.objectContaining({ repliesDisabled: true })
+  );
+  created.unmount();
+  render(
+    <Editor
+      eventId='event-one'
+      postData={{ id: 'post-one', title: 'Old', content: '<p>Old</p>' }}
+    />
+  );
+  expect(state.canConfigureReplies).toBe(false);
+  await state.save?.({
+    title: 'Edited',
+    content: '<p>Edited</p>',
+    attachments: [],
+    attachmentIdsToDelete: [],
+    repliesDisabled: false,
+  });
+  expect(state.update.mock.calls[0][0]).not.toHaveProperty('repliesDisabled');
 });

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Id } from '../../../../../convex/_generated/dataModel';
 import { api } from '../../../../../convex/_generated/api';
 import { createGroupPostHooks } from '../useGroupPosts';
+import { createPostControlHooks } from '../usePostControls';
 
 const nativeRequire = createRequire(
   new URL('../../../../mobile/package.json', import.meta.url)
@@ -38,6 +39,7 @@ describe('Group Post hooks with actual application SDK providers', () => {
       const appSdk = appRequire('convex/react');
       const { getFunctionName } = appRequire('convex/server');
       const hooks = createGroupPostHooks(api, appSdk);
+      const controls = createPostControlHooks(api, appSdk);
       const results = new Map<string, unknown>();
       const subscriptions = new Map<string, Set<() => void>>();
       const client = {
@@ -68,14 +70,26 @@ describe('Group Post hooks with actual application SDK providers', () => {
         createReply: ReturnType<typeof hooks.useCreateGroupPostReply>;
         updateReply: ReturnType<typeof hooks.useUpdateGroupPostReply>;
         deleteReply: ReturnType<typeof hooks.useDeleteGroupPostReply>;
+        setReplies: ReturnType<typeof controls.useSetPostRepliesDisabled>;
+        setPinned: ReturnType<typeof controls.useSetPostPinned>;
       };
-      let observed: { feed: unknown; post: unknown; replies: unknown };
+      let observed: {
+        feed: unknown;
+        post: unknown;
+        replies: unknown;
+        pinnedEvent: unknown;
+        pinnedGroup: unknown;
+      };
       let tree: { unmount: () => void } | undefined;
       function ThreadProbe() {
         observed = {
           feed: hooks.useGroupPosts({ groupId, paginationOpts }),
           post: hooks.useGroupPost({ postId }),
           replies: hooks.useGroupPostReplies({ postId, paginationOpts }),
+          pinnedEvent: controls.usePinnedEventPosts({
+            eventId: 'event' as Id<'events'>,
+          }),
+          pinnedGroup: controls.usePinnedGroupPosts({ groupId }),
         };
         mutations = {
           createPost: hooks.useCreateGroupPost(),
@@ -84,6 +98,8 @@ describe('Group Post hooks with actual application SDK providers', () => {
           createReply: hooks.useCreateGroupPostReply(),
           updateReply: hooks.useUpdateGroupPostReply(),
           deleteReply: hooks.useDeleteGroupPostReply(),
+          setReplies: controls.useSetPostRepliesDisabled(),
+          setPinned: controls.useSetPostPinned(),
         };
         return null;
       }
@@ -101,6 +117,8 @@ describe('Group Post hooks with actual application SDK providers', () => {
           feed: undefined,
           post: undefined,
           replies: undefined,
+          pinnedEvent: undefined,
+          pinnedGroup: undefined,
         });
         const watchCalls = client.watchQuery.mock.calls.map(
           ([reference, args]) => [getFunctionName(reference), args]
@@ -110,6 +128,8 @@ describe('Group Post hooks with actual application SDK providers', () => {
             ['groupPosts/queries:listPosts', { groupId, paginationOpts }],
             ['groupPosts/queries:getPost', { postId }],
             ['groupPosts/queries:listReplies', { postId, paginationOpts }],
+            ['posts/queries:getPinnedEventPosts', { eventId: 'event' }],
+            ['groupPosts/queries:listPinnedPosts', { groupId }],
           ])
         );
         expect(
@@ -129,16 +149,25 @@ describe('Group Post hooks with actual application SDK providers', () => {
           results.set('groupPosts/queries:listPosts', feed);
           results.set('groupPosts/queries:getPost', post);
           results.set('groupPosts/queries:listReplies', replies);
+          results.set('posts/queries:getPinnedEventPosts', [post]);
+          results.set('groupPosts/queries:listPinnedPosts', [post]);
           for (const listeners of subscriptions.values())
             for (const notify of listeners) notify();
         });
-        expect(observed!).toEqual({ feed, post, replies });
+        expect(observed!).toEqual({
+          feed,
+          post,
+          replies,
+          pinnedEvent: [post],
+          pinnedGroup: [post],
+        });
 
         // Call the actual SDK mutation closures. This catches use of a different
         // context and accidental routing to Event endpoints or old storage IDs.
         const createPost = {
           groupId,
           title: 'Plans',
+          repliesDisabled: true,
           content: '',
           attachments: [attachment],
         };
@@ -161,6 +190,16 @@ describe('Group Post hooks with actual application SDK providers', () => {
         await mutations!.updateReply(updateReply);
         await mutations!.deleteReply({ replyId });
         await mutations!.deletePost({ postId });
+        await mutations!.setReplies({
+          postId,
+          repliesDisabled: true,
+          expectedRevision: 2,
+        });
+        await mutations!.setPinned({
+          postId,
+          pinned: true,
+          expectedRevision: 3,
+        });
         expect(
           client.mutation.mock.calls.map(([reference, args]) => [
             getFunctionName(reference),
@@ -173,6 +212,14 @@ describe('Group Post hooks with actual application SDK providers', () => {
           ['groupPosts/mutations:updateReply', updateReply],
           ['groupPosts/mutations:deleteReply', { replyId }],
           ['groupPosts/mutations:deletePost', { postId }],
+          [
+            'posts/mutations:setRepliesDisabled',
+            { postId, repliesDisabled: true, expectedRevision: 2 },
+          ],
+          [
+            'posts/mutations:setPinned',
+            { postId, pinned: true, expectedRevision: 3 },
+          ],
         ]);
       } finally {
         await renderer.act(async () => tree?.unmount());

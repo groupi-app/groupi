@@ -277,7 +277,7 @@
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
-      "itemType": "{ \"id\": string; \"createdAt\": number; \"author\": { \"id\": string; \"kind\"?: \"user\" | \"integration\"; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } } | null; \"attachments\": Array<{ \"id\": string; \"storageId\": string; \"filename\": string; \"size\": number; \"mimeType\": string; \"url\": string | null }>; \"eventId\": string; \"title\": string; \"content\": string; \"editedAt\": number | null; \"replyCount\": number }"
+      "itemType": "{ \"id\": string; \"createdAt\": number; \"author\": { \"id\": string; \"kind\"?: \"user\" | \"integration\"; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } } | null; \"attachments\": Array<{ \"id\": string; \"storageId\": string; \"filename\": string; \"size\": number; \"mimeType\": string; \"url\": string | null }>; \"eventId\": string; \"title\": string; \"content\": string; \"editedAt\": number | null; \"replyCount\": number; \"repliesDisabled\"?: boolean; \"repliesRevision\"?: number; \"pinnedAt\"?: number; \"pinRevision\"?: number }"
     },
     "name": "listPosts",
     "method": "GET",
@@ -552,7 +552,7 @@
     "name": "explicitlyAnnounceToPermittedGroupMembers",
     "method": "POST",
     "path": "/groups/{groupId}/announcements",
-    "summary": "Explicitly announce to permitted Group members"
+    "summary": "Retired: use a post to share an update"
   },
   {
     "paging": null,

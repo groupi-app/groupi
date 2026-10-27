@@ -1,4 +1,6 @@
+import { ConvexError } from 'convex/values';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -6,16 +8,23 @@ import {
   within,
 } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { getFunctionName } from 'convex/server';
 import type { Id } from '@/convex/_generated/dataModel';
 import { GroupPostDetail, GroupPostEditor, GroupPosts } from './group-posts';
 const state = vi.hoisted(() => ({
+  mobile: false,
   group: { joiningQuestionnaire: { canAccessMemberContent: true } } as unknown,
   post: null as unknown,
   replies: { page: [] as unknown[], isDone: true, continueCursor: '' },
+  pinned: [] as unknown[],
+  pin: vi.fn(),
+  replyControl: vi.fn(),
   posts: { page: [] as unknown[], isDone: true, continueCursor: '' },
   profile: vi.fn(),
   replyUpdate: vi.fn(),
+  replyCreate: vi.fn(),
+  upload: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
@@ -24,6 +33,12 @@ const state = vi.hoisted(() => ({
   back: vi.fn(),
   guard: vi.fn(),
 }));
+vi.mock('@/hooks/convex/use-post-controls', () => ({
+  usePinnedGroupPosts: () => state.pinned,
+  useSetPostRepliesDisabled: () => state.replyControl,
+  useSetPostPinned: () => state.pin,
+}));
+vi.mock('@/hooks/use-mobile', () => ({ useMobile: () => state.mobile }));
 vi.unmock('@/convex/_generated/api');
 vi.mock('convex/react', () => ({
   useMutation: () => state.mutation,
@@ -95,7 +110,7 @@ vi.mock('@/components/attachments', () => ({
 vi.mock('@/hooks/convex/use-file-upload', () => ({
   useAttachments: () => ({
     pendingUploads: [],
-    uploadAll: async () => [],
+    uploadAll: state.upload,
     clearAll: vi.fn(),
     addFiles: vi.fn(),
     removeFile: vi.fn(),
@@ -112,7 +127,7 @@ vi.mock('@/hooks/convex/use-presence', () => ({
 vi.mock('@/hooks/convex/use-groups', () => ({ useGroup: () => state.group }));
 vi.mock('@/hooks/convex/use-group-posts', () => ({
   useGroupPostReplies: () => state.replies,
-  useCreateGroupPostReply: () => vi.fn(),
+  useCreateGroupPostReply: () => state.replyCreate,
   useUpdateGroupPostReply: () => state.replyUpdate,
   useDeleteGroupPostReply: () => vi.fn(),
   useGroupPosts: () => state.posts,
@@ -125,6 +140,8 @@ const groupId = 'group' as Id<'groups'>;
 const postId = 'post' as Id<'posts'>;
 beforeEach(() => {
   vi.clearAllMocks();
+  state.mobile = false;
+  state.upload.mockResolvedValue([]);
   state.group = { joiningQuestionnaire: { canAccessMemberContent: true } };
   state.post = {
     _id: postId,
@@ -139,11 +156,215 @@ beforeEach(() => {
     replyCount: 0,
     viewerPersonId: 'viewer',
   };
+  state.pinned = [];
+  state.pin.mockResolvedValue({ revision: 1 });
+  state.replyControl.mockResolvedValue({ revision: 1 });
   state.posts = { page: [], isDone: true, continueCursor: '' };
   state.replies = { page: [], isDone: true, continueCursor: '' };
   state.mutation.mockResolvedValue({});
 });
 describe('canonical Group Posts', () => {
+  it('rejects a pending upload submission locally when replies close before publication', async () => {
+    let resolve!: (value: never[]) => void;
+    state.upload.mockReturnValue(
+      new Promise(done => {
+        resolve = done;
+      })
+    );
+    const view = render(<GroupPostDetail groupId={groupId} postId={postId} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Post text' }), {
+      target: { value: '<p>Keep my draft</p>' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send reply' }));
+    state.post = { ...(state.post as object), repliesDisabled: true };
+    view.rerender(<GroupPostDetail groupId={groupId} postId={postId} />);
+    await act(async () => resolve([]));
+    expect(state.replyCreate).not.toHaveBeenCalled();
+    state.post = { ...(state.post as object), repliesDisabled: false };
+    view.rerender(<GroupPostDetail groupId={groupId} postId={postId} />);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Your draft is preserved'
+    );
+    expect(screen.getByRole('textbox', { name: 'Post text' })).toHaveValue(
+      '<p>Keep my draft</p>'
+    );
+  });
+
+  it('reports a full pin limit in the mobile ActionMenu without optimistic success', async () => {
+    state.mobile = true;
+    state.post = { ...(state.post as object), canPin: true, pinRevision: 2 };
+    state.pin.mockRejectedValue(
+      new ConvexError({
+        code: 'PIN_LIMIT',
+        message: 'Unpin a post before pinning another.',
+      })
+    );
+    render(<GroupPostDetail groupId={groupId} postId={postId} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Post actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unpin a post');
+    expect(state.pin).toHaveBeenCalledExactlyOnceWith({
+      postId,
+      pinned: true,
+      expectedRevision: 2,
+    });
+    expect(screen.getByRole('button', { name: 'Pin post' })).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: 'Unpin post' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('publishes a Group post with replies disabled only when the composer option is chosen', async () => {
+    state.create.mockResolvedValue(postId);
+    render(<GroupPostEditor groupId={groupId} />);
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Update' },
+    });
+    fireEvent.change(screen.getByLabelText('Post text'), {
+      target: { value: '<p>No replies needed</p>' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow replies' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish post' }));
+    await waitFor(() =>
+      expect(state.create).toHaveBeenCalledWith(
+        expect.objectContaining({ groupId, repliesDisabled: true })
+      )
+    );
+  });
+  it('keeps existing replies readable and editable while hiding the new reply composer when closed', () => {
+    state.post = { ...(state.post as object), repliesDisabled: true };
+    state.replies = {
+      page: [
+        {
+          _id: 'reply',
+          authorName: 'Mina',
+          createdAt: 1,
+          content: '<p>Existing reply</p>',
+          attachments: [],
+          canEdit: true,
+          canDelete: true,
+        },
+      ],
+      isDone: true,
+      continueCursor: '',
+    };
+    render(<GroupPostDetail groupId={groupId} postId={postId} />);
+    expect(screen.getByText('Existing reply')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Edit reply' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Send reply' })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Replies are closed.')).toBeInTheDocument();
+  });
+  it('retains an unsent reply draft when a remote lock closes then reopens replies', () => {
+    state.replies = {
+      page: [
+        {
+          _id: 'existing',
+          authorName: 'Mina',
+          createdAt: 1,
+          content: '<p>Prior reply</p>',
+          attachments: [],
+          canEdit: true,
+          canDelete: true,
+        },
+      ],
+      isDone: true,
+      continueCursor: '',
+    };
+    const view = render(<GroupPostDetail groupId={groupId} postId={postId} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Post text' }), {
+      target: { value: '<p>My unsent reply</p>' },
+    });
+    state.post = { ...(state.post as object), repliesDisabled: true };
+    view.rerender(<GroupPostDetail groupId={groupId} postId={postId} />);
+    expect(
+      screen.queryByRole('button', { name: 'Send reply' })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit reply' })).toBeEnabled();
+    state.post = { ...(state.post as object), repliesDisabled: false };
+    view.rerender(<GroupPostDetail groupId={groupId} postId={postId} />);
+    expect(screen.getByRole('textbox', { name: 'Post text' })).toHaveValue(
+      '<p>My unsent reply</p>'
+    );
+  });
+  it('renders separately retrieved pins before polls without duplicating normal-page IDs', () => {
+    const base = state.post as object;
+    state.pinned = [
+      {
+        ...base,
+        _id: 'older',
+        title: 'Older pin',
+        pinnedAt: 10,
+        replyCount: 0,
+        unreadCount: 0,
+      },
+      {
+        ...base,
+        _id: 'newer',
+        title: 'Newest pin',
+        pinnedAt: 20,
+        replyCount: 0,
+        unreadCount: 0,
+      },
+    ];
+    state.posts = {
+      page: [
+        {
+          ...base,
+          _id: 'newer',
+          title: 'Newest pin',
+          pinnedAt: 20,
+          replyCount: 0,
+          unreadCount: 0,
+        },
+        {
+          ...base,
+          _id: 'ordinary',
+          title: 'Ordinary post',
+          replyCount: 0,
+          unreadCount: 0,
+        },
+      ],
+      isDone: false,
+      continueCursor: 'next',
+    };
+    render(<GroupPosts groupId={groupId} />);
+    expect(screen.getAllByRole('link', { name: 'Newest pin' })).toHaveLength(1);
+    const links = screen.getAllByRole('link');
+    expect(links.map(link => link.textContent)).toEqual([
+      'Newest pin',
+      'Older pin',
+      'Ordinary post',
+    ]);
+  });
+  it('offers only server-authorized reply and pin actions through the post menu', async () => {
+    state.post = {
+      ...(state.post as object),
+      canSetRepliesDisabled: true,
+      canPin: false,
+      repliesRevision: 3,
+    };
+    render(<GroupPostDetail groupId={groupId} postId={postId} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Post actions' }));
+    expect(
+      screen.queryByRole('menuitem', { name: 'Pin post' })
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: 'Lock replies' }));
+    await waitFor(() =>
+      expect(state.replyControl).toHaveBeenCalledWith({
+        postId,
+        repliesDisabled: true,
+        expectedRevision: 3,
+      })
+    );
+    expect(state.pin).not.toHaveBeenCalled();
+  });
+
   it('gates member content behind current Group onboarding', () => {
     state.group = { joiningQuestionnaire: { canAccessMemberContent: false } };
     render(<GroupPosts groupId={groupId} />);
@@ -202,6 +423,7 @@ describe('canonical Group Posts', () => {
     await waitFor(() =>
       expect(state.create).toHaveBeenCalledWith({
         groupId,
+        repliesDisabled: false,
         title: 'New discussion',
         content: '<p>Ideas welcome</p>',
         attachments: [],

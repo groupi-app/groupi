@@ -2,12 +2,24 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
-import { expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
   GroupDiscordSettings,
   GroupDiscordRetiredStatus,
 } from './group-discord-settings';
+const accountState = vi.hoisted(() => ({
+  linked: undefined as boolean | undefined,
+}));
+vi.mock('@/hooks/convex/use-accounts', () => ({
+  useHasLinkedProviders: () =>
+    accountState.linked === undefined
+      ? undefined
+      : { discord: accountState.linked },
+}));
+beforeEach(() => {
+  accountState.linked = undefined;
+});
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
 it('configures a Group server with a newly created role by default', async () => {
@@ -45,6 +57,7 @@ it('configures a Group server with a newly created role by default', async () =>
   ).toBeVisible();
   await user.keyboard('{Escape}');
   expect(help).toHaveFocus();
+  await user.click(screen.getByText('Advanced setup'));
   await user.type(
     screen.getByRole('textbox', { name: 'Discord server ID' }),
     '123'
@@ -160,12 +173,11 @@ it('explains membership consequences before explicitly saving a discovered serve
   await user.click(
     screen.getByRole('button', { name: 'Load my Discord servers' })
   );
-  await user.click(
-    await screen.findByRole('button', { name: 'Choose Community' })
+  await user.click(await screen.findByRole('button', { name: 'Community' }));
+  expect(screen.getByRole('button', { name: 'Community' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
   );
-  expect(
-    screen.getByRole('textbox', { name: 'Discord server ID' })
-  ).toHaveValue('123');
   await user.click(
     screen.getByRole('button', { name: 'Save Discord connection' })
   );
@@ -234,11 +246,14 @@ it('requires an explicit handback acknowledgement before disabling', async () =>
   const disable = screen.getByRole('button', {
     name: 'Disable Discord connection',
   });
-  expect(disable).toBeDisabled();
+  await user.click(disable);
+  expect(
+    screen.getByRole('button', { name: 'Confirm disable' })
+  ).toBeDisabled();
   await user.click(
     screen.getByRole('checkbox', { name: 'I understand Discord handback' })
   );
-  await user.click(disable);
+  await user.click(screen.getByRole('button', { name: 'Confirm disable' }));
   await waitFor(() => expect(mutation).toHaveBeenCalled());
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
     'groupDiscord/mutations:disable'
@@ -295,8 +310,9 @@ it('shows retired cleanup on the old Group link and hides unauthorized summaries
 });
 
 it.each([false, true])(
-  'refreshes active server details without reconfiguration (failure: %s)',
+  'refreshes metadata once for linked managers, without a Refresh control (failure: %s)',
   async failure => {
+    accountState.linked = true;
     const client = new ConvexReactClient('https://fixture.convex.cloud', {
       unsavedChangesWarning: false,
     });
@@ -314,33 +330,131 @@ it.each([false, true])(
     const action = vi.spyOn(client, 'action');
     if (failure)
       action.mockRejectedValue(new Error('Server permission changed.'));
-    else action.mockResolvedValue({ guildName: 'Updated community' });
+    else action.mockResolvedValue(null);
     const mutation = vi.spyOn(client, 'mutation');
-    const mounted = render(
+    const element = (
       <ConvexProvider client={client}>
         <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
       </ConvexProvider>
     );
-    await userEvent
-      .setup()
-      .click(screen.getByRole('button', { name: 'Refresh server details' }));
+    const mounted = render(element);
+    await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
+    mounted.rerender(element);
     expect(getFunctionName(action.mock.calls[0][0])).toBe(
       'groupDiscord/actions:refreshMetadata'
     );
     expect(action.mock.calls[0][1]).toEqual({ groupId: 'group-one' });
     expect(mutation).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: /Refresh/ })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Connected')).toBeVisible();
+    expect(screen.queryByText(/123/)).not.toBeInTheDocument();
     if (failure)
       expect(await screen.findByRole('alert')).toHaveTextContent(
         'Server permission changed.'
       );
-    else
-      expect(await screen.findByRole('status')).toHaveTextContent(
-        'Discord server details refreshed.'
-      );
-    expect(
-      screen.getByRole('button', { name: 'Disable Discord connection' })
-    ).toBeDisabled();
     mounted.unmount();
     await client.close();
   }
 );
+it('keeps linking in Account settings and does not auto-write when unlinked', async () => {
+  accountState.linked = false;
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => null,
+  }));
+  const action = vi.spyOn(client, 'action');
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('link', { name: 'Link Discord' })).toHaveAttribute(
+    'href',
+    '/settings/account'
+  );
+  expect(
+    screen.getByRole('textbox', { name: 'Landing channel ID (optional)' })
+  ).toBeVisible();
+  expect(
+    screen.queryByRole('button', { name: 'Load my Discord servers' })
+  ).not.toBeInTheDocument();
+  expect(action).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});
+it('cancels handback using the keyboard and restores focus without a mutation', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      guildId: '123',
+      guildName: 'Community',
+      mode: 'role',
+      generation: 1,
+      status: 'active',
+    }),
+  }));
+  const mutation = vi.spyOn(client, 'mutation');
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  const user = userEvent.setup();
+  const trigger = screen.getByRole('button', {
+    name: 'Disable Discord connection',
+  });
+  trigger.focus();
+  await user.keyboard('{Enter}');
+  expect(screen.getByRole('alertdialog')).toBeVisible();
+  await user.keyboard('{Escape}');
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});
+
+it('requests only the selected Group mode capabilities through the existing bot install flow', async () => {
+  vi.stubEnv('NEXT_PUBLIC_DISCORD_CLIENT_ID', 'fixture-client');
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => null,
+  }));
+  const action = vi.spyOn(client, 'action');
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupDiscordSettings groupId={'group-one' as Id<'groups'>} />
+    </ConvexProvider>
+  );
+  expect(
+    new URL(
+      screen.getByRole('link', { name: 'Install Bot' }).getAttribute('href')!
+    ).searchParams.get('permissions')
+  ).toBe('268435585');
+  await userEvent
+    .setup()
+    .click(screen.getByRole('radio', { name: 'Server membership only' }));
+  expect(
+    new URL(
+      screen.getByRole('link', { name: 'Install Bot' }).getAttribute('href')!
+    ).searchParams.get('permissions')
+  ).toBe('135');
+  expect(action).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+  vi.unstubAllEnvs();
+});

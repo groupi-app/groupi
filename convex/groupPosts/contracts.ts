@@ -1,3 +1,4 @@
+import { controlFields } from '../posts/controls';
 import { v } from 'convex/values';
 import schema from '../schema';
 import { attachmentWithUrlValidator } from '../attachments/model';
@@ -23,6 +24,7 @@ export const post = v.object({
   _creationTime: v.number(),
   ...schema.tables.posts.validator.fields,
   groupId: v.id('groups'),
+  ...controlFields,
   createdAt: v.number(),
   authorName: v.string(),
   author,

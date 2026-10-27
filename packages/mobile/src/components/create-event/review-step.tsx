@@ -166,6 +166,7 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
       }
 
       const result = await createEvent({
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         title: title.trim(),
         description: description.trim() || undefined,
         location: location.trim() || undefined,

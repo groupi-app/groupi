@@ -1,5 +1,8 @@
 import { reconcileEventExclusions } from '../groups/exclusions';
-import { guardEventReactivation, isEventComplete } from '../events/lifecycle';
+import {
+  guardEventReactivation,
+  isEventCurrentCandidate,
+} from '../events/lifecycle';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -205,7 +208,8 @@ export async function list(
     page = [];
   for (const grant of rows.page) {
     const event = await ctx.db.get(grant.eventId);
-    if (!event || isEventComplete(event, Date.now())) continue;
+    if (!event || !(await isEventCurrentCandidate(ctx, event, Date.now())))
+      continue;
     const ownMembership = await eventMember(ctx, event._id, personId);
     if (!(await eventAdmissionAccess(ctx, event, personId)).canRead) continue;
     const logistics = await eventLogisticsForPerson(ctx, event._id, personId);

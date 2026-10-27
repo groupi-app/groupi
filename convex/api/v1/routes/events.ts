@@ -142,7 +142,7 @@ export function createEventRoutes() {
     }
 
     const { timezone, ...eventBody } = body;
-    let mutationBody = { ...eventBody };
+    let mutationBody = { ...eventBody, timezone };
 
     if (body.gdl !== undefined) {
       const gdlResult = parseGDL(body.gdl, {

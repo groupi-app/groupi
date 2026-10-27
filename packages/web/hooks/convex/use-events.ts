@@ -173,6 +173,7 @@ export function useCreateEvent() {
       imageFocalPoint?: FocalPoint; // Optional focal point for image cropping
       potentialDateTimes?: string[]; // ISO date strings for multi-date events (legacy)
       potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
+      timezone?: string;
       chosenDateTime?: string; // ISO date string for single-date events
       chosenEndDateTime?: string; // ISO date string for end time
       reminderOffset?: ReminderOffset; // Legacy: kept for backward compat
@@ -186,6 +187,8 @@ export function useCreateEvent() {
     }) => {
       return await createEvent({
         title: data.title,
+        timezone:
+          data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
         description: data.description,
         location: data.location,
         imageStorageId: data.imageStorageId as Id<'_storage'> | undefined,

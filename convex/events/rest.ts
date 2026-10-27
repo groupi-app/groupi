@@ -133,7 +133,7 @@ export const create = internalMutation({
     const { eventId, membershipId } = await createEventForPerson(
       ctx,
       personId,
-      args
+      { ...args, timezone }
     );
     if (
       requestId !== undefined &&

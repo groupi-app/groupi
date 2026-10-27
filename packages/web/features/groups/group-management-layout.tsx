@@ -9,7 +9,6 @@ import {
   UserPlus,
   ClipboardList,
   MessageCircle,
-  Mail,
   Shield,
   Pencil,
 } from 'lucide-react';
@@ -17,6 +16,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useGroup } from '@/hooks/convex/use-groups';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { GroupAnnouncementsSettings } from './group-announcements-settings';
 
 export function GroupManagementLayout({
   children,
@@ -28,6 +28,10 @@ export function GroupManagementLayout({
   const { groupId } = useParams<{ groupId: string }>();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const pathname = usePathname();
+  // Retired sending URLs contain no management content. Replace them with the
+  // canonical feed, whose page applies its own authentication and access checks.
+  if (pathname === `/groups/${groupId}/settings/announcements`)
+    return <GroupAnnouncementsSettings groupId={groupId as Id<'groups'>} />;
   if (isLoading) return <p role='status'>Loading Group…</p>;
   if (!isAuthenticated)
     return (
@@ -116,12 +120,6 @@ function AuthenticatedGroupManagementLayout({
       title: 'Discord',
       icon: MessageCircle,
       show: group.canManageMembers,
-    },
-    {
-      path: 'announcements',
-      title: 'Announcements',
-      icon: Mail,
-      show: group.viewerRole !== 'MEMBER',
     },
     {
       path: 'ownership',

@@ -20,6 +20,8 @@ const body = z
   .object({
     title: z.string().optional(),
     content: z.string().optional(),
+    repliesDisabled: z.boolean().optional(),
+    expectedRepliesRevision: z.number().int().nonnegative().optional(),
     text: z.string().optional(),
     attachments: z.array(attachment).max(10).optional(),
     attachmentsToAdd: z.array(attachment).max(10).optional(),
@@ -60,6 +62,10 @@ const postSummary = summary.extend({
   content: z.string(),
   editedAt: z.number().nullable(),
   replyCount: z.number(),
+  repliesDisabled: z.boolean().optional(),
+  repliesRevision: z.number().optional(),
+  pinnedAt: z.number().optional(),
+  pinRevision: z.number().optional(),
 });
 const replySummary = summary.extend({
   postId: z.string(),
@@ -145,7 +151,14 @@ export function createDiscussionRoutes(kind: 'posts' | 'replies') {
   for (const operation of ['create', 'edit', 'delete'] as const) {
     const operationBody = body.superRefine((value, ctx) => {
       const allowed = [
-        ...(kind === 'posts' ? ['title', 'content'] : ['text']),
+        ...(kind === 'posts'
+          ? [
+              'title',
+              'content',
+              'repliesDisabled',
+              ...(operation === 'edit' ? ['expectedRepliesRevision'] : []),
+            ]
+          : ['text']),
         ...(operation === 'create'
           ? ['attachments']
           : ['attachmentsToAdd', 'attachmentIdsToDelete']),

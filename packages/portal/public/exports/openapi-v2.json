@@ -311,7 +311,7 @@
           "timezone": {
             "type": "string",
             "example": "America/New_York",
-            "description": "IANA timezone used to interpret GDL. Defaults to UTC when omitted."
+            "description": "Stable IANA Event timezone for GDL and automatic completion at the next local day when no end is set. Defaults to UTC when omitted."
           },
           "gdl": {
             "type": "string",
@@ -10878,6 +10878,18 @@
                           },
                           "replyCount": {
                             "type": "number"
+                          },
+                          "repliesDisabled": {
+                            "type": "boolean"
+                          },
+                          "repliesRevision": {
+                            "type": "number"
+                          },
+                          "pinnedAt": {
+                            "type": "number"
+                          },
+                          "pinRevision": {
+                            "type": "number"
                           }
                         },
                         "required": [
@@ -11007,6 +11019,18 @@
                                 "nullable": true
                               },
                               "replyCount": {
+                                "type": "number"
+                              },
+                              "repliesDisabled": {
+                                "type": "boolean"
+                              },
+                              "repliesRevision": {
+                                "type": "number"
+                              },
+                              "pinnedAt": {
+                                "type": "number"
+                              },
+                              "pinRevision": {
                                 "type": "number"
                               }
                             },
@@ -11170,6 +11194,18 @@
                       "nullable": true
                     },
                     "replyCount": {
+                      "type": "number"
+                    },
+                    "repliesDisabled": {
+                      "type": "boolean"
+                    },
+                    "repliesRevision": {
+                      "type": "number"
+                    },
+                    "pinnedAt": {
+                      "type": "number"
+                    },
+                    "pinRevision": {
                       "type": "number"
                     },
                     "replies": {
@@ -11336,6 +11372,13 @@
                   },
                   "content": {
                     "type": "string"
+                  },
+                  "repliesDisabled": {
+                    "type": "boolean"
+                  },
+                  "expectedRepliesRevision": {
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "text": {
                     "type": "string"
@@ -11555,6 +11598,18 @@
                         "replyCount": {
                           "type": "number"
                         },
+                        "repliesDisabled": {
+                          "type": "boolean"
+                        },
+                        "repliesRevision": {
+                          "type": "number"
+                        },
+                        "pinnedAt": {
+                          "type": "number"
+                        },
+                        "pinRevision": {
+                          "type": "number"
+                        },
                         "replies": {
                           "type": "array",
                           "items": {
@@ -11754,6 +11809,13 @@
                   },
                   "content": {
                     "type": "string"
+                  },
+                  "repliesDisabled": {
+                    "type": "boolean"
+                  },
+                  "expectedRepliesRevision": {
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "text": {
                     "type": "string"
@@ -12355,6 +12417,13 @@
                   "content": {
                     "type": "string"
                   },
+                  "repliesDisabled": {
+                    "type": "boolean"
+                  },
+                  "expectedRepliesRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
                   "text": {
                     "type": "string"
                   },
@@ -12644,6 +12713,13 @@
                   },
                   "content": {
                     "type": "string"
+                  },
+                  "repliesDisabled": {
+                    "type": "boolean"
+                  },
+                  "expectedRepliesRevision": {
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "text": {
                     "type": "string"
@@ -14884,7 +14960,9 @@
         "tags": [
           "Groups"
         ],
-        "summary": "Explicitly announce to permitted Group members",
+        "summary": "Retired: use a post to share an update",
+        "deprecated": true,
+        "description": "New announcement sends and retries are retired. This compatibility endpoint rejects valid send requests; existing status reads remain available.",
         "security": [
           {
             "apiKey": []

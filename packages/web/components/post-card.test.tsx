@@ -1,11 +1,33 @@
+import { ConvexError } from 'convex/values';
 import type { ComponentProps } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
-import { render, screen, within } from '@testing-library/react';
+import {
+  render,
+  screen,
+  within,
+  waitFor,
+  fireEvent,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PostCard } from './post-card';
 
-vi.mock('@/hooks/use-mobile', () => ({ useMobile: () => false }));
+const controls = vi.hoisted(() => ({
+  mobile: false,
+  replies: vi.fn(),
+  pin: vi.fn(),
+}));
+vi.mock('@/hooks/convex/use-post-controls', () => ({
+  useSetPostRepliesDisabled: () => controls.replies,
+  useSetPostPinned: () => controls.pin,
+}));
+beforeEach(() => {
+  controls.mobile = false;
+  vi.clearAllMocks();
+  controls.replies.mockResolvedValue({ revision: 1, repliesDisabled: true });
+  controls.pin.mockResolvedValue({ revision: 1, pinned: true, pinnedAt: 1 });
+});
+vi.mock('@/hooks/use-mobile', () => ({ useMobile: () => controls.mobile }));
 vi.mock('@/hooks/convex/use-muting', () => ({
   useIsPostMutedFromContext: () => ({
     isMuted: false,
@@ -23,7 +45,10 @@ vi.mock('@/components/member-icon', () => ({
   default: () => <button>Member profile</button>,
 }));
 
-function renderPost(kind: 'user' | 'integration') {
+function renderPost(
+  kind: 'user' | 'integration',
+  flags: { canSetRepliesDisabled?: boolean; canPin?: boolean } = {}
+) {
   const createdAt = 1_700_000_000_000;
   const personId = 'author-1' as Id<'persons'>;
   const eventId = 'event-1' as Id<'events'>;
@@ -41,6 +66,7 @@ function renderPost(kind: 'user' | 'integration') {
     },
   };
   const postData = {
+    ...flags,
     _id: 'post-1' as Id<'posts'>,
     _creationTime: createdAt,
     title: 'Community update',
@@ -82,6 +108,47 @@ function renderPost(kind: 'user' | 'integration') {
 }
 
 describe('Post card merged attribution and actions', () => {
+  it('exposes author reply locking and manager pinning through the desktop post menu', async () => {
+    renderPost('user', { canSetRepliesDisabled: true, canPin: true });
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole('button', { name: 'Actions for post Community update' })
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Lock replies' }));
+    await waitFor(() =>
+      expect(controls.replies).toHaveBeenCalledWith({
+        postId: 'post-1',
+        repliesDisabled: true,
+        expectedRevision: 0,
+      })
+    );
+    expect(
+      screen.getByRole('menuitem', { name: 'Open replies' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Pin post' })
+    ).toBeInTheDocument();
+  });
+  it('offers the same controls and actionable errors in the mobile drawer', async () => {
+    controls.mobile = true;
+    controls.pin.mockRejectedValueOnce(
+      new ConvexError({
+        code: 'PIN_LIMIT',
+        message: 'Unpin another post first.',
+      })
+    );
+    renderPost('user', { canSetRepliesDisabled: true, canPin: true });
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole('button', { name: 'Actions for post Community update' })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Pin post' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unpin another post first.'
+    );
+    expect(screen.getByRole('button', { name: 'Pin post' })).toBeEnabled();
+  });
+
   it('keeps integration attribution distinct from member actions and the primary link', async () => {
     const user = userEvent.setup();
     renderPost('integration');

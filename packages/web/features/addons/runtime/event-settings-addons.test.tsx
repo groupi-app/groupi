@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { EventSettingsAddons } from './organisms/event-settings-addons';
+vi.mock('@/features/event-settings', () => ({
+  useOptionalEventSettingsDraft: () => state.draft,
+}));
 vi.unmock('@/convex/_generated/api');
 vi.mock('@/context/global-user-context', () => ({
   useGlobalUser: () => ({ person: { _id: 'person-a' } }),
@@ -11,6 +14,18 @@ vi.mock('@/hooks/convex/use-accounts', () => ({
   useHasLinkedProviders: vi.fn(),
 }));
 const state = vi.hoisted(() => ({
+  draft: null as null | {
+    values: {
+      addons: Array<{ addonType: string; config: unknown; enabled: boolean }>;
+    };
+    patch: {
+      addons?: Array<{ addonType: string; config: unknown; enabled: boolean }>;
+    };
+    epoch: number;
+    busy: boolean;
+    setSection: ReturnType<typeof vi.fn>;
+  },
+  definitions: ['bring-list'] as string[],
   role: 'ORGANIZER',
   configs: [] as unknown[],
   enable: vi.fn(),
@@ -39,7 +54,7 @@ vi.mock('./catalog', async importOriginal => {
     ) =>
       actual
         .getEventAddonDefinitions(configs)
-        .filter(definition => definition.id === 'bring-list'),
+        .filter(definition => state.definitions.includes(definition.id)),
   };
 });
 const eventId = 'event-one' as Id<'events'>;
@@ -61,6 +76,8 @@ function saved(
   };
 }
 beforeEach(() => {
+  state.draft = null;
+  state.definitions = ['bring-list'];
   state.role = 'ORGANIZER';
   state.configs = [saved()];
   vi.clearAllMocks();
@@ -148,4 +165,160 @@ describe('Event Settings feature management', () => {
     );
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
+});
+
+it('stages enabling and new Bring item edits in the global draft without backend writes', async () => {
+  state.configs = [];
+  const setSection = vi.fn((_key, value) => {
+    if (state.draft) {
+      state.draft.values.addons = value;
+      state.draft.patch.addons = value;
+    }
+  });
+  state.draft = {
+    values: {
+      addons: [
+        {
+          addonType: 'reminders',
+          config: { reminderOffset: '1_DAY' },
+          enabled: true,
+        },
+      ],
+    },
+    patch: {},
+    epoch: 0,
+    busy: false,
+    setSection,
+  };
+  const mounted = render(<EventSettingsAddons eventId={eventId} />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('switch'));
+  await user.click(screen.getByRole('button', { name: 'Add Item' }));
+  await user.type(
+    screen.getByPlaceholderText('Item name (e.g. "Chips")'),
+    'Forks'
+  );
+  await user.click(screen.getByRole('button', { name: /^Add$/ }));
+  expect(setSection).toHaveBeenLastCalledWith('addons', [
+    {
+      addonType: 'reminders',
+      config: { reminderOffset: '1_DAY' },
+      enabled: true,
+    },
+    {
+      addonType: 'bring-list',
+      config: {
+        items: [expect.objectContaining({ name: 'Forks', quantity: 1 })],
+      },
+      enabled: true,
+    },
+  ]);
+  mounted.rerender(<EventSettingsAddons eventId={eventId} />);
+  expect(
+    screen.queryByRole('button', { name: 'Save Items' })
+  ).not.toBeInTheDocument();
+  expect(state.enable).not.toHaveBeenCalled();
+  expect(state.update).not.toHaveBeenCalled();
+  expect(state.disable).not.toHaveBeenCalled();
+});
+
+it('stages reminder changes for global Save and resets the editor on Revert epoch', async () => {
+  state.configs = [saved('reminders', true, { reminderOffset: '1_DAY' })];
+  state.definitions = ['reminders'];
+  const baseline = {
+    addonType: 'reminders',
+    enabled: true,
+    config: { reminderOffset: '1_DAY' },
+  };
+  const setSection = vi.fn((_key, value) => {
+    if (state.draft) {
+      state.draft.values.addons = value;
+      state.draft.patch.addons = value;
+    }
+  });
+  state.draft = {
+    values: { addons: [baseline] },
+    patch: {},
+    epoch: 0,
+    busy: false,
+    setSection,
+  };
+  const mounted = render(<EventSettingsAddons eventId={eventId} />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Expand settings' }));
+  Element.prototype.scrollIntoView = vi.fn();
+  screen.getByRole('combobox').focus();
+  await user.keyboard('{Enter}');
+  await user.keyboard('2 days');
+  await user.keyboard('{Enter}');
+  expect(setSection).toHaveBeenLastCalledWith('addons', [
+    {
+      addonType: 'reminders',
+      enabled: true,
+      config: { reminderOffset: '2_DAYS' },
+    },
+  ]);
+  expect(state.update).not.toHaveBeenCalled();
+  expect(state.enable).not.toHaveBeenCalled();
+  state.draft.values.addons = [baseline];
+  state.draft.patch = {};
+  state.draft.epoch++;
+  mounted.rerender(<EventSettingsAddons eventId={eventId} />);
+  await user.click(screen.getByRole('button', { name: 'Expand settings' }));
+  expect(screen.getByRole('combobox')).toHaveTextContent('1 day before');
+});
+
+it('stages a destructive disable only after confirmation, leaving the backend for global Save', async () => {
+  const setSection = vi.fn((_key, value) => {
+    if (state.draft) {
+      state.draft.values.addons = value;
+      state.draft.patch.addons = value;
+    }
+  });
+  state.draft = {
+    values: { addons: [{ addonType: 'bring-list', enabled: true, config }] },
+    patch: {},
+    epoch: 0,
+    busy: false,
+    setSection,
+  };
+  const mounted = render(<EventSettingsAddons eventId={eventId} />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('switch'));
+  expect(setSection).not.toHaveBeenCalled();
+  expect(state.disable).not.toHaveBeenCalled();
+  expect(screen.getByRole('alertdialog')).toHaveTextContent(
+    'when you save Event settings'
+  );
+  await user.click(screen.getByRole('button', { name: 'Confirm change' }));
+  await waitFor(() =>
+    expect(setSection).toHaveBeenCalledWith('addons', [
+      {
+        addonType: 'bring-list',
+        enabled: false,
+        config,
+        confirmedDestructive: true,
+      },
+    ])
+  );
+  expect(state.disable).not.toHaveBeenCalled();
+  mounted.rerender(<EventSettingsAddons eventId={eventId} />);
+  expect(
+    screen.getByRole('button', { name: 'Enable Bring List' })
+  ).toBeVisible();
+  // A failed global save leaves the provider patch unchanged, so this staged
+  // disable remains visible and never falls back to an immediate mutation.
+  mounted.rerender(<EventSettingsAddons eventId={eventId} />);
+  expect(
+    screen.getByRole('button', { name: 'Enable Bring List' })
+  ).toBeVisible();
+  state.draft!.values.addons = [
+    { addonType: 'bring-list', enabled: true, config },
+  ];
+  state.draft!.patch = {};
+  state.draft!.epoch++;
+  mounted.rerender(<EventSettingsAddons eventId={eventId} />);
+  expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+  expect(state.disable).not.toHaveBeenCalled();
+  expect(state.update).not.toHaveBeenCalled();
 });

@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
+import { seedGroupAnnouncement } from './announcement-history.helpers';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
 // Allow serial CLI process startup and real HTTP operations on hosted runners.
-it('CLI explicitly sends and recovers truthful aggregate status over real local HTTP', async () => {
+it('CLI rejects retired sends and retains historical aggregate status over real local HTTP', async () => {
   const bridge = await cliRestBridge();
   try {
     const owner = await bridge.actor('cli-ann-owner');
@@ -27,18 +28,41 @@ it('CLI explicitly sends and recovers truthful aggregate status over real local 
       '--request-id',
       requestId,
     ];
-    expect((await bridge.cli(outsider.rawKey, args)).code).toBe(3);
-    const first = await bridge.cli(owner.rawKey, args);
-    expect(first.code, first.stderr).toBe(0);
-    expect(JSON.parse(first.stdout)).toMatchObject({
-      state: expect.stringMatching(/PROCESSING|COMPLETED/),
-      notified: 0,
+    const outsiderSend = await bridge.cli(outsider.rawKey, args);
+    expect(outsiderSend.code).toBe(5);
+    expect(JSON.parse(outsiderSend.stderr).error).toMatchObject({
+      code: 'CONFLICT',
+      message: expect.stringContaining('Announcements are retired'),
     });
-    const recovered = await bridge.cli(owner.rawKey, args);
-    expect(recovered.code, recovered.stderr).toBe(0);
-    expect(JSON.parse(recovered.stdout).announcementId).toBe(
-      JSON.parse(first.stdout).announcementId
+    const receiptsBefore = await bridge.t.run(ctx =>
+      ctx.db.query('groupAnnouncements').collect()
     );
+    const first = await bridge.cli(owner.rawKey, args);
+    expect(first.code).toBe(5);
+    expect(JSON.parse(first.stderr).error).toMatchObject({
+      code: 'CONFLICT',
+      message: expect.stringContaining('Announcements are retired'),
+    });
+    expect(
+      await bridge.t.run(ctx => ctx.db.query('groupAnnouncements').collect())
+    ).toEqual(receiptsBefore);
+    const historical = await seedGroupAnnouncement(
+      bridge.t,
+      owner.personId,
+      {
+        groupId: bridge.id<'groups'>(groupId),
+        requestId,
+        title: 'Reading',
+        message: 'Bring a book',
+      },
+      false
+    );
+    const recovered = await bridge.cli(owner.rawKey, args);
+    expect(recovered.code).toBe(5);
+    expect(JSON.parse(recovered.stderr).error).toMatchObject({
+      code: 'CONFLICT',
+      message: expect.stringContaining('Announcements are retired'),
+    });
     const status = await bridge.cli(owner.rawKey, [
       'groups',
       'announcement-status',
@@ -53,6 +77,9 @@ it('CLI explicitly sends and recovers truthful aggregate status over real local 
       'skipped',
       'state',
     ]);
+    expect(JSON.parse(status.stdout).announcementId).toBe(
+      bridge.wireId(historical.announcementId)
+    );
     const changed = await bridge.cli(owner.rawKey, [
       ...args.slice(0, 6),
       'Changed',

@@ -1,6 +1,6 @@
 import { participationRevision } from '../events/participationRevision';
 import { rsvpChoices, rsvpStatus } from '../availability/contracts';
-import { isEventComplete } from '../events/lifecycle';
+import { isEventCurrentCandidate } from '../events/lifecycle';
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -72,7 +72,7 @@ export async function currentEventForPerson(
     if (!event) continue;
     const access = await eventAdmissionAccess(ctx, event, personId);
     retained ||= Boolean(access.membership);
-    if (isEventComplete(event, now)) continue;
+    if (!(await isEventCurrentCandidate(ctx, event, now))) continue;
     if (!access.membership && !(eligible && access.hasApplicationAudience))
       continue;
     events.push({ event, access });

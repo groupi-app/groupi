@@ -1,3 +1,4 @@
+import { setRepliesDisabledForPerson } from './controls';
 import { purgeReply } from '../replies/writes';
 import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
 import type { Id } from '../_generated/dataModel';
@@ -31,12 +32,14 @@ export async function createPostForPerson(
     groupId,
     title,
     content,
+    repliesDisabled,
     attachments = [],
   }: {
     eventId?: Id<'events'>;
     groupId?: Id<'groups'>;
     title: string;
     content: string;
+    repliesDisabled?: boolean;
     attachments?: AttachmentInput[];
   }
 ) {
@@ -70,6 +73,7 @@ export async function createPostForPerson(
     title: title.trim(),
     content: content.trim(),
     authorId: person._id,
+    repliesDisabled,
     ...parent,
     membershipId: membership?._id,
   });
@@ -110,12 +114,16 @@ export async function updatePostForPerson(
     postId,
     title,
     content,
+    repliesDisabled,
+    expectedRepliesRevision,
     attachmentsToAdd = [],
     attachmentIdsToDelete = [],
   }: {
     postId: Id<'posts'>;
     title?: string;
     content?: string;
+    repliesDisabled?: boolean;
+    expectedRepliesRevision?: number;
     attachmentsToAdd?: AttachmentInput[];
     attachmentIdsToDelete?: Id<'attachments'>[];
   }
@@ -140,6 +148,26 @@ export async function updatePostForPerson(
       code: 'FORBIDDEN',
       message: "You don't have permission to edit this post",
     });
+  }
+
+  if (repliesDisabled !== undefined) {
+    if (expectedRepliesRevision === undefined)
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'A reply settings revision is required.',
+      });
+    await setRepliesDisabledForPerson(ctx, personId, {
+      postId,
+      repliesDisabled,
+      expectedRevision: expectedRepliesRevision,
+    });
+    if (
+      title === undefined &&
+      content === undefined &&
+      !attachmentsToAdd.length &&
+      !attachmentIdsToDelete.length
+    )
+      return { post: await ctx.db.get(postId) };
   }
 
   // Prepare update data

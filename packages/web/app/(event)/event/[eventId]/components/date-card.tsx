@@ -1,5 +1,7 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
+import { isDateOptionPassed } from '@groupi/shared/utils';
 import { Card, CardAction } from '@/components/ui/card';
 
 import { Save as ActionSave } from 'lucide-react';
@@ -52,6 +54,8 @@ export function DateCard({
   userId: string;
   userRole: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
 }) {
+  const now = useLifecycleClock(pdt.dateTime);
+  const passed = isDateOptionPassed(pdt, now);
   const yesAmount = pdt.availabilities.filter(a => a.status === 'YES').length;
   const maybeAmount = pdt.availabilities.filter(
     a => a.status === 'MAYBE'
@@ -121,6 +125,9 @@ export function DateCard({
                 #{pdt.rank}
               </h1>
               <div className='flex flex-col'>
+                {passed && (
+                  <span className='text-xs text-muted-foreground'>Passed</span>
+                )}
                 <h1 className='font-heading'>
                   {new Date(pdt.dateTime).toLocaleDateString([], {
                     weekday: 'long',
@@ -403,6 +410,7 @@ export function DateCard({
                 <Button variant='ghost'>Cancel</Button>
               </DialogClose>
               <Button
+                disabled={passed}
                 onClick={() => {
                   setDialogType('confirm');
                 }}

@@ -6,6 +6,10 @@ import { useMutation, useQuery } from 'convex/react';
 import { ThemeProvider } from '@/providers/theme-provider';
 import AppearanceSettings from '@/app/(settings)/settings/appearance/page';
 
+// Account switching is exported by the molecule barrel but is outside this theme confirmation test.
+vi.mock('@/components/molecules/account-switcher', () => ({
+  AccountSwitcher: () => null,
+}));
 vi.mock('@/convex/_generated/api', () => ({
   api: {
     themes: {

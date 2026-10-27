@@ -153,14 +153,14 @@ from .types import (
     Object82edc32e8e2d,
     Object2a37f36fe967,
     Object8f2e07428f60,
-    Objectaf5c4bdda5d7,
-    Object87783cbc6404,
+    Object8463bf3a21f6,
+    Object9f4f70f63a25,
     Object7b041e5fec41,
     Object6cdac6024129,
-    Objectbd43ca3d5411,
+    Object75c54bf3aa30,
     Object34ab70d01c28,
     Object60ee9f02bc5d,
-    Objecte63be612b92f,
+    Object8d956b0bf9c6,
     Object009017a89888,
     Objectfda4f2d5c7e6,
     Object588b21707c8f,
@@ -756,7 +756,7 @@ class Groupi(Transport):
         return self.request('DELETE', '/friends/{friendshipId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def explicitly_announce_to_permitted_group_members(self, *, path=None, query=None, body=None, idempotency_key=None):
-        """Explicitly announce to permitted Group members."""
+        """Retired: use a post to share an update."""
         return self.request('POST', '/groups/{groupId}/announcements', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def recover_your_explicit_announcement_request_status(self, *, path=None, query=None, body=None, idempotency_key=None):
@@ -1903,7 +1903,7 @@ class AsyncGroupi(AsyncTransport):
         return await self.request('DELETE', '/friends/{friendshipId}', **kwargs)
 
     async def explicitly_announce_to_permitted_group_members(self, **kwargs):
-        """Explicitly announce to permitted Group members."""
+        """Retired: use a post to share an update."""
         return await self.request('POST', '/groups/{groupId}/announcements', **kwargs)
 
     async def recover_your_explicit_announcement_request_status(self, **kwargs):

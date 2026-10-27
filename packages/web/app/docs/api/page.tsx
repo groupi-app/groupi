@@ -213,10 +213,10 @@ v1: https://api.groupi.gg/api/v1`}
             <p className='text-muted-foreground'>
               Create API keys in your{' '}
               <a
-                href='/settings/account'
+                href='/settings/developer'
                 className='underline hover:text-foreground'
               >
-                account settings
+                developer settings
               </a>
               .
             </p>

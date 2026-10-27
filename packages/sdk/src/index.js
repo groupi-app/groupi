@@ -520,7 +520,7 @@ export class Groupi extends Transport {
   removeFriend(input = {}, options = {}) {
     return this.request('DELETE', '/friends/{friendshipId}', input, options);
   }
-  /** Explicitly announce to permitted Group members */
+  /** Retired: use a post to share an update */
   explicitlyAnnounceToPermittedGroupMembers(input = {}, options = {}) {
     return this.request(
       'POST',

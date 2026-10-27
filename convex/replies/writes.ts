@@ -1,3 +1,4 @@
+import { requireRepliesOpen } from '../posts/controls';
 import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
 import type { Id } from '../_generated/dataModel';
 import { validateContent } from '../lib/discussionContent';
@@ -36,6 +37,7 @@ export async function createReplyForPerson(
   }
 
   const membership = await requireDiscussionParent(ctx, post, personId);
+  requireRepliesOpen(post);
 
   const normalizedText = await validateContent(ctx, personId, post, text, 5000);
   if (!hasDiscussionText(normalizedText) && attachments.length === 0) {

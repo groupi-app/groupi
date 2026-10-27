@@ -37,6 +37,8 @@ export interface EventCardProps {
 // ===== Manage Page Props =====
 
 export interface ManageConfigProps {
+  /** Stages new-feature edits in the Event settings draft without a backend write. */
+  onDraftChange?: (config: AddonConfiguration) => void;
   eventId: Id<'events'>;
   config: Record<string, unknown> | null;
   chosenDateTime?: number;

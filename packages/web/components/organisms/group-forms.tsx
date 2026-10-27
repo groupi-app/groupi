@@ -1,11 +1,22 @@
 'use client';
-import { Save as ActionSave } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ActionMenu } from '@/components/ui/action-menu';
+import { ActionMenuButton } from '@/components/ui/action-menu-button';
+import { useActionMenu } from '@/hooks/use-action-menu';
+import { ContextMenuItem } from '@/components/ui/context-menu';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
-  groupFormTemplates,
   type ApplicationQuestion,
   type ApplicationAnswers,
 } from '@groupi/shared/hooks';
@@ -30,13 +41,21 @@ import {
   useDeleteForm,
 } from '@/hooks/convex/use-group-forms';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ContentPage } from '@/features/content/content-design';
 import { Label } from '@/components/ui/label';
 import {
   ApplicationQuestionEditor,
   ApplicationQuestionFields,
 } from './application-question-fields';
 import { GroupConfirmedAction } from './group-confirmed-action';
+const formSurface =
+  'mx-auto w-full min-w-0 max-w-md space-y-4 rounded-card border border-border bg-card p-4 text-sm break-words';
+const formTitleField =
+  'min-h-8 resize-none border-transparent bg-transparent px-0 font-heading text-lg font-semibold leading-snug field-sizing-content';
+const formDescriptionField =
+  'min-h-10 resize-y border-transparent bg-transparent px-0 text-sm leading-relaxed field-sizing-content';
+
 const failure = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -59,17 +78,18 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
   );
   if (!group || !policy) return <p role='status'>Loading forms…</p>;
   return (
-    <main className='p-6 space-y-4'>
+    <ContentPage>
       <h1 className='font-heading text-2xl font-bold'>
         {base.startsWith('/event/') ? 'Event forms' : 'Group forms'}
       </h1>
-      <p>Collect responses without changing joining requirements.</p>
       {policy.canConfigure && (
-        <section
-          className='rounded-card border border-border p-4 space-y-3'
+        <details
+          className='space-y-3 text-sm'
           aria-label='Form availability policy'
         >
-          <h2 className='font-heading'>Owner settings</h2>
+          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+            Settings
+          </summary>
           <Button
             onClick={async () => {
               try {
@@ -105,21 +125,13 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
             <option value='MANAGERS'>Owners and moderators</option>
             <option value='MEMBERS'>Any eligible member</option>
           </select>
-        </section>
+        </details>
       )}
       {!canAccess ? (
-        <p>
-          Complete required onboarding before using ordinary forms. Your own
-          saved history remains available by its original form link.
-        </p>
+        <p>Complete required onboarding to use forms.</p>
       ) : (
         <>
-          {!policy.enabled && (
-            <p>
-              Forms are disabled. Configuration and saved responses are
-              preserved. Current eligible managers can manage preserved forms.
-            </p>
-          )}
+          {!policy.enabled && <p>Forms are disabled.</p>}
           {policy.enabled &&
             policy.canCreate !== false &&
             (policy.creation === 'MEMBERS' || canManage) && (
@@ -130,6 +142,13 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
                 Create form
               </Link>
             )}
+          {forms === undefined && (policy.enabled || canManage) ? (
+            <p role='status'>Loading forms…</p>
+          ) : forms?.page.length === 0 ? (
+            <p className='rounded-card border border-dashed border-border p-6 text-muted-foreground'>
+              No forms yet.
+            </p>
+          ) : null}
           {forms?.page.map(form => (
             <div
               key={form._id}
@@ -145,11 +164,11 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
               >
                 {policy.enabled ? form.title : `Manage ${form.title}`}
               </Link>
-              <p>{form.description}</p>
+              {form.description && <p>{form.description}</p>}
               <p>
                 {form.resultsVisibility === 'MEMBERS'
-                  ? 'Shared responses visible to eligible members'
-                  : 'Personal answers visible to you and current managers'}
+                  ? 'Shared responses'
+                  : 'Personal responses'}
               </p>
             </div>
           ))}
@@ -160,8 +179,15 @@ export function GroupForms({ groupId }: { groupId: ContentOwnerId }) {
           )}
         </>
       )}
-      {error && <p role='alert'>{error}</p>}
-    </main>
+      {error && (
+        <p
+          role='alert'
+          className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+        >
+          {error}
+        </p>
+      )}
+    </ContentPage>
   );
 }
 export function GroupFormEditor({
@@ -244,29 +270,10 @@ function FormEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <main className='p-6 space-y-4'>
-      <h1 className='font-heading'>
-        {initial ? 'Manage form' : 'Create form'}
-      </h1>
-      {!initial && (
-        <div aria-label='Reusable form templates'>
-          {groupFormTemplates.map(template => (
-            <Button
-              key={template.id}
-              variant='outline'
-              onClick={() => {
-                setTitle(template.title);
-                setDescription(template.description);
-                setQuestions(template.questions.map(q => ({ ...q })));
-              }}
-            >
-              Use {template.id} template
-            </Button>
-          ))}
-        </div>
-      )}
+    <main className='mx-auto w-full min-w-0 max-w-md space-y-3 px-4 py-4'>
+      <h1 className='sr-only'>{initial ? 'Manage form' : 'Create form'}</h1>
       <form
-        className='space-y-4'
+        className={formSurface}
         onSubmit={async event => {
           event.preventDefault();
           setBusy(true);
@@ -292,16 +299,18 @@ function FormEditor({
               router.push(`${base}/forms/${id}`);
             }
           } catch (e) {
-            setError(
-              `${failure(e)} Creation is not automatically retried; inspect the form list before repeating an uncertain creation.`
-            );
+            setError(`${failure(e)} Check forms before retrying.`);
           } finally {
             setBusy(false);
           }
         }}
       >
-        <Label htmlFor='ordinary-form-title'>Form title</Label>
-        <Input
+        <Label className='sr-only' htmlFor='ordinary-form-title'>
+          Form title
+        </Label>
+        <Textarea
+          rows={1}
+          className={formTitleField}
           id='ordinary-form-title'
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -309,20 +318,38 @@ function FormEditor({
           required
           disabled={busy}
         />
-        <Label htmlFor='ordinary-form-description'>Description</Label>
-        <Input
+        <Label className='sr-only' htmlFor='ordinary-form-description'>
+          Description
+        </Label>
+        <Textarea
+          rows={1}
+          placeholder='Add a description…'
+          className={formDescriptionField}
           id='ordinary-form-description'
           value={description}
           onChange={e => setDescription(e.target.value)}
           maxLength={2000}
           disabled={busy}
         />
+
+        <ApplicationQuestionEditor
+          contentLayout
+          title='Form questions'
+          requiredLabel='Answer required'
+          questions={questions}
+          onChange={setQuestions}
+          disabled={busy}
+        />
         {!initial && (
-          <>
-            <Label htmlFor='ordinary-form-visibility'>
+          <details className='text-sm'>
+            <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+              Visibility · {visibility === 'MANAGERS' ? 'Personal' : 'Shared'}
+            </summary>
+            <Label className='sr-only' htmlFor='ordinary-form-visibility'>
               Response visibility (fixed for this form)
             </Label>
             <select
+              className='w-full min-w-0 rounded-input border border-input bg-background p-2'
               id='ordinary-form-visibility'
               value={visibility}
               onChange={e =>
@@ -337,35 +364,45 @@ function FormEditor({
               </option>
               <option value='MEMBERS'>Shared: all eligible members</option>
             </select>
-          </>
+          </details>
         )}
-        <p>
-          Configuration changes preserve saved answers and their original
-          question definitions. Current-version answers require review before
-          saving. This is not the joining questionnaire.
-        </p>
-        <ApplicationQuestionEditor
-          title='Form questions'
-          requiredLabel='Answer required'
-          questions={questions}
-          onChange={setQuestions}
-          disabled={busy}
-        />
-        <Button disabled={busy}>
-          {initial ? 'Save form settings' : 'Create form'}
-        </Button>
-        {error && <p role='alert'>{error}</p>}
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button disabled={busy}>
+            {initial ? 'Save changes' : 'Create form'}
+          </Button>
+          <Button
+            variant='ghost'
+            type='button'
+            disabled={busy}
+            onClick={() => router.push(`${base}/forms`)}
+          >
+            Cancel
+          </Button>
+        </div>
+        {error && (
+          <p
+            role='alert'
+            className='rounded-input border-l-4 border-border-error bg-bg-error-subtle p-3 text-sm text-error'
+          >
+            {error}
+          </p>
+        )}
       </form>
       {initial && (
-        <GroupConfirmedAction
-          label='Delete form'
-          confirmation='Confirm deleting form and all responses'
-          explanation='This permanently removes the preserved form and all response history.'
-          onConfirm={async () => {
-            await deleteForm({ toolId: initial._id });
-            router.push(`${base}/forms`);
-          }}
-        />
+        <details className='text-sm'>
+          <summary className='min-h-10 cursor-pointer py-2 text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'>
+            Actions
+          </summary>
+          <GroupConfirmedAction
+            label='Delete form'
+            confirmation='Confirm deleting form and all responses'
+            explanation='This permanently removes the preserved form and all response history.'
+            onConfirm={async () => {
+              await deleteForm({ toolId: initial._id });
+              router.push(`${base}/forms`);
+            }}
+          />
+        </details>
       )}
     </main>
   );
@@ -405,26 +442,40 @@ function FormInteraction({
 }) {
   const base = useContentBase(groupId);
   const submit = useSubmitFormResponse();
-  const remove = useRemoveFormResponse();
-  const deleteForm = useDeleteForm();
-  const router = useRouter();
   const [answers, setAnswers] = useState<ApplicationAnswers>(form.answers);
   const [busy, setBusy] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const actionAnchor = useRef<HTMLDivElement>(null);
   return (
-    <main className='p-6 space-y-4'>
-      <h1 className='font-heading'>{form.title}</h1>
-      <p>{form.description}</p>
-      <p>
+    <main className={formSurface}>
+      <header className='flex min-w-0 items-start justify-between gap-2'>
+        <h1 className='min-w-0 flex-1 font-heading text-lg font-semibold leading-snug'>
+          {form.title}
+        </h1>
+        {(form.savedVersion !== null || form.canManage) && (
+          <FormActions
+            anchor={actionAnchor}
+            form={form}
+            base={base}
+            busy={busy}
+            onViewResponses={() => setShowResults(true)}
+            onMessage={setMessage}
+          />
+        )}
+      </header>
+      {form.description && (
+        <p className='text-sm leading-relaxed'>{form.description}</p>
+      )}
+      <p className='text-xs text-muted-foreground'>
         {form.resultsVisibility === 'MEMBERS'
-          ? 'Shared contribution: eligible members can see your latest answers. On account deletion, that shared contribution survives anonymously; your private revision history is purged.'
-          : 'Personal answers: only you and current eligible managers can see them. Account deletion purges your answers and history.'}{' '}
-        Managers may moderate ordinary responses. Removing your response also
-        removes its history.
+          ? 'Shared responses'
+          : 'Only you and managers can see your response'}
       </p>
       <form
         className='space-y-4'
         onSubmit={async e => {
           e.preventDefault();
+          if (busy) return;
           setBusy(true);
           setMessage('');
           try {
@@ -442,57 +493,221 @@ function FormInteraction({
           }
         }}
       >
-        <ApplicationQuestionFields
-          questions={form.questions}
-          answers={answers}
-          onChange={setAnswers}
-          disabled={busy}
-        />
-        <Button
-          icon={<ActionSave aria-hidden='true' className='size-4' />}
-          disabled={busy}
-        >
-          Save response
+        <div className='[&>div>div]:border-0 [&>div>div]:p-0 [&>div>fieldset]:border-0 [&>div>fieldset]:p-0'>
+          <ApplicationQuestionFields
+            questions={form.questions}
+            answers={answers}
+            onChange={setAnswers}
+            disabled={busy}
+          />
+        </div>
+        <Button disabled={busy} isLoading={busy} loadingText='Submitting…'>
+          {form.savedVersion === null ? 'Submit response' : 'Update response'}
         </Button>
       </form>
-      {form.savedVersion !== null && (
-        <GroupConfirmedAction
-          label='Remove my response'
-          confirmation='Confirm removing my response and its history'
-          explanation='Your latest response and private revision history will be removed.'
-          onConfirm={() => remove({ toolId: form._id })}
-        />
+      {message && (
+        <p role='status' className='text-sm'>
+          {message}
+        </p>
       )}
-      <Link
-        className='text-primary underline'
-        href={`${base}/forms/${form._id}/history`}
-      >
-        My saved answer history
-      </Link>
-      {form.canManage && (
-        <>
-          <Link
-            className='text-primary underline'
-            href={`${base}/forms/${form._id}/settings`}
-          >
-            Manage form settings
-          </Link>
-          <GroupConfirmedAction
-            label='Delete form'
-            confirmation='Confirm deleting form and all responses'
-            explanation='This permanently removes the form and all response history.'
-            onConfirm={async () => {
-              await deleteForm({ toolId: form._id });
-              router.push(`${base}/forms`);
+      {form.canManage && form.canReview && (
+        <Dialog open={showResults} onOpenChange={setShowResults}>
+          <DialogContent
+            onCloseAutoFocus={event => {
+              event.preventDefault();
+              actionAnchor.current?.querySelector('button')?.focus();
             }}
-          />
-        </>
-      )}
-      {message && <p role='status'>{message}</p>}
-      {form.canReview && (
-        <GroupFormResults toolId={form._id} canManage={form.canManage} />
+            aria-describedby={undefined}
+            className='max-h-[80dvh] min-w-0 overflow-y-auto [&_button]:h-auto [&_button]:min-h-10 [&_button]:whitespace-normal'
+          >
+            <DialogTitle>Responses</DialogTitle>
+            {showResults && (
+              <GroupFormResults toolId={form._id} canManage={form.canManage} />
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </main>
+  );
+}
+/** The same action inventory drives desktop dropdown/context menu and mobile drawer. */
+function FormActions({
+  form,
+  anchor,
+  base,
+  busy,
+  onViewResponses,
+  onMessage,
+}: {
+  form: NonNullable<ReturnType<typeof useForm>>;
+  anchor: RefObject<HTMLDivElement | null>;
+  base: string;
+  busy: boolean;
+  onViewResponses: () => void;
+  onMessage: (message: string) => void;
+}) {
+  const menu = useActionMenu();
+  const remove = useRemoveFormResponse();
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  function choose(action: 'responses' | 'remove') {
+    menu.setSheetOpen(false);
+    if (action === 'responses') onViewResponses();
+    else {
+      setError('');
+      setConfirming(true);
+    }
+  }
+  const actions = [
+    ...(form.canManage && form.canReview
+      ? [{ id: 'responses' as const, label: 'View responses', Icon: Eye }]
+      : []),
+    ...(form.savedVersion !== null
+      ? [{ id: 'remove' as const, label: 'Remove my response', Icon: Trash2 }]
+      : []),
+  ];
+  const dropdownContent = (
+    <>
+      {actions.map(({ id, label, Icon }) => (
+        <DropdownMenuItem key={id} disabled={busy} onSelect={() => choose(id)}>
+          <Icon aria-hidden='true' className='size-4' />
+          {label}
+        </DropdownMenuItem>
+      ))}
+      {form.canManage && (
+        <DropdownMenuItem disabled={busy} asChild>
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4' />
+            Edit form
+          </Link>
+        </DropdownMenuItem>
+      )}
+    </>
+  );
+  const contextMenuContent = (
+    <>
+      {actions.map(({ id, label, Icon }) => (
+        <ContextMenuItem key={id} disabled={busy} onSelect={() => choose(id)}>
+          <Icon aria-hidden='true' className='size-4' />
+          {label}
+        </ContextMenuItem>
+      ))}
+      {form.canManage && (
+        <ContextMenuItem disabled={busy} asChild>
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4' />
+            Edit form
+          </Link>
+        </ContextMenuItem>
+      )}
+    </>
+  );
+  const drawerContent = (
+    <div className='flex min-w-0 flex-col gap-1 px-4 pb-4 pt-2'>
+      {actions.map(({ id, label, Icon }) => (
+        <Button
+          key={id}
+          variant='ghost'
+          disabled={busy}
+          className='h-auto min-h-11 justify-start whitespace-normal text-left'
+          onClick={() => choose(id)}
+        >
+          <Icon aria-hidden='true' className='size-4 shrink-0' />
+          {label}
+        </Button>
+      ))}
+      {form.canManage && (
+        <Button
+          asChild
+          variant='ghost'
+          className='h-auto min-h-11 justify-start whitespace-normal text-left'
+          onClick={() => menu.setSheetOpen(false)}
+        >
+          <Link href={`${base}/forms/${form._id}/settings`}>
+            <Pencil aria-hidden='true' className='size-4 shrink-0' />
+            Edit form
+          </Link>
+        </Button>
+      )}
+    </div>
+  );
+  return (
+    <>
+      <ActionMenu
+        drawerTitle='Form actions'
+        drawerContent={drawerContent}
+        contextMenuContent={contextMenuContent}
+        sheetOpen={menu.sheetOpen}
+        onSheetOpenChange={menu.setSheetOpen}
+        onContextMenu={menu.handleContextMenu}
+        onClick={menu.handleClick}
+        disabled={busy}
+      >
+        <div ref={anchor} className='shrink-0'>
+          <ActionMenuButton
+            label='Form actions'
+            className='size-10 shrink-0'
+            onClick={menu.handleMoreClick}
+            onContextMenu={menu.handleContextMenu}
+            dropdownContent={dropdownContent}
+          >
+            <MoreHorizontal className='size-4' aria-hidden='true' />
+          </ActionMenuButton>
+        </div>
+      </ActionMenu>
+      <Dialog
+        open={confirming}
+        onOpenChange={open => {
+          if (!pending) setConfirming(open);
+        }}
+      >
+        <DialogContent
+          preventClose={pending}
+          onCloseAutoFocus={event => {
+            event.preventDefault();
+            anchor.current?.querySelector('button')?.focus();
+          }}
+        >
+          <DialogTitle>Remove your response?</DialogTitle>
+          <DialogDescription>
+            Your response and its history will be removed.
+          </DialogDescription>
+          <div className='flex flex-wrap justify-end gap-2'>
+            <DialogClose asChild>
+              <Button variant='outline' disabled={pending}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              variant='destructive'
+              disabled={pending}
+              isLoading={pending}
+              onClick={async () => {
+                setPending(true);
+                setError('');
+                try {
+                  await remove({ toolId: form._id });
+                  setConfirming(false);
+                  onMessage('Response removed.');
+                } catch (e) {
+                  setError(failure(e));
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              Remove response
+            </Button>
+          </div>
+          {error && (
+            <p role='alert' className='text-sm text-error'>
+              {error}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 function SavedAnswers({
@@ -503,13 +718,15 @@ function SavedAnswers({
   answers: ApplicationAnswers;
 }) {
   return (
-    <dl>
+    <dl className='space-y-3'>
       {questions.map(q => {
         const value = answers[q.id];
         return (
           <div key={q.id}>
-            <dt>{q.label}</dt>
-            <dd>
+            <dt className='text-sm font-semibold text-muted-foreground'>
+              {q.label}
+            </dt>
+            <dd className='mt-1 whitespace-pre-wrap break-words'>
               {Array.isArray(value)
                 ? value.join(', ')
                 : String(value ?? 'No answer')}
@@ -534,6 +751,11 @@ export function GroupFormHistory({ toolId }: { toolId: Id<'groupTools'> }) {
         Only your retained answers and original definitions are shown. Current
         private questions are not exposed by this recovery view.
       </p>
+      {history === undefined ? (
+        <p role='status'>Loading saved history…</p>
+      ) : history.page.length === 0 ? (
+        <p>No saved responses on this page.</p>
+      ) : null}
       {history?.page.map(row => (
         <div className='rounded-card border border-border p-4' key={row._id}>
           <p>
@@ -571,10 +793,17 @@ function GroupFormResults({
   const remove = useRemoveFormResult();
   return (
     <section className='space-y-3'>
-      <h2 className='font-heading'>Latest responses</h2>
+      <h2 className='sr-only'>Latest responses</h2>
+      {results === undefined ? (
+        <p role='status'>Loading responses…</p>
+      ) : results.page.length === 0 ? (
+        <p className='rounded-input bg-bg-sunken p-4 text-sm text-muted-foreground'>
+          No responses yet.
+        </p>
+      ) : null}
       {results?.page.map(row => (
-        <div key={row._id} className='rounded-card border border-border p-4'>
-          <p>
+        <div key={row._id} className='space-y-3 border-t border-border pt-3'>
+          <p className='text-xs text-muted-foreground'>
             {row.personId ? 'Member contribution' : 'Anonymous contribution'} ·
             form version {row.version}
           </p>

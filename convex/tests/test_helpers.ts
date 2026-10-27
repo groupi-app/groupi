@@ -364,7 +364,7 @@ export async function createTestEventWithDates(
 
   const { potentialDateTimeIds } = await t.run(async ctx => {
     const ids: Id<'potentialDateTimes'>[] = [];
-    const baseTime = Date.now();
+    const baseTime = Date.now() + 24 * 60 * 60 * 1000;
     for (let i = 0; i < dateCount; i++) {
       const id = await ctx.db.insert('potentialDateTimes', {
         eventId: eventSetup.eventId,

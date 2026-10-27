@@ -451,3 +451,70 @@ describe('discussion write transaction authorization', () => {
     });
   });
 });
+
+describe.each(['v1', 'v2'] as const)('%s reply lock parity', version => {
+  it('supports creation locks, denies stale new replies and preserves normal edits without extra setting notifications', async () => {
+    const { t, organizer, attendee, moderator, eventId } = await setup();
+    const response = await attendee.request(
+      version,
+      `/events/${eventId}/posts`,
+      'POST',
+      {
+        title: 'Closed replies',
+        content: 'Readable content',
+        repliesDisabled: true,
+      }
+    );
+    expect(response.status).toBe(201);
+    const { postId } = await resultData(response, version);
+    expect(
+      (
+        await organizer.request(version, `/posts/${postId}/replies`, 'POST', {
+          text: 'Old client reply',
+        })
+      ).status
+    ).toBe(403);
+    const before = await notifications(t, postId);
+    const open = await moderator.request(version, `/posts/${postId}`, 'PATCH', {
+      repliesDisabled: false,
+      expectedRepliesRevision: 0,
+    });
+    expect(open.status).toBe(200);
+    expect(await notifications(t, postId)).toEqual(before);
+    expect((await t.run(ctx => ctx.db.get(postId)))?.editedAt).toBeUndefined();
+    const reply = await organizer.request(
+      version,
+      `/posts/${postId}/replies`,
+      'POST',
+      { text: 'Allowed after reopening' }
+    );
+    expect(reply.status).toBe(201);
+    const close = await attendee.request(version, `/posts/${postId}`, 'PATCH', {
+      repliesDisabled: true,
+      expectedRepliesRevision: 1,
+    });
+    expect(close.status).toBe(200);
+    const stale = await moderator.request(
+      version,
+      `/posts/${postId}`,
+      'PATCH',
+      { repliesDisabled: false, expectedRepliesRevision: 0 }
+    );
+    expect(stale.status).toBe(409);
+    expect(
+      (
+        await attendee.request(version, `/posts/${postId}`, 'PATCH', {
+          content: 'Legacy content edit',
+        })
+      ).status
+    ).toBe(200);
+    expect(await t.run(ctx => ctx.db.get(postId))).toMatchObject({
+      repliesDisabled: true,
+      repliesRevision: 2,
+    });
+    expect(
+      (await organizer.request(version, `/posts/${postId}/replies`, 'GET'))
+        .status
+    ).toBe(200);
+  });
+});

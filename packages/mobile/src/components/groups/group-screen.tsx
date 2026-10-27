@@ -5,7 +5,6 @@ import {
 } from './group-discord-settings';
 import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
-import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -288,9 +287,6 @@ export function GroupDetailScreen() {
                 questions={group.applicationQuestions}
               />
             ) : null}
-            {group.viewerRole !== 'MEMBER' && (
-              <GroupAnnouncementComposer groupId={id} />
-            )}
             {group.canManageRoles ? (
               <GroupEventSharingPolicy
                 groupId={id}
