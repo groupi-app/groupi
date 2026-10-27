@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import type { Monaco, OnMount } from '@monaco-editor/react';
 import { cn } from '@/lib/utils';
 import { useBuilder } from './builder-context';
+import { normalizeMonacoHexColor } from './monaco-color';
 import type { DataBlock } from './building-blocks';
 
 type MonacoEditor = Parameters<OnMount>[0];
@@ -36,7 +37,7 @@ function cssVar(name: string, fallback: string): string {
     const inner = raw.replace(/hsl\(([^)]+)\)/, '$1');
     return hslToHex(inner);
   }
-  if (raw.startsWith('#')) return raw;
+  if (raw.startsWith('#')) return normalizeMonacoHexColor(raw) ?? fallback;
   return fallback;
 }
 

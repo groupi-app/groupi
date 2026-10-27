@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMutation, useQuery } from 'convex/react';
 import { DeveloperAppsSettings } from './developer-apps-settings';
@@ -140,3 +140,30 @@ it('hides review requests for approved apps while retaining Details and Copy ID'
     screen.queryByRole('menuitem', { name: /Request.*review/ })
   ).not.toBeInTheDocument();
 });
+
+it.each([1200, 320, 375, 390])(
+  'restores keyboard focus after registration dismissal at %ipx without registering',
+  async width => {
+    vi.stubGlobal('innerWidth', width);
+    vi.mocked(useQuery).mockReturnValue([]);
+    const register = vi.fn();
+    vi.mocked(useMutation).mockReturnValue(register as never);
+    const user = userEvent.setup();
+    render(<DeveloperAppsSettings />);
+    const trigger = screen.getByRole('button', { name: 'Register app' });
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('dialog', { name: 'Register app' });
+    await user.type(screen.getByLabelText('App name'), 'Retained draft');
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    await waitFor(() => expect(trigger).toHaveFocus());
+    await user.keyboard('{Enter}');
+    expect(await screen.findByLabelText('App name')).toHaveValue(
+      'Retained draft'
+    );
+    expect(register).not.toHaveBeenCalled();
+  }
+);

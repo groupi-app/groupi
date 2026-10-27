@@ -7,6 +7,7 @@ import { SettingsActions } from './settings-actions';
 import {
   Dialog,
   DialogContent,
+  DialogTrigger,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -167,13 +168,15 @@ export function DeveloperAppsSettings() {
             ))}
           </div>
         )}
-        <Button onClick={() => setRegistrationOpen(true)}>Register app</Button>
         <Dialog
           open={registrationOpen}
           onOpenChange={value => {
             if (!pending) setRegistrationOpen(value);
           }}
         >
+          <DialogTrigger asChild>
+            <Button>Register app</Button>
+          </DialogTrigger>
           <DialogContent
             preventClose={pending}
             className='max-h-[90dvh] overflow-y-auto'
