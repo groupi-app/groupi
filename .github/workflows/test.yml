@@ -373,6 +373,9 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Test deployment build boundaries
+        run: node --test scripts/vercel-build.test.mjs
+
       - name: Test verification readiness gate
         run: node --test scripts/verification-readiness.test.mjs
 
