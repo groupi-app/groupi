@@ -8,7 +8,8 @@
       "codex/shared-content-creation": false,
       "codex/content-pages-refinement": false,
       "codex/management-ui-refinement": false,
-      "codex/release-lock-resolution": false
+      "codex/release-lock-resolution": false,
+      "codex/portal-learning-spec": false
     }
   }
 }

@@ -6,12 +6,14 @@ import { PortalLayout } from './components/templates/portal-layout';
 import { ApiExplorer } from './components/organisms/api-explorer';
 import { DeveloperSearch } from './components/organisms/developer-search';
 import { DocumentReader } from './components/organisms/document-reader';
+import { AgentGuideLinks } from './components/molecules/agent-guide-links';
 import { PortalHome } from './components/organisms/portal-home';
 const pages = corpus.pages as Page[];
 const redirects: Record<string, string> = {
   '/docs/api': '/v2/reference/api',
   '/reference/api': '/v2/reference/api',
   '/cli/reference': '/cli/0.1.0/reference',
+  '/v2/contributor': '/v2/introduction',
 };
 export function Portal() {
   const [path, setPath] = useState(
@@ -30,7 +32,11 @@ export function Portal() {
       ? `${page.title} | Groupi developers`
       : 'Groupi developers';
     if (redirects[window.location.pathname])
-      window.history.replaceState({}, '', `${path}${window.location.hash}`);
+      window.history.replaceState(
+        {},
+        '',
+        `${path}${window.location.pathname === '/v2/contributor' ? '#contributing' : window.location.hash}`
+      );
     const id = window.location.hash.slice(1);
     if (id) {
       const target = document.getElementById(id);
@@ -64,14 +70,22 @@ export function Portal() {
           event.shiftKey ||
           event.altKey ||
           target.pathname.startsWith('/exports/') ||
-          target.pathname === '/llms.txt'
+          target.pathname === '/llms.txt' ||
+          target.pathname.endsWith('.md') ||
+          target.pathname.startsWith('/examples/')
         )
           return;
         event.preventDefault();
-        window.history.pushState({}, '', target.href);
-        setPath(target.pathname);
-        if (target.hash) {
-          const section = document.getElementById(target.hash.slice(1));
+        const destination = new URL(target.href);
+        if (redirects[destination.pathname]) {
+          if (destination.pathname === '/v2/contributor')
+            destination.hash = 'contributing';
+          destination.pathname = redirects[destination.pathname];
+        }
+        window.history.pushState({}, '', destination.href);
+        setPath(destination.pathname);
+        if (destination.hash) {
+          const section = document.getElementById(destination.hash.slice(1));
           section?.scrollIntoView?.();
           section?.focus({ preventScroll: true });
         }
@@ -80,8 +94,8 @@ export function Portal() {
       <PortalLayout
         navigation={
           <nav aria-label='Developer navigation'>
-            <a href='/v2/integrator'>Build</a>
-            <a href='/v2/contributor'>Contribute</a>
+            <a href='/v2/introduction'>Learn</a>
+            <a href='/v2/reference/api'>Reference</a>
             <a href='/cli/0.1.0/guide'>CLI</a>
             <a href='/v2/addons'>Add-ons</a>
             <a href='/v2/sdks'>SDKs</a>
@@ -113,6 +127,9 @@ export function Portal() {
                   <option value='v1'>REST v1</option>
                 </select>
               </label>
+            ) : null}
+            {page.id === 'introduction' || page.id === 'agents' ? (
+              <AgentGuideLinks />
             ) : null}
             <DocumentReader page={page} />
           </>

@@ -1,7 +1,7 @@
 # Developer portal publishing contract
 
 Approved implementation inputs for issues #293 and #298, confirmed by the user
-on 15 October 2026. This document does not claim a deployed portal or published packages.
+on 15 October 2026, updated by the approved learning specification on 30 October 2026. This document does not claim a deployed portal or published packages.
 
 ## Table of Contents
 
@@ -17,11 +17,13 @@ Use a dedicated `@groupi/portal` React client application in `packages/portal`,
 with Vite static output and the existing Groupi semantic design tokens. It has
 no authentication provider, server rendering, API routes or server actions.
 Hosting requires a static fallback to `index.html` for reader routes. Deployment
-and executing builds remain separate authorized work.
+remains separately authorized work. Local builds and previews are permitted for verification.
 
 Canonical reader routes are `/v2/<page>#<passage>`, `/v1/reference/api#<operation>`
-and `/cli/0.1.0/reference#<command>`. The root presents equal Build and Contribute
-journeys with direct CLI, add-on and self-hosting navigation. The current API
+and `/cli/0.1.0/reference#<command>`. Learn and Reference are the primary journeys.
+The Introduction links directly to CONTRIBUTING.md; there is no separate contributor course.
+The old contributor reader path redirects to that blurb. CLI, add-on, SDK and
+authorization references remain directly available. The current API
 recommendation is v2; v1 remains explicitly versioned without an invented
 retirement date. Self-hosting is a Proposed page and is excluded from this
 implementation's launch dependency because self-host implementation is out of
@@ -64,9 +66,11 @@ but no Playwright subprocess or source-serving test adapter is authorized.
 
 ## Optional exports and explorer
 
-Proposed exports are Markdown, plain text, JSON passage index and `llms.txt`, all
+Exports include Markdown, plain text, JSON passage index and `llms.txt`, all
 from the same canonical public corpus with version and availability metadata.
-There is no new authenticated agent-query endpoint.
+The integration-only `/agents.md` entry aliases `/v2/agents.md`; task-specific raw
+Markdown uses the same canonical source as human lessons. Absolute links use the
+configured, verified documentation origin. There is no new authenticated agent-query endpoint.
 
 The proposed early explorer is fixture-only. It identifies itself as Demo,
 explains the instance and identity boundary, and simulates eligible event list

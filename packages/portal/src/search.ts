@@ -126,6 +126,21 @@ export function searchPassages(
         }
       }
       if (item.title.includes(full)) score += 30;
+      // A broad resource lookup defaults to its collection read, not an
+      // alphabetically earlier destructive endpoint with the same nouns.
+      const collection = item.entry.title.match(
+        /^GET \/api\/v[12]\/([^/ {]+)$/
+      )?.[1];
+      if (
+        collection &&
+        tokens.includes(words(collection)[0]) &&
+        !tokens.some(token =>
+          ['delete', 'remove', 'create', 'post', 'patch', 'update'].includes(
+            token
+          )
+        )
+      )
+        score += 8;
       if (
         item.entry.id.startsWith('api-') ||
         item.entry.id.startsWith('cli-reference:')

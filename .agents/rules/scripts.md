@@ -10,9 +10,9 @@ Use this policy to choose safe validation commands. Exact script definitions liv
 
 ## Runtime boundaries
 
-Under repository policy, agents must not run `pnpm dev*`, `pnpm build*`, `pnpm start`, `pnpm preview`, `pnpm convex:dev`, or `pnpm convex:deploy`. This covers equivalent underlying server/build/deployment commands. The user manages local runtimes; use `pnpm check` and one-shot tests for ordinary validation. Explicit user instructions take precedence, and existing authorization need not be requested again.
+Agents may run local development servers, builds, start commands and preview servers for implementation and verification. Use `pnpm check` and one-shot tests for ordinary validation. Inspect scripts before running them: a local command that deploys Convex functions or changes a remote environment still requires the appropriate deployment authorization. This includes `pnpm convex:dev` and `pnpm convex:deploy`; local runtime permission does not authorize their remote effects.
 
-A server's availability is evidence to establish, not an assumption. Follow [runtime readiness](../../docs/agents/workflow.md#runtime-readiness) at feature kickoff and before browser/native verification. A hosted preview authorization does not by itself authorize a production deployment, local verification build, or provisioning accounts/credentials outside the agreed scope. Other documents' server-start examples do not override this policy.
+A server's availability is evidence to establish, not an assumption. Follow [runtime readiness](../../docs/agents/workflow.md#runtime-readiness) at feature kickoff and before browser/native verification. Local runtime or hosted preview authorization does not authorize a production deployment or provisioning accounts/credentials outside the agreed scope. Other documents' server-start examples do not override this policy.
 
 ## Validation commands
 

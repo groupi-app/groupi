@@ -1,16 +1,29 @@
 # Bounded access and delegated sign-in
 
 v2 · Upcoming · Source: docs/bounded-authorization.md
+Canonical document: http://localhost:4173/v2/auth.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+## Table of Contents
+
+- [Verify the authorization capability first](#availability)
+- [Create a bounded key for selected Events](#named-keys)
+- [Request each action and related field explicitly](#projections)
+- [Give an integration its own discussion identity](#integrations)
+- [Consent, background access and disconnect](#connections)
+- [Inspect and revoke access](#revocation)
+
+<a id="availability"></a>
 ## Verify the authorization capability first
-Canonical passage: /v2/auth#availability
+Canonical passage: http://localhost:4173/v2/auth#availability
 
 Bounded credentials and delegated sign-in are source candidates in this repository. Verify the intended deployment before using them; this page does not establish a hosted release or configured OAuth issuer. Existing CLI browser login remains a separate flow. Credential bounds always intersect current account authority, and an authentication failure never switches to a broader key.
 
+<a id="named-keys"></a>
 ## Create a bounded key for selected Events
-Canonical passage: /v2/auth#named-keys
+Canonical passage: http://localhost:4173/v2/auth#named-keys
 
 In Account settings, use bounded keys to choose a name, expiry, explicit actions and selected Events. User keys may instead explicitly select all current and future Events within current authority. Identity-only user keys need no Event selection. Copy the secret when it is shown once and keep it out of browser bundles and source control. Legacy collection keys remain separately labeled and have different permissions.
 
@@ -19,22 +32,26 @@ curl --fail-with-body "https://YOUR-INSTANCE.convex.site/api/v2/events" \
   -H "x-api-key: $GROUPI_BOUNDED_KEY"
 ```
 
+<a id="projections"></a>
 ## Request each action and related field explicitly
-Canonical passage: /v2/auth#projections
+Canonical passage: http://localhost:4173/v2/auth#projections
 
 Event reads, updates, member reads, discussion actions, file access and identity claims have separate actions. Write-only access returns identifiers, not discussion content or attachment URLs. File uploads require a granted eventId and files.upload; attachment expansion requires files.read. Event creation, membership administration, Groups and Invite Lists are not supported bounded actions. An unsupported operation fails closed; use the published action matrix before designing a workflow.
 
+<a id="integrations"></a>
 ## Give an integration its own discussion identity
-Canonical passage: /v2/auth#integrations
+Canonical passage: http://localhost:4173/v2/auth#integrations
 
 An integration key selects Events and requires a current Organizer sponsor. The integration appears as the author of its own posts and replies and has no person record, membership or RSVP. It can edit or delete only its own discussion content. Sponsor authority is rechecked for each operation; sponsorship does not grant blanket access or impersonate the sponsor.
 
+<a id="connections"></a>
 ## Consent, background access and disconnect
-Canonical passage: /v2/auth#connections
+Canonical passage: http://localhost:4173/v2/auth#connections
 
 The approved delegated profile uses authorization code with S256 PKCE, app-and-instance-specific identity, 60-second codes and 5-minute access tokens. Background access requires separate consent; rotating refresh is limited to 30 days and 7 days of inactivity. Initial clients are confidential web and native apps; browser-only refresh is unavailable. Connected Apps shows actions and resources and lets you disconnect. Disconnect stops future access but cannot delete copied data or terminate the app’s own session. Release readiness still requires issuer configuration and environment-specific verification.
 
+<a id="revocation"></a>
 ## Inspect and revoke access
-Canonical passage: /v2/auth#revocation
+Canonical passage: http://localhost:4173/v2/auth#revocation
 
 Revoked or expired credentials fail without a grace period. Current membership and role loss reduce effective access even if a key has not expired. Owner-visible audit metadata is retained for 90 days and excludes raw credentials and resource bodies. Already committed writes and previously acquired file URLs are not undone by revocation.

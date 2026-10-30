@@ -417,3 +417,47 @@ summary {
   cursor: pointer;
   color: var(--text-link);
 }
+
+.learning-lesson {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: clamp(1rem, 3vw, 2rem);
+  margin-block: 2rem;
+  background: var(--bg-sunken);
+  min-width: 0;
+}
+.learning-lesson h2:first-of-type {
+  margin-top: 0.5rem;
+}
+.event-preview {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-raised);
+}
+.event-preview h3 {
+  margin-block: 0.25rem;
+}
+.learning-lesson input,
+.learning-lesson select {
+  width: 100%;
+  min-width: 0;
+}
+.learning-lesson [type='checkbox'] {
+  width: auto;
+}
+.learning-lesson [role='tab'][aria-selected='true'] {
+  border-color: var(--border-focus);
+  background: var(--bg-interactive-hover);
+  font-weight: 750;
+}
+.learning-lesson [role='status'] {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.learning-lesson [role='tabpanel']:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
