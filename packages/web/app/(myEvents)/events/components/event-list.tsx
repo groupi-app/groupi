@@ -1,5 +1,6 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { EventCard } from './event-card';
 import { useUserEvents } from '@/hooks/convex/use-events';
@@ -39,6 +40,14 @@ export function EventList({
   sortBy = 'createdat',
   filter = 'all',
 }: EventListProps = {}) {
+  const userEventsData = useUserEvents();
+  const lifecycleDates: (number | undefined)[] = (
+    userEventsData?.events ?? []
+  ).flatMap(({ event }: { event: Doc<'events'> }) => [
+    event.chosenEndDateTime,
+    ...(event.potentialDateTimes ?? []),
+  ]);
+  const now = useLifecycleClock(lifecycleDates);
   const [isMounted, setIsMounted] = useState(false);
   const [pastEventsOpen, setPastEventsOpen] = useState(false);
 
@@ -50,7 +59,6 @@ export function EventList({
   }, []);
 
   // Use Convex hook for real-time user events
-  const userEventsData = useUserEvents();
 
   // Loading state
   if (userEventsData === undefined) {
@@ -135,7 +143,8 @@ export function EventList({
     if (!membershipData) return false;
     return !isEventPast(
       membershipData.event.chosenDateTime,
-      membershipData.event.chosenEndDateTime
+      membershipData.event.chosenEndDateTime,
+      { ...membershipData.event, now }
     );
   });
 
@@ -146,7 +155,8 @@ export function EventList({
     if (!membershipData) return false;
     return isEventPast(
       membershipData.event.chosenDateTime,
-      membershipData.event.chosenEndDateTime
+      membershipData.event.chosenEndDateTime,
+      { ...membershipData.event, now }
     );
   });
 

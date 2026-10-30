@@ -1,3 +1,8 @@
+import { reconcileEventExclusions } from '../groups/exclusions';
+import {
+  guardEventReactivation,
+  isEventCurrentCandidate,
+} from '../events/lifecycle';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -67,6 +72,7 @@ export async function share(
 ) {
   await requirePerson(ctx, personId);
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  await guardEventReactivation(ctx, eventId);
   if (!(await canShare(ctx, groupId, personId)))
     fail('FORBIDDEN', 'Current Group sharing permission is required.');
   const existing = await ctx.db
@@ -95,6 +101,7 @@ export async function share(
       sharedById: personId,
       createdAt: Date.now(),
     });
+  await reconcileEventExclusions(ctx, eventId);
   return { eventId, groupId, shared: true };
 }
 export async function withdraw(
@@ -126,6 +133,7 @@ export async function friends(
 ) {
   await requirePerson(ctx, personId);
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  if (enabled) await guardEventReactivation(ctx, eventId);
   await ctx.db.patch(eventId, {
     friendsAudienceEnabled: enabled,
     updatedAt: Date.now(),
@@ -200,10 +208,7 @@ export async function list(
     page = [];
   for (const grant of rows.page) {
     const event = await ctx.db.get(grant.eventId);
-    if (
-      !event ||
-      (event.chosenDateTime !== undefined && event.chosenDateTime < Date.now())
-    )
+    if (!event || !(await isEventCurrentCandidate(ctx, event, Date.now())))
       continue;
     const ownMembership = await eventMember(ctx, event._id, personId);
     if (!(await eventAdmissionAccess(ctx, event, personId)).canRead) continue;

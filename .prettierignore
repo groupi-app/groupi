@@ -132,3 +132,8 @@ packages/mobile/ios/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Canonical portal artifacts are formatted by the content generator.
+packages/portal/src/generated/
+packages/portal/public/exports/
+packages/portal/public/llms.txt

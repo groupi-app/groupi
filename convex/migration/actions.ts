@@ -8,127 +8,132 @@ import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { Id } from '../_generated/dataModel';
 
-// Types matching the parsed SQL data
-interface OldPerson {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  firstName: string | null;
-  lastName: string | null;
-  username: string;
-  imageUrl: string;
-  email: string; // Added from Clerk export
-}
-
-interface OldEvent {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  title: string;
-  description: string;
-  location: string;
-  chosenDateTime: string | null;
-  chosenEndDateTime: string | null;
-  reminderOffset:
-    | '30_MINUTES'
-    | '1_HOUR'
-    | '2_HOURS'
-    | '4_HOURS'
-    | '1_DAY'
-    | '2_DAYS'
-    | '3_DAYS'
-    | '1_WEEK'
-    | '2_WEEKS'
-    | '4_WEEKS'
-    | null;
-}
-
-interface OldMembership {
-  id: string;
-  personId: string;
-  eventId: string;
-  role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
-  rsvpStatus: 'YES' | 'MAYBE' | 'NO' | 'PENDING';
-}
-
-interface OldPotentialDateTime {
-  id: string;
-  eventId: string;
-  dateTime: string;
-  endDateTime: string | null;
-}
-
-interface OldAvailability {
-  membershipId: string;
-  potentialDateTimeId: string;
-  status: 'YES' | 'MAYBE' | 'NO' | 'PENDING';
-}
-
-interface OldPost {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  editedAt: string;
-  authorId: string;
-  eventId: string;
-  title: string;
-  content: string;
-}
-
-interface OldReply {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  authorId: string;
-  postId: string;
-  text: string;
-}
-
-interface OldInvite {
-  id: string;
-  eventId: string;
-  createdById: string;
-  createdAt: string;
-  expiresAt: string | null;
-  usesRemaining: number | null;
-  maxUses: number | null;
-  usesTotal: number | null;
-  name: string | null;
-}
-
-interface OldNotification {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  personId: string;
-  type: string;
-  eventId: string | null;
-  postId: string | null;
-  read: boolean;
-  datetime: string | null;
-  authorId: string | null;
-  rsvp: string | null;
-}
-
-interface OldPersonSettings {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  personId: string;
-}
-
-interface ParsedData {
-  persons: OldPerson[];
-  events: OldEvent[];
-  memberships: OldMembership[];
-  potentialDateTimes: OldPotentialDateTime[];
-  availabilities: OldAvailability[];
-  posts: OldPost[];
-  replies: OldReply[];
-  invites: OldInvite[];
-  notifications: OldNotification[];
-  personSettings: OldPersonSettings[];
-}
+// Historical SQL import contract; inferred by Convex rather than cast.
+const OldPerson = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  firstName: v.union(v.string(), v.null()),
+  lastName: v.union(v.string(), v.null()),
+  username: v.string(),
+  imageUrl: v.string(),
+  email: v.string(),
+});
+const OldEvent = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  title: v.string(),
+  description: v.string(),
+  location: v.string(),
+  chosenDateTime: v.union(v.string(), v.null()),
+  chosenEndDateTime: v.union(v.string(), v.null()),
+  reminderOffset: v.union(
+    v.literal('30_MINUTES'),
+    v.literal('1_HOUR'),
+    v.literal('2_HOURS'),
+    v.literal('4_HOURS'),
+    v.literal('1_DAY'),
+    v.literal('2_DAYS'),
+    v.literal('3_DAYS'),
+    v.literal('1_WEEK'),
+    v.literal('2_WEEKS'),
+    v.literal('4_WEEKS'),
+    v.null()
+  ),
+});
+const OldMembership = v.object({
+  id: v.string(),
+  personId: v.string(),
+  eventId: v.string(),
+  role: v.union(
+    v.literal('ORGANIZER'),
+    v.literal('MODERATOR'),
+    v.literal('ATTENDEE')
+  ),
+  rsvpStatus: v.union(
+    v.literal('YES'),
+    v.literal('MAYBE'),
+    v.literal('NO'),
+    v.literal('PENDING')
+  ),
+});
+const OldPotentialDateTime = v.object({
+  id: v.string(),
+  eventId: v.string(),
+  dateTime: v.string(),
+  endDateTime: v.union(v.string(), v.null()),
+});
+const OldAvailability = v.object({
+  membershipId: v.string(),
+  potentialDateTimeId: v.string(),
+  status: v.union(
+    v.literal('YES'),
+    v.literal('MAYBE'),
+    v.literal('NO'),
+    v.literal('PENDING')
+  ),
+});
+const OldPost = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  editedAt: v.string(),
+  authorId: v.string(),
+  eventId: v.string(),
+  title: v.string(),
+  content: v.string(),
+});
+const OldReply = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  authorId: v.string(),
+  postId: v.string(),
+  text: v.string(),
+});
+const OldInvite = v.object({
+  id: v.string(),
+  eventId: v.string(),
+  createdById: v.string(),
+  createdAt: v.string(),
+  expiresAt: v.union(v.string(), v.null()),
+  usesRemaining: v.union(v.number(), v.null()),
+  maxUses: v.union(v.number(), v.null()),
+  usesTotal: v.union(v.number(), v.null()),
+  name: v.union(v.string(), v.null()),
+});
+const OldNotification = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  personId: v.string(),
+  type: v.string(),
+  eventId: v.union(v.string(), v.null()),
+  postId: v.union(v.string(), v.null()),
+  read: v.boolean(),
+  datetime: v.union(v.string(), v.null()),
+  authorId: v.union(v.string(), v.null()),
+  rsvp: v.union(v.string(), v.null()),
+});
+const OldPersonSettings = v.object({
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  personId: v.string(),
+});
+const ParsedData = v.object({
+  persons: v.array(OldPerson),
+  events: v.array(OldEvent),
+  memberships: v.array(OldMembership),
+  potentialDateTimes: v.array(OldPotentialDateTime),
+  availabilities: v.array(OldAvailability),
+  posts: v.array(OldPost),
+  replies: v.array(OldReply),
+  invites: v.array(OldInvite),
+  notifications: v.array(OldNotification),
+  personSettings: v.array(OldPersonSettings),
+});
 
 // ID mappings
 interface IdMappings {
@@ -158,11 +163,11 @@ function generateToken(): string {
  */
 export const runMigration = internalAction({
   args: {
-    data: v.any(), // ParsedData JSON
+    data: ParsedData,
     clearFirst: v.optional(v.boolean()),
   },
   handler: async (ctx, { data, clearFirst }) => {
-    const parsedData = data as ParsedData;
+    const parsedData = data;
 
     console.log('='.repeat(60));
     console.log('Starting Supabase to Convex Migration');

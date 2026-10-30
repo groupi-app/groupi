@@ -40,8 +40,8 @@ export const EventSummarySchema = z
     createdAt: TimestampSchema,
     updatedAt: TimestampSchema,
     memberCount: z.number().int(),
-    userRole: RoleSchema,
-    userRsvpStatus: RsvpStatusSchema,
+    userRole: RoleSchema.nullable(),
+    userRsvpStatus: RsvpStatusSchema.nullable(),
   })
   .openapi('EventSummary');
 
@@ -100,7 +100,7 @@ export const CreateEventRequestSchema = z
     timezone: z.string().optional().openapi({
       example: 'America/New_York',
       description:
-        'IANA timezone used to interpret GDL. Defaults to UTC when omitted.',
+        'Stable IANA Event timezone for GDL and automatic completion at the next local day when no end is set. Defaults to UTC when omitted.',
     }),
     gdl: z.string().optional().openapi({
       example: '[Tu,Th]@18-20',

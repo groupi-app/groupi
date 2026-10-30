@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
+import { RsvpChoices } from '@/components/molecules/rsvp-choices';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -101,42 +102,40 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
         userMembership.role !== 'ORGANIZER' &&
         (userMembership.rsvpStatus !== 'PENDING' ? (
           <DialogTrigger asChild>
-            <button
+            <Button
               type='button'
-              className={`rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 ${
+              variant={
                 userMembership.rsvpStatus === 'YES'
-                  ? 'bg-success'
+                  ? 'success'
                   : userMembership.rsvpStatus === 'NO'
-                    ? 'bg-error'
-                    : 'bg-warning'
-              }`}
+                    ? 'destructive'
+                    : 'warning'
+              }
+              className='w-fit gap-2.5'
             >
               {userMembership.rsvpStatus === 'YES' ? (
-                <Icons.check className='size-5 text-white' />
+                <Icons.check className='size-5' />
               ) : userMembership.rsvpStatus === 'NO' ? (
-                <Icons.close className='size-5 text-white' />
+                <Icons.close className='size-5' />
               ) : (
-                <span className='size-5 text-white font-bold text-xl leading-5 text-center'>
+                <span className='size-5 font-bold text-xl leading-5 text-center'>
                   ?
                 </span>
               )}
-              <span className='text-white font-semibold'>
+              <span className='font-semibold'>
                 RSVP: {userMembership.rsvpStatus}
               </span>
               {userMembership.rsvpNote && (
-                <Icons.messageSquare className='size-4 text-white/80' />
+                <Icons.messageSquare className='size-4' />
               )}
-            </button>
+            </Button>
           </DialogTrigger>
         ) : (
           <DialogTrigger asChild>
-            <button
-              type='button'
-              className='bg-info rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 animate-wiggle-periodic'
-            >
-              <Icons.party className='size-5 text-white' />
-              <span className='text-white font-semibold'>RSVP Pending!</span>
-            </button>
+            <Button type='button' variant='info' className='w-fit gap-2.5'>
+              <Icons.party className='size-5' />
+              <span className='font-semibold'>RSVP Pending!</span>
+            </Button>
           </DialogTrigger>
         ))}
       <DialogContent>
@@ -169,45 +168,8 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
               control={form.control}
               name='rsvp'
               render={({ field }) => (
-                <FormItem className='flex gap-2 items-center space-y-0'>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'YES' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('YES')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <Icons.check className='text-success' />
-                        <span>Yes</span>
-                      </div>
-                    </Button>
-                  </FormControl>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'MAYBE' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('MAYBE')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <span className='font-semibold w-6 text-xl text-warning text-center'>
-                          ?
-                        </span>
-                        <span>Maybe</span>
-                      </div>
-                    </Button>
-                  </FormControl>
-                  <FormControl className='w-1/3'>
-                    <Button
-                      type='button'
-                      variant={field.value === 'NO' ? 'default' : 'outline'}
-                      onClick={() => field.onChange('NO')}
-                    >
-                      <div className='flex items-center gap-1 pr-2'>
-                        <Icons.close className='text-error' />
-                        <span>No</span>
-                      </div>
-                    </Button>
-                  </FormControl>
+                <FormItem>
+                  <RsvpChoices value={field.value} onChange={field.onChange} />
                 </FormItem>
               )}
             />

@@ -10,6 +10,7 @@ export const createPostArgs = v.object({
   eventId: v.id('events'),
   title: v.string(),
   content: v.string(),
+  repliesDisabled: v.optional(v.boolean()),
   attachments: v.optional(v.array(attachmentInputValidator)),
   _traceId: v.optional(v.string()),
 });
@@ -17,6 +18,8 @@ export const updatePostArgs = v.object({
   postId: v.id('posts'),
   title: v.optional(v.string()),
   content: v.optional(v.string()),
+  repliesDisabled: v.optional(v.boolean()),
+  expectedRepliesRevision: v.optional(v.number()),
   attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
   attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
   _traceId: v.optional(v.string()),

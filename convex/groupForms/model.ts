@@ -3,13 +3,9 @@ import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { requirePerson } from '../groups/model';
-import { requireManager, membershipFor } from '../groups/policy';
+import { requireManager } from '../groups/policy';
 import { requireGroupMemberContent } from '../groups/contentAccess';
-import {
-  requireToolCreation,
-  requireToolInteraction,
-  getPolicy,
-} from '../groupTools/policy';
+import { getPolicy } from '../groupTools/policy';
 import {
   validateQuestions,
   validateAnswers,
@@ -17,6 +13,14 @@ import {
   type ApplicationAnswers,
 } from '../../packages/shared/src/utils/application-questions';
 import { hash } from '../lib/requestId';
+import {
+  contentContext,
+  contentCapabilities,
+  requireContentCreation,
+  requireContentInteraction,
+  requireContentManager,
+  contentEnabled,
+} from '../groupTools/context';
 type ReadCtx = MutationCtx | QueryCtx;
 function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
@@ -65,18 +69,19 @@ export async function create(
   ctx: MutationCtx,
   personId: Id<'persons'>,
   input: {
-    groupId: Id<'groups'>;
+    groupId?: Id<'groups'>;
+    eventId?: Id<'events'>;
     title: string;
     description?: string;
     questions: ApplicationQuestion[];
     resultsVisibility: 'MANAGERS' | 'MEMBERS';
   }
 ) {
-  await requireToolCreation(ctx, personId, input.groupId, 'FORM');
+  await requireContentCreation(ctx, personId, input, 'FORM');
   const data = clean(input);
   const now = Date.now();
   const toolId = await ctx.db.insert('groupTools', {
-    groupId: input.groupId,
+    ...contentContext(input),
     kind: 'FORM',
     title: data.title,
     description: data.description,
@@ -87,7 +92,7 @@ export async function create(
   });
   await ctx.db.insert('groupForms', {
     toolId,
-    groupId: input.groupId,
+    ...contentContext(input),
     version: 1,
     questions: data.questions,
     updatedAt: now,
@@ -108,8 +113,7 @@ export async function configure(
   const { tool, config } = await instance(ctx, input.toolId);
   if (!Number.isInteger(input.version) || input.version < 1)
     fail('VALIDATION_ERROR', 'Form version must be a positive integer.');
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   if (config.version !== input.version)
     fail('CONFLICT', 'Form configuration changed. Reload before saving.');
   const data = clean(input);
@@ -133,8 +137,7 @@ export async function management(
   toolId: Id<'groupTools'>
 ) {
   const { tool, config } = await instance(ctx, toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   return {
     ...tool,
     version: config.version,
@@ -148,8 +151,8 @@ export async function get(
   toolId: Id<'groupTools'>
 ) {
   const { tool, config } = await instance(ctx, toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'FORM');
-  const member = await membershipFor(ctx, tool.groupId, personId);
+  await requireContentInteraction(ctx, personId, tool, 'FORM');
+  const { canManage } = await contentCapabilities(ctx, personId, tool);
   const record = await own(ctx, toolId, personId);
   // Seed only responses whose question identity/type/options still match; saved snapshots remain in own history.
   const answers: ApplicationAnswers = {};
@@ -173,10 +176,9 @@ export async function get(
     savedQuestions: record?.questions ?? [],
     savedVersion: record?.version ?? null,
     responseRevision: record?.revision ?? 0,
-    canManage: member?.role !== 'MEMBER',
-    canReview:
-      tool.resultsVisibility === 'MEMBERS' || member?.role !== 'MEMBER',
-    enabled: (await getPolicy(ctx, tool.groupId, 'FORM')).enabled,
+    canManage: canManage,
+    canReview: tool.resultsVisibility === 'MEMBERS' || canManage,
+    enabled: await contentEnabled(ctx, tool, 'FORM'),
   };
 }
 export async function submit(
@@ -200,7 +202,7 @@ export async function submit(
       'VALIDATION_ERROR',
       'Form version must be positive and response revision nonnegative integers.'
     );
-  await requireToolInteraction(ctx, personId, tool.groupId, 'FORM');
+  await requireContentInteraction(ctx, personId, tool, 'FORM');
   if (config.version !== input.version)
     fail(
       'CONFLICT',
@@ -226,7 +228,7 @@ export async function submit(
   const now = Date.now();
   const fields = {
     toolId: tool._id,
-    groupId: tool.groupId,
+    ...contentContext(tool),
     personId,
     revision: (record?.revision ?? 0) + 1,
     version: config.version,
@@ -281,9 +283,9 @@ export async function results(
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
   const { tool } = await instance(ctx, toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'FORM');
+  await requireContentInteraction(ctx, personId, tool, 'FORM');
   if (tool.resultsVisibility === 'MANAGERS')
-    await requireManager(ctx, tool.groupId, personId);
+    await requireContentManager(ctx, personId, tool);
   try {
     return publicPage(
       await ctx.db
@@ -329,8 +331,7 @@ export async function removeResponse(
   const target = targetId ?? personId;
   if (target !== personId) {
     const { tool } = await instance(ctx, toolId);
-    await requireGroupMemberContent(ctx, tool.groupId, personId);
-    await requireManager(ctx, tool.groupId, personId);
+    await requireContentManager(ctx, personId, tool);
   }
   const record = await own(ctx, toolId, target);
   if (record) await ctx.db.delete(record._id);
@@ -348,8 +349,7 @@ export async function remove(
   toolId: Id<'groupTools'>
 ) {
   const { tool } = await instance(ctx, toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   await purgeTool(ctx, toolId);
   return null;
 }
@@ -376,8 +376,8 @@ export async function removeResult(
 ) {
   const record = await ctx.db.get(responseId);
   if (!record) return null;
-  await requireGroupMemberContent(ctx, record.groupId, personId);
-  await requireManager(ctx, record.groupId, personId);
+  const { tool } = await instance(ctx, record.toolId);
+  await requireContentManager(ctx, personId, tool);
   if (record.personId)
     return removeResponse(ctx, personId, record.toolId, record.personId);
   await ctx.db.delete(record._id);

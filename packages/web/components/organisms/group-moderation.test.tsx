@@ -1,5 +1,14 @@
-vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
+import {
+  GroupAdmissionsSettings,
+  GroupMembershipSettings,
+  GroupInvitationsSettings,
+  GroupOwnershipSettings,
+} from '@/features/groups';
+vi.mock('./community-expulsion-progress', () => ({
+  CommunityExpulsionProgress: () => null,
+}));
+vi.mock('./community-expulsion-action', () => ({
+  CommunityExpulsionAction: () => null,
 }));
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -111,6 +120,24 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTools/queries:getFormPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getListPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getPollPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupDiscord/enrollment:getStatus': null,
+    'groupDiscord/queries:getConnection': null,
+    'groups/expulsions:progress': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
@@ -214,7 +241,7 @@ it('requires explicit confirmation before removing a member through the producti
   const { client, mutation } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -261,6 +288,9 @@ it.each(['MEMBER', 'MODERATOR'])(
       await screen.findByRole('button', { name: 'Leave Group' })
     );
     expect(mutation).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/Independent Event membership and RSVP remain unchanged/)
+    ).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: 'Confirm leaving Neighbors' })
     );
@@ -283,7 +313,7 @@ it('lets managers inspect the private bans page and confirm lifting a ban', asyn
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupOwnershipSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -331,7 +361,7 @@ it('allows moderator invitations while withholding owner policy and protected ta
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   expect(
@@ -360,7 +390,7 @@ it('requires confirmation to ban a pending invitee and explains that re-entry st
   const { client, mutation } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -420,7 +450,7 @@ it('updates the live roster after the owner appoints and demotes a moderator', a
   const { client, mutation, setData } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -500,7 +530,7 @@ it('shows a confidential error after a rejected ban and allows an explicit retry
     .mockResolvedValueOnce({ banned: true });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -529,18 +559,18 @@ it('uses the app provider despite a distinct shared SDK and explains the owner c
   const { client } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupMembershipSettings groupId={groupId} />
     </AppProvider>
   );
   expect(
-    await screen.findByText(/owner cannot leave or delete their account/)
+    await screen.findByText(/Owners must transfer ownership before leaving/)
   ).toBeInTheDocument();
   expect(
     screen.queryByRole('button', { name: 'Leave Group' })
   ).not.toBeInTheDocument();
   expect(
-    screen.getByRole('link', { name: 'delete the Group' })
-  ).toHaveAttribute('href', '#delete-group');
+    screen.getByRole('link', { name: 'Manage ownership' })
+  ).toHaveAttribute('href', '/groups/group-one/settings/ownership');
   expect(
     screen.queryByRole('button', { name: /transfer/i })
   ).not.toBeInTheDocument();
@@ -667,7 +697,7 @@ it('pages private bans without exposing contact metadata and shows an empty fina
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupOwnershipSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -697,7 +727,7 @@ it('withholds pending invitation ban controls when the server protects the targe
   });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupInvitationsSettings groupId={groupId} />
     </AppProvider>
   );
   expect(
@@ -706,6 +736,32 @@ it('withholds pending invitation ban controls when the server protects the targe
   expect(
     screen.queryByRole('button', { name: 'Ban invited user Alex' })
   ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('keeps the owner overview roster read-only while management remains in settings', async () => {
+  const { client, mutation } = fixtureClient();
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  expect(await screen.findByText('@alex')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Remove Alex' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Ban Alex' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Make Alex a moderator' })
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Group settings' })).toHaveAttribute(
+    'href',
+    '/groups/group-one/settings'
+  );
+  expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });

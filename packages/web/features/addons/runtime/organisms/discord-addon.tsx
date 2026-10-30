@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { BUILTIN_COMPLETION } from '../../model/completion';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -284,7 +285,7 @@ function DiscordEventCard({ eventId, chosenDateTime }: EventCardProps) {
 
   if (discordInfo === undefined) {
     return (
-      <Card className='rounded-card shadow-raised p-4 w-fit'>
+      <Card className='rounded-card p-4 w-fit'>
         <div className='flex items-center gap-3'>
           <div className='flex items-center justify-center size-9 rounded-card bg-[#5865F2]/10 shrink-0'>
             <Icons.discord className='size-5 text-[#5865F2]' />
@@ -306,7 +307,7 @@ function DiscordEventCard({ eventId, chosenDateTime }: EventCardProps) {
     : null;
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-3'>
         <div className='flex items-center justify-center size-9 rounded-card bg-[#5865F2]/10 shrink-0'>
           <Icons.discord className='size-5 text-[#5865F2]' />
@@ -343,6 +344,7 @@ function DiscordEventCard({ eventId, chosenDateTime }: EventCardProps) {
 
 function DiscordManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -375,11 +377,18 @@ function DiscordManageConfig({
   const handleSelect = (guild: DiscordGuild) => {
     setSelectedGuildId(guild.id);
     setSelectedGuildName(guild.name);
+    onDraftChange?.({ guildId: guild.id, guildName: guild.name });
   };
 
   const handleSave = async () => {
     if (!selectedGuildId || !selectedGuildName) return;
-    await onSave({ guildId: selectedGuildId, guildName: selectedGuildName });
+    if (
+      (await onSave({
+        guildId: selectedGuildId,
+        guildName: selectedGuildName,
+      })) === false
+    )
+      return;
     setPendingEnable(false);
   };
 
@@ -440,6 +449,7 @@ function DiscordManageConfig({
                   create a new one.
                 </p>
                 <Button
+                  icon={<ActionSave aria-hidden='true' className='size-4' />}
                   type='button'
                   size='sm'
                   onClick={handleSave}
@@ -450,10 +460,12 @@ function DiscordManageConfig({
                 </Button>
               </>
             )}
-            {(hasChanges || pendingEnable) &&
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
               selectedGuildId &&
               !currentGuildId && (
                 <Button
+                  icon={<ActionSave aria-hidden='true' className='size-4' />}
                   type='button'
                   size='sm'
                   onClick={handleSave}

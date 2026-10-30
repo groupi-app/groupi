@@ -2,7 +2,7 @@ import { type Infer, v, ConvexError } from 'convex/values';
 
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
-import { requireDiscussionRole } from '../lib/discussionAccess';
+import { requireDiscussionParent } from '../lib/discussionAccess';
 import { claimUpload } from '../files/uploads';
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -63,7 +63,7 @@ export const attachmentWithUrlValidator = v.object({
   altText: v.optional(v.string()),
   postId: v.optional(v.id('posts')),
   replyId: v.optional(v.id('replies')),
-  uploaderId: v.id('persons'),
+  uploaderId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
   url: v.union(v.string(), v.null()),
@@ -76,7 +76,7 @@ export type AttachmentParent = {
   replyId?: Id<'replies'>;
 };
 
-function getAttachmentType(
+export function getAttachmentType(
   mimeType: string
 ): 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' {
   if ((ALLOWED_MIME_TYPES.IMAGE as readonly string[]).includes(mimeType)) {
@@ -121,7 +121,7 @@ export async function requireAttachmentParentAccess(
         message: 'Attachment parent not found',
       });
 
-    await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
+    await requireDiscussionParent(ctx, post, personId);
     if (requireParentAuthor && post.authorId !== personId) {
       throw new ConvexError({
         code: 'FORBIDDEN',
@@ -145,7 +145,7 @@ export async function requireAttachmentParentAccess(
       message: 'Attachment parent not found',
     });
 
-  await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
+  await requireDiscussionParent(ctx, post, personId);
   if (requireParentAuthor && reply.authorId !== personId) {
     throw new ConvexError({
       code: 'FORBIDDEN',
@@ -154,7 +154,7 @@ export async function requireAttachmentParentAccess(
   }
 }
 
-async function requireValidStoredFile(
+export async function requireValidStoredFile(
   ctx: MutationCtx,
   attachment: AttachmentInput
 ) {

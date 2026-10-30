@@ -2,5 +2,13 @@
   "installCommand": "corepack enable && pnpm install",
   "buildCommand": "bash scripts/vercel-build.sh",
   "outputDirectory": "packages/web/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "git": {
+    "deploymentEnabled": {
+      "codex/shared-content-creation": false,
+      "codex/content-pages-refinement": false,
+      "codex/management-ui-refinement": false,
+      "codex/release-lock-resolution": false
+    }
+  }
 }

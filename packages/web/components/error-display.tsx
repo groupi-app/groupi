@@ -125,7 +125,10 @@ export function ErrorDisplay({
         )}
       >
         <div
-          className={cn('rounded-full bg-muted p-3 mb-3', config.iconClassName)}
+          className={cn(
+            'rounded-card border-[length:var(--soft-sticker-edge)] border-[color:var(--soft-sticker-color)] bg-muted p-3 mb-3',
+            config.iconClassName
+          )}
         >
           <IconComponent className='h-6 w-6' />
         </div>
@@ -154,11 +157,9 @@ export function ErrorDisplay({
           )}
           {action &&
             (action.href ? (
-              <Link href={action.href}>
-                <Button variant={action.variant || 'default'} size='sm'>
-                  {action.label}
-                </Button>
-              </Link>
+              <Button asChild variant={action.variant || 'default'} size='sm'>
+                <Link href={action.href}>{action.label}</Link>
+              </Button>
             ) : (
               <Button
                 variant={action.variant || 'default'}
@@ -183,7 +184,7 @@ export function ErrorDisplay({
       {/* Icon with background */}
       <div
         className={cn(
-          'rounded-full bg-muted p-6 mb-6 animate-in fade-in zoom-in duration-300',
+          'rounded-card border-[length:var(--soft-sticker-edge)] border-[color:var(--soft-sticker-color)] bg-muted p-6 mb-6',
           config.iconClassName
         )}
       >
@@ -191,17 +192,17 @@ export function ErrorDisplay({
       </div>
 
       {/* Title */}
-      <h1 className='font-heading font-bold text-3xl md:text-4xl mb-3 text-center animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100'>
+      <h1 className='font-heading font-bold text-3xl md:text-4xl mb-3 text-center'>
         {displayTitle}
       </h1>
 
       {/* Message */}
-      <p className='text-muted-foreground text-center max-w-md mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150'>
+      <p className='text-muted-foreground text-center max-w-md mb-8'>
         {displayMessage}
       </p>
 
       {/* Action buttons */}
-      <div className='flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200'>
+      <div className='flex flex-wrap items-center justify-center gap-3'>
         {showBackButton && (
           <Button
             variant='outline'
@@ -226,21 +227,19 @@ export function ErrorDisplay({
         )}
 
         {showHomeButton && (
-          <Link href='/events'>
-            <Button variant='default'>
-              <Icons.party className='mr-2 h-4 w-4' />
+          <Button asChild>
+            <Link href='/events'>
+              <Icons.party className='size-4' />
               My Events
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
 
         {action &&
           (action.href ? (
-            <Link href={action.href}>
-              <Button variant={action.variant || 'default'}>
-                {action.label}
-              </Button>
-            </Link>
+            <Button asChild variant={action.variant || 'default'}>
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
           ) : (
             <Button
               variant={action.variant || 'default'}

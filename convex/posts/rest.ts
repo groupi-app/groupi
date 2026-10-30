@@ -1,3 +1,4 @@
+import { requireEventPost } from '../lib/discussionAccess';
 import {
   internalQuery,
   internalMutation,
@@ -20,6 +21,10 @@ const postSummary = v.object({
   content: v.string(),
   createdAt: v.number(),
   editedAt: v.union(v.number(), v.null()),
+  repliesDisabled: v.boolean(),
+  repliesRevision: v.number(),
+  pinnedAt: v.optional(v.number()),
+  pinRevision: v.number(),
   author: discussionAuthor,
 });
 const postDetail = v.object({
@@ -35,10 +40,15 @@ async function readPostSummary(ctx: QueryCtx, post: Doc<'posts'>) {
     content: post.content,
     createdAt: post._creationTime,
     editedAt: post.editedAt ?? null,
+    repliesDisabled: post.repliesDisabled ?? false,
+    repliesRevision: post.repliesRevision ?? 0,
+    pinnedAt: post.pinnedAt,
+    pinRevision: post.pinRevision ?? 0,
     author: await readDiscussionAuthor(ctx, post.authorId),
   };
 }
-async function readPostDetail(ctx: QueryCtx, post: Doc<'posts'>) {
+async function readPostDetail(ctx: QueryCtx, storedPost: Doc<'posts'>) {
+  const post = requireEventPost(storedPost);
   const replies = await ctx.db
     .query('replies')
     .withIndex('by_post', q => q.eq('postId', post._id))
@@ -97,6 +107,8 @@ export const getPostDetail = internalQuery({
     const post = await ctx.db.get(postId as Id<'posts'>);
     if (
       !post ||
+      !post.eventId ||
+      post.groupId ||
       !(await getEventMembershipForPerson(
         ctx,
         post.eventId,
@@ -114,13 +126,17 @@ export const createPost = internalMutation({
     personId: v.string(),
     title: v.string(),
     content: v.string(),
+    repliesDisabled: v.optional(v.boolean()),
   },
   returns: v.object({ postId: v.id('posts') }),
-  handler: async (ctx, { eventId, personId, title, content }) => {
+  handler: async (
+    ctx,
+    { eventId, personId, title, content, repliesDisabled }
+  ) => {
     const { postId } = await createPostForPerson(
       ctx,
       personId as Id<'persons'>,
-      { eventId: eventId as Id<'events'>, title, content }
+      { eventId: eventId as Id<'events'>, title, content, repliesDisabled }
     );
     return { postId };
   },
@@ -132,9 +148,15 @@ export const updatePost = internalMutation({
     personId: v.string(),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    repliesDisabled: v.optional(v.boolean()),
+    expectedRepliesRevision: v.optional(v.number()),
   },
   returns: postDetail,
   handler: async (ctx, { postId, personId, ...updates }) => {
+    const existing = await ctx.db.get(postId as Id<'posts'>);
+    if (!existing)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(existing);
     const { post } = await updatePostForPerson(ctx, personId as Id<'persons'>, {
       postId: postId as Id<'posts'>,
       ...updates,
@@ -146,8 +168,13 @@ export const updatePost = internalMutation({
 export const deletePost = internalMutation({
   args: { postId: v.string(), personId: v.string() },
   returns: v.object({ success: v.boolean() }),
-  handler: async (ctx, { postId, personId }) =>
-    deletePostForPerson(ctx, personId as Id<'persons'>, {
-      postId: postId as Id<'posts'>,
-    }),
+  handler: async (ctx, { postId, personId }) => {
+    const existing = await ctx.db.get(postId as Id<'posts'>);
+    if (!existing)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(existing);
+    return deletePostForPerson(ctx, personId as Id<'persons'>, {
+      postId: existing._id,
+    });
+  },
 });

@@ -1,3 +1,5 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
+import { guardEventReactivation } from './lifecycle';
 import { hasGroupAudience } from '../groupEventAudiences/access';
 import { ConvexError } from 'convex/values';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -35,14 +37,18 @@ export async function eventAdmissionAccess(
   event: Doc<'events'>,
   personId?: Id<'persons'>
 ) {
-  const membership = personId
-    ? await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', personId).eq('eventId', event._id)
-        )
-        .first()
-    : null;
+  const excluded = personId
+    ? await isEventExcludedForPerson(ctx, event._id, personId)
+    : false;
+  const membership =
+    personId && !excluded
+      ? await ctx.db
+          .query('memberships')
+          .withIndex('by_person_event', q =>
+            q.eq('personId', personId).eq('eventId', event._id)
+          )
+          .first()
+      : null;
   const ban = personId
     ? await ctx.db
         .query('eventBans')
@@ -58,18 +64,20 @@ export async function eventAdmissionAccess(
   const groupAudience = await hasGroupAudience(ctx, event, personId);
   // A lost Group path does not cancel another current audience grant.
   const hasApplicationAudience = Boolean(
-    personId && (audience || groupAudience) && !ban && !blocked
+    personId && (audience || groupAudience) && !ban && !blocked && !excluded
   );
   return {
     membership,
     hasApplicationAudience,
     canRead: Boolean(
-      membership ||
-        ((audience || (groupAudience && !blocked)) &&
-          (event.visibility === 'PUBLIC' || !ban))
+      !excluded &&
+        (membership ||
+          ((audience || (groupAudience && !blocked)) &&
+            (event.visibility === 'PUBLIC' || !ban)))
     ),
     canApply: Boolean(
       personId &&
+        !excluded &&
         !membership &&
         hasApplicationAudience &&
         !ban &&
@@ -78,6 +86,7 @@ export async function eventAdmissionAccess(
     ),
     canJoin: Boolean(
       personId &&
+        !excluded &&
         !membership &&
         (audience || groupAudience) &&
         !ban &&
@@ -183,6 +192,8 @@ export async function updateAdmissionPolicyForPerson(
   admissionPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY'
 ) {
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  if (admissionPolicy !== 'INVITATION_ONLY')
+    await guardEventReactivation(ctx, eventId);
   await ctx.db.patch(eventId, { admissionPolicy, updatedAt: Date.now() });
   return { eventId, admissionPolicy };
 }

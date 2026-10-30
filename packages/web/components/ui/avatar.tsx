@@ -7,11 +7,15 @@ import { cn } from '@/lib/utils';
 
 export function Avatar({
   className,
+  presentation = 'soft',
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
+  presentation?: 'soft';
+}) {
   return (
     <AvatarPrimitive.Root
       data-slot='avatar'
+      data-presentation={presentation}
       className={cn(
         // Clean avatar - subtle border for definition
         'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-avatar border border-border/50 shadow-raised',

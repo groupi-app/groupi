@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { BUILTIN_COMPLETION } from '../../model/completion';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -223,13 +224,13 @@ function BringListEventCard({ eventId, config }: EventCardProps) {
   }, [allData]);
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-3'>
         <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>
           <Icons.listChecks className='size-5' />
         </div>
         <div>
-          <p className='font-medium'>Bring List</p>
+          <p className='font-medium'>What to bring</p>
           <p className='text-sm text-muted-foreground'>
             {totalClaimed} / {totalNeeded} items claimed
           </p>
@@ -248,6 +249,7 @@ function BringListEventCard({ eventId, config }: EventCardProps) {
 
 function BringListManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -278,7 +280,7 @@ function BringListManageConfig({
       toast.error('Add at least one item');
       return;
     }
-    await onSave({ items });
+    if ((await onSave({ items })) === false) return;
     setPendingEnable(false);
   };
 
@@ -326,24 +328,33 @@ function BringListManageConfig({
       <Collapsible open={isOn && expanded}>
         <CollapsibleContent>
           <div className='px-4 pb-4 pt-0 space-y-3'>
-            <ItemBuilder items={items} onChange={setItems} />
-            {(hasChanges || pendingEnable) && items.length > 0 && (
-              <>
-                <p className='text-sm text-warning'>
-                  Saving changes will reset all existing claims and notify
-                  members.
-                </p>
-                <Button
-                  type='button'
-                  size='sm'
-                  onClick={handleSaveItems}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                >
-                  Save Items
-                </Button>
-              </>
-            )}
+            <ItemBuilder
+              items={items}
+              onChange={next => {
+                setItems(next);
+                onDraftChange?.({ items: next });
+              }}
+            />
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
+              items.length > 0 && (
+                <>
+                  <p className='text-sm text-warning'>
+                    Saving changes will reset all existing claims and notify
+                    members.
+                  </p>
+                  <Button
+                    icon={<ActionSave aria-hidden='true' className='size-4' />}
+                    type='button'
+                    size='sm'
+                    onClick={handleSaveItems}
+                    disabled={isSaving}
+                    isLoading={isSaving}
+                  >
+                    Save Items
+                  </Button>
+                </>
+              )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -545,7 +556,7 @@ function BringListItemRow({
   };
 
   return (
-    <Card className='rounded-card shadow-raised p-4'>
+    <Card className='rounded-card p-4'>
       <div className='flex items-start gap-3'>
         <div className='flex-1 min-w-0'>
           <p className='font-medium'>{item.name}</p>
@@ -601,7 +612,11 @@ function BringListItemRow({
                 className='w-16 h-8 text-sm'
                 autoFocus
               />
-              <Button size='sm' onClick={handleConfirmQty}>
+              <Button
+                icon={<ActionSave aria-hidden='true' className='size-4' />}
+                size='sm'
+                onClick={handleConfirmQty}
+              >
                 Save
               </Button>
               <Button
@@ -702,7 +717,7 @@ function BringListOverview({
   );
 
   return (
-    <Card className='rounded-card shadow-raised p-4'>
+    <Card className='rounded-card p-4'>
       <div className='flex items-center justify-between'>
         <div>
           <p className='font-medium'>Overview</p>

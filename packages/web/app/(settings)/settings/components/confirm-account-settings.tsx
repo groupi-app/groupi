@@ -30,7 +30,7 @@ export function ConfirmAccountSettings({
       <Card
         className={cn(
           'mx-auto md:left-[175px] fixed z-sticky bottom-20 right-0 left-0 w-full max-w-md transition-colors duration-300',
-          shouldFlash && 'border-destructive bg-destructive'
+          shouldFlash && 'ring-2 ring-error'
         )}
       >
         <CardHeader>
@@ -38,6 +38,7 @@ export function ConfirmAccountSettings({
             <span>You have unsaved changes!</span>
             <div className='flex items-center gap-3 w-full md:w-max'>
               <Button
+                type='button'
                 className='grow'
                 onClick={handleSaveClick}
                 disabled={!formState.isValid}
@@ -47,6 +48,7 @@ export function ConfirmAccountSettings({
                 Save
               </Button>
               <Button
+                type='button'
                 onClick={() => reset()}
                 variant='secondary'
                 icon={<Icons.undo className='size-4' />}

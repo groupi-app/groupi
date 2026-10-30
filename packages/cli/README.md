@@ -834,23 +834,18 @@ to read your own form after joining; no further admission approval is needed.
 A repeated approved decision after departure remains approved without rejoining
 and omits this current-member status.
 
-## Explicit Group announcements
+## Retired Group announcements
 
-Current owners/moderators deliberately send with
-`groupi groups announce GROUP --title 'Reading' --message 'Bring a book' --request-id UNIX_MS.UUID_V4`.
-Preserve the timestamped UUID-v4 request ID and exact body on recovery. Repeating
-that request returns the same aggregate result; changed content conflicts and
-keys expire after 24 hours. Inspect with
+Use posts for updates. `groupi groups announce` is retained only to explain the
+retirement; it rejects before profile, credential or network access. Native and
+REST announcement creation and public email retries also reject. No new
+announcement is created or queued.
+
+Existing status remains available to an authorized manager with `groups:read`:
 `groupi groups announcement-status GROUP --request-id UNIX_MS.UUID_V4`.
-
-Send requires `groups:write`, status requires `groups:read`, and the current
-manager role is checked inside the write. The CLI checks
-`capabilities.groups.announcements: 1` before sending. Results contain only the
-announcement ID, processing/completed/cancelled state, created notification count
-and skipped membership count. External delivery is not confirmed. Current
-membership, bans, account availability, privacy, DND and recipient preferences
-apply. Routine Event/tool publication stays silent. Existing in-app/email/push/
-webhook channels apply; SMS and manager automation are not included.
+Stored records, previously queued internal delivery, notification preferences and
+unsubscribe links are preserved. Status reports aggregate processing rather than
+confirming external delivery. Posting uses existing notification preferences.
 
 ## Resolve account ownership before deletion
 

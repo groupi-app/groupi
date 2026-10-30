@@ -1,7 +1,12 @@
+import { requireRepliesOpen } from '../posts/controls';
 import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
 import type { Id } from '../_generated/dataModel';
 import { validateContent } from '../lib/discussionContent';
-import { requireDiscussionRole } from '../lib/discussionAccess';
+import {
+  discussionParent,
+  discussionPermissions,
+  requireDiscussionParent,
+} from '../lib/discussionAccess';
 import { type MutationCtx } from '../_generated/server';
 import { ConvexError } from 'convex/values';
 import {
@@ -31,28 +36,10 @@ export async function createReplyForPerson(
     throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
   }
 
-  // Verify user is a member of the event
-  const membership = await ctx.db
-    .query('memberships')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', person._id).eq('eventId', post.eventId)
-    )
-    .first();
+  const membership = await requireDiscussionParent(ctx, post, personId);
+  requireRepliesOpen(post);
 
-  if (!membership) {
-    throw new ConvexError({
-      code: 'FORBIDDEN',
-      message: 'You must be a member of this event to reply',
-    });
-  }
-
-  const normalizedText = await validateContent(
-    ctx,
-    personId,
-    post.eventId,
-    text,
-    5000
-  );
+  const normalizedText = await validateContent(ctx, personId, post, text, 5000);
   if (!hasDiscussionText(normalizedText) && attachments.length === 0) {
     throw new ConvexError({
       code: 'VALIDATION_ERROR',
@@ -67,7 +54,7 @@ export async function createReplyForPerson(
     postId,
     text: normalizedText,
     authorId: person._id,
-    membershipId: membership._id,
+    membershipId: membership?._id,
   });
 
   if (attachments.length > 0) {
@@ -81,8 +68,8 @@ export async function createReplyForPerson(
   // Notify post author and other reply participants
   await notifyThreadParticipants(ctx, {
     postId,
-    eventId: post.eventId,
-    postAuthorId: post.authorId,
+    ...discussionParent(post),
+    postAuthorId: ctx.db.normalizeId('persons', post.authorId) ?? undefined,
     replyAuthorId: person._id,
   });
 
@@ -90,7 +77,7 @@ export async function createReplyForPerson(
   await notifyMentionedUsers(ctx, {
     content: normalizedText,
     authorId: person._id,
-    eventId: post.eventId,
+    ...discussionParent(post),
     postId,
   });
 
@@ -128,9 +115,8 @@ export async function updateReplyForPerson(
   // Check if user can edit this reply
   // User can edit if they are the author OR have moderator/organizer role
   const isAuthor = reply.authorId === person._id;
-  const hasModeratorRole =
-    (await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE'))
-      .role !== 'ATTENDEE';
+  const hasModeratorRole = (await discussionPermissions(ctx, post, personId))
+    .canManage;
 
   if (!isAuthor && !hasModeratorRole) {
     throw new ConvexError({
@@ -160,14 +146,7 @@ export async function updateReplyForPerson(
   text =
     text === undefined
       ? reply.text
-      : await validateContent(
-          ctx,
-          personId,
-          post.eventId,
-          text,
-          5000,
-          reply.text
-        );
+      : await validateContent(ctx, personId, post, text, 5000, reply.text);
   if (!hasDiscussionText(text) && !remainingAttachment) {
     throw new ConvexError({
       code: 'VALIDATION_ERROR',
@@ -185,8 +164,6 @@ export async function deleteReplyForPerson(
   personId: Id<'persons'>,
   { replyId }: { replyId: Id<'replies'> }
 ) {
-  const person = { _id: personId };
-
   // Get the reply
   const reply = await ctx.db.get(replyId);
   if (!reply) {
@@ -199,25 +176,8 @@ export async function deleteReplyForPerson(
     throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
   }
 
-  // Check if user is author or moderator/organizer
-  const membership = await ctx.db
-    .query('memberships')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', person._id).eq('eventId', post.eventId)
-    )
-    .first();
-
-  if (!membership) {
-    throw new ConvexError({
-      code: 'FORBIDDEN',
-      message: 'You are not a member of this event',
-    });
-  }
-
-  const canDelete =
-    reply.authorId === person._id ||
-    membership.role === 'ORGANIZER' ||
-    membership.role === 'MODERATOR';
+  const { canManage } = await discussionPermissions(ctx, post, personId);
+  const canDelete = reply.authorId === personId || canManage;
 
   if (!canDelete) {
     throw new ConvexError({
@@ -226,17 +186,19 @@ export async function deleteReplyForPerson(
     });
   }
 
-  // Delete reply attachments and storage files
+  await purgeReply(ctx, replyId);
+  return { success: true };
+}
+
+/** Shared retirement cleanup, including account and parent deletion. */
+export async function purgeReply(ctx: MutationCtx, replyId: Id<'replies'>) {
   const attachments = await ctx.db
     .query('attachments')
     .withIndex('by_reply', q => q.eq('replyId', replyId))
     .collect();
-
   for (const attachment of attachments) {
     await ctx.storage.delete(attachment.storageId);
     await ctx.db.delete(attachment._id);
   }
-
-  await ctx.db.delete(replyId);
-  return { success: true };
+  if (await ctx.db.get(replyId)) await ctx.db.delete(replyId);
 }

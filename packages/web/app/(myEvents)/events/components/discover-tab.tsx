@@ -1,5 +1,6 @@
 'use client';
 
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
@@ -33,13 +34,7 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
   const organizerInitials = organizerName.slice(0, 2).toUpperCase();
 
   return (
-    <div
-      className={cn(
-        'flex flex-col overflow-hidden rounded-card shadow-raised bg-card',
-        'transition-all duration-fast ease-bounce',
-        'hover:shadow-floating'
-      )}
-    >
+    <Card treatment='quiet' className='flex flex-col overflow-hidden'>
       {/* Cover image area */}
       <div className='relative aspect-[16/9] overflow-hidden'>
         {event.imageUrl ? (
@@ -152,7 +147,7 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -171,7 +166,9 @@ export function DiscoverTab({
     return (
       <div className='flex flex-col items-center justify-center py-16 text-center'>
         <Icons.search className='size-12 text-muted-foreground/30 mb-4' />
-        <h3 className='text-lg font-medium mb-1'>No events to discover</h3>
+        <h3 className='font-heading text-lg font-medium mb-1'>
+          No events to discover
+        </h3>
         <p className='text-sm text-muted-foreground max-w-sm'>
           Upcoming and undated Events shared with you through eligible Groups or
           Friends will appear here. Your current access and completed required

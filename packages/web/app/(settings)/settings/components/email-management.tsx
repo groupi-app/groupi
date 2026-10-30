@@ -218,9 +218,9 @@ export function EmailManagement() {
                   {!email.isPrimary && (
                     <Button
                       size='sm'
-                      variant='ghost'
+                      variant='destructive-ghost'
                       onClick={() => setEmailToRemove(email.address)}
-                      className='text-destructive hover:text-destructive'
+                      className=''
                     >
                       <Icons.trash className='h-4 w-4' />
                     </Button>
@@ -233,7 +233,9 @@ export function EmailManagement() {
           {/* Add New Email */}
           <div className='border-t pt-4'>
             <div className='space-y-3'>
-              <h4 className='text-sm font-medium'>Add Email Address</h4>
+              <h4 className='font-heading text-sm font-medium'>
+                Add Email Address
+              </h4>
               <div className='flex gap-2'>
                 <div className='flex-1'>
                   <Input
@@ -289,7 +291,7 @@ export function EmailManagement() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => emailToRemove && handleRemoveEmail(emailToRemove)}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              variant='destructive'
             >
               Remove
             </AlertDialogAction>

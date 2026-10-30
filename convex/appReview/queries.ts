@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { v } from 'convex/values';
 import { internalQuery, type QueryCtx } from '../_generated/server';
 import { components } from '../_generated/api';
@@ -89,7 +90,8 @@ export const readInbox = internalQuery({
         paginationOpts: { cursor: null, numItems: 1 },
       }
     );
-    const verification = verifications.page[0];
+    const verification: AuthDoc<'verification'> | undefined =
+      verifications.page[0];
     // Better Auth 1.6 stores normal plain OTPs as code:attempts. Fail closed if
     // its storage format changes. Do not surface reset/verification/magic tokens.
     const match = verification?.value.match(/^(\d{6}):(\d+)$/);

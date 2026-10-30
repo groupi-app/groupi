@@ -51,3 +51,14 @@ export const getOwnEntries = query({
       true
     ),
 });
+
+import * as bring from './bring';
+export const listBringClaims = query({
+  args: {
+    toolId: v.id('groupTools'),
+    entryIds: v.array(v.id('groupListEntries')),
+  },
+  returns: v.array(bring.bringClaimSummary),
+  handler: async (ctx, args) =>
+    bring.claims(ctx, (await requireAuth(ctx)).person._id, args),
+});

@@ -1,4 +1,5 @@
 'use client';
+import { EventDeleteCard } from './components/event-delete-card';
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -43,6 +44,7 @@ export default function EventSettingsPage(props: {
       title='Event Settings'
       description='Choose a category'
       backHref={`/event/${eventId}`}
+      backLabel='Event'
       showMobileBack={true}
     >
       <nav className='flex flex-col gap-2'>
@@ -67,6 +69,9 @@ export default function EventSettingsPage(props: {
           );
         })}
       </nav>
+      <div className='mt-6'>
+        <EventDeleteCard />
+      </div>
     </SettingsPageTemplate>
   );
 }

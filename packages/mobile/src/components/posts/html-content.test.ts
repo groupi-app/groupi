@@ -77,3 +77,17 @@ describe('parseHtml', () => {
     expect(toRichTextHtml('')).toBe('<p></p>');
   });
 });
+
+it('preserves canonical web-authored Group mention identity for native rendering', () => {
+  expect(
+    parseHtml(
+      '<p>Hello <span data-type="mention" data-id="member-id">@Alex</span></p>'
+    )
+  ).toEqual([
+    {
+      type: 'paragraph',
+      segments: [{ text: 'Hello ' }, { text: '@Alex', mentionId: 'member-id' }],
+      level: undefined,
+    },
+  ]);
+});

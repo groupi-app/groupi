@@ -1,3 +1,7 @@
+import { Presence } from '@convex-dev/presence';
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
+import { nextParticipationRevision } from '../events/participationRevision';
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deletePersonApplications } from '../eventApplications/cleanup';
@@ -137,6 +141,11 @@ export const createMobileFixture = mutation({
       timezone: 'UTC',
     });
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -464,7 +473,17 @@ export const createMagicLinkToken = mutation({
  */
 export const debugVerifications = query({
   args: { fixtureKey: v.string() },
-  returns: v.array(v.any()),
+  returns: v.array(
+    v.object({
+      _id: v.string(),
+      _creationTime: v.number(),
+      identifier: v.string(),
+      value: v.string(),
+      expiresAt: v.number(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
   handler: async (ctx, { fixtureKey }) => {
     assertFixtureAccess(fixtureKey);
 
@@ -477,7 +496,7 @@ export const debugVerifications = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
     return verifications;
   },
 });
@@ -511,7 +530,7 @@ export const getLastMagicLink = query({
       },
     });
 
-    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    const verifications: AuthDoc<'verification'>[] = result.page;
 
     // Find verification matching the email
     const now = Date.now();
@@ -589,6 +608,11 @@ export const seedEvent = mutation({
 
     // Create organizer membership
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -729,6 +753,11 @@ export const seedMembership = mutation({
     }
 
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: args.role,
@@ -766,6 +795,36 @@ export const cleanupTestData = mutation({
   returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     assertFixtureAccess(args.fixtureKey);
+
+    // Recover fixture presence even when its parent/person was already removed.
+    // Normalize by table first: placeholders and cross-table IDs never become rooms.
+    const fixturePresence = new Presence(components.presence);
+    const rooms = new Set<string>();
+    for (const value of args.postIds) {
+      const id = ctx.db.normalizeId('posts', value);
+      if (id) rooms.add(`post:${id}`);
+    }
+    for (const value of args.eventIds) {
+      const id = ctx.db.normalizeId('events', value);
+      if (id) rooms.add(`event:${id}`);
+    }
+    for (const roomId of rooms) {
+      await fixturePresence.removeRoom(ctx, roomId);
+      const access = await ctx.db
+        .query('presenceRoomAccess')
+        .withIndex('by_roomId', q => q.eq('roomId', roomId))
+        .collect();
+      for (const row of access) await ctx.db.delete(row._id);
+    }
+    const people = new Set(
+      args.personIds
+        .map(value => ctx.db.normalizeId('persons', value))
+        .filter(value => value !== null)
+    );
+    for (const personId of people) {
+      // "app" is shared by real users: remove this user only, never the room/token.
+      await fixturePresence.removeRoomUser(ctx, 'app', personId);
+    }
 
     // Delete in reverse order of dependencies
 
@@ -856,6 +915,7 @@ export const cleanupTestData = mutation({
         await deleteEventTransfers(ctx, eventId);
         await deleteEventApplications(ctx, eventId);
         await removeAudiencesForEvent(ctx, eventId);
+        await deleteEventParticipationRevisions(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted

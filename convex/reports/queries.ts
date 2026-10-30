@@ -243,9 +243,17 @@ export const getReportsAdmin = query({
           if (post) {
             const author = await ctx.db.get(post.authorId);
             const authorUser = author
-              ? await getUserInfo(ctx, author.userId)
+              ? 'userId' in author
+                ? await getUserInfo(ctx, author.userId)
+                : {
+                    name: author.name,
+                    email: null,
+                    image: null,
+                    username: null,
+                    role: null,
+                  }
               : null;
-            const event = await ctx.db.get(post.eventId);
+            const event = post.eventId ? await ctx.db.get(post.eventId) : null;
             targetPreview = {
               label: post.title,
               content: post.content.slice(0, 200),
@@ -258,10 +266,18 @@ export const getReportsAdmin = query({
           if (reply) {
             const author = await ctx.db.get(reply.authorId);
             const authorUser = author
-              ? await getUserInfo(ctx, author.userId)
+              ? 'userId' in author
+                ? await getUserInfo(ctx, author.userId)
+                : {
+                    name: author.name,
+                    email: null,
+                    image: null,
+                    username: null,
+                    role: null,
+                  }
               : null;
             const post = await ctx.db.get(reply.postId);
-            const event = post ? await ctx.db.get(post.eventId) : null;
+            const event = post?.eventId ? await ctx.db.get(post.eventId) : null;
             targetPreview = {
               label: 'Reply',
               content: reply.text.slice(0, 200),

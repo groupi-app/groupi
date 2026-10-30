@@ -1,15 +1,20 @@
 import { useState, type ReactNode } from 'react';
 import { View, TextInput } from 'react-native';
-import { router } from 'expo-router';
+import {
+  useToolRouter,
+  useToolCommunity as useGroup,
+  useEventToolScope,
+  belongsToOwner,
+  type ContentOwnerId,
+} from '../content/event-tool-scope';
 import type { Id } from 'convex/_generated/dataModel';
 import { groupListTemplates, listEntryRequestId } from '@groupi/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useGroup } from '@/hooks/use-groups';
 import * as hooks from '@/hooks/use-group-lists';
 import { GroupPageControls } from './group-page-controls';
-type GroupId = Id<'groups'>;
+type GroupId = ContentOwnerId;
 type ToolId = Id<'groupTools'>;
 type List = NonNullable<ReturnType<typeof hooks.useList>>;
 type Entry = NonNullable<
@@ -29,6 +34,7 @@ function ListGate({
   children: ReactNode;
   management?: boolean;
 }) {
+  const router = useToolRouter();
   const group = useGroup(groupId);
   const policy = hooks.useListPolicy(group ? { groupId } : 'skip');
   if (group === undefined) return <Text>Loading Group…</Text>;
@@ -62,14 +68,18 @@ function ListGate({
   return <>{children}</>;
 }
 export function GroupListsHub({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
+  const eventId = useEventToolScope();
   return (
     <View className='gap-3'>
-      <Button
-        accessibilityLabel='Group list policy'
-        onPress={() => router.push(`/groups/${groupId}/lists/policy`)}
-      >
-        Lists policy
-      </Button>
+      {!eventId && (
+        <Button
+          accessibilityLabel='Group list policy'
+          onPress={() => router.push(`/groups/${groupId}/lists/policy`)}
+        >
+          Lists policy
+        </Button>
+      )}
       <ListGate groupId={groupId} management>
         <Lists groupId={groupId} />
       </ListGate>
@@ -77,6 +87,7 @@ export function GroupListsHub({ groupId }: { groupId: GroupId }) {
   );
 }
 function Lists({ groupId }: { groupId: GroupId }) {
+  const router = useToolRouter();
   const [cursor, setCursor] = useState<string | null>(null);
   const page = hooks.useLists({
     groupId,
@@ -93,9 +104,10 @@ function Lists({ groupId }: { groupId: GroupId }) {
         </Text>
       ) : null}
       {policy?.enabled &&
+      policy.canCreate !== false &&
       (policy.creation === 'MEMBERS' || group?.canManageMembers) ? (
         <Button
-          accessibilityLabel='Create Group list'
+          accessibilityLabel='Create list'
           onPress={() => router.push(`/groups/${groupId}/lists/create`)}
         >
           Create list
@@ -205,8 +217,14 @@ function CreateEditor({ groupId }: { groupId: GroupId }) {
   const group = useGroup(groupId);
   const policy = hooks.useListPolicy({ groupId });
   if (!group || !policy) return <Text>Loading creation permissions…</Text>;
+  if (policy.canCreate === false)
+    return (
+      <Text>
+        Creating content is unavailable under current Event permissions.
+      </Text>
+    );
   if (policy.creation === 'MANAGERS' && !group.canManageMembers)
-    return <Text>Only eligible managers can create Group lists.</Text>;
+    return <Text>Only eligible managers can create lists.</Text>;
   return <Editor groupId={groupId} />;
 }
 function ExistingEditor({
@@ -217,6 +235,8 @@ function ExistingEditor({
   toolId: ToolId;
 }) {
   const list = hooks.useListManagement({ toolId });
+  if (list && !belongsToOwner(list, groupId))
+    return <Text>List belongs to another community.</Text>;
   return list ? (
     <Editor key={`${toolId}:${list.version}`} groupId={groupId} list={list} />
   ) : (
@@ -224,6 +244,7 @@ function ExistingEditor({
   );
 }
 function Editor({ groupId, list }: { groupId: GroupId; list?: List }) {
+  const router = useToolRouter();
   const create = hooks.useCreateList(),
     configure = hooks.useConfigureList(),
     remove = hooks.useDeleteList();
@@ -320,7 +341,7 @@ function Editor({ groupId, list }: { groupId: GroupId; list?: List }) {
       ) : null}
       <Button
         disabled={busy || !title.trim()}
-        accessibilityLabel='Save Group list'
+        accessibilityLabel='Save list'
         onPress={save}
       >
         Save list
@@ -329,7 +350,7 @@ function Editor({ groupId, list }: { groupId: GroupId; list?: List }) {
         <Button
           disabled={busy}
           variant='destructive'
-          accessibilityLabel='Delete Group list'
+          accessibilityLabel='Delete list'
           onPress={() =>
             showConfirmDialog({
               title: 'Delete list?',
@@ -359,6 +380,7 @@ export function GroupPersistentList({
   groupId: GroupId;
   toolId: ToolId;
 }) {
+  const router = useToolRouter();
   return (
     <View className='gap-3'>
       <Button
@@ -380,6 +402,7 @@ function CurrentList({
   groupId: GroupId;
   toolId: ToolId;
 }) {
+  const router = useToolRouter();
   const list = hooks.useList({ toolId });
   const add = hooks.useAddListEntry();
   const [text, setText] = useState(''),
@@ -391,6 +414,8 @@ function CurrentList({
     version: number;
   } | null>(null);
   if (!list) return <Text>Loading list…</Text>;
+  if (!belongsToOwner(list, groupId))
+    return <Text>List belongs to another community.</Text>;
   async function submit() {
     if (!list) return;
     const body = attempt ?? {
@@ -430,7 +455,7 @@ function CurrentList({
       </Text>
       {list.canManage ? (
         <Button
-          accessibilityLabel='Manage Group list'
+          accessibilityLabel='Manage list'
           onPress={() =>
             router.push(`/groups/${groupId}/lists/${toolId}/manage`)
           }

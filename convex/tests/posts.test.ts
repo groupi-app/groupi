@@ -456,7 +456,11 @@ describe('Posts Domain - Legacy Tests (Updated)', () => {
       expect(firstPage.isDone).toBe(false);
       expect(secondPage.isDone).toBe(false);
       expect(thirdPage.isDone).toBe(true);
-      expect(firstPage.page[0].author).toEqual({ name: null, image: null });
+      expect(firstPage.page[0].author).toEqual({
+        kind: 'user',
+        name: null,
+        image: null,
+      });
     });
 
     test('should reject paginated feed access for a non-member', async () => {

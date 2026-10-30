@@ -54,6 +54,7 @@ function savedConfig(
               {
                 id: 'intro-text',
                 type: 'static_text',
+                required: false,
                 label: 'Details',
                 content: `Instructions for ${name}`,
               },
@@ -63,6 +64,12 @@ function savedConfig(
       },
     },
   };
+}
+
+function customTemplate(row: typeof config) {
+  if (!row || !('template' in row.config) || !row.config.template)
+    throw new Error('Expected a custom template fixture');
+  return row.config.template;
 }
 
 beforeEach(() => {
@@ -117,7 +124,9 @@ describe('AddonPage', () => {
   it('shows loading without rendering a form until configuration arrives', () => {
     config = undefined;
     render(page());
-    expect(screen.getByRole('status')).toHaveTextContent('Loading add-on');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Loading event feature'
+    );
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
@@ -129,10 +138,16 @@ describe('AddonPage', () => {
       if (state === 'missing') config = null;
       if (state === 'unsupported') addonId = 'unsupported-addon';
       if (state === 'card-only')
-        config!.config.template.settings.cardOnly = true;
+        customTemplate(config).settings!.cardOnly = true;
       render(page(eventId, addonId));
       expect(
-        screen.getByRole('heading', { name: 'Add-on unavailable' })
+        screen.getByRole('heading', {
+          name: config
+            ? addonId.startsWith('custom:')
+              ? 'Event A questions'
+              : 'Saved event feature'
+            : 'Event feature unavailable',
+        })
       ).toBeInTheDocument();
       expect(
         screen.getByRole('link', { name: 'Return to Event' })
@@ -143,6 +158,22 @@ describe('AddonPage', () => {
       ).not.toBeInTheDocument();
     }
   );
+
+  it('keeps malformed saved custom features named and reachable without exposing configuration', () => {
+    const template = customTemplate(config);
+    template.name = 'Picnic choices';
+    template.sections[0].fields =
+      null as unknown as (typeof template.sections)[0]['fields'];
+    render(page());
+    expect(
+      screen.getByRole('heading', { name: 'Picnic choices' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'No saved information is changed'
+    );
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(saveData).not.toHaveBeenCalled();
+  });
 
   it('renders a required custom add-on on a direct visit before any prior setup', () => {
     render(page());
@@ -161,7 +192,7 @@ describe('AddonPage', () => {
     'lets members acknowledge a required %s add-on and records its completion',
     async contents => {
       const user = userEvent.setup();
-      if (contents === 'empty') config!.config.template.sections[0].fields = [];
+      if (contents === 'empty') customTemplate(config).sections[0].fields = [];
       const { rerender } = render(page());
 
       await user.click(
@@ -198,14 +229,14 @@ describe('AddonPage', () => {
 
   it('does not carry draft answers into another event using the same template', async () => {
     const user = userEvent.setup();
-    config!.config.template.sections[0].fields = [
-      { id: 'answer', type: 'text', label: 'Your answer' },
+    customTemplate(config).sections[0].fields = [
+      { id: 'answer', type: 'text', label: 'Your answer', required: false },
     ];
     const { rerender } = render(page());
     await user.type(screen.getByRole('textbox'), 'Private answer for A');
     config = savedConfig('Event B questions');
-    config.config.template.sections[0].fields = [
-      { id: 'answer', type: 'text', label: 'Your answer' },
+    customTemplate(config).sections[0].fields = [
+      { id: 'answer', type: 'text', label: 'Your answer', required: false },
     ];
     rerender(page('event-b' as Id<'events'>));
     expect(screen.getByRole('textbox')).toHaveValue('');
@@ -230,6 +261,20 @@ describe('AddonPage', () => {
     expect(screen.getByRole('link', { name: 'Test event' })).toHaveAttribute(
       'href',
       '/event/event-b'
+    );
+  });
+  it('clears a numeric answer using the supported empty value when submitting', async () => {
+    const user = userEvent.setup();
+    customTemplate(config).sections[0].fields = [
+      { id: 'answer', type: 'number', label: 'Count', required: false },
+    ];
+    render(page());
+    const input = screen.getByRole('spinbutton');
+    await user.type(input, '12');
+    await user.clear(input);
+    await user.click(screen.getByRole('button', { name: /submit/i }));
+    expect(saveData).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { answer: null } })
     );
   });
 });

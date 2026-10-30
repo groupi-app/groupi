@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PaperDivider } from '@/components/atoms/paper-divider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,6 @@ import {
   Send,
   Plus,
   Users,
-  FileSpreadsheet,
   Loader2,
 } from 'lucide-react';
 
@@ -269,7 +269,6 @@ export function EmailInvitesDialog({
       <DialogContent className='sm:max-w-[800px] max-h-[85vh] overflow-hidden flex flex-col'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Mail className='size-5' />
             Email Invites
           </DialogTitle>
           <DialogDescription className='sr-only'>
@@ -397,7 +396,7 @@ John Doe <john@example.com>; Jane Smith <jane@example.com>`}
                   </Button>
                 </div>
 
-                <div className='border-t border-border' />
+                <PaperDivider treatment='perforated' />
 
                 {/* CSV Upload */}
                 <div className='space-y-3'>
@@ -503,13 +502,12 @@ John Doe <john@example.com>; Jane Smith <jane@example.com>`}
               </div>
             </div>
 
-            <div className='border-t border-border' />
+            <PaperDivider treatment='perforated' />
 
             {/* Invitees List */}
             <div className='flex-1 min-h-0 flex flex-col'>
               <div className='flex items-center justify-between mb-2'>
-                <h3 className='font-medium flex items-center gap-2'>
-                  <FileSpreadsheet className='size-4' />
+                <h3 className='font-heading font-medium flex items-center gap-2'>
                   Invitees
                   <Badge variant='secondary'>
                     {localInvites.length + emailInvites.length}

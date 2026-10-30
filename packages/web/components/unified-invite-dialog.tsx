@@ -32,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Icons } from '@/components/icons';
 import { EventPeopleInvite } from '@/components/organisms/event-people-invite';
 import {
   LocalEmailInviteItem,
@@ -65,7 +64,6 @@ import {
   Send,
   Plus,
   Users,
-  FileSpreadsheet,
   Loader2,
 } from 'lucide-react';
 
@@ -173,14 +171,14 @@ function AnimatedTabsContent({
       className='flex-1 flex flex-col min-h-0'
     >
       <div hidden={editorActive}>
-        <TabsList className='grid w-full grid-cols-4'>
+        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4'>
           <TabsTrigger
             value='link'
             aria-label='Link'
             className='flex items-center gap-1.5'
           >
             <Link2 className='size-4' />
-            <span className='hidden sm:inline'>Link</span>
+            <span>Link</span>
           </TabsTrigger>
           <TabsTrigger
             value='email'
@@ -188,7 +186,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <Mail className='size-4' />
-            <span className='hidden sm:inline'>Email</span>
+            <span>Email</span>
           </TabsTrigger>
           <TabsTrigger
             value='username'
@@ -196,7 +194,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <AtSign className='size-4' />
-            <span className='hidden sm:inline'>Username</span>
+            <span>Username</span>
           </TabsTrigger>
           <TabsTrigger
             value='list'
@@ -204,7 +202,7 @@ function AnimatedTabsContent({
             className='flex items-center gap-1.5'
           >
             <Users className='size-4' />
-            <span className='hidden sm:inline'>From list</span>
+            <span>From list</span>
           </TabsTrigger>
         </TabsList>
       </div>
@@ -309,7 +307,6 @@ export function UnifiedInviteDialog() {
       >
         <DialogHeader className='flex-shrink-0'>
           <DialogTitle className='flex items-center gap-2'>
-            <Icons.invite className='size-5' />
             Invite People
           </DialogTitle>
           <DialogDescription>
@@ -392,8 +389,7 @@ function LinkInviteTab({ eventId }: { eventId: Id<'events'> }) {
   return (
     <div className='space-y-4'>
       <div className='bg-muted/30 rounded-card p-4'>
-        <h4 className='font-medium mb-2 flex items-center gap-2'>
-          <Link2 className='size-4' />
+        <h4 className='font-heading font-medium mb-2 flex items-center gap-2'>
           Create Invite Link
         </h4>
         <p className='text-sm text-muted-foreground'>
@@ -916,8 +912,7 @@ function EmailInviteTab({ eventId }: { eventId: Id<'events'> }) {
         {/* Invitees List */}
         <div className='flex-1 min-h-0 flex flex-col'>
           <div className='flex items-center justify-between mb-2'>
-            <h3 className='text-sm font-medium flex items-center gap-2'>
-              <FileSpreadsheet className='size-4' />
+            <h3 className='font-heading text-sm font-medium flex items-center gap-2'>
               Invitees
               <Badge variant='secondary'>
                 {localInvites.length + emailInvites.length}

@@ -1,10 +1,13 @@
 'use client';
+import { AccountFormWithGuard } from './account-form-with-guard';
 
+import Link from 'next/link';
+import { ArrowRight, Trash2 as ActionTrash2 } from 'lucide-react';
 import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
 import { LinkedAccountsList } from './linked-accounts-list';
 import { PasskeySettings } from './passkey-settings';
-import { ApiKeysSettings } from './api-keys-settings';
+import { ConnectedAppsSettings } from '@/features/authorization';
 import { DeleteAccountModal } from './delete-account-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,14 +34,16 @@ export function AccountSettingsContent({
 
   return (
     <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <UsernameField />
-        </CardContent>
-      </Card>
+      <AccountFormWithGuard>
+        <Card>
+          <CardHeader>
+            <CardTitle>Username</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <UsernameField />
+          </CardContent>
+        </Card>
+      </AccountFormWithGuard>
 
       <EmailManagement />
 
@@ -50,7 +55,15 @@ export function AccountSettingsContent({
 
       <PasskeySettings />
 
-      <ApiKeysSettings />
+      <ConnectedAppsSettings />
+
+      <Link
+        href='/settings/developer'
+        className='flex min-h-11 items-center justify-between gap-3 rounded-input border border-border p-3 text-sm font-medium hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring'
+      >
+        Developer settings
+        <ArrowRight aria-hidden='true' className='size-4 shrink-0' />
+      </Link>
 
       <Card>
         <CardHeader>
@@ -63,6 +76,7 @@ export function AccountSettingsContent({
               certain.
             </p>
             <Button
+              icon={<ActionTrash2 aria-hidden='true' className='size-4' />}
               type='button'
               variant='destructive'
               onClick={() => setDeleteModalOpen(true)}

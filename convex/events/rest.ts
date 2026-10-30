@@ -1,3 +1,6 @@
+import { removeToolsForEvent } from '../groupTools/cleanup';
+import { removeEventMailForEvent } from '../groupAnnouncements/eventMailCleanup';
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
@@ -130,7 +133,7 @@ export const create = internalMutation({
     const { eventId, membershipId } = await createEventForPerson(
       ctx,
       personId,
-      args
+      { ...args, timezone }
     );
     if (
       requestId !== undefined &&
@@ -167,6 +170,7 @@ export const expireRequest = internalMutation({
 export const update = internalMutation({
   args: {
     personId: v.id('persons'),
+    integrationActorId: v.optional(v.id('authorizationPrincipals')),
     eventId: v.id('events'),
     body: v.object({
       reminderOffset: v.optional(v.union(reminderOffsetValidator, v.null())),
@@ -177,7 +181,7 @@ export const update = internalMutation({
     }),
   },
   returns: eventDetailValidator,
-  handler: async (ctx, { personId, eventId, body }) => {
+  handler: async (ctx, { personId, eventId, body, integrationActorId }) => {
     if (!Object.values(body).some(value => value !== undefined))
       throw requestValidationError(
         'Specify at least one event field to update.'
@@ -219,16 +223,26 @@ export const update = internalMutation({
       });
     }
     if (Object.values(basic).some(value => value !== undefined))
-      await updateEventForPerson(ctx, personId, { eventId, ...basic });
+      await updateEventForPerson(
+        ctx,
+        personId,
+        { eventId, ...basic },
+        integrationActorId
+      );
     if (potentialDateTimeOptions !== undefined)
-      await updatePotentialDateTimesForPerson(ctx, personId, {
-        eventId,
-        potentialDateTimeOptions: potentialDateTimeOptions.map(opt => ({
-          start: parseEventDate(opt.start),
-          ...(opt.end === undefined ? {} : { end: parseEventDate(opt.end) }),
-          ...(opt.note === undefined ? {} : { note: opt.note }),
-        })),
-      });
+      await updatePotentialDateTimesForPerson(
+        ctx,
+        personId,
+        {
+          eventId,
+          potentialDateTimeOptions: potentialDateTimeOptions.map(opt => ({
+            start: parseEventDate(opt.start),
+            ...(opt.end === undefined ? {} : { end: parseEventDate(opt.end) }),
+            ...(opt.note === undefined ? {} : { note: opt.note }),
+          })),
+        },
+        integrationActorId
+      );
     const event = await readEventDetail(ctx, eventId);
     if (!event) throw requestValidationError('Event not found');
     return event;
@@ -265,6 +279,8 @@ export const deleteEvent = internalMutation({
       }
     }
 
+    await removeEventMailForEvent(ctx, eventId);
+    await removeToolsForEvent(ctx, eventId);
     await deleteEventTransfers(ctx, eventId);
     await removeAudiencesForEvent(ctx, eventId);
 
@@ -335,6 +351,7 @@ export const deleteEvent = internalMutation({
 
     // Delete event
     await deleteEventApplications(ctx, eventId);
+    await deleteEventParticipationRevisions(ctx, eventId);
     await ctx.db.delete(eventId);
 
     return { success: true };

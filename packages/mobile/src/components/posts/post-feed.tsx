@@ -1,13 +1,12 @@
+import { NewContentButton } from '../content/new-content-button';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   View,
   type ListRenderItem,
 } from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 import {
@@ -54,9 +53,6 @@ export function PostFeed({
   loadMore,
 }: PostFeedProps) {
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
-  const primaryForegroundColor = String(
-    useCSSVariable('--color-primary-foreground') ?? ''
-  );
   const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
   const showNewPost = canCreatePosts(userRole, eventPermissions);
 
@@ -144,19 +140,10 @@ export function PostFeed({
       />
 
       {showNewPost ? (
-        <Pressable
-          onPress={() => router.push(`/event/${eventId}/new-post`)}
-          accessibilityRole='button'
-          accessibilityLabel='Create new post'
-          accessibilityHint='Opens the new post composer'
-          hitSlop={4}
-          className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-primary-foreground bg-primary px-5 py-3 shadow-floating active:scale-95 active:bg-primary-hover'
-        >
-          <Ionicons name='add' size={20} color={primaryForegroundColor} />
-          <Text className='font-semibold text-primary-foreground'>
-            New Post
-          </Text>
-        </Pressable>
+        <NewContentButton
+          base={`/event/${eventId}`}
+          className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-button border-2 border-sticker-edge bg-primary px-5 py-3 shadow-floating active:bg-primary-pressed'
+        />
       ) : null}
     </View>
   );

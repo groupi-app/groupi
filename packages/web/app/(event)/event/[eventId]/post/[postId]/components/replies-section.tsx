@@ -57,6 +57,8 @@ export function RepliesSection({
 
   const currentReplies = postDetailData?.post?.replies || initialReplies;
   const currentReplyCount = currentReplies.length;
+  const currentPost = postDetailData?.post ?? post;
+  const repliesDisabled = Boolean(currentPost.repliesDisabled);
 
   // Get the current user's personId from global context for filtering
   const { person } = useGlobalUser();
@@ -342,12 +344,20 @@ export function RepliesSection({
         />
         {/* Typing indicator - shown between replies and form */}
         <TypingIndicator typingUsers={typingUsers} className='px-2' />
-        <ReplyForm
-          postId={postId}
-          post={post}
-          userMembership={userMembership}
-          onEditLastReply={handleEditLastReply}
-        />
+        {repliesDisabled && (
+          <p role='status' className='px-2 text-sm text-muted-foreground'>
+            Replies are locked.
+          </p>
+        )}
+        <div hidden={repliesDisabled}>
+          <ReplyForm
+            disabled={repliesDisabled}
+            postId={postId}
+            post={currentPost}
+            userMembership={userMembership}
+            onEditLastReply={handleEditLastReply}
+          />
+        </div>
       </div>
 
       {showJumpToPresent && (
@@ -355,7 +365,7 @@ export function RepliesSection({
           onClick={scrollToPresent}
           variant='secondary'
           className={cn(
-            'fixed z-float shadow-overlay text-xs w-auto',
+            'fixed z-float  text-xs w-auto',
             'animate-in fade-in slide-in-from-bottom-4'
           )}
           style={{

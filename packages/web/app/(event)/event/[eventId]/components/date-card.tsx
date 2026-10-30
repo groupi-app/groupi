@@ -1,5 +1,10 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
+import { isDateOptionPassed } from '@groupi/shared/utils';
+import { Card, CardAction } from '@/components/ui/card';
+
+import { Save as ActionSave } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChooseDateTime } from '@/hooks/mutations/use-choose-date-time';
 import { cn, isSameDay } from '@/lib/utils';
@@ -49,6 +54,8 @@ export function DateCard({
   userId: string;
   userRole: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
 }) {
+  const now = useLifecycleClock(pdt.dateTime);
+  const passed = isDateOptionPassed(pdt, now);
   const yesAmount = pdt.availabilities.filter(a => a.status === 'YES').length;
   const maybeAmount = pdt.availabilities.filter(
     a => a.status === 'MAYBE'
@@ -105,116 +112,123 @@ export function DateCard({
 
   return (
     <Dialog>
-      <DialogTrigger
-        asChild
-        onClick={() => {
-          setDialogType('overview');
-        }}
-      >
-        <div className='w-full md:max-w-lg rounded-card border border-border shadow-raised py-4 px-4 hover:bg-accent/80 hover:shadow-floating transition-all cursor-pointer'>
-          <div className='flex items-start gap-4'>
-            <h1 className='font-semibold text-2xl'>#{pdt.rank}</h1>
-            <div className='flex flex-col'>
-              <h1>
-                {new Date(pdt.dateTime).toLocaleDateString([], {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+      <Card treatment='interactive' className='w-full md:max-w-lg'>
+        <DialogTrigger
+          asChild
+          onClick={() => {
+            setDialogType('overview');
+          }}
+        >
+          <CardAction className='w-full p-4'>
+            <div className='flex items-start gap-4'>
+              <h1 className='font-heading font-semibold text-2xl'>
+                #{pdt.rank}
               </h1>
-              <span className='text-sm text-muted-foreground'>
-                {pdt.endDateTime &&
-                !isSameDay(pdt.dateTime, pdt.endDateTime) ? (
-                  // Multi-day event: show date range
-                  <>
-                    {new Date(pdt.dateTime).toLocaleTimeString([], {
-                      timeStyle: 'short',
-                    })}
-                    {' - '}
-                    {new Date(pdt.endDateTime).toLocaleDateString([], {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                    })}{' '}
-                    {new Date(pdt.endDateTime).toLocaleTimeString([], {
-                      timeStyle: 'short',
-                    })}
-                  </>
-                ) : pdt.endDateTime ? (
-                  // Same-day event with end time
-                  <>
-                    {new Date(pdt.dateTime).toLocaleTimeString([], {
-                      timeStyle: 'short',
-                    })}
-                    {' - '}
-                    {new Date(pdt.endDateTime).toLocaleTimeString([], {
-                      timeStyle: 'short',
-                    })}
-                  </>
-                ) : (
-                  // No end time
-                  new Date(pdt.dateTime).toLocaleTimeString([], {
-                    timeStyle: 'short',
-                  })
+              <div className='flex flex-col'>
+                {passed && (
+                  <span className='text-xs text-muted-foreground'>Passed</span>
                 )}
-              </span>
-            </div>
-          </div>
-          {pdt.note && (
-            <p className='text-muted-foreground text-xs mt-2 italic'>
-              {pdt.note}
-            </p>
-          )}
-          <div className='flex items-center gap-2 mt-4'>
-            <div className='flex items-center gap-2'>
-              <Icons.check className='size-6 rounded-full  text-success' />
-              <span>{yesAmount}</span>
-            </div>
-            <div className='flex items-center gap-2'>
-              <div className='rounded-full size-6 text-center font-semibold text-warning cursor-default'>
-                <span>?</span>
+                <h1 className='font-heading'>
+                  {new Date(pdt.dateTime).toLocaleDateString([], {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </h1>
+                <span className='text-sm text-muted-foreground'>
+                  {pdt.endDateTime &&
+                  !isSameDay(pdt.dateTime, pdt.endDateTime) ? (
+                    // Multi-day event: show date range
+                    <>
+                      {new Date(pdt.dateTime).toLocaleTimeString([], {
+                        timeStyle: 'short',
+                      })}
+                      {' - '}
+                      {new Date(pdt.endDateTime).toLocaleDateString([], {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}{' '}
+                      {new Date(pdt.endDateTime).toLocaleTimeString([], {
+                        timeStyle: 'short',
+                      })}
+                    </>
+                  ) : pdt.endDateTime ? (
+                    // Same-day event with end time
+                    <>
+                      {new Date(pdt.dateTime).toLocaleTimeString([], {
+                        timeStyle: 'short',
+                      })}
+                      {' - '}
+                      {new Date(pdt.endDateTime).toLocaleTimeString([], {
+                        timeStyle: 'short',
+                      })}
+                    </>
+                  ) : (
+                    // No end time
+                    new Date(pdt.dateTime).toLocaleTimeString([], {
+                      timeStyle: 'short',
+                    })
+                  )}
+                </span>
               </div>
-              <span>{maybeAmount}</span>
             </div>
-            <div className='flex items-center gap-2'>
-              <Icons.close className='size-6 rounded-full text-error' />
+            {pdt.note && (
+              <p className='text-muted-foreground text-xs mt-2 italic'>
+                {pdt.note}
+              </p>
+            )}
+            <div className='flex items-center gap-2 mt-4'>
+              <div className='flex items-center gap-2'>
+                <Icons.check className='size-6 rounded-full text-success' />
+                <span>{yesAmount}</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <div className='rounded-full size-6 text-center font-semibold text-warning cursor-default'>
+                  <span>?</span>
+                </div>
+                <span>{maybeAmount}</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <Icons.close className='size-6 rounded-full text-error' />
 
-              <span>{noAmount}</span>
+                <span>{noAmount}</span>
+              </div>
             </div>
-          </div>
-          <div className='w-full rounded-full border border-border h-4 flex items-center'>
-            <div
-              className={cn(
-                'h-full bg-success rounded-l-full',
-                maybeAmount === 0 && noAmount === 0 ? 'rounded-r-full' : ''
-              )}
-              style={{
-                width: `${(yesAmount / pdt.availabilities.length) * 100}%`,
-              }}
-            />
-            <div
-              className={cn(
-                'h-full bg-warning',
-                yesAmount === 0 ? 'rounded-l-full' : '',
-                noAmount === 0 ? 'rounded-r-full' : ''
-              )}
-              style={{
-                width: `${(maybeAmount / pdt.availabilities.length) * 100}%`,
-              }}
-            />
-            <div
-              className={cn(
-                ' h-full bg-error rounded-r-full',
-                yesAmount === 0 && maybeAmount === 0 ? 'rounded-l-full' : ''
-              )}
-              style={{
-                width: `${(noAmount / pdt.availabilities.length) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-      </DialogTrigger>
+            <div className='w-full rounded-full border border-border h-4 flex items-center'>
+              <div
+                className={cn(
+                  'h-full bg-success rounded-l-full',
+                  maybeAmount === 0 && noAmount === 0 ? 'rounded-r-full' : ''
+                )}
+                style={{
+                  width: `${(yesAmount / pdt.availabilities.length) * 100}%`,
+                }}
+              />
+              <div
+                className={cn(
+                  'h-full bg-warning',
+                  yesAmount === 0 ? 'rounded-l-full' : '',
+                  noAmount === 0 ? 'rounded-r-full' : ''
+                )}
+                style={{
+                  width: `${(maybeAmount / pdt.availabilities.length) * 100}%`,
+                }}
+              />
+              <div
+                className={cn(
+                  ' h-full bg-error rounded-r-full',
+                  yesAmount === 0 && maybeAmount === 0 ? 'rounded-l-full' : ''
+                )}
+                style={{
+                  width: `${(noAmount / pdt.availabilities.length) * 100}%`,
+                }}
+              />
+            </div>
+          </CardAction>
+        </DialogTrigger>
+      </Card>
       <DialogContent>
         {dialogType === 'overview' && (
           <>
@@ -239,7 +253,7 @@ export function DateCard({
                     </>
                   )}
               </DialogTitle>
-              <h2 className='text-muted-foreground text-lg'>
+              <h2 className='font-heading text-muted-foreground text-lg'>
                 {new Date(pdt.dateTime).toLocaleTimeString([], {
                   timeStyle: 'short',
                 })}
@@ -283,6 +297,9 @@ export function DateCard({
                         Cancel
                       </Button>
                       <Button
+                        icon={
+                          <ActionSave aria-hidden='true' className='size-4' />
+                        }
                         type='button'
                         size='sm'
                         onClick={handleSaveNote}
@@ -388,11 +405,12 @@ export function DateCard({
                 </TabsContent>
               ))}
             </Tabs>
-            <div className='flex justify-end gap-1 items-center '>
+            <div className='flex justify-end gap-1 items-center'>
               <DialogClose asChild>
                 <Button variant='ghost'>Cancel</Button>
               </DialogClose>
               <Button
+                disabled={passed}
                 onClick={() => {
                   setDialogType('confirm');
                 }}

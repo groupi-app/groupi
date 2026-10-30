@@ -20,6 +20,8 @@ import { UsernameSection } from '@/components/settings/username-section';
 import { EmailSection } from '@/components/settings/email-section';
 import { LinkedAccountsSection } from '@/components/settings/linked-accounts-section';
 import { PasskeySection } from '@/components/settings/passkey-section';
+import { ConnectedAppsSection } from '@/components/settings/connected-apps-section';
+import { AuthorizationSection } from '@/components/settings/authorization-section';
 import { ApiKeysSection } from '@/components/settings/api-keys-section';
 
 import { api } from 'convex/_generated/api';
@@ -95,6 +97,8 @@ function AccountSettingsContent() {
 
         <PasskeySection />
 
+        <ConnectedAppsSection />
+        <AuthorizationSection />
         <ApiKeysSection />
 
         {/* Danger Zone */}

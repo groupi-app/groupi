@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -184,7 +185,9 @@ export function InlineInviteListEditor({
           </p>
         </div>
         <section aria-label='Selected people' className='flex flex-col gap-2'>
-          <h3 className='font-medium'>Selected people ({people.length}/100)</h3>
+          <h3 className='font-heading font-medium'>
+            Selected people ({people.length}/100)
+          </h3>
           <QuerySection message='Unable to check selected people. Your list draft is preserved.'>
             <InviteListSelectedPeople
               selected={people}
@@ -253,6 +256,7 @@ export function InlineInviteListEditor({
         )}
         <div className='flex flex-wrap gap-2'>
           <Button
+            icon={<ActionSave aria-hidden='true' className='size-4' />}
             variant='outline'
             onClick={() => save(false)}
             isLoading={saving}
@@ -260,7 +264,11 @@ export function InlineInviteListEditor({
           >
             Save
           </Button>
-          <Button onClick={() => save(true)} disabled={saving}>
+          <Button
+            icon={<ActionSave aria-hidden='true' className='size-4' />}
+            onClick={() => save(true)}
+            disabled={saving}
+          >
             Save and use
           </Button>
           <Button variant='outline' onClick={() => requestLeave()}>

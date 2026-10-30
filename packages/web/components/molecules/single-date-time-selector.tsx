@@ -190,7 +190,7 @@ export function SingleDateTimeSelector({
     <div className='flex flex-col gap-6'>
       {/* Calendar Card with integrated time picker */}
       <div className='flex justify-center w-full'>
-        <Card className='overflow-hidden border-border shadow-raised max-w-fit'>
+        <Card className='overflow-hidden border-border max-w-fit'>
           <CardContent className='p-0'>
             {hasEndTime ? (
               // Date range mode when end time is enabled
@@ -309,7 +309,9 @@ export function SingleDateTimeSelector({
         >
           <div className='flex items-center gap-3'>
             <Icons.calendar className='size-5 text-primary' />
-            <h2 className='text-lg font-semibold'>{getDisplayDateTime()}</h2>
+            <h2 className='font-heading text-lg font-semibold'>
+              {getDisplayDateTime()}
+            </h2>
           </div>
         </div>
       </div>

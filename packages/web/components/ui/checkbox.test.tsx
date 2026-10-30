@@ -8,6 +8,39 @@ import userEvent from '@testing-library/user-event';
 import { Checkbox } from './checkbox';
 
 describe('Checkbox', () => {
+  it('announces partial selection and selects all when activated', async () => {
+    const user = userEvent.setup();
+    render(
+      <Checkbox
+        aria-label='Select all members'
+        defaultChecked='indeterminate'
+      />
+    );
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: 'Select all members',
+    });
+    expect(checkbox).toBePartiallyChecked();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    expect(checkbox).not.toBePartiallyChecked();
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('announces changes between controlled mixed and checked states', () => {
+    const { rerender } = render(
+      <Checkbox aria-label='Select all members' checked='indeterminate' />
+    );
+    expect(
+      screen.getByRole('checkbox', { name: 'Select all members' })
+    ).toBePartiallyChecked();
+
+    rerender(<Checkbox aria-label='Select all members' checked />);
+    expect(
+      screen.getByRole('checkbox', { name: 'Select all members' })
+    ).toBeChecked();
+  });
   it('should render checkbox', () => {
     render(<Checkbox />);
 

@@ -7,10 +7,14 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { StickerIcon } from '@/components/atoms';
+import {
+  EventHeaderLayout,
+  EventTitle,
+} from '@/components/templates/event-header-layout';
 import Link from 'next/link';
-import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
 import { LeaveEventDialog } from './leaveEventDialog';
 import { ReportDialog } from '@/components/report-dialog';
@@ -59,7 +63,6 @@ export function EventHeader({ data }: EventHeaderProps) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   // State hooks
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -277,17 +280,6 @@ export function EventHeader({ data }: EventHeaderProps) {
             Event Settings
           </Button>
         </Link>
-        <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
-          onClick={() => {
-            setDrawerOpen(false);
-            setDeleteDialogOpen(true);
-          }}
-        >
-          <Icons.delete className='size-4 mr-2' />
-          Delete Event
-        </Button>
       </>
     ) : (
       <>
@@ -309,6 +301,17 @@ export function EventHeader({ data }: EventHeaderProps) {
           )}
         </Button>
         <Button
+          asChild
+          variant='ghost'
+          className='w-full justify-start'
+          onClick={() => setDrawerOpen(false)}
+        >
+          <Link href={`/event/${eventId}/settings/ownership`}>
+            <Icons.settings className='size-4 mr-2' />
+            Event ownership
+          </Link>
+        </Button>
+        <Button
           variant='ghost'
           className='w-full justify-start'
           onClick={() => {
@@ -320,8 +323,8 @@ export function EventHeader({ data }: EventHeaderProps) {
           Report Event
         </Button>
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setDrawerOpen(false);
             setLeaveDialogOpen(true);
@@ -335,42 +338,41 @@ export function EventHeader({ data }: EventHeaderProps) {
 
   return (
     <>
-      <header className='flex flex-col md:my-5 max-w-4xl mx-auto gap-3'>
-        {event.imageUrl && (
-          <button
-            ref={coverContainerRef}
-            type='button'
-            onClick={() => setLightboxOpen(true)}
-            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-card mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border shadow-raised'
-            style={{ touchAction: 'manipulation' }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}
-            <img
-              src={event.imageUrl}
-              alt={`Cover image for ${title}`}
-              className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
-              style={
-                coverObjectPosition
-                  ? { objectPosition: coverObjectPosition }
-                  : undefined
-              }
-              onLoad={handleCoverImageLoad}
-            />
-          </button>
-        )}
-        <div className='flex justify-between flex-col-reverse gap-3 md:flex-row'>
-          <div className='flex items-center gap-3'>
-            <h1
-              data-test='event-title'
-              className='text-5xl font-heading font-medium'
+      <EventHeaderLayout
+        cover={
+          event.imageUrl && (
+            <button
+              ref={coverContainerRef}
+              type='button'
+              onClick={() => setLightboxOpen(true)}
+              className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-card mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border shadow-raised'
+              style={{ touchAction: 'manipulation' }}
             >
-              {title}
-            </h1>
+              {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}
+              <img
+                src={event.imageUrl}
+                alt={`Cover image for ${title}`}
+                className='w-full h-full object-cover transition-transform duration-300'
+                style={
+                  coverObjectPosition
+                    ? { objectPosition: coverObjectPosition }
+                    : undefined
+                }
+                onLoad={handleCoverImageLoad}
+              />
+            </button>
+          )
+        }
+        title={
+          <>
+            <EventTitle data-test='event-title'>{title}</EventTitle>
             {isMuted && (
               <Icons.bellOff className='size-7 text-muted-foreground' />
             )}
-          </div>
-          {isMobile ? (
+          </>
+        }
+        actions={
+          isMobile ? (
             <>
               <Button
                 variant='ghost'
@@ -442,32 +444,30 @@ export function EventHeader({ data }: EventHeaderProps) {
                         </div>
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuItem
-                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
-                      onClick={() => setDeleteDialogOpen(true)}
-                    >
-                      <div className='flex items-center gap-1'>
-                        <Icons.delete className='size-4' />
-                        <span>Delete Event</span>
-                      </div>
-                    </DropdownMenuItem>
                   </>
                 ) : (
                   <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/event/${eventId}/settings/ownership`}>
+                        <Icons.settings className='size-4' />
+                        Event ownership
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className='cursor-pointer'
                       onClick={() => setReportDialogOpen(true)}
                     >
-                      <div className='flex items-center gap-1'>
+                      <div className='flex items-center gap-3'>
                         <Icons.flag className='size-4' />
                         <span>Report Event</span>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                      variant='destructive'
+                      className='cursor-pointer'
                       onClick={() => setLeaveDialogOpen(true)}
                     >
-                      <div className='flex items-center gap-1'>
+                      <div className='flex items-center gap-3'>
                         <Icons.leave className='size-4' />
                         <span>Leave Event</span>
                       </div>
@@ -476,60 +476,62 @@ export function EventHeader({ data }: EventHeaderProps) {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
-        <div className='flex flex-col gap-2'>
-          {location && (
-            <div className='flex items-center gap-2.5'>
-              <StickerIcon icon={Icons.location} size='sm' color='success' />
-              <span data-test='event-location' className='font-semibold'>
-                {location}
-              </span>
-            </div>
-          )}
-          {eventDateStr != null ? (
-            <div className='flex items-center gap-2.5'>
-              <StickerIcon icon={Icons.date} size='sm' color='info' />
-              <span data-test='event-datetime' className='font-semibold'>
-                {eventDateStr}
-              </span>
-            </div>
-          ) : userMembership.role === 'ORGANIZER' ? (
-            <Link href={`/event/${eventId}/date-select`}>
-              <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
-                <Icons.date className='size-5' />
-                Choose Date/Time
-                <Icons.arrowRight className='size-4' />
-              </Button>
-            </Link>
-          ) : (
-            <Link href={`/event/${eventId}/availability`}>
-              <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
-                <Icons.date className='size-5' />
-                Set Availability
-                <Icons.arrowRight className='size-4' />
-              </Button>
-            </Link>
-          )}
-          <div className='flex items-center gap-2.5'>
-            {visibility === 'FRIENDS' ? (
-              <Icons.people className='size-4 text-muted-foreground/70' />
-            ) : (
-              <Icons.lock className='size-4 text-muted-foreground/70' />
+          )
+        }
+        metadata={
+          <>
+            {location && (
+              <div className='flex items-center gap-2.5'>
+                <StickerIcon icon={Icons.location} size='sm' color='success' />
+                <span data-test='event-location' className='font-semibold'>
+                  {location}
+                </span>
+              </div>
             )}
-            <span className='text-sm text-muted-foreground/70'>
-              {visibilityLabel}
-            </span>
-          </div>
-        </div>
-        {description && <p data-test='event-description'>{description}</p>}
-        <EventRSVP eventId={eventIdTyped} />
-      </header>
-      {userMembership.role === 'ORGANIZER' ? (
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DeleteEventDialog eventId={eventIdTyped} />
-        </Dialog>
-      ) : (
+            {eventDateStr != null ? (
+              <div className='flex items-center gap-2.5'>
+                <StickerIcon icon={Icons.date} size='sm' color='info' />
+                <span data-test='event-datetime' className='font-semibold'>
+                  {eventDateStr}
+                </span>
+              </div>
+            ) : userMembership.role === 'ORGANIZER' ? (
+              <Link href={`/event/${eventId}/date-select`}>
+                <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
+                  <Icons.date className='size-5' />
+                  Choose Date/Time
+                  <Icons.arrowRight className='size-4' />
+                </Button>
+              </Link>
+            ) : (
+              <Link href={`/event/${eventId}/availability`}>
+                <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
+                  <Icons.date className='size-5' />
+                  Set Availability
+                  <Icons.arrowRight className='size-4' />
+                </Button>
+              </Link>
+            )}
+            <div className='flex items-center gap-2.5'>
+              {visibility === 'FRIENDS' ? (
+                <Icons.people className='size-4 text-muted-foreground/70' />
+              ) : visibility === 'PUBLIC' ? (
+                <Globe className='size-4 text-muted-foreground/70' />
+              ) : (
+                <Icons.lock className='size-4 text-muted-foreground/70' />
+              )}
+              <span className='text-sm text-muted-foreground/70'>
+                {visibilityLabel}
+              </span>
+            </div>
+          </>
+        }
+        description={
+          description && <p data-test='event-description'>{description}</p>
+        }
+        rsvp={<EventRSVP eventId={eventIdTyped} />}
+      />
+      {userMembership.role !== 'ORGANIZER' && (
         <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
           <LeaveEventDialog eventId={eventIdTyped} />
         </Dialog>

@@ -21,7 +21,7 @@ export function BackButton({ onPress, className }: BackButtonProps) {
       hitSlop={8}
       className={
         className ??
-        'mr-3 h-10 w-10 items-center justify-center rounded-badge border-2 border-background bg-muted shadow-raised active:scale-95'
+        'mr-3 h-11 w-11 items-center justify-center rounded-badge border-2 border-sticker-edge bg-muted active:bg-accent'
       }
     >
       <Ionicons name='arrow-back' size={20} color={iconColor} />

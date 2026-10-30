@@ -12,3 +12,7 @@ export * from './status-indicator';
 export * from './step-badge';
 export * from './sticker-icon';
 export * from './unread-indicator';
+
+export * from './heading';
+
+export * from './paper-divider';

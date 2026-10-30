@@ -193,11 +193,12 @@ export function MentionHandler({
           )}
           {selectedMember.role === 'MODERATOR' && (
             <DropdownMenuItem
+              variant='destructive'
               onClick={() => {
                 setDialogAction(MemberAction.DEMOTE);
                 setDialogOpen(true);
               }}
-              className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+              className='cursor-pointer'
             >
               <Icons.shieldOff className='size-4 mr-2' />
               Demote
@@ -207,11 +208,12 @@ export function MentionHandler({
       )}
       {canKick && (
         <DropdownMenuItem
+          variant='destructive'
           onClick={() => {
             setDialogAction(MemberAction.KICK);
             setDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
           <Icons.kick className='size-4 mr-2' />
           Kick
@@ -295,8 +297,8 @@ export function MentionHandler({
                     )}
                     {canPromote && selectedMember.role === 'MODERATOR' && (
                       <Button
-                        variant='ghost'
-                        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                        variant='destructive-ghost'
+                        className='w-full justify-start'
                         onClick={() => {
                           setDialogAction(MemberAction.DEMOTE);
                           setSheetOpen(false);
@@ -309,8 +311,8 @@ export function MentionHandler({
                     )}
                     {canKick && (
                       <Button
-                        variant='ghost'
-                        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+                        variant='destructive-ghost'
+                        className='w-full justify-start'
                         onClick={() => {
                           setDialogAction(MemberAction.KICK);
                           setSheetOpen(false);

@@ -50,9 +50,12 @@ export default function ReplyForm({
   post,
   userMembership,
   onEditLastReply,
+  disabled = false,
 }: {
   postId: Id<'posts'> | string;
+  disabled?: boolean;
   post: {
+    repliesDisabled?: boolean;
     event?: {
       _id: Id<'events'>;
       memberships?: Array<{
@@ -87,6 +90,8 @@ export default function ReplyForm({
     };
   }, [userMembership]);
 
+  const locked = disabled || Boolean(post.repliesDisabled);
+  const lockedRef = useRef(locked);
   const createReply = useCreateReply(currentUser);
   const {
     pendingUploads,
@@ -113,6 +118,10 @@ export default function ReplyForm({
   // Track typing state for this post using global user context
   const { setTyping } = useCurrentUserTypingState(postId as Id<'posts'>);
 
+  useEffect(() => {
+    lockedRef.current = locked;
+    if (locked) setTyping(false);
+  }, [locked, setTyping]);
   // Track typing status when editor content changes
   const handleEditorChange = useCallback(
     (value: string) => {
@@ -125,9 +134,9 @@ export default function ReplyForm({
       );
 
       // Set typing status based on whether there's content
-      setTyping(hasContent);
+      setTyping(!locked && hasContent);
     },
-    [setTyping]
+    [setTyping, locked]
   );
 
   // Clear typing status on unmount or when form is submitted
@@ -251,6 +260,7 @@ export default function ReplyForm({
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (lockedRef.current || isSubmitting) return;
     // Check if there's any content to submit
     const hasText = values.reply && !isEmptyHtml(values.reply);
     const hasAttachments = pendingUploads.length > 0;
@@ -285,6 +295,8 @@ export default function ReplyForm({
           }))
         : undefined;
 
+      if (lockedRef.current)
+        throw new Error('Replies are locked. Your draft is preserved.');
       await createReply({
         text: hasText ? values.reply : '',
         postId: postId as import('@/convex/_generated/dataModel').Id<'posts'>,
@@ -317,6 +329,7 @@ export default function ReplyForm({
   }
 
   const handleSubmit = async () => {
+    if (lockedRef.current || isSubmitting) return;
     const currentValue = form.getValues('reply');
     const hasText = currentValue && !isEmptyHtml(currentValue);
     const hasAttachments = pendingUploads.length > 0;
@@ -376,7 +389,9 @@ export default function ReplyForm({
                         {/* Attachment Button */}
                         <AttachmentButton
                           onFilesSelected={handleFilesSelected}
-                          disabled={!canAddMore || isSubmitting || isUploading}
+                          disabled={
+                            locked || !canAddMore || isSubmitting || isUploading
+                          }
                           remainingSlots={remainingSlots}
                           className='mt-2 flex-shrink-0'
                         />
@@ -431,13 +446,13 @@ export default function ReplyForm({
                           <Button
                             type='button'
                             onClick={handleSubmit}
-                            disabled={isSubmitting || isUploading}
+                            disabled={locked || isSubmitting || isUploading}
                             size='sm'
                             className={cn(
                               'absolute right-2 h-8 w-8 p-0',
                               'bg-primary text-primary-foreground',
                               'hover:bg-primary/90',
-                              'shadow-floating',
+                              '',
                               isMultiline || pendingUploads.length > 0
                                 ? 'bottom-2'
                                 : 'top-1/2 -translate-y-1/2'

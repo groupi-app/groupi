@@ -114,6 +114,7 @@ export function createEventRoutes() {
     request: {
       headers: z.object({ 'Idempotency-Key': z.string().optional() }),
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateEventRequestSchema,
@@ -250,6 +251,7 @@ export function createEventRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateEventRequestSchema,
@@ -271,7 +273,10 @@ export function createEventRoutes() {
         description: 'Event updated',
         content: {
           'application/json': {
-            schema: EventResponseSchema,
+            schema: z.union([
+              EventResponseSchema,
+              z.object({ eventId: z.string() }),
+            ]),
           },
         },
       },

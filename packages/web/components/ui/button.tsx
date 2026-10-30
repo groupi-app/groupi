@@ -8,17 +8,24 @@ import { cn } from '@/lib/utils';
 export const buttonVariants = cva(
   // Base styles with dramatically rounded corners (Duolingo-style)
   // Using semantic radius token and bouncy hover effect
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button text-sm font-semibold transition-all duration-fast ease-bounce focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background cursor-pointer active:scale-[0.98] hover:scale-[1.02]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button text-sm font-semibold transition-all duration-fast ease-bounce focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background cursor-pointer',
   {
     variants: {
+      presentation: {
+        legacy: 'soft-action',
+        soft: 'soft-action',
+      },
       variant: {
         // Solid variants with sticker aesthetic (white border, shadow)
         default:
-          'bg-primary text-primary-foreground border-2 border-white shadow-raised hover:bg-primary/90 hover:shadow-floating',
+          'soft-action-filled soft-action-primary bg-primary text-primary-foreground border-2 border-white shadow-raised ',
         destructive:
-          'bg-destructive text-destructive-foreground border-2 border-white shadow-raised hover:bg-destructive/90 hover:shadow-floating',
+          'soft-action-filled soft-action-destructive bg-destructive text-destructive-foreground border-2 border-white shadow-raised ',
         secondary:
-          'bg-secondary text-secondary-foreground border-2 border-white shadow-raised hover:bg-secondary/80 hover:shadow-floating',
+          'soft-action-filled soft-action-secondary bg-secondary text-secondary-foreground border-2 border-white shadow-raised ',
+        success: 'soft-action-filled soft-action-success',
+        warning: 'soft-action-filled soft-action-warning',
+        info: 'soft-action-filled soft-action-info',
         // Outline variants - subtle, no sticker effect
         outline:
           'border border-border bg-background hover:bg-accent/80 hover:text-accent-foreground',
@@ -26,7 +33,9 @@ export const buttonVariants = cva(
           'border border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary',
         // Minimal variants (no sticker effect)
         ghost: 'hover:bg-accent/80 hover:text-accent-foreground',
-        link: 'underline-offset-4 hover:underline text-primary hover:scale-100 active:scale-100',
+        'destructive-ghost':
+          'soft-action-destructive-ghost text-text-error hover:bg-bg-error-subtle',
+        link: 'underline-offset-4 hover:underline text-primary',
       },
       size: {
         default: 'h-10 py-2 px-4',
@@ -38,6 +47,7 @@ export const buttonVariants = cva(
     },
     defaultVariants: {
       variant: 'default',
+      presentation: 'soft',
       size: 'default',
     },
   }
@@ -66,6 +76,7 @@ export interface ButtonProps
 export function Button({
   className,
   variant,
+  presentation = 'soft',
   size,
   asChild = false,
   isLoading = false,
@@ -82,9 +93,25 @@ export function Button({
     return (
       <Comp
         data-slot='button'
-        className={cn(buttonVariants({ variant, size, className }))}
+        data-presentation={presentation}
+        data-variant={variant ?? 'default'}
+        className={cn(
+          buttonVariants({ variant, presentation, size, className })
+        )}
         suppressHydrationWarning
         {...props}
+        aria-busy={presentation === 'soft' && isLoading ? true : undefined}
+        aria-disabled={
+          presentation === 'soft' && (disabled || isLoading) ? true : undefined
+        }
+        onClickCapture={event => {
+          if (presentation === 'soft' && (disabled || isLoading)) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          props.onClickCapture?.(event);
+        }}
       >
         {children}
       </Comp>
@@ -94,12 +121,21 @@ export function Button({
   return (
     <Comp
       data-slot='button'
-      className={cn(buttonVariants({ variant, size, className }))}
+      data-presentation={presentation}
+      data-variant={variant ?? 'default'}
+      className={cn(buttonVariants({ variant, presentation, size, className }))}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       {...props}
     >
       {isLoading ? (
-        <Loader2 className='size-4 animate-spin' />
+        <Loader2
+          aria-hidden='true'
+          className={cn(
+            'size-4 animate-spin',
+            presentation === 'soft' && 'motion-reduce:animate-none'
+          )}
+        />
       ) : icon ? (
         icon
       ) : null}

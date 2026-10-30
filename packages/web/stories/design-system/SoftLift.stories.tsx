@@ -1,0 +1,918 @@
+import './MaterialStudies.css';
+import type { Meta, StoryObj } from '@storybook/react';
+import { useRef, useState } from 'react';
+import {
+  ArrowRight,
+  Bell,
+  Bookmark,
+  Copy,
+  Lock,
+  MapPin,
+  MessageSquare,
+  Pencil,
+  Save,
+  Trash2,
+  Wrench,
+  CalendarDays,
+  Check,
+  CircleAlert,
+  Clock,
+  Globe,
+  Info,
+  TriangleAlert,
+  MoreHorizontal,
+  Plus,
+  Users,
+} from 'lucide-react';
+import { Heading } from '@/components/atoms/heading';
+import { PaperDivider } from '@/components/atoms/paper-divider';
+import { PresenceIndicator } from '@/components/atoms/presence-indicator';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardAction,
+  CardActions,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { EmptyState } from '@/components/molecules/empty-state';
+import { LoadingState } from '@/components/molecules/loading-state';
+import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { ListPageTemplate } from '@/components/templates/list-page-template';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from '@/lib/utils/toast';
+import { toast as sonnerToast } from 'sonner';
+
+const meta = {
+  title: 'Design system/Soft lift',
+  parameters: { layout: 'fullscreen' },
+} satisfies Meta;
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className='flex min-w-0 flex-col gap-5'>
+      <div className='flex flex-col gap-1'>
+        <Heading>{title}</Heading>
+        {description && (
+          <p className='max-w-2xl text-muted-foreground'>{description}</p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+function GalleryFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <main className='mx-auto flex max-w-6xl flex-col gap-12 px-5 py-8 sm:px-8 sm:py-12'>
+      {children}
+    </main>
+  );
+}
+function Actions() {
+  return (
+    <Section
+      title='Actions with a little give'
+      description='Hover a filled action, then hold to press it farther. Tab through to inspect focus.'
+    >
+      <div className='flex flex-wrap items-start gap-5'>
+        <Button
+          presentation='soft'
+          icon={<Plus aria-hidden='true' className='size-4' />}
+        >
+          Create event
+        </Button>
+        <Button
+          presentation='soft'
+          variant='secondary'
+          icon={<Save aria-hidden='true' className='size-4' />}
+        >
+          Save draft
+        </Button>
+        <Button
+          presentation='soft'
+          variant='destructive'
+          icon={<Trash2 aria-hidden='true' className='size-4' />}
+        >
+          Remove
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          icon={<Pencil aria-hidden='true' className='size-4' />}
+        >
+          Edit details
+        </Button>
+        <Button presentation='soft' variant='ghost'>
+          Cancel
+        </Button>
+        <Button
+          presentation='soft'
+          variant='link'
+          icon={<ArrowRight aria-hidden='true' className='size-4' />}
+        >
+          See all events
+        </Button>
+      </div>
+      <div className='flex flex-wrap items-center gap-5'>
+        <Button presentation='soft' isLoading loadingText='Saving changes'>
+          Save changes
+        </Button>
+        <Button
+          presentation='soft'
+          disabled
+          icon={<Plus aria-hidden='true' className='size-4' />}
+        >
+          Create event
+        </Button>
+        <Button presentation='soft' asChild>
+          <a href='#surfaces'>
+            Explore surfaces{' '}
+            <ArrowRight aria-hidden='true' className='size-4' />
+          </a>
+        </Button>
+        <Button presentation='soft' size='icon' aria-label='Add a date'>
+          <Plus aria-hidden='true' className='size-4' />
+        </Button>
+      </div>
+    </Section>
+  );
+}
+function SurfaceSamples() {
+  const [saved, setSaved] = useState(false);
+  const [opened, setOpened] = useState(false);
+  return (
+    <Section
+      title='Surfaces tell you what they do'
+      description='Information stays still. A featured surface draws attention. A destination responds to its primary action.'
+    >
+      <div id='surfaces' className='grid items-start gap-6 md:grid-cols-3'>
+        <Card treatment='quiet'>
+          <CardHeader>
+            <Badge presentation='soft' variant='outline' className='self-start'>
+              Information
+            </Badge>
+            <CardTitle>Bring something to share</CardTitle>
+            <CardDescription>
+              Snacks, a blanket, and your favorite people.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className='text-sm'>
+              Quiet surfaces keep everyday details easy to scan.
+            </p>
+          </CardContent>
+        </Card>
+        <Card treatment='featured'>
+          <CardHeader>
+            <Badge presentation='soft' variant='info' className='self-start'>
+              <CalendarDays aria-hidden='true' className='size-4' /> Up next
+            </Badge>
+            <CardTitle>Picnic in the park</CardTitle>
+            <CardDescription>Saturday · 2:00 PM</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className='text-sm'>
+              A cut-paper frame gives this moment emphasis.
+            </p>
+          </CardContent>
+          <PaperDivider treatment='perforated' className='mb-5' />
+          <CardFooter>
+            <Button
+              presentation='soft'
+              variant='outline'
+              icon={<ArrowRight aria-hidden='true' className='size-4' />}
+            >
+              View details
+            </Button>
+          </CardFooter>
+        </Card>
+        <Card treatment='interactive'>
+          <CardHeader>
+            <Badge presentation='soft' variant='success' className='self-start'>
+              <Globe aria-hidden='true' className='size-4' /> Public event
+            </Badge>
+            <CardTitle>
+              <CardAction onClick={() => setOpened(true)}>
+                Sunday board games
+              </CardAction>
+            </CardTitle>
+            <CardDescription>Sunday · 4:00 PM</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className='flex items-center gap-2 text-sm'>
+              <ArrowRight aria-hidden='true' className='size-4 shrink-0' />
+              <span>Open from the card. Save it independently.</span>
+            </p>
+          </CardContent>
+          <CardFooter>
+            <CardActions>
+              <Button
+                presentation='soft'
+                variant='outline'
+                icon={
+                  <Bookmark
+                    aria-hidden='true'
+                    className='size-4'
+                    fill={saved ? 'currentColor' : 'none'}
+                  />
+                }
+                aria-pressed={saved}
+                onClick={() => setSaved(!saved)}
+              >
+                {saved ? 'Saved' : 'Save event'}
+              </Button>
+            </CardActions>
+          </CardFooter>
+        </Card>
+      </div>
+      <p role='status' className='text-sm text-muted-foreground'>
+        {opened
+          ? 'Sunday board games opened. This gallery uses local sample content.'
+          : 'Try the primary card action and the separate Save event button.'}
+      </p>
+    </Section>
+  );
+}
+function PeopleStickers() {
+  return (
+    <Section
+      title='People, with a place in the album'
+      description='Photo stickers keep a familiar circular silhouette. Initials and availability remain clear when a photo is unavailable.'
+    >
+      <div className='flex flex-wrap items-center gap-8'>
+        <div className='flex items-center gap-3'>
+          <div className='relative'>
+            <Avatar presentation='soft' className='size-14'>
+              <AvatarImage
+                src='https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
+                alt='Alex'
+              />
+              <AvatarFallback>AL</AvatarFallback>
+            </Avatar>
+            <PresenceIndicator
+              status='online'
+              size='lg'
+              className='absolute bottom-0 right-0'
+            />
+          </div>
+          <div>
+            <p className='font-semibold'>Alex</p>
+            <p className='text-sm text-muted-foreground'>Online</p>
+          </div>
+        </div>
+        <div className='flex items-center gap-3'>
+          <Avatar presentation='soft' className='size-14'>
+            <AvatarFallback>MR</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className='font-semibold'>Maya</p>
+            <p className='text-sm text-muted-foreground'>Initials fallback</p>
+          </div>
+        </div>
+        <div className='flex flex-col gap-2'>
+          <div
+            className='material-avatar-stack flex'
+            role='group'
+            aria-label='Alex, Maya, Jo and Sam'
+          >
+            {['AL', 'MR', 'JO', 'SA'].map(initials => (
+              <Avatar presentation='soft' key={initials}>
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+          <p className='text-sm text-muted-foreground'>A close-knit stack</p>
+        </div>
+      </div>
+    </Section>
+  );
+}
+function Fields() {
+  const [mixed, setMixed] = useState<boolean | 'indeterminate'>(
+    'indeterminate'
+  );
+  return (
+    <Section title='Quiet controls, clear states'>
+      <div className='grid gap-8 md:grid-cols-2'>
+        <div className='flex min-w-0 flex-col gap-5'>
+          <div className='flex flex-col gap-2'>
+            <Label
+              htmlFor='event-name'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              Event name
+            </Label>
+            <Input
+              presentation='soft'
+              id='event-name'
+              placeholder='What are we planning?'
+            />
+            <p className='text-sm text-muted-foreground'>
+              Give people a name they will recognize.
+            </p>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <Label
+              htmlFor='invalid-time'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <Clock aria-hidden='true' className='size-4 shrink-0' />
+              Start time
+            </Label>
+            <Input
+              presentation='soft'
+              id='invalid-time'
+              defaultValue='25:30'
+              aria-invalid
+              aria-describedby='time-error'
+            />
+            <p
+              id='time-error'
+              className='flex items-center gap-2 text-sm text-foreground'
+            >
+              <CircleAlert
+                aria-hidden='true'
+                className='size-4 shrink-0 text-error'
+              />{' '}
+              Enter a time between 00:00 and 23:59.
+            </p>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <Label
+              htmlFor='disabled-location'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <MapPin aria-hidden='true' className='size-4 shrink-0' />
+              Location
+            </Label>
+            <Input
+              presentation='soft'
+              id='disabled-location'
+              disabled
+              defaultValue='Choose a date first'
+            />
+          </div>
+        </div>
+        <div className='flex min-w-0 flex-col gap-5'>
+          <div className='flex flex-col gap-2'>
+            <Label
+              htmlFor='details'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              A little more detail
+            </Label>
+            <Textarea
+              presentation='soft'
+              id='details'
+              placeholder='Anything people should know before they arrive?'
+            />
+          </div>
+          <fieldset className='flex flex-col gap-3'>
+            <legend className='mb-3 text-sm font-semibold'>
+              Event preferences
+            </legend>
+            <div className='flex items-center gap-3'>
+              <Checkbox
+                presentation='soft'
+                id='mixed-choice'
+                checked={mixed}
+                onCheckedChange={setMixed}
+              />
+              <Label
+                htmlFor='mixed-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <Bell aria-hidden='true' className='size-4 shrink-0' />
+                Notify people about updates
+              </Label>
+            </div>
+            <div className='flex items-center gap-3'>
+              <Checkbox
+                presentation='soft'
+                id='checked-choice'
+                defaultChecked
+              />
+              <Label
+                htmlFor='checked-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <MessageSquare aria-hidden='true' className='size-4 shrink-0' />
+                Allow replies
+              </Label>
+            </div>
+            <div className='flex items-center gap-3'>
+              <Checkbox presentation='soft' id='disabled-choice' disabled />
+              <Label
+                htmlFor='disabled-choice'
+                className='inline-flex items-center gap-2 leading-snug'
+              >
+                <Lock aria-hidden='true' className='size-4 shrink-0' />
+                Registration closed
+              </Label>
+            </div>
+          </fieldset>
+          <div className='flex items-center gap-3'>
+            <Switch presentation='soft' id='reminder-choice' />
+            <Label
+              htmlFor='reminder-choice'
+              className='inline-flex items-center gap-2 leading-snug'
+            >
+              <Bell aria-hidden='true' className='size-4 shrink-0' />
+              Send a reminder
+            </Label>
+          </div>
+        </div>
+      </div>
+    </Section>
+  );
+}
+function NavigationAndStatus() {
+  return (
+    <Section title='Location and status at a glance'>
+      <Tabs presentation='soft' defaultValue='events'>
+        <TabsList aria-label='Sample Group destinations'>
+          <TabsTrigger value='events' className='gap-2'>
+            <CalendarDays aria-hidden='true' className='size-4 shrink-0' />
+            Events
+          </TabsTrigger>
+          <TabsTrigger value='people' className='gap-2'>
+            <Users aria-hidden='true' className='size-4 shrink-0' />
+            People
+          </TabsTrigger>
+          <TabsTrigger value='tools' className='gap-2'>
+            <Wrench aria-hidden='true' className='size-4 shrink-0' />
+            Tools
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value='events'>
+          <p className='text-sm'>Events shared with this Group.</p>
+        </TabsContent>
+        <TabsContent value='people'>
+          <p className='text-sm'>The people in this Group.</p>
+        </TabsContent>
+        <TabsContent value='tools'>
+          <p className='text-sm'>Tools enabled for this Group.</p>
+        </TabsContent>
+      </Tabs>
+      <div className='flex flex-wrap gap-3'>
+        <Badge presentation='soft' variant='success'>
+          <Check aria-hidden='true' className='size-4' /> Completed
+        </Badge>
+        <Badge presentation='soft' variant='warning'>
+          <Clock aria-hidden='true' className='size-4' /> Pending
+        </Badge>
+        <Badge presentation='soft' variant='destructive'>
+          <CircleAlert aria-hidden='true' className='size-4' /> Needs attention
+        </Badge>
+        <Badge presentation='soft' variant='info'>
+          <Users aria-hidden='true' className='size-4' /> Open to members
+        </Badge>
+      </div>
+      <Progress presentation='soft' value={60} aria-label='Setup progress' />
+    </Section>
+  );
+}
+function Feedback() {
+  const attempts = useRef(0);
+  return (
+    <Section title='Feedback that stays with you'>
+      <div className='flex flex-wrap gap-5'>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              presentation='soft'
+              variant='outline'
+              aria-label='Actions for Picnic in the park'
+            >
+              <MoreHorizontal aria-hidden='true' className='size-4' /> Event
+              actions
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent presentation='soft'>
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                onSelect={() => toast({ title: 'Event link copied' })}
+              >
+                <Copy aria-hidden='true' className='size-4' />
+                Copy event link
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => toast({ title: 'Draft saved' })}
+              >
+                <Save aria-hidden='true' className='size-4' />
+                Save draft
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() => toast({ title: 'Changes saved' })}
+        >
+          Show success feedback
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            toast({
+              title: 'Could not save changes',
+              description: 'Check your connection, then try saving again.',
+              variant: 'destructive',
+            })
+          }
+        >
+          Show error feedback
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            sonnerToast.warning('Check the date', {
+              description: 'Choose a start time before inviting people.',
+            })
+          }
+        >
+          Show warning feedback
+        </Button>
+        <Button
+          presentation='soft'
+          variant='outline'
+          onClick={() =>
+            sonnerToast.info('Invitations are ready', {
+              description: 'Share the link when you are ready.',
+            })
+          }
+        >
+          Show info feedback
+        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              presentation='soft'
+              variant='outline'
+              onClick={() => {
+                attempts.current = 0;
+              }}
+            >
+              Review confirmation
+            </Button>
+          </DialogTrigger>
+          <ConfirmationDialog
+            presentation='soft'
+            title='Remove this draft?'
+            description='The first attempt in this preview fails so you can inspect the error and retry.'
+            confirmText='Remove draft'
+            loadingText='Removing draft'
+            onConfirm={async () => {
+              attempts.current += 1;
+              await new Promise(resolve => window.setTimeout(resolve, 700));
+              if (attempts.current === 1) throw new Error('Preview retry');
+            }}
+          />
+        </Dialog>
+      </div>
+      <Alert presentation='soft' variant='destructive'>
+        <CircleAlert aria-hidden='true' />
+        <AlertTitle>Could not save your changes</AlertTitle>
+        <AlertDescription>
+          Check your connection, then try saving again.
+        </AlertDescription>
+      </Alert>
+      <Toaster presentation='soft' />
+    </Section>
+  );
+}
+export const Overview: Story = {
+  render: () => (
+    <GalleryFrame>
+      <header className='flex max-w-3xl flex-col gap-3'>
+        <Badge presentation='soft' variant='outline'>
+          Component review · opt-in preview
+        </Badge>
+        <Heading level={1} roleSize='page'>
+          Groupi’s sticker book
+        </Heading>
+        <p className='text-lg text-muted-foreground'>
+          Action stickers, writable spaces, and little labels for your plans.
+        </p>
+      </header>
+      <Actions />
+      <SurfaceSamples />
+      <PeopleStickers />
+      <Fields />
+      <NavigationAndStatus />
+      <Feedback />
+    </GalleryFrame>
+  ),
+};
+export const ActionsAndSurfaces: Story = {
+  render: () => (
+    <GalleryFrame>
+      <Actions />
+      <SurfaceSamples />
+    </GalleryFrame>
+  ),
+};
+export const FieldsAndFeedback: Story = {
+  render: () => (
+    <GalleryFrame>
+      <Fields />
+      <NavigationAndStatus />
+      <Feedback />
+    </GalleryFrame>
+  ),
+};
+export const LayoutAndStates: Story = {
+  render: () => (
+    <GalleryFrame>
+      <ListPageTemplate
+        className='px-0'
+        presentation='soft'
+        title='Make room for a good time'
+        subtitle='Page, section, and content headings each have a clear role.'
+        controls={
+          <Button
+            presentation='soft'
+            icon={<Plus aria-hidden='true' className='size-4' />}
+          >
+            Create event
+          </Button>
+        }
+      >
+        <div className='flex flex-col gap-10'>
+          <SurfaceSamples />
+          <Section title='A fresh start'>
+            <Card treatment='quiet'>
+              <CardContent>
+                <EmptyState
+                  presentation='soft'
+                  icon={<CalendarDays aria-hidden='true' />}
+                  message='Your next plan starts here'
+                  description='Create an event and invite people to join you.'
+                  action={
+                    <Button
+                      presentation='soft'
+                      icon={<Plus aria-hidden='true' className='size-4' />}
+                    >
+                      Create your first event
+                    </Button>
+                  }
+                />
+              </CardContent>
+            </Card>
+          </Section>
+          <Section title='While things are loading'>
+            <LoadingState presentation='soft' message='Loading your events…' />
+            <div aria-hidden='true' className='grid gap-4 sm:grid-cols-2'>
+              <Skeleton presentation='soft' className='h-32 rounded-card' />
+              <Skeleton presentation='soft' className='h-32 rounded-card' />
+            </div>
+          </Section>
+        </div>
+      </ListPageTemplate>
+    </GalleryFrame>
+  ),
+};
+export const LongContent: Story = {
+  render: () => (
+    <GalleryFrame>
+      <ListPageTemplate
+        className='px-0'
+        presentation='soft'
+        title='A very long event name that needs room to wrap gracefully on a smaller screen'
+        controls={
+          <Button
+            presentation='soft'
+            icon={<Plus aria-hidden='true' className='size-4' />}
+          >
+            Create an event with the neighborhood
+          </Button>
+        }
+      >
+        <Card treatment='featured'>
+          <CardHeader>
+            <CardTitle>
+              Weekend plans with friends, family, and everyone else who wants to
+              join
+            </CardTitle>
+            <CardDescription>
+              A long description should wrap naturally and leave the next action
+              easy to find, including when your text size is increased.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Input
+              presentation='soft'
+              aria-label='Long event title'
+              defaultValue='A wonderfully long and descriptive event name'
+            />
+          </CardContent>
+          <CardFooter className='flex-wrap gap-4'>
+            <Button
+              presentation='soft'
+              icon={<Save aria-hidden='true' className='size-4' />}
+            >
+              Save changes and invite everyone
+            </Button>
+            <Button
+              presentation='soft'
+              variant='outline'
+              icon={<Pencil aria-hidden='true' className='size-4' />}
+            >
+              Keep editing this event
+            </Button>
+          </CardFooter>
+        </Card>
+      </ListPageTemplate>
+    </GalleryFrame>
+  ),
+};
+
+function StatusChoice() {
+  return (
+    <Section
+      title='Flat cut-out status labels'
+      description='Selected. A crisp white edge connects these quiet labels to the sticker book, without action depth.'
+    >
+      <div className='flex flex-wrap gap-3'>
+        <Badge presentation='soft' variant='success'>
+          <Check aria-hidden='true' className='size-4' />
+          Completed
+        </Badge>
+        <Badge presentation='soft' variant='warning'>
+          <Clock aria-hidden='true' className='size-4' />
+          Pending
+        </Badge>
+        <Badge presentation='soft' variant='info'>
+          <Users aria-hidden='true' className='size-4' />
+          Open to members
+        </Badge>
+      </div>
+    </Section>
+  );
+}
+function StudyTabs({ longLabel = false }: { longLabel?: boolean }) {
+  return (
+    <Tabs presentation='soft' defaultValue='events'>
+      <TabsList aria-label='Attached index destinations'>
+        <TabsTrigger value='events' className='gap-2'>
+          <CalendarDays aria-hidden='true' className='size-4 shrink-0' />
+          Events
+        </TabsTrigger>
+        <TabsTrigger value='people' className='gap-2'>
+          <Users aria-hidden='true' className='size-4 shrink-0' />
+          People
+        </TabsTrigger>
+        <TabsTrigger value='tools' className='gap-2'>
+          <Wrench aria-hidden='true' className='size-4 shrink-0' />
+          Tools
+        </TabsTrigger>
+        {longLabel && (
+          <TabsTrigger value='announcements'>
+            Community announcements and shared resources
+          </TabsTrigger>
+        )}
+      </TabsList>
+      <TabsContent value='events'>Events shared with this Group.</TabsContent>
+      <TabsContent value='people'>The people in this Group.</TabsContent>
+      <TabsContent value='tools'>Tools enabled for this Group.</TabsContent>
+      {longLabel && (
+        <TabsContent value='announcements'>
+          Announcements and resources shared with this Group.
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+}
+function NavigationChoice() {
+  return (
+    <Section
+      title='Attached index tabs'
+      description='Selected. The current destination joins its content sheet. Focus stays visible and the same keyboard controls still work.'
+    >
+      <StudyTabs />
+      <details>
+        <summary className='cursor-pointer py-3 text-sm font-semibold'>
+          Try a long destination label
+        </summary>
+        <div className='pt-4'>
+          <StudyTabs longLabel />
+        </div>
+        <p className='pt-3 text-sm text-muted-foreground'>
+          Resize to 320 px to inspect wrapping. Long labels can put the attached
+          tabs on multiple rows.
+        </p>
+      </details>
+    </Section>
+  );
+}
+const annotationExamples = [
+  {
+    variant: 'default',
+    title: 'Before you invite people',
+    description: 'Review the event details first.',
+    icon: null,
+  },
+  {
+    variant: 'info',
+    title: 'Invitations are ready',
+    description: 'Share the link when you are ready.',
+    icon: Info,
+  },
+  {
+    variant: 'success',
+    title: 'Changes saved',
+    description: 'The event details are up to date.',
+    icon: Check,
+  },
+  {
+    variant: 'warning',
+    title: 'Check the date',
+    description: 'Choose a start time before inviting people.',
+    icon: TriangleAlert,
+  },
+  {
+    variant: 'destructive',
+    title: 'Could not save your changes',
+    description: 'Check your connection, then try saving again.',
+    icon: CircleAlert,
+  },
+] as const;
+function NoticeChoice() {
+  return (
+    <Section
+      title='Annotation-strip alerts'
+      description='Selected. Quiet fill, readable ink and a narrow semantic edge keep the notice beside its task. There is no raised depth or clickable appearance.'
+    >
+      <div className='flex flex-col gap-4'>
+        {annotationExamples.map(example => {
+          const Icon = example.icon;
+          return (
+            <Alert
+              key={example.variant}
+              presentation='soft'
+              variant={example.variant}
+            >
+              {Icon && <Icon aria-hidden='true' className='size-5' />}
+              <AlertTitle>{example.title}</AlertTitle>
+              <AlertDescription>{example.description}</AlertDescription>
+            </Alert>
+          );
+        })}
+      </div>
+    </Section>
+  );
+}
+export const MaterialStudies: Story = {
+  render: () => (
+    <GalleryFrame>
+      <header className='flex max-w-3xl flex-col gap-3'>
+        <Heading level={1} roleSize='page'>
+          Chosen for the sticker book
+        </Heading>
+        <p className='text-lg text-muted-foreground'>
+          Flat cut-out labels, attached index tabs, and annotation strips. These
+          choices are now in the canonical soft components; the rest of the
+          gallery is still under review.
+        </p>
+      </header>
+      <StatusChoice />
+      <NavigationChoice />
+      <NoticeChoice />
+    </GalleryFrame>
+  ),
+};

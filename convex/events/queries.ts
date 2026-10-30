@@ -1,4 +1,14 @@
 import {
+  audienceOptionsArgs,
+  audienceOptionsPage,
+  audienceOptionsForPerson,
+} from './settings';
+import { settingsSnapshot, settingsForPerson } from './settings';
+import {
+  requireNoEventExclusion,
+  isEventExcludedForPerson,
+} from '../groups/exclusions';
+import {
   eventLogisticsValidator,
   logisticsEventValidator,
 } from './admissionContracts';
@@ -39,6 +49,9 @@ export const getEventHeader = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     // Require authentication
     const { person: currentPerson } = await requireAuth(ctx);
 
@@ -68,6 +81,12 @@ export const getEventHeader = query({
     return {
       event: {
         ...event,
+        potentialDateTimes: (
+          await ctx.db
+            .query('potentialDateTimes')
+            .withIndex('by_event', q => q.eq('eventId', event._id))
+            .collect()
+        ).map(option => option.dateTime),
         imageUrl,
         chosenDateTime: event.chosenDateTime,
       },
@@ -91,6 +110,9 @@ export const getEventAttendeesData = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     // Require authentication
     const { person: currentPerson } = await requireAuth(ctx);
 
@@ -209,7 +231,7 @@ export const getEventAttendeesData = query({
 
     // Filter out invalid memberships
     const validMemberships = membershipsWithData.filter(
-      m => m.person && m.person.user
+      (m): m is NonNullable<typeof m> => Boolean(m?.person && m.person.user)
     );
 
     return {
@@ -248,6 +270,14 @@ export const getUserEvents = query({
     // Get event data for each membership
     const eventsWithMemberships = await Promise.all(
       memberships.map(async membership => {
+        if (
+          await isEventExcludedForPerson(
+            ctx,
+            membership.eventId,
+            currentPerson._id
+          )
+        )
+          return null;
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
 
@@ -262,6 +292,13 @@ export const getUserEvents = query({
         return {
           event: {
             ...event,
+            // Date-option records are authoritative; legacy arrays may lag old clients.
+            potentialDateTimes: (
+              await ctx.db
+                .query('potentialDateTimes')
+                .withIndex('by_event', q => q.eq('eventId', event._id))
+                .collect()
+            ).map(option => option.dateTime),
             imageUrl,
             chosenDateTime: event.chosenDateTime,
             memberCount: event.memberCount ?? 0,
@@ -304,6 +341,9 @@ export const getEvent = query({
   },
   returns: logisticsEventValidator,
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     const person = await getCurrentPerson(ctx);
     return (await eventLogisticsForPerson(ctx, eventId, person?._id)).event;
   },
@@ -314,6 +354,9 @@ export const getEventLogistics = query({
   args: { eventId: v.id('events') },
   returns: eventLogisticsValidator,
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     const person = await getCurrentPerson(ctx);
     return eventLogisticsForPerson(ctx, eventId, person?._id);
   },
@@ -329,6 +372,9 @@ export const getEventPotentialDates = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     const { person: currentPerson } = await requireAuth(ctx);
     const membership = await ctx.db
       .query('memberships')
@@ -362,6 +408,9 @@ export const getEventAvailabilityData = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     // Require authentication and membership
     const { person: currentPerson } = await requireAuth(ctx);
 
@@ -420,7 +469,7 @@ export const getEventAvailabilityData = query({
     );
 
     const validMembers = membersWithUsers.filter(
-      m => m.person && m.person.user
+      (m): m is NonNullable<typeof m> => Boolean(m?.person && m.person.user)
     );
 
     // Build a membership lookup map for efficient member resolution
@@ -492,6 +541,14 @@ export const getUserEventsAndInvites = query({
 
     const eventsWithMemberships = await Promise.all(
       memberships.map(async membership => {
+        if (
+          await isEventExcludedForPerson(
+            ctx,
+            membership.eventId,
+            currentPerson._id
+          )
+        )
+          return null;
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
 
@@ -505,6 +562,13 @@ export const getUserEventsAndInvites = query({
         return {
           event: {
             ...event,
+            // Date-option records are authoritative; legacy arrays may lag old clients.
+            potentialDateTimes: (
+              await ctx.db
+                .query('potentialDateTimes')
+                .withIndex('by_event', q => q.eq('eventId', event._id))
+                .collect()
+            ).map(option => option.dateTime),
             imageUrl,
             chosenDateTime: event.chosenDateTime,
             memberCount: event.memberCount ?? 0,
@@ -538,6 +602,10 @@ export const getUserEventsAndInvites = query({
 
     const invites = await Promise.all(
       pendingInvites.map(async invite => {
+        if (
+          await isEventExcludedForPerson(ctx, invite.eventId, currentPerson._id)
+        )
+          return null;
         const [event, inviterPerson] = await Promise.all([
           ctx.db.get(invite.eventId),
           ctx.db.get(invite.inviterId),
@@ -647,6 +715,11 @@ export const getEventsForUserInvite = query({
     const eligibleEvents = [];
     for (const membership of myMemberships) {
       const eventId = membership.eventId;
+      if (
+        (await isEventExcludedForPerson(ctx, eventId, currentPerson._id)) ||
+        (await isEventExcludedForPerson(ctx, eventId, targetPersonId))
+      )
+        continue;
 
       // Skip if target is already a member, banned, or has pending invite
       if (targetEventIds.has(eventId)) continue;
@@ -840,6 +913,23 @@ export const getEventById = internalQuery({
     eventId: v.id('events'),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionActor = await getCurrentPerson(ctx);
+    if (exclusionActor)
+      await requireNoEventExclusion(ctx, eventId, exclusionActor._id);
     return await ctx.db.get(eventId);
   },
+});
+
+export const getSettings = query({
+  args: { eventId: v.id('events') },
+  returns: settingsSnapshot,
+  handler: async (ctx, { eventId }) =>
+    settingsForPerson(ctx, eventId, (await requireAuth(ctx)).person._id),
+});
+
+export const getSettingsAudienceOptions = query({
+  args: audienceOptionsArgs,
+  returns: audienceOptionsPage,
+  handler: async (ctx, args) =>
+    audienceOptionsForPerson(ctx, (await requireAuth(ctx)).person._id, args),
 });

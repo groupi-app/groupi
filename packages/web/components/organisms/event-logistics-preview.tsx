@@ -1,15 +1,69 @@
 'use client';
 
-import { Component, useState, type ReactNode } from 'react';
+import {
+  Component,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   useEventLogistics,
   useJoinEvent,
 } from '@/hooks/convex/use-event-admission';
+
+/** Public logistics and its skeleton share a shell, separate from member content. */
+function EventLogisticsShell({ children, ...props }: ComponentProps<'main'>) {
+  return (
+    <main className='mx-auto max-w-2xl p-6 space-y-6' {...props}>
+      {children}
+    </main>
+  );
+}
+
+export function EventLogisticsPreviewSkeleton() {
+  return (
+    <>
+      <p role='status' className='sr-only'>
+        Loading event…
+      </p>
+      <EventLogisticsShell aria-busy='true'>
+        <div aria-hidden='true'>
+          <Skeleton className='h-6 w-14' />
+        </div>
+        <div aria-hidden='true'>
+          <Skeleton className='h-9 w-3/4' />
+        </div>
+        <div aria-hidden='true' className='flex items-center gap-3'>
+          <Skeleton className='size-10 shrink-0 rounded-full' />
+          <div className='min-w-0 flex-1'>
+            <p className='text-sm text-muted-foreground'>Organizer</p>
+            <Skeleton className='h-6 w-32 max-w-full' />
+          </div>
+        </div>
+        <section
+          aria-hidden='true'
+          className='rounded-card bg-card p-4 space-y-4'
+        >
+          <div>
+            <h2 className='font-heading font-semibold'>Location</h2>
+            <Skeleton className='h-6 w-3/4' />
+          </div>
+          <div>
+            <h2 className='font-heading font-semibold'>Dates</h2>
+            <Skeleton className='h-5 w-24' />
+            <Skeleton className='mt-1 h-6 w-full' />
+          </div>
+        </section>
+      </EventLogisticsShell>
+    </>
+  );
+}
 
 class LogisticsBoundary extends Component<
   { children: ReactNode },
@@ -23,7 +77,9 @@ class LogisticsBoundary extends Component<
     if (this.state.unavailable)
       return (
         <main className='mx-auto max-w-2xl p-6 space-y-4'>
-          <h1 className='text-2xl font-semibold'>Event unavailable</h1>
+          <h1 className='font-heading text-2xl font-semibold'>
+            Event unavailable
+          </h1>
           <p role='alert'>
             This event is unavailable or you do not have permission to view it.
           </p>
@@ -50,12 +106,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  if (logistics === undefined)
-    return (
-      <p role='status' className='p-6'>
-        Loading event…
-      </p>
-    );
+  if (logistics === undefined) return <EventLogisticsPreviewSkeleton />;
   const { event, organizer, entryAction } = logistics;
   const organizerName = organizer?.name || organizer?.username || 'Organizer';
   const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -66,7 +117,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
   const formatRange = (start: number, end: number | null) =>
     `${dateFormatter.format(start)}${end !== null ? ` – ${dateFormatter.format(end)}` : ''}`;
   return (
-    <main className='mx-auto max-w-2xl p-6 space-y-6'>
+    <EventLogisticsShell>
       <Link href='/events' className='text-primary underline'>
         Events
       </Link>
@@ -85,7 +136,7 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
           }
         />
       )}
-      <h1 className='text-3xl font-bold'>{event.title}</h1>
+      <h1 className='font-heading text-3xl font-bold'>{event.title}</h1>
       <div className='flex items-center gap-3'>
         <Avatar>
           <AvatarImage src={organizer?.image ?? undefined} alt='' />
@@ -104,11 +155,11 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
         aria-label='Event logistics'
       >
         <div>
-          <h2 className='font-semibold'>Location</h2>
+          <h2 className='font-heading font-semibold'>Location</h2>
           <p>{event.location || 'Location TBD'}</p>
         </div>
         <div>
-          <h2 className='font-semibold'>Dates</h2>
+          <h2 className='font-heading font-semibold'>Dates</h2>
           <p className='text-sm text-muted-foreground'>{event.timezone}</p>
           {event.chosenDateTime !== null ? (
             <p>{formatRange(event.chosenDateTime, event.chosenEndDateTime)}</p>
@@ -141,13 +192,13 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
       >
         {entryAction === 'INVITATION_ONLY' && (
           <>
-            <h2 className='font-semibold'>Invitation only</h2>
+            <h2 className='font-heading font-semibold'>Invitation only</h2>
             <p>You need an invitation to join this event.</p>
           </>
         )}
         {entryAction === 'UNAVAILABLE' && (
           <>
-            <h2 className='font-semibold'>Joining unavailable</h2>
+            <h2 className='font-heading font-semibold'>Joining unavailable</h2>
             <p>You cannot join this event at this time.</p>
           </>
         )}
@@ -222,6 +273,6 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
           </div>
         ) : null}
       </section>
-    </main>
+    </EventLogisticsShell>
   );
 }

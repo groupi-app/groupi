@@ -105,6 +105,57 @@ describe('NotificationSlate', () => {
     vi.clearAllMocks();
   });
 
+  test('routes canonical Group post notifications to the Group thread', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          event: undefined,
+          groupId: 'group-123' as TestId<'groups'>,
+          group: { id: 'group-123', title: 'Neighbors' },
+        }}
+      />
+    );
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123/posts/post-123'
+    );
+    expect(screen.getByText('Neighbors')).toBeInTheDocument();
+  });
+  test('keeps deleted Group Discord alerts on the stable cleanup view', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          type: 'GROUP_DISCORD_SYNC_BLOCKED',
+          groupId: 'group-123' as TestId<'groups'>,
+          group: undefined,
+        }}
+      />
+    );
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123'
+    );
+  });
+  test('opens Group Discord status from a blocked synchronization alert', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          type: 'GROUP_DISCORD_SYNC_BLOCKED',
+          groupId: 'group-123' as TestId<'groups'>,
+          group: { id: 'group-123' as TestId<'groups'>, title: 'Readers' },
+        }}
+      />
+    );
+    expect(screen.getByText(/check permissions and retry/)).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123/settings/discord#group-discord-heading'
+    );
+  });
+
   test('should render notification content correctly', () => {
     render(<NotificationSlate notification={mockNotification} />);
 

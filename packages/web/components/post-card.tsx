@@ -1,12 +1,20 @@
 'use client';
 
+import { Pin, Lock } from 'lucide-react';
+import {
+  usePostStateActions,
+  PostStateMenuItems,
+} from '@/features/discussion/post-state-actions';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { Dialog } from '@/components/ui/dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ContextMenuItem } from '@/components/ui/context-menu';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardAction, CardActions } from '@/components/ui/card';
+import { PostCardSkeleton } from '@/components/skeletons/post-card-skeleton';
+export { PostCardSkeleton } from '@/components/skeletons/post-card-skeleton';
 import { formatDate } from '@/lib/utils';
 import { canDeletePost } from '@/lib/event-permissions';
 import Link from 'next/link';
@@ -14,6 +22,7 @@ import { DeletePostDialog } from './delete-post-dialog';
 import { ReportDialog } from './report-dialog';
 import { Icons } from '@/components/icons';
 import MemberIcon from '@/components/member-icon';
+import { IntegrationAuthor } from '@/components/molecules/integration-author';
 import { PostCardContent } from './post-card-content';
 import RepliesIcons from './replies-icons';
 import { useActionMenu } from '@/hooks/use-action-menu';
@@ -28,6 +37,7 @@ import {
 // Post data with related information
 type PostData = Doc<'posts'> & {
   author: Doc<'persons'> & {
+    kind?: 'user' | 'integration';
     user: User;
   };
   event: Doc<'events'> & {
@@ -42,6 +52,8 @@ type PostData = Doc<'posts'> & {
   replies: Array<Doc<'replies'>>;
   replyCount?: number;
   authorId: string;
+  canSetRepliesDisabled?: boolean;
+  canPin?: boolean;
 };
 
 export function PostCard({
@@ -110,6 +122,7 @@ export function PostCard({
     [baseHandleMoreClick]
   );
 
+  const stateActions = usePostStateActions(postData, () => setSheetOpen(false));
   const isMe = author ? userId === authorId : false;
 
   if (!author) return null;
@@ -137,6 +150,7 @@ export function PostCard({
           </>
         )}
       </Button>
+      <PostStateMenuItems state={stateActions} menu='drawer' />
       {!isMe && (
         <Button
           variant='ghost'
@@ -160,8 +174,8 @@ export function PostCard({
       )}
       {canDelete && (
         <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          variant='destructive-ghost'
+          className='w-full justify-start'
           onClick={() => {
             setSheetOpen(false);
             setDeleteDialogOpen(true);
@@ -177,6 +191,7 @@ export function PostCard({
   // Context menu content for desktop
   const contextMenuContent = (
     <>
+      <PostStateMenuItems state={stateActions} menu='context' />
       <ContextMenuItem
         onSelect={e => {
           e.preventDefault();
@@ -184,7 +199,7 @@ export function PostCard({
         }}
         className='cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-3'>
           {isMuted ? (
             <>
               <Icons.bell className='size-4' />
@@ -206,7 +221,7 @@ export function PostCard({
           }}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.flag className='size-4' />
             <span>Report Post</span>
           </div>
@@ -215,7 +230,7 @@ export function PostCard({
       {isMe && (
         <ContextMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
             </div>
@@ -224,13 +239,14 @@ export function PostCard({
       )}
       {canDelete && (
         <ContextMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setDeleteDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.delete className='size-4' />
             <span>Delete</span>
           </div>
@@ -242,6 +258,7 @@ export function PostCard({
   // Dropdown menu content for desktop action button
   const dropdownContent = (
     <>
+      <PostStateMenuItems state={stateActions} menu='dropdown' />
       <DropdownMenuItem
         onSelect={e => {
           e.preventDefault();
@@ -249,7 +266,7 @@ export function PostCard({
         }}
         className='cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-3'>
           {isMuted ? (
             <>
               <Icons.bell className='size-4' />
@@ -271,7 +288,7 @@ export function PostCard({
           }}
           className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.flag className='size-4' />
             <span>Report Post</span>
           </div>
@@ -280,7 +297,7 @@ export function PostCard({
       {isMe && (
         <DropdownMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
             </div>
@@ -289,13 +306,14 @@ export function PostCard({
       )}
       {canDelete && (
         <DropdownMenuItem
+          variant='destructive'
           onSelect={e => {
             e.preventDefault();
             setDeleteDialogOpen(true);
           }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          className='cursor-pointer'
         >
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-3'>
             <Icons.delete className='size-4' />
             <span>Delete</span>
           </div>
@@ -305,9 +323,14 @@ export function PostCard({
   );
 
   const cardContent = (
-    <div className='rounded-card border border-border w-full relative shadow-raised hover:shadow-floating z-lifted group transition-shadow duration-fast'>
-      <div className='absolute top-4 left-3'>
-        {member ? (
+    <Card treatment='interactive' edge='none' className='w-full group'>
+      <CardActions className='absolute top-4 left-3'>
+        {author.kind === 'integration' ? (
+          <IntegrationAuthor
+            name={author.user.name || 'Integration'}
+            showName={false}
+          />
+        ) : member ? (
           <MemberIcon
             itemKey={member._id}
             member={member}
@@ -320,60 +343,88 @@ export function PostCard({
         ) : (
           <div className='rounded-full size-10 bg-primary' />
         )}
-      </div>
-      <ActionMenuButton
-        onClick={handleMoreClick}
-        onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
-        dropdownContent={dropdownContent}
-      >
-        <Icons.more className='size-4' />
-      </ActionMenuButton>
-      <Link
-        data-test='post-card'
-        href={`/event/${event._id}/post/${id}`}
-        className='w-full z-lifted'
-      >
-        <div className='w-full rounded-card bg-card hover:bg-accent/80 transition-colors pt-4 px-5 pb-2'>
-          <div className='flex flex-col gap-1'>
-            <div className='ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16'>
-              <div className='flex items-center gap-2'>
-                <span className='sm:text-xl font-heading text-card-foreground truncate overflow-hidden'>
-                  {title}
-                </span>
-                {isMuted && (
-                  <Icons.bellOff className='size-4 text-muted-foreground flex-shrink-0' />
-                )}
-              </div>
-              <span className='text-sm text-muted-foreground'>
-                {author.user.name || author.user.email}
-              </span>
-            </div>
-            <PostCardContent content={content} />
-            <div className='flex items-center justify-between mt-2'>
-              <div className='flex flex-col sm:flex-row sm:items-center sm:gap-4'>
-                <span className='text-muted-foreground text-sm'>
-                  Created {formatDate(createdAt)}
-                </span>
-                {editedAt &&
-                  new Date(editedAt).toISOString() !==
-                    new Date(createdAt).toISOString() && (
-                    <span className='text-muted-foreground text-sm'>
-                      Edited {formatDate(editedAt)}
-                    </span>
+      </CardActions>
+      <CardActions className='absolute top-2 right-2'>
+        <ActionMenuButton
+          label={`Actions for post ${title}`}
+          onClick={handleMoreClick}
+          onContextMenu={handleContextMenu}
+          className='size-8'
+          dropdownContent={dropdownContent}
+        >
+          <Icons.more className='size-4' />
+        </ActionMenuButton>
+      </CardActions>
+      <CardAction asChild>
+        <Link
+          data-test='post-card'
+          href={`/event/${event._id}/post/${id}`}
+          className='block w-full'
+        >
+          <div className='w-full pt-4 px-5 pb-2'>
+            <div className='flex flex-col gap-1'>
+              <div className='ml-12 mb-2 flex min-w-0 flex-col pr-12'>
+                <div className='flex items-center gap-2'>
+                  {postData.pinnedAt !== undefined && (
+                    <Pin
+                      className='size-4 shrink-0 text-muted-foreground'
+                      aria-label='Pinned post'
+                    />
                   )}
-              </div>
-              <div className='text-muted-foreground flex items-center gap-1'>
-                <RepliesIcons replies={replies} />
-                <span className='text-sm'>
-                  {replyCount ?? replies.length} replies
+                  <span className='min-w-0 flex-1 sm:text-xl font-heading text-card-foreground truncate'>
+                    {title}
+                  </span>
+                  {isMuted && (
+                    <Icons.bellOff className='size-4 text-muted-foreground flex-shrink-0' />
+                  )}
+                </div>
+                <span className='text-sm text-muted-foreground'>
+                  {author.user.name || author.user.email}
+                  {author.kind === 'integration' ? (
+                    <Badge variant='secondary' className='ml-2'>
+                      Integration
+                    </Badge>
+                  ) : null}
                 </span>
+              </div>
+              {postData.repliesDisabled && (
+                <span className='flex items-center gap-1 text-xs text-muted-foreground'>
+                  <Lock className='size-3' aria-hidden />
+                  Replies locked
+                </span>
+              )}
+              <PostCardContent content={content} />
+              <div className='flex items-center justify-between mt-2'>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:gap-4'>
+                  <span className='text-muted-foreground text-sm'>
+                    Created {formatDate(createdAt)}
+                  </span>
+                  {editedAt &&
+                    new Date(editedAt).toISOString() !==
+                      new Date(createdAt).toISOString() && (
+                      <span className='text-muted-foreground text-sm'>
+                        Edited {formatDate(editedAt)}
+                      </span>
+                    )}
+                </div>
+                <div className='text-muted-foreground flex items-center gap-1'>
+                  <RepliesIcons replies={replies} />
+                  <span className='text-sm'>
+                    {replyCount ?? replies.length}{' '}
+                    {(replyCount ?? replies.length) === 1 ? 'reply' : 'replies'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Link>
-    </div>
+        </Link>
+      </CardAction>
+      {stateActions.error && (
+        <p role='alert' className='px-5 pb-3 text-sm text-error'>
+          {stateActions.error}
+        </p>
+      )}
+    </Card>
   );
 
   return (
@@ -404,34 +455,4 @@ export function PostCard({
   );
 }
 
-export function PostCardSkeleton() {
-  return (
-    <div className='rounded-card border border-border w-full relative shadow-raised max-w-4xl'>
-      <div className='w-full transition-all pt-4 px-5 pb-2'>
-        <div className='flex flex-col gap-1'>
-          <div className='flex items-center gap-2 mb-1'>
-            <Skeleton className='size-10 rounded-full' />
-            <div className='flex flex-col space-y-1'>
-              <Skeleton className='w-36 h-4' />
-              <Skeleton className='w-16 h-3' />
-            </div>
-          </div>
-          <div className='flex flex-wrap gap-1'>
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-full h-4' />
-            <Skeleton className='w-3/4 h-4' />
-          </div>
-          <div className='flex items-center justify-between mt-2'>
-            <Skeleton className='w-16 h-4' />
-            <Skeleton className='w-16 h-4' />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Attach Skeleton as a static property for backward compatibility
 PostCard.Skeleton = PostCardSkeleton;

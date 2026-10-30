@@ -58,6 +58,7 @@ export interface PostActionApi {
           title: string;
           content: string;
           attachments?: AttachmentMutationInput[];
+          repliesDisabled?: boolean;
         },
         { postId: ConvexId<'posts'>; post: unknown }
       >;
@@ -66,6 +67,8 @@ export interface PostActionApi {
           postId: ConvexId<'posts'>;
           title?: string;
           content?: string;
+          repliesDisabled?: boolean;
+          expectedRepliesRevision?: number;
         },
         { post: unknown }
       >;
@@ -114,7 +117,8 @@ export type NotificationType =
   | 'GROUP_APPLICATION_APPROVED'
   | 'GROUP_APPLICATION_DECLINED'
   | 'GROUP_ANNOUNCEMENT'
-  | 'GROUP_ONBOARDING_REQUIRED';
+  | 'GROUP_ONBOARDING_REQUIRED'
+  | 'GROUP_DISCORD_SYNC_BLOCKED';
 
 export const ConvexEnums = {
   Status: {
@@ -143,5 +147,6 @@ export const ConvexEnums = {
     GROUP_APPLICATION_APPROVED: 'GROUP_APPLICATION_APPROVED' as const,
     GROUP_APPLICATION_DECLINED: 'GROUP_APPLICATION_DECLINED' as const,
     GROUP_ONBOARDING_REQUIRED: 'GROUP_ONBOARDING_REQUIRED' as const,
+    GROUP_DISCORD_SYNC_BLOCKED: 'GROUP_DISCORD_SYNC_BLOCKED' as const,
   },
 } as const;

@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,6 +126,7 @@ export function PresetManager({
                 Cancel
               </Button>
               <Button
+                icon={<ActionSave aria-hidden='true' className='size-4' />}
                 onClick={handleSavePreset}
                 disabled={!newPresetName.trim()}
               >

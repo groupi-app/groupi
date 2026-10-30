@@ -200,6 +200,8 @@ vi.mock('react-native-gesture-handler', () => ({
 
 // Mock Reanimated v4
 vi.mock('react-native-reanimated', () => ({
+  useReducedMotion: vi.fn(() => false),
+  cancelAnimation: vi.fn(),
   default: {
     View: vi.fn(({ children }: { children?: React.ReactNode }) => children),
   },
@@ -388,3 +390,8 @@ vi.mock('@groupi/shared/design/themes', () => ({
 // Suppress console noise in tests
 global.console.warn = vi.fn();
 global.console.error = vi.fn();
+
+vi.mock('uniwind', () => ({
+  useCSSVariable: vi.fn(() => '#8200ad'),
+  Uniwind: { setTheme: vi.fn(), updateCSSVariables: vi.fn() },
+}));

@@ -18,19 +18,19 @@ const ROLE_CONFIG: Record<
   ORGANIZER: {
     label: 'Organizer',
     icon: 'star',
-    bgClassName: 'bg-bg-warning-subtle border border-border shadow-raised',
+    bgClassName: 'bg-bg-warning-subtle border-2 border-sticker-edge',
     textClassName: 'text-text-warning',
   },
   MODERATOR: {
     label: 'Moderator',
     icon: 'shield',
-    bgClassName: 'bg-bg-info-subtle border border-border shadow-raised',
+    bgClassName: 'bg-bg-info-subtle border-2 border-sticker-edge',
     textClassName: 'text-text-info',
   },
   ATTENDEE: {
     label: 'Attendee',
     icon: 'person',
-    bgClassName: 'bg-muted border border-border shadow-raised',
+    bgClassName: 'bg-muted border-2 border-sticker-edge',
     textClassName: 'text-muted-foreground',
   },
 };

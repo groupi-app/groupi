@@ -377,10 +377,8 @@ export default function HomeContent() {
           {/* Text Content — no animation delays, renders instantly for LCP */}
           <div className='text-center lg:text-left'>
             <div className='mb-6'>
-              <h1 className='text-3xl md:text-4xl lg:text-5xl font-black text-foreground leading-tight'>
-                Spend less time planning
-                <br />
-                and more time{' '}
+              <h1 className='font-heading text-3xl md:text-4xl lg:text-5xl font-black text-foreground leading-tight'>
+                Spend less time planning and more time{' '}
               </h1>
               <Typewriter />
             </div>
@@ -395,7 +393,7 @@ export default function HomeContent() {
               <Link href='/create'>
                 <Button
                   size='lg'
-                  className='text-base px-8 py-6 rounded-card font-bold shadow-raised hover:shadow-floating hover:scale-[1.03] active:scale-[0.97] transition-all border-[3px] border-white'
+                  className='text-base px-8 py-6 rounded-card font-bold transition-all border-[3px] border-white'
                 >
                   Create an Event
                   <Icons.arrowRight className='ml-2 w-5 h-5' />
@@ -405,7 +403,7 @@ export default function HomeContent() {
                 <Button
                   size='lg'
                   variant='outline'
-                  className='text-base px-8 py-6 rounded-card font-bold bg-card border-2 hover:scale-[1.03] active:scale-[0.97] transition-all'
+                  className='text-base px-8 py-6 rounded-card font-bold bg-card border-2 transition-all'
                 >
                   Sign In
                 </Button>
@@ -429,7 +427,7 @@ export default function HomeContent() {
       <section className='py-16 px-6'>
         <div className='max-w-2xl mx-auto'>
           <div className='text-center mb-12 animate-on-scroll'>
-            <h2 className='text-2xl md:text-3xl font-black text-foreground'>
+            <h2 className='font-heading text-2xl md:text-3xl font-black text-foreground'>
               How it works
             </h2>
           </div>
@@ -478,7 +476,7 @@ export default function HomeContent() {
       <section className='py-16 px-6 bg-card/60'>
         <div className='max-w-3xl mx-auto'>
           <div className='text-center mb-12 animate-on-scroll'>
-            <h2 className='text-2xl md:text-3xl font-black text-foreground mb-3'>
+            <h2 className='font-heading text-2xl md:text-3xl font-black text-foreground mb-3'>
               Built for you, not advertisers
             </h2>
             <p className='text-muted-foreground max-w-xl mx-auto'>
@@ -520,7 +518,7 @@ export default function HomeContent() {
             ].map((card, i) => (
               <div
                 key={i}
-                className='animate-on-scroll hover:-translate-y-1 transition-transform'
+                className='animate-on-scroll transition-transform'
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
                 <StickerCard
@@ -528,7 +526,7 @@ export default function HomeContent() {
                   iconColor={card.iconColor}
                   title={card.title}
                   description={card.description}
-                  className='hover:shadow-floating transition-shadow'
+                  className='transition-shadow'
                 />
               </div>
             ))}
@@ -544,7 +542,7 @@ export default function HomeContent() {
               <div className='animate-bounce-gentle'>
                 <LogoSticker size='sm' color='primary' showArm waving />
               </div>
-              <h2 className='text-2xl md:text-3xl font-black text-foreground'>
+              <h2 className='font-heading text-2xl md:text-3xl font-black text-foreground'>
                 Ready to try it?
               </h2>
             </div>
@@ -554,7 +552,7 @@ export default function HomeContent() {
             <Link href='/create'>
               <Button
                 size='lg'
-                className='text-lg px-10 py-7 rounded-card font-bold shadow-floating hover:shadow-overlay hover:scale-[1.03] active:scale-[0.97] transition-all border-[3px] border-white'
+                className='text-lg px-10 py-7 rounded-card font-bold transition-all border-[3px] border-white'
               >
                 Create Your Event
                 <Icons.arrowRight className='ml-2 w-5 h-5' />

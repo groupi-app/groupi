@@ -17,7 +17,7 @@ export function GroupInvitationInbox({
       className='flex flex-col gap-3 rounded-card border border-border p-4'
       aria-labelledby='group-inbox-heading'
     >
-      <h2 id='group-inbox-heading' className='text-lg font-bold'>
+      <h2 id='group-inbox-heading' className='font-heading text-lg font-bold'>
         Your Group invitations
       </h2>
       {invitations === undefined ? (

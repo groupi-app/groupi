@@ -43,6 +43,7 @@ vi.mock('@groupi/shared/platform', () => ({
   },
 }));
 
+vi.mock('../ui/user-avatar', () => ({ UserAvatar: 'UserAvatar' }));
 vi.mock('../members/member-avatar', () => ({
   MemberAvatar: 'MemberAvatar',
 }));
@@ -217,4 +218,57 @@ describe('PostCard', () => {
     ]);
     expect(options.some(option => option.label === 'Edit Post')).toBe(false);
   });
+});
+
+it('labels an integration author and avoids member profile access', () => {
+  const card = PostCard({
+    post: {
+      ...post,
+      authorId: 'integration-id',
+      author: { name: 'Calendar companion', kind: 'integration' },
+    },
+    eventId: 'event-123',
+    currentPersonId: 'person-current',
+  });
+  const section = Children.toArray(
+    card.props.children.props.children as ReactNode
+  )[0];
+  expect(isValidElement(section)).toBe(true);
+  const row = isValidElement<{ children: ReactNode }>(section)
+    ? Children.toArray(section.props.children)
+    : [];
+  expect(isValidElement(row[0]) && row[0].type).toBe('UserAvatar');
+  expect(isValidElement(row[0]) && row[0].props).not.toHaveProperty('personId');
+});
+
+it('opens canonical Group posts and Group manager edit routes without Event IDs', () => {
+  vi.clearAllMocks();
+  mocks.useIsPostMuted.mockReturnValue({ isMuted: false });
+  const card = PostCard({
+    post,
+    groupId: 'group-123',
+    currentPersonId: 'person-current',
+    userRole: 'OWNER',
+  });
+  card.props.onPress();
+  expect(router.push).toHaveBeenCalledWith('/groups/group-123/posts/post-123');
+  card.props.onLongPress();
+  const options = menuOptions();
+  options.find(option => option.label === 'Edit Post')?.onPress();
+  expect(router.push).toHaveBeenCalledWith(
+    '/groups/group-123/posts/post-123/edit'
+  );
+});
+
+it('announces pinned and locked state without removing historical reply counts', () => {
+  const card = PostCard({
+    post: { ...post, pinnedAt: 100, repliesDisabled: true },
+    eventId: 'event',
+    currentPersonId: 'reader',
+  });
+  expect(card.props.accessibilityLabel).toBe(
+    'Pinned, Packing list, by Avery, replies closed, 2 replies'
+  );
+  card.props.onPress();
+  expect(router.push).toHaveBeenCalledWith('/event/event/post/post-123');
 });

@@ -1,5 +1,7 @@
 'use node';
 
+import { makeFunctionReference } from 'convex/server';
+import type { Id } from '../_generated/dataModel';
 import { internalAction } from '../_generated/server';
 import { v } from 'convex/values';
 import { Resend } from 'resend';
@@ -107,5 +109,43 @@ export const sendExternalNotifications = internalAction({
     }
 
     return results;
+  },
+});
+
+/** Collect current Group post context immediately before external delivery. */
+export const sendDiscussionNotification = internalAction({
+  args: { notificationId: v.id('notifications') },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const data = await ctx.runMutation(
+      makeFunctionReference<
+        'mutation',
+        { notificationId: Id<'notifications'> },
+        {
+          emails: { to: string; subject: string; html: string }[];
+          webhooks: {
+            url: string;
+            payload: string;
+            headers?: Record<string, string>;
+          }[];
+        }
+      >('notifications/discussionDispatch:collect'),
+      args
+    );
+    if (data.emails.length || data.webhooks.length)
+      await ctx.runAction(
+        makeFunctionReference<
+          'action',
+          typeof data,
+          {
+            emailsSent: number;
+            emailsFailed: number;
+            webhooksSent: number;
+            webhooksFailed: number;
+          }
+        >('notifications/actions:sendExternalNotifications'),
+        data
+      );
+    return null;
   },
 });

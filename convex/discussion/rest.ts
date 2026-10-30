@@ -1,3 +1,6 @@
+import { requireEventPost } from '../lib/discussionAccess';
+import { requireNoEventExclusion } from '../groups/exclusions';
+import { getDiscussionActorWithUser } from '../posts/presentation';
 import {
   internalQuery,
   internalMutation,
@@ -5,7 +8,6 @@ import {
 } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import type { Id, Doc } from '../_generated/dataModel';
-import { getPersonWithUser } from '../auth';
 import {
   createPostForPerson,
   updatePostForPerson,
@@ -36,14 +38,18 @@ const summaryFields = {
   content: v.optional(v.string()),
   editedAt: v.optional(v.union(v.number(), v.null())),
   replyCount: v.optional(v.number()),
+  repliesDisabled: v.optional(v.boolean()),
+  repliesRevision: v.optional(v.number()),
+  pinnedAt: v.optional(v.number()),
+  pinRevision: v.optional(v.number()),
   postId: v.optional(v.id('posts')),
   text: v.optional(v.string()),
   updatedAt: v.optional(v.union(v.number(), v.null())),
   author: discussionAuthor,
   attachments: v.array(attachmentSummary),
 };
-const contentSummary = v.object(summaryFields);
-const contentDetail = v.object({
+export const contentSummary = v.object(summaryFields);
+export const contentDetail = v.object({
   ...summaryFields,
   replies: v.optional(v.array(contentSummary)),
 });
@@ -52,6 +58,7 @@ async function access(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const member = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>
@@ -65,9 +72,9 @@ async function access(
     });
 }
 async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
-  const author = await getPersonWithUser(ctx, row.authorId);
+  const author = await getDiscussionActorWithUser(ctx, row.authorId);
   const attachments = await (
-    'eventId' in row
+    'title' in row
       ? ctx.db
           .query('attachments')
           .withIndex('by_post', q => q.eq('postId', row._id))
@@ -78,10 +85,14 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
   return {
     id: row._id,
     createdAt: row._creationTime,
-    ...('eventId' in row
+    ...('title' in row
       ? {
           eventId: row.eventId,
           title: row.title,
+          repliesDisabled: row.repliesDisabled ?? false,
+          repliesRevision: row.repliesRevision ?? 0,
+          pinnedAt: row.pinnedAt,
+          pinRevision: row.pinRevision ?? 0,
           content: row.content,
           editedAt: row.editedAt ?? null,
           replyCount: (
@@ -99,6 +110,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
     author: author
       ? {
           id: author.person._id,
+          kind: author.kind,
           user: {
             id: author.user._id,
             name: author.user.name ?? null,
@@ -122,7 +134,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
 }
 async function detail(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
   const result = await summary(ctx, row);
-  if ('eventId' in row) {
+  if ('title' in row) {
     const replies = await ctx.db
       .query('replies')
       .withIndex('by_post', q => q.eq('postId', row._id))
@@ -145,10 +157,10 @@ export const read = internalQuery({
         code: 'NOT_FOUND',
         message: 'Content not found',
       });
-    const post = 'eventId' in row ? row : await ctx.db.get(row.postId);
+    const post = 'title' in row ? row : await ctx.db.get(row.postId);
     if (!post)
       throw new ConvexError({ code: 'NOT_FOUND', message: 'Parent not found' });
-    await access(ctx, args.personId, post.eventId);
+    await access(ctx, args.personId, requireEventPost(post).eventId);
     return detail(ctx, row);
   },
 });
@@ -176,7 +188,11 @@ export const list = internalQuery({
     const post = postId ? await ctx.db.get(postId) : null;
     if (!eventId && !post)
       throw new ConvexError({ code: 'NOT_FOUND', message: 'Parent not found' });
-    await access(ctx, args.personId, eventId ?? post!.eventId);
+    await access(
+      ctx,
+      args.personId,
+      eventId ?? requireEventPost(post!).eventId
+    );
     const query =
       args.kind === 'posts'
         ? ctx.db
@@ -230,6 +246,8 @@ export const write = internalMutation({
     body: v.object({
       title: v.optional(v.string()),
       content: v.optional(v.string()),
+      repliesDisabled: v.optional(v.boolean()),
+      expectedRepliesRevision: v.optional(v.number()),
       text: v.optional(v.string()),
       attachments: v.optional(v.array(attachmentInputValidator)),
       attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
@@ -244,12 +262,33 @@ export const write = internalMutation({
   ),
   handler: async (ctx, a) => {
     const { personId, body } = a;
+    // Versioned REST discussion remains Event-scoped; native Group adapters use
+    // the canonical writes directly after validating their stored parent.
+    if (a.kind === 'posts' && a.operation !== 'create') {
+      const post = await ctx.db.get(a.id as Id<'posts'>);
+      if (post) requireEventPost(post);
+    } else if (a.kind === 'replies') {
+      const reply =
+        a.operation === 'create'
+          ? null
+          : await ctx.db.get(a.id as Id<'replies'>);
+      if (a.operation !== 'create' && !reply)
+        throw new ConvexError({
+          code: 'NOT_FOUND',
+          message: 'Reply not found',
+        });
+      const parentId =
+        a.operation === 'create' ? (a.id as Id<'posts'>) : reply!.postId;
+      const post = await ctx.db.get(parentId);
+      if (post) requireEventPost(post);
+    }
     if (a.kind === 'posts') {
       if (a.operation === 'create')
         return createPostForPerson(ctx, personId, {
           eventId: a.id as Id<'events'>,
           title: body.title ?? '',
           content: body.content ?? '',
+          repliesDisabled: body.repliesDisabled,
           attachments: body.attachments,
         });
       if (a.operation === 'delete')
@@ -260,6 +299,8 @@ export const write = internalMutation({
         postId: a.id as Id<'posts'>,
         title: body.title,
         content: body.content,
+        repliesDisabled: body.repliesDisabled,
+        expectedRepliesRevision: body.expectedRepliesRevision,
         attachmentsToAdd: body.attachmentsToAdd,
         attachmentIdsToDelete: body.attachmentIdsToDelete,
       });

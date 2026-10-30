@@ -1,15 +1,17 @@
-import { Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Plus } from 'lucide-react-native';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 
 export function CreateEventFab() {
   return (
-    <Pressable
+    <Button
+      accessibilityLabel='Create event'
       onPress={() => router.push('/create-event')}
-      className='absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full border-[3px] border-white bg-primary shadow-floating'
-      style={{ elevation: 6 }}
+      size='icon'
+      className='absolute bottom-6 right-6 h-14 w-14 rounded-full'
     >
-      <Ionicons name='add' size={28} color='#ffffff' />
-    </Pressable>
+      <Icon as={Plus} size={28} className='text-primary-foreground' />
+    </Button>
   );
 }

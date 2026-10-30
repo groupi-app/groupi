@@ -1,5 +1,8 @@
 'use client';
 
+import { Plus as ActionPlus } from 'lucide-react';
+import type { AddonConfiguration } from '../../model/types';
+
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -10,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardAction, CardContent } from '@/components/ui/card';
 import { useMyPublishedTemplates } from '../../hooks/use-addon-templates';
 import type { CustomAddonTemplate } from '../../model/custom-addon-schema';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -19,8 +22,8 @@ interface TemplatePickerProps {
   eventId: Id<'events'>;
   onSelect: (
     addonType: string,
-    config: Record<string, unknown>
-  ) => Promise<void>;
+    config: AddonConfiguration
+  ) => Promise<void | boolean>;
 }
 
 export function TemplatePicker({ onSelect }: TemplatePickerProps) {
@@ -41,7 +44,7 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
 
     setIsAdding(true);
     try {
-      await onSelect(addonType, config);
+      if ((await onSelect(addonType, config)) === false) return;
       setOpen(false);
     } finally {
       setIsAdding(false);
@@ -77,6 +80,7 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
                 No published custom add-ons yet.
               </p>
               <Button
+                icon={<ActionPlus aria-hidden='true' className='size-4' />}
                 variant='link'
                 className='mt-1'
                 onClick={() => {
@@ -106,30 +110,36 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
 
               return (
                 <Card
+                  treatment='interactive'
                   key={tmpl._id}
-                  className='cursor-pointer rounded-card shadow-raised transition-shadow hover:shadow-floating'
-                  onClick={() =>
-                    !isAdding &&
-                    handleSelect({
-                      _id: tmpl._id,
-                      name: tmpl.name,
-                      template: tmpl.template as CustomAddonTemplate,
-                    })
-                  }
+                  className='cursor-pointer rounded-card'
                 >
-                  <CardContent className='flex items-center gap-3 p-3'>
-                    <div className='flex size-9 items-center justify-center rounded-button bg-bg-interactive'>
-                      <IconComponent className='size-4 text-primary' />
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate text-sm font-medium'>
-                        {tmpl.name}
-                      </p>
-                      <p className='truncate text-xs text-muted-foreground'>
-                        {tmpl.description}
-                      </p>
-                    </div>
-                  </CardContent>
+                  <CardAction
+                    disabled={isAdding}
+                    onClick={() =>
+                      !isAdding &&
+                      handleSelect({
+                        _id: tmpl._id,
+                        name: tmpl.name,
+                        template: tmpl.template as CustomAddonTemplate,
+                      })
+                    }
+                    className='w-full'
+                  >
+                    <CardContent className='flex items-center gap-3 p-3'>
+                      <div className='flex size-9 items-center justify-center rounded-button bg-bg-interactive'>
+                        <IconComponent className='size-4 text-primary' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-medium'>
+                          {tmpl.name}
+                        </p>
+                        <p className='truncate text-xs text-muted-foreground'>
+                          {tmpl.description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CardAction>
                 </Card>
               );
             }

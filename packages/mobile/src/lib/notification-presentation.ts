@@ -36,7 +36,8 @@ export function getNotificationMessage(
   notification: NotificationPresentationInput
 ) {
   const authorName = getAuthorName(notification);
-  const eventTitle = notification.event?.title ?? 'an event';
+  const eventTitle =
+    notification.group?.title ?? notification.event?.title ?? 'an event';
   const postTitle = notification.post?.title ?? 'a post';
 
   switch (notification.type) {
@@ -47,7 +48,9 @@ export function getNotificationMessage(
     case 'EVENT_APPLICATION_DECLINED':
       return `Your application to ${eventTitle} was declined`;
     case 'EVENT_EDITED':
-      return `${eventTitle} was updated`;
+      return notification.groupId && notification.postId
+        ? `“${postTitle}” was updated`
+        : `${eventTitle} was updated`;
     case 'DATE_CHOSEN':
       return `A date was selected for ${eventTitle}`;
     case 'DATE_CHANGED':
@@ -93,6 +96,8 @@ export function getNotificationMessage(
       return notification.groupAnnouncement
         ? `${notification.groupAnnouncement.title}: ${notification.groupAnnouncement.message}`
         : 'Group announcement unavailable';
+    case 'GROUP_DISCORD_SYNC_BLOCKED':
+      return 'Discord synchronization needs attention. Open Group Discord settings to check permissions and retry.';
     case 'GROUP_ONBOARDING_REQUIRED':
       return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_REMOVED':
@@ -115,6 +120,10 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (notification.type === 'GROUP_DISCORD_SYNC_BLOCKED') {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/groups/${groupId}` : null;
+  }
   if (notification.type === 'GROUP_ONBOARDING_REQUIRED') {
     const groupId = notification.group?.id ?? notification.groupId;
     return groupId ? `/groups/${groupId}/questionnaire` : null;
@@ -147,6 +156,8 @@ export function getNotificationDestination(
   ) {
     return '/friends';
   }
+  if (notification.groupId && notification.postId && notification.post)
+    return `/groups/${notification.groupId}/posts/${notification.postId}`;
   if (!notification.eventId) return null;
   if (notification.type === 'EVENT_APPLICATION_RECEIVED')
     return `/event/${notification.eventId}/applications`;

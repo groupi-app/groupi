@@ -20,6 +20,8 @@ Feature-specific application behavior lives in feature-owned modules under
 The atomic design system remains the home for reusable UI. The first migrated
 feature is add-ons; see `docs/adr/0002-feature-owned-application-modules.md`.
 
+When changing UI, apply the approved [material and interaction contracts](../../docs/ui-design-system.md#material-and-interaction-contracts). Review reusable and page-specific components from simplest to most complex; keep structural redesign in its separate feature review.
+
 Groupi uses a three-layer design token system with atomic component architecture:
 
 | Layer      | Purpose                         | Example                          |
@@ -346,7 +348,8 @@ className = 'transition-all duration-fast ease-bounce';
 className = 'duration-normal ease-default';
 
 // For hover effects
-className = 'hover:scale-[1.02] active:scale-[0.98] duration-fast ease-bounce';
+// Use canonical Button/Card action states: depress on hover/press, retain visible focus.
+// Respect reduced motion; native uses press feedback rather than hover.
 ```
 
 ## Common Patterns

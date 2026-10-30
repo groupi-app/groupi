@@ -1868,7 +1868,7 @@ Commands:
   create [options]                                            Create an owner-only Group
   edit [options] <group-id>                                   Update Group identity as owner
   delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain
-  announce [options] <group-id>                               Explicitly announce to permitted members; reports queued notifications
+  announce [options] <group-id>                               Retired: create a post for Group updates instead
   announcement-status [options] <group-id>                    Recover your aggregate announcement status
   members [options] <group-id>                                Read admitted Group roster
   invites [options] <group-id>                                Inspect Group invitations as manager
@@ -2042,8 +2042,10 @@ Usage: groupi groups delete [options] <group-id>
 Explicitly retire an owned Group and its data; independent Events remain
 
 Options:
-  --yes       Confirm Group deletion
-  -h, --help  display help for command
+  --yes                           Confirm Group deletion
+  --acknowledge-discord-handback  Hand retained Discord access to staff; owed removals continue,
+                                  server and bot remain
+  -h, --help                      display help for command
 ```
 
 ## groupi groups announce
@@ -2051,12 +2053,12 @@ Options:
 ```text
 Usage: groupi groups announce [options] <group-id>
 
-Explicitly announce to permitted members; reports queued notifications
+Retired: create a post for Group updates instead
 
 Options:
-  --title <title>      Announcement title (1–100 characters)
-  --message <message>  Announcement message (1–2000 characters)
-  --request-id <id>    Stable <unix-ms>.<uuid-v4> key; preserve body on recovery
+  --title <title>      Legacy announcement title (unused)
+  --message <message>  Legacy announcement message (unused)
+  --request-id <id>    Legacy request key (unused)
   -h, --help           display help for command
 ```
 

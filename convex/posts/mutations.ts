@@ -1,3 +1,4 @@
+import { setRepliesDisabledForPerson, setPinnedForPerson } from './controls';
 import {
   createPostArgs,
   updatePostArgs,
@@ -41,4 +42,29 @@ export const deletePost = mutation({
     const { person } = await requireAuth(ctx);
     return deletePostForPerson(ctx, person._id, args);
   },
+});
+
+export const setRepliesDisabled = mutation({
+  args: {
+    postId: v.id('posts'),
+    repliesDisabled: v.boolean(),
+    expectedRevision: v.number(),
+  },
+  returns: v.object({ revision: v.number(), repliesDisabled: v.boolean() }),
+  handler: async (ctx, args) =>
+    setRepliesDisabledForPerson(ctx, (await requireAuth(ctx)).person._id, args),
+});
+export const setPinned = mutation({
+  args: {
+    postId: v.id('posts'),
+    pinned: v.boolean(),
+    expectedRevision: v.number(),
+  },
+  returns: v.object({
+    revision: v.number(),
+    pinned: v.boolean(),
+    pinnedAt: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) =>
+    setPinnedForPerson(ctx, (await requireAuth(ctx)).person._id, args),
 });

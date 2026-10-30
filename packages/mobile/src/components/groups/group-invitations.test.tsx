@@ -1,3 +1,6 @@
+vi.mock('../content/new-content-button', () => ({
+  GroupNewContentButton: 'GroupNewContentButton',
+}));
 vi.mock('./group-announcement-composer', () => ({
   GroupAnnouncementComposer: () => null,
 }));
@@ -824,6 +827,9 @@ describe('native moderation with production SDK and providers', () => {
     network.moderator = true;
     mounted = await mount(GroupDetailScreen);
     await press(mounted, 'Leave Group');
+    expect(vi.mocked(Alert.alert).mock.calls.at(-1)![1]).toContain(
+      'independent Event memberships and RSVP responses remain unchanged'
+    );
     expect(network.mutation).not.toHaveBeenCalled();
     await confirm();
     expect(network.mutation).toHaveBeenCalledExactlyOnceWith(

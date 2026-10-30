@@ -178,7 +178,7 @@ function ReminderEventCard({
   };
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-4'>
         <div className='flex items-center gap-3'>
           <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>
@@ -249,7 +249,8 @@ function ReminderManageConfig({
   const handleOffsetChange = async (value: ReminderOffset) => {
     setOffset(value);
     if (enabled) {
-      await onSave({ reminderOffset: value });
+      if ((await onSave({ reminderOffset: value })) === false)
+        setOffset(currentOffset);
     }
   };
 

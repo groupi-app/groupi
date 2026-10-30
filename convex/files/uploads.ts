@@ -1,6 +1,9 @@
+import { requireDiscussionParent } from '../lib/discussionAccess';
+import { uploadDetails } from './contracts';
 import { validateImageBytes } from './imageRules';
 import {
   internalMutation,
+  internalQuery,
   httpAction,
   type MutationCtx,
 } from '../_generated/server';
@@ -15,7 +18,7 @@ export const purposeValidator = v.union(
 export type UploadPurpose = 'attachment' | 'avatar' | 'cover';
 export async function claimUpload(
   ctx: MutationCtx,
-  personId: Id<'persons'>,
+  personId: Id<'persons'> | Id<'authorizationPrincipals'>,
   storageId: Id<'_storage'>,
   purpose: UploadPurpose
 ) {
@@ -198,5 +201,47 @@ export const expireTicket = internalMutation({
     // Successful and rejected uploads consume their ticket before expiry runs.
     if (await ctx.db.get(id)) await ctx.db.delete(id);
     return null;
+  },
+});
+
+export const readRegisteredUpload = internalQuery({
+  args: { storageId: v.id('_storage'), personId: v.id('persons') },
+  returns: uploadDetails,
+  handler: async (ctx, { storageId, personId }) => {
+    const attachment = await ctx.db
+      .query('attachments')
+      .withIndex('by_storage', q => q.eq('storageId', storageId))
+      .unique();
+    const upload = await ctx.db
+      .query('uploads')
+      .withIndex('by_storage', q => q.eq('storageId', storageId))
+      .unique();
+    if (attachment) {
+      const reply = attachment.replyId
+        ? await ctx.db.get(attachment.replyId)
+        : null;
+      const post = attachment.postId
+        ? await ctx.db.get(attachment.postId)
+        : reply
+          ? await ctx.db.get(reply.postId)
+          : null;
+      if (!post)
+        throw new ConvexError({
+          code: 'FORBIDDEN',
+          message: 'File access denied.',
+        });
+      await requireDiscussionParent(ctx, post, personId);
+    } else if (!upload || upload.personId !== personId || upload.claimed)
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'File access denied.',
+      });
+    return {
+      storageId,
+      filename: attachment?.filename ?? 'upload',
+      mimeType: attachment?.mimeType ?? upload!.mimeType,
+      size: attachment?.size ?? upload!.size,
+      url: await ctx.storage.getUrl(storageId),
+    };
   },
 });

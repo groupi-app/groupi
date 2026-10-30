@@ -1,3 +1,5 @@
+import { isDateOptionPassed } from '@groupi/shared/utils';
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -65,6 +67,7 @@ export async function submitAvailabilityForPerson(
   personId: Id<'persons'>,
   { eventId, responses }: Infer<typeof submitAvailabilityArgs>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   // Require authentication and membership
   const person = { _id: personId };
 
@@ -103,6 +106,13 @@ export async function submitAvailabilityForPerson(
       attendanceError(
         'VALIDATION_ERROR',
         'Potential date time does not belong to this event'
+      );
+    }
+
+    if (isDateOptionPassed(potentialDateTime, now)) {
+      attendanceError(
+        'VALIDATION_ERROR',
+        'This date has passed. Choose a future date option.'
       );
     }
 
@@ -168,6 +178,7 @@ export async function updateSingleAvailabilityForPerson(
     attendanceError('VALIDATION_ERROR', 'Potential date time not found');
   }
 
+  await requireNoEventExclusion(ctx, potentialDateTime.eventId, personId);
   // Get user's membership for this event
   const membership = await ctx.db
     .query('memberships')
@@ -183,6 +194,13 @@ export async function updateSingleAvailabilityForPerson(
   // Validate note length
   if (note && note.length > 200) {
     attendanceError('VALIDATION_ERROR', 'Note must be 200 characters or less');
+  }
+
+  if (isDateOptionPassed(potentialDateTime, Date.now())) {
+    attendanceError(
+      'VALIDATION_ERROR',
+      'This date has passed. Choose a future date option.'
+    );
   }
 
   // Collapse any historical duplicates before applying the update.
@@ -229,6 +247,7 @@ export async function clearAllAvailabilityForPerson(
   personId: Id<'persons'>,
   { eventId }: Infer<typeof clearAllAvailabilityArgs>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   // Require authentication and membership
   const person = { _id: personId };
 
@@ -249,13 +268,19 @@ export async function clearAllAvailabilityForPerson(
     .withIndex('by_membership', q => q.eq('membershipId', membership._id))
     .collect();
 
-  // Delete all availabilities
+  // Passed-date responses are historical: bulk reset only clears editable dates.
+  const removable = [];
+  for (const availability of availabilities) {
+    const option = await ctx.db.get(availability.potentialDateTimeId);
+    if (!option || !isDateOptionPassed(option, Date.now()))
+      removable.push(availability);
+  }
   await Promise.all(
-    availabilities.map(availability => ctx.db.delete(availability._id))
+    removable.map(availability => ctx.db.delete(availability._id))
   );
 
   return {
-    deletedCount: availabilities.length,
+    deletedCount: removable.length,
     membershipId: membership._id,
   };
 }

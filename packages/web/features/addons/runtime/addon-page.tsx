@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useAddonConfig } from '../hooks';
 import { useAddonGating } from './use-addon-gating';
+import {
+  canRenderParticipantFeature,
+  participantFeatureTitle,
+} from './participant-features';
+import { FeatureRenderingBoundary } from './feature-rendering-boundary';
 import { getAddonById } from './catalog';
 
 export function AddonPage({
@@ -22,21 +27,31 @@ export function AddonPage({
   const { redirectTo, isLoading: gatingLoading } = useAddonGating(eventId);
 
   if (eventData === undefined || addonConfig === undefined) {
-    return <p role='status'>Loading add-on…</p>;
+    return <p role='status'>Loading event feature…</p>;
   }
 
-  const definition = getAddonById(addonId, addonConfig?.config);
+  const definition = canRenderParticipantFeature(addonId, addonConfig?.config)
+    ? getAddonById(addonId, addonConfig?.config)
+    : undefined;
   if (!eventData || !addonConfig?.enabled || !definition?.PageComponent) {
     const reason = !addonConfig
-      ? 'This add-on has not been added to this event.'
+      ? 'This feature has not been enabled for this event.'
       : !addonConfig.enabled
-        ? 'This add-on is disabled for this event.'
-        : 'This add-on does not have an available page.';
+        ? 'This feature is disabled for this event.'
+        : 'This saved feature does not have an available page in this version.';
     return (
       <div className='container mx-auto py-8 text-center'>
         <div className='max-w-md mx-auto'>
-          <h1 className='text-2xl font-bold mb-4'>Add-on unavailable</h1>
-          <p className='text-muted-foreground mb-6'>{reason}</p>
+          <h1 className='font-heading text-2xl font-bold mb-4'>
+            {addonConfig
+              ? participantFeatureTitle(addonId, addonConfig.config)
+              : 'Event feature unavailable'}
+          </h1>
+          <p role='status' className='text-muted-foreground mb-6'>
+            {reason}{' '}
+            {addonConfig &&
+              'No saved information is changed by opening this page.'}
+          </p>
           <Button asChild>
             <Link href={`/event/${eventId}`}>Return to Event</Link>
           </Button>
@@ -65,12 +80,16 @@ export function AddonPage({
       <h1 className='text-4xl font-heading my-4'>
         {definition.pageTitle ?? definition.name}
       </h1>
-      <definition.PageComponent
-        key={`${eventId}:${addonId}`}
-        eventId={event._id}
-        addonType={addonId}
-        config={addonConfig.config}
-      />
+      <FeatureRenderingBoundary
+        key={`${eventId}:${addonId}:${addonConfig.updatedAt}`}
+        title={participantFeatureTitle(addonId, addonConfig.config)}
+      >
+        <definition.PageComponent
+          eventId={event._id}
+          addonType={addonId}
+          config={addonConfig.config}
+        />
+      </FeatureRenderingBoundary>
     </div>
   );
 }

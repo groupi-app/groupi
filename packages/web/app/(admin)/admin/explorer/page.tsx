@@ -1,9 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { useSearchParams } from 'next/navigation';
 import { DataExplorer, type DetailTarget } from './components/data-explorer';
 
-export default function ExplorerPage() {
+function ExplorerContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get('type');
   const id = searchParams.get('id');
@@ -16,7 +18,7 @@ export default function ExplorerPage() {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-3xl font-bold'>Data Explorer</h1>
+        <h1 className='font-heading text-3xl font-bold'>Data Explorer</h1>
         <p className='text-muted-foreground'>
           Browse and explore all entities in the database with clickable
           relations.
@@ -24,5 +26,13 @@ export default function ExplorerPage() {
       </div>
       <DataExplorer initialTarget={initialTarget} />
     </div>
+  );
+}
+
+export default function ExplorerPage() {
+  return (
+    <Suspense>
+      <ExplorerContent />
+    </Suspense>
   );
 }

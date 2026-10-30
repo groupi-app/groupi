@@ -1,7 +1,11 @@
+'use client';
+
 // Inspired by react-hot-toast library
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
+import { dismissToast, toast as deliverToast } from '@/lib/utils/toast';
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
@@ -130,7 +134,50 @@ const listeners: Array<(state: State) => void> = [];
 let memoryState: State = { toasts: [] };
 
 function dispatch(action: Action) {
+  const previous = memoryState;
   memoryState = reducer(memoryState, action);
+  // Compatibility callers and the mounted app renderer share one delivery path.
+  for (const toast of previous.toasts) {
+    const current = memoryState.toasts.find(item => item.id === toast.id);
+    if (toast.open && !current?.open) dismissToast(toast.id);
+  }
+  if (action.type === 'ADD_TOAST' || action.type === 'UPDATE_TOAST') {
+    const current = memoryState.toasts.find(
+      item => item.id === action.toast.id
+    );
+    if (current?.open) {
+      const actionProps = current.action?.props;
+      let toastAction: React.ReactNode;
+      if (actionProps) {
+        const { altText, asChild, ...buttonProps } = actionProps;
+        const actionButtonProps = {
+          type: 'button',
+          ...buttonProps,
+          'data-button': true,
+          'data-action': true,
+          'aria-label': buttonProps['aria-label'] ?? altText,
+          onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+            buttonProps.onClick?.(event);
+            if (!event.defaultPrevented) current.onOpenChange?.(false);
+          },
+        };
+        toastAction = React.createElement(
+          asChild ? Slot : 'button',
+          actionButtonProps
+        );
+      }
+      deliverToast(
+        { ...current, variant: current.variant ?? undefined },
+        {
+          id: current.id,
+          duration: current.duration,
+          onDismiss: () => current.onOpenChange?.(false),
+          onAutoClose: () => current.onOpenChange?.(false),
+          action: toastAction,
+        }
+      );
+    }
+  }
   listeners.forEach(listener => {
     listener(memoryState);
   });
@@ -141,7 +188,7 @@ type Toast = Omit<ToasterToast, 'id'>;
 function toast({ ...props }: Toast) {
   const id = genId();
 
-  const update = (props: ToasterToast) =>
+  const update = (props: Partial<ToasterToast>) =>
     dispatch({
       type: 'UPDATE_TOAST',
       toast: { ...props, id },
@@ -155,6 +202,7 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: open => {
+        props.onOpenChange?.(open);
         if (!open) dismiss();
       },
     },
@@ -178,7 +226,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []);
 
   return {
     ...state,

@@ -15,7 +15,7 @@ export default function SupportPage() {
         </p>
       </section>
       <section>
-        <h2>Report a problem</h2>
+        <h2 className='font-heading'>Report a problem</h2>
         <p>
           Include your device model, iOS version, Groupi version/build if
           available, what you were trying to do, and what happened. Include
@@ -28,7 +28,7 @@ export default function SupportPage() {
         </p>
       </section>
       <section>
-        <h2>Signing in</h2>
+        <h2 className='font-heading'>Signing in</h2>
         <p>
           Use the sign-in method connected to your account. For email-code login
           in the iOS app, check the address entered and your spam folder.
@@ -38,7 +38,7 @@ export default function SupportPage() {
         </p>
       </section>
       <section>
-        <h2>Notifications and invitations</h2>
+        <h2 className='font-heading'>Notifications and invitations</h2>
         <p>
           Check notification permissions in iOS Settings and notification or
           mute preferences inside Groupi. For invitation problems, ask the
@@ -47,7 +47,7 @@ export default function SupportPage() {
         </p>
       </section>
       <section>
-        <h2>Content or safety concerns</h2>
+        <h2 className='font-heading'>Content or safety concerns</h2>
         <p>
           Email <a href='mailto:support@groupi.gg'>support@groupi.gg</a> with
           enough information to identify the issue, avoiding unnecessary
@@ -56,7 +56,7 @@ export default function SupportPage() {
         </p>
       </section>
       <section>
-        <h2>Account deletion</h2>
+        <h2 className='font-heading'>Account deletion</h2>
         <p>
           Open Settings → Account → Danger Zone → Delete Account. Resolve
           ownership responsibilities shown by the app and follow the

@@ -43,7 +43,7 @@ export function AvailabilityContent({
     return (
       <div className='container max-w-5xl py-4'>
         <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold'>No Date Options</h1>
+          <h1 className='font-heading text-2xl font-bold'>No Date Options</h1>
           <p className='mt-2'>Voting is not enabled for this event</p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AvailabilityContent({
     return (
       <div className='container max-w-5xl py-4'>
         <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold'>Access Restricted</h1>
+          <h1 className='font-heading text-2xl font-bold'>Access Restricted</h1>
           <p className='mt-2'>Organizers cannot vote on availabilities</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function AvailabilityContent({
 
         <div className='my-2'>
           <h1 className='font-heading text-4xl'>When are you around?</h1>
-          <h2 className='text-muted-foreground text-lg'>
+          <h2 className='font-heading text-muted-foreground text-lg'>
             Don&apos;t worry. You can update this later.
           </h2>
         </div>

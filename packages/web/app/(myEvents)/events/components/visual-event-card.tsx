@@ -1,9 +1,13 @@
 'use client';
 
+import { classifyEventLifecycle } from '@groupi/shared/utils';
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import Link from 'next/link';
+import { Card, CardAction, CardActions } from '@/components/ui/card';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HostingBadge, StickerIcon } from '@/components/atoms';
+import { Globe } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { Doc, Id } from '@/convex/_generated/dataModel';
@@ -65,6 +69,12 @@ export function VisualEventCard({
   organizer,
   className,
 }: VisualEventCardProps) {
+  const now = useLifecycleClock([
+    event.chosenEndDateTime,
+    ...(event.potentialDateTimes ?? []),
+  ]);
+  const needsNewDates =
+    classifyEventLifecycle(event, now) === 'NEEDS_NEW_DATES';
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -132,8 +142,8 @@ export function VisualEventCard({
             </Link>
           </Button>
           <Button
-            variant='ghost'
-            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+            variant='destructive-ghost'
+            className='w-full justify-start'
             onClick={() => {
               setSheetOpen(false);
               setDeleteDialogOpen(true);
@@ -157,8 +167,8 @@ export function VisualEventCard({
             Report Event
           </Button>
           <Button
-            variant='ghost'
-            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+            variant='destructive-ghost'
+            className='w-full justify-start'
             onClick={() => {
               setSheetOpen(false);
               setLeaveDialogOpen(true);
@@ -200,7 +210,7 @@ export function VisualEventCard({
         <>
           <ContextMenuItem className='cursor-pointer' asChild>
             <Link href={`/event/${eventId}/edit`}>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.edit className='size-4' />
                 <span>Edit Details</span>
               </div>
@@ -215,13 +225,14 @@ export function VisualEventCard({
             </Link>
           </ContextMenuItem>
           <ContextMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setDeleteDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.delete className='size-4' />
               <span>Delete Event</span>
             </div>
@@ -236,19 +247,20 @@ export function VisualEventCard({
             }}
             className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.flag className='size-4' />
               <span>Report Event</span>
             </div>
           </ContextMenuItem>
           <ContextMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setLeaveDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.leave className='size-4' />
               <span>Leave Event</span>
             </div>
@@ -286,7 +298,7 @@ export function VisualEventCard({
         <>
           <DropdownMenuItem className='cursor-pointer' asChild>
             <Link href={`/event/${eventId}/edit`}>
-              <div className='flex items-center gap-1'>
+              <div className='flex items-center gap-3'>
                 <Icons.edit className='size-4' />
                 <span>Edit Details</span>
               </div>
@@ -301,13 +313,14 @@ export function VisualEventCard({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setDeleteDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.delete className='size-4' />
               <span>Delete Event</span>
             </div>
@@ -322,19 +335,20 @@ export function VisualEventCard({
             }}
             className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.flag className='size-4' />
               <span>Report Event</span>
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
+            variant='destructive'
             onSelect={e => {
               e.preventDefault();
               setLeaveDialogOpen(true);
             }}
-            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+            className='cursor-pointer'
           >
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-3'>
               <Icons.leave className='size-4' />
               <span>Leave Event</span>
             </div>
@@ -345,147 +359,162 @@ export function VisualEventCard({
   );
 
   const cardContent = (
-    <div
-      className={cn(
-        'relative group',
-        'transition-all duration-fast ease-bounce',
-        'hover:scale-[1.02] active:scale-[0.98]'
-      )}
-    >
+    <Card treatment='interactive' className='relative group'>
       {/* Action menu button */}
-      <ActionMenuButton
-        onClick={handleMoreClick}
-        onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 bg-card/80 backdrop-blur-sm hover:bg-card transition-colors rounded-md top-2 right-2 flex items-center justify-center opacity-0 group-hover:opacity-100'
-        dropdownContent={dropdownContent}
-      >
-        <Icons.more className='size-4' />
-      </ActionMenuButton>
-
-      <Link href={`/event/${eventId}`}>
-        <div
-          className={cn(
-            'flex flex-col overflow-hidden rounded-card shadow-raised bg-card cursor-pointer',
-            'transition-shadow duration-fast ease-bounce',
-            'group-hover:shadow-floating',
-            className
-          )}
+      <CardActions className='absolute top-2 right-2'>
+        <ActionMenuButton
+          label={`Actions for event ${event.title}`}
+          onClick={handleMoreClick}
+          onContextMenu={handleContextMenu}
+          className='size-8 bg-card/80 backdrop-blur-sm hover:bg-card transition-colors rounded-md flex items-center justify-center'
+          dropdownContent={dropdownContent}
         >
-          {/* Cover image area */}
-          <div className='relative aspect-[16/9] overflow-hidden'>
-            {event.imageUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */
-              <img
-                src={event.imageUrl}
-                alt={event.title}
-                className='absolute inset-0 w-full h-full object-cover'
-                style={{ objectPosition: `${focalX}% ${focalY}%` }}
-              />
-            ) : (
-              <div
-                className={cn(
-                  'absolute inset-0 bg-gradient-to-br',
-                  gradientClass
-                )}
-              >
-                <div className='absolute inset-0 flex items-center justify-center'>
-                  <Icons.party className='size-12 text-muted-foreground/30' />
-                </div>
-              </div>
+          <Icons.more className='size-4' />
+        </ActionMenuButton>
+      </CardActions>
+
+      <CardAction asChild>
+        <Link href={`/event/${eventId}`}>
+          <div
+            className={cn(
+              'flex flex-col overflow-hidden rounded-card  cursor-pointer',
+              'transition-shadow duration-fast ease-bounce',
+              '',
+              className
             )}
-
-            {/* Hosting badge - top left */}
-            {isOrganizer && <HostingBadge className='absolute top-3 left-3' />}
-
-            {/* Muted indicator - top left (after hosting badge or alone) */}
-            {isMuted && (
-              <div
-                className={cn(
-                  'absolute top-3 bg-card/90 backdrop-blur-sm rounded-full p-1.5 shadow-raised',
-                  isOrganizer ? 'left-11' : 'left-3'
-                )}
-              >
-                <Icons.bellOff className='size-3.5 text-muted-foreground' />
-              </div>
-            )}
-          </div>
-
-          {/* Content area */}
-          <div className='p-4 flex flex-col gap-2'>
-            {/* Title */}
-            <h3 className='font-heading text-lg font-medium line-clamp-1'>
-              {event.title}
-            </h3>
-
-            {/* Description */}
-            {event.description && (
-              <p className='text-sm text-muted-foreground line-clamp-2'>
-                {event.description}
-              </p>
-            )}
-
-            {/* Date/Time */}
-            <div className='flex items-center gap-2 text-sm'>
-              <StickerIcon icon={Icons.date} size='xs' color='info' />
-              <span className='text-muted-foreground'>
-                {event.chosenDateTime
-                  ? formatDateTimeRangeShort(
-                      event.chosenDateTime,
-                      event.chosenEndDateTime
-                    )
-                  : 'Date TBD'}
-              </span>
-            </div>
-
-            {/* Location */}
-            {event.location && (
-              <div className='flex items-center gap-2 text-sm'>
-                <StickerIcon icon={Icons.location} size='xs' color='success' />
-                <span className='text-muted-foreground line-clamp-1'>
-                  {event.location}
-                </span>
-              </div>
-            )}
-
-            {/* Visibility */}
-            <div className='flex items-center gap-2 text-sm'>
-              {event.visibility === 'FRIENDS' ? (
-                <Icons.people className='size-3.5 text-muted-foreground/60' />
+          >
+            {/* Cover image area */}
+            <div className='relative aspect-[16/9] overflow-hidden'>
+              {event.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */
+                <img
+                  src={event.imageUrl}
+                  alt={event.title}
+                  className='absolute inset-0 w-full h-full object-cover'
+                  style={{ objectPosition: `${focalX}% ${focalY}%` }}
+                />
               ) : (
-                <Icons.lock className='size-3.5 text-muted-foreground/60' />
+                <div
+                  className={cn(
+                    'absolute inset-0 bg-gradient-to-br',
+                    gradientClass
+                  )}
+                >
+                  <div className='absolute inset-0 flex items-center justify-center'>
+                    <Icons.party className='size-12 text-muted-foreground/30' />
+                  </div>
+                </div>
               )}
-              <span className='text-muted-foreground/60'>
-                {event.visibility === 'FRIENDS'
-                  ? 'Friends'
-                  : event.visibility === 'PUBLIC'
-                    ? 'Public'
-                    : 'Private'}
-              </span>
+
+              {/* Hosting badge - top left */}
+              {isOrganizer && (
+                <HostingBadge className='absolute top-3 left-3' />
+              )}
+
+              {/* Muted indicator - top left (after hosting badge or alone) */}
+              {isMuted && (
+                <div
+                  className={cn(
+                    'absolute top-3 bg-card/90 backdrop-blur-sm rounded-full p-1.5 ',
+                    isOrganizer ? 'left-11' : 'left-3'
+                  )}
+                >
+                  <Icons.bellOff className='size-3.5 text-muted-foreground' />
+                </div>
+              )}
             </div>
 
-            {/* Organizer */}
-            {organizer && (
-              <div className='flex items-center gap-2 mt-1'>
-                <Avatar className='size-5'>
-                  <AvatarImage
-                    src={organizer.user.image || undefined}
-                    alt={organizer.user.name || organizer.user.email}
-                  />
-                  <AvatarFallback className='text-xs'>
-                    {(organizer.user.name || organizer.user.email)
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className='text-sm text-muted-foreground line-clamp-1'>
-                  {organizer.user.name || organizer.user.email}
+            {/* Content area */}
+            <div className='p-4 flex flex-col gap-2'>
+              {/* Title */}
+              <h3 className='font-heading text-lg font-medium line-clamp-1'>
+                {event.title}
+              </h3>
+
+              {/* Description */}
+              {event.description && (
+                <p className='text-sm text-muted-foreground line-clamp-2'>
+                  {event.description}
+                </p>
+              )}
+
+              {/* Date/Time */}
+              <div className='flex items-center gap-2 text-sm'>
+                <StickerIcon icon={Icons.date} size='xs' color='info' />
+                <span className='text-muted-foreground'>
+                  {event.chosenDateTime
+                    ? formatDateTimeRangeShort(
+                        event.chosenDateTime,
+                        event.chosenEndDateTime
+                      )
+                    : needsNewDates
+                      ? 'Needs new dates'
+                      : 'Date TBD'}
                 </span>
               </div>
-            )}
+
+              {/* Location */}
+              {event.location && (
+                <div className='flex items-center gap-2 text-sm'>
+                  <StickerIcon
+                    icon={Icons.location}
+                    size='xs'
+                    color='success'
+                  />
+                  <span className='text-muted-foreground line-clamp-1'>
+                    {event.location}
+                  </span>
+                </div>
+              )}
+
+              {/* Visibility */}
+              <div className='flex items-center gap-2 text-sm'>
+                {event.visibility === 'FRIENDS' ? (
+                  <Icons.people className='size-3.5 text-muted-foreground/60' />
+                ) : event.visibility === 'PUBLIC' ? (
+                  <Globe className='size-3.5 text-muted-foreground/60' />
+                ) : (
+                  <Icons.lock className='size-3.5 text-muted-foreground/60' />
+                )}
+                <span className='text-muted-foreground/60'>
+                  {event.visibility === 'FRIENDS'
+                    ? 'Friends'
+                    : event.visibility === 'PUBLIC'
+                      ? 'Public'
+                      : 'Private'}
+                </span>
+              </div>
+
+              {/* Organizer */}
+              {organizer && (
+                <div className='flex items-center gap-2 mt-1'>
+                  <Avatar className='size-5'>
+                    <AvatarImage
+                      src={organizer.user.image || undefined}
+                      alt={organizer.user.name || organizer.user.email}
+                    />
+                    <AvatarFallback className='text-xs'>
+                      {(organizer.user.name || organizer.user.email)
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className='text-sm text-muted-foreground line-clamp-1'>
+                    {organizer.user.name || organizer.user.email}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </Link>
-    </div>
+          <span
+            aria-hidden='true'
+            className='absolute bottom-4 right-4 text-muted-foreground'
+          >
+            <Icons.forward className='size-4' />
+          </span>
+        </Link>
+      </CardAction>
+    </Card>
   );
 
   return (

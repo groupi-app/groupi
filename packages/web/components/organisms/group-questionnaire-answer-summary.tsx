@@ -5,7 +5,7 @@ type Form = NonNullable<ReturnType<typeof useJoiningQuestionnaire>>;
 export function QuestionnaireAnswerSummary({ form }: { form: Form }) {
   return (
     <div className='space-y-3'>
-      <h3 className='font-semibold'>Current answers</h3>
+      <h3 className='font-heading font-semibold'>Current answers</h3>
       {form.questions.length === 0 && <p>No current questions.</p>}
       <dl className='space-y-2'>
         {form.questions.map(question => (

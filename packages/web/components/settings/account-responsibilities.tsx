@@ -17,7 +17,9 @@ export function AccountResponsibilities() {
       aria-label='Resolve account responsibilities'
       className='space-y-4'
     >
-      <h2 className='font-semibold'>Resolve your Groups and Events</h2>
+      <h2 className='font-heading font-semibold'>
+        Resolve your Groups and Events
+      </h2>
       <p role='status' aria-live='polite'>
         {!readiness
           ? 'Checking current ownership…'
@@ -42,7 +44,7 @@ function OwnedResources({ kind }: { kind: 'GROUP' | 'EVENT' }) {
       aria-label={`Owned ${kind === 'GROUP' ? 'Groups' : 'Events'}`}
       className='space-y-3'
     >
-      <h3 className='font-semibold'>
+      <h3 className='font-heading font-semibold'>
         {kind === 'GROUP' ? 'Groups' : 'Events'}
       </h3>
       <p role='status' aria-live='polite'>
@@ -90,7 +92,11 @@ function Responsibility({
     try {
       if (item.kind === 'GROUP') {
         const groupId = item.id as Id<'groups'>;
-        if (action === 'delete') await actions.deleteGroup({ groupId });
+        if (action === 'delete')
+          await actions.deleteGroup({
+            groupId,
+            acknowledgeDiscordHandback: true,
+          });
         else if (action === 'offer')
           await actions.offerGroup({
             groupId,
@@ -130,7 +136,7 @@ function Responsibility({
       aria-label={`${item.title} responsibility`}
       className='space-y-2 rounded-card border p-3'
     >
-      <h4 className='font-semibold'>{item.title}</h4>
+      <h4 className='font-heading font-semibold'>{item.title}</h4>
       <p role='status'>
         {item.status === 'PENDING'
           ? 'Pending acceptance — unresolved. The recipient must accept in their ownership controls.'
@@ -144,7 +150,7 @@ function Responsibility({
       <Label htmlFor={`recipient-${item.id}`}>Transfer ownership to</Label>
       <select
         id={`recipient-${item.id}`}
-        className='w-full rounded-input border bg-background p-2'
+        className='min-h-11 w-full rounded-input border border-input bg-background p-2 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
         value={recipient}
         onChange={e => setRecipient(e.target.value)}
         disabled={busy || candidates.status === 'LoadingFirstPage'}
@@ -203,7 +209,9 @@ function Responsibility({
         >
           <p>
             Permanently delete {item.title} and its data?
-            {item.kind === 'GROUP' ? ' Independent Events remain.' : ''}
+            {item.kind === 'GROUP'
+              ? ' Discord retained roles and membership pass to Discord staff; pending removals still run. No Discord server or bot is deleted. Independent Events remain.'
+              : ''}
           </p>
           <Button
             type='button'

@@ -12,4 +12,25 @@ crons.cron(
   {}
 );
 
+crons.interval(
+  'prune authorization audit',
+  { hours: 1 },
+  internal.authorization.mutations.pruneAudit,
+  {}
+);
+
+crons.interval(
+  'prune expired delegated artifacts',
+  { minutes: 5 },
+  internal.delegatedApps.storage.pruneExpired,
+  {}
+);
+
+crons.interval(
+  'reconcile managed Discord access',
+  { minutes: 1 },
+  internal.groupDiscord.reconcile.dispatch,
+  {}
+);
+
 export default crons;

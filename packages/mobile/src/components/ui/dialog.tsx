@@ -67,7 +67,7 @@ function DialogContent({
       <DialogOverlay>
         <DialogPrimitive.Content
           className={cn(
-            'bg-background border-border z-50 mx-auto flex w-full flex-col gap-4 rounded-modal border p-6 shadow-overlay sm:max-w-lg',
+            'bg-popover border-sticker-edge z-50 mx-auto flex w-full flex-col gap-4 rounded-modal border-2 p-6 shadow-overlay sm:max-w-lg',
             Platform.select({
               web: 'animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200',
             }),

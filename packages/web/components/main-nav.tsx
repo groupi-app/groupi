@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import {
   NavigationMenu,
@@ -55,13 +56,12 @@ export function MainNav({ items }: { items: NavItem[] }) {
       <Authenticated>
         <div className='hidden md:block'>
           <div className='flex items-center gap-3'>
-            <Link
-              href='/create'
-              className='flex items-center gap-1.5 h-9 px-3 text-sm font-semibold rounded-button bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
-            >
-              <Icons.plus className='size-4' />
-              <span>Create</span>
-            </Link>
+            <Button size='sm' asChild>
+              <Link href='/create'>
+                <Icons.plus className='size-4' />
+                <span>Create</span>
+              </Link>
+            </Button>
             <NotificationsDesktop />
             <AuthenticatedProfileDropdown />
           </div>

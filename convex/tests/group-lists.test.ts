@@ -197,8 +197,13 @@ it('enforces owner creation policy, own/private visibility, manager moderation a
       })
     ).page
   ).toHaveLength(1);
+  expect(
+    await member.auth.query(api.groupLists.queries.getListForManagement, {
+      toolId: privateId,
+    })
+  ).toMatchObject({ canConfigure: true, canManage: false, canDelete: false });
   await expect(
-    member.auth.query(api.groupLists.queries.getListForManagement, {
+    other.auth.query(api.groupLists.queries.getListForManagement, {
       toolId: privateId,
     })
   ).rejects.toThrow();

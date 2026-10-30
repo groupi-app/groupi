@@ -1,42 +1,21 @@
 'use client';
-
 import { use } from 'react';
-import { useEventHeader } from '@/hooks/convex';
-import { Id } from '@/convex/_generated/dataModel';
-import { EditEventSingleDate } from '../../../edit/components/edit-event-single-date';
 import { SettingsPageTemplate } from '@/components/templates';
-import { ChangeDateSingleSkeleton } from '@/components/skeletons';
-
-export default function EventSettingsDateSinglePage(props: {
+import { EventDateFields } from '@/features/event-settings/dates';
+export default function DateSettingsPage({
+  params,
+}: {
   params: Promise<{ eventId: string }>;
 }) {
-  const { eventId } = use(props.params);
-  const eventData = useEventHeader(eventId as Id<'events'>);
-
-  const event = eventData?.event;
-  const datetime = event?.chosenDateTime
-    ? new Date(event.chosenDateTime)
-    : undefined;
-  const endDatetime = event?.chosenEndDateTime
-    ? new Date(event.chosenEndDateTime)
-    : undefined;
-
+  const { eventId } = use(params);
   return (
     <SettingsPageTemplate
-      title='Choose a Date'
+      title='Choose a date'
       backHref={`/event/${eventId}/settings/date`}
+      backLabel='Date settings'
       maxWidth='md'
     >
-      {!event ? (
-        <ChangeDateSingleSkeleton />
-      ) : (
-        <EditEventSingleDate
-          eventId={eventId}
-          datetime={datetime}
-          endDatetime={endDatetime}
-          backHref={`/event/${eventId}/settings/date`}
-        />
-      )}
+      <EventDateFields mode='SINGLE' />
     </SettingsPageTemplate>
   );
 }

@@ -1,0 +1,1963 @@
+[
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"kind\": \"GROUP\" | \"EVENT\"; \"id\": string; \"title\": string; \"status\": \"NONE\" | \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"transferId\": string | null; \"recipientId\": string | null; \"resolved\": false }"
+    },
+    "name": "getAccountResponsibilities",
+    "method": "GET",
+    "path": "/account/responsibilities",
+    "summary": "Enumerate all current owned Groups or Events, including unresolved offers"
+  },
+  {
+    "paging": null,
+    "name": "readLiveReadinessFinalDeletionRevalidates",
+    "method": "GET",
+    "path": "/account/readiness",
+    "summary": "Read live readiness; final deletion revalidates"
+  },
+  {
+    "paging": null,
+    "name": "postAccountDelete",
+    "method": "POST",
+    "path": "/account/delete",
+    "summary": "Permanently delete the authenticated account after live responsibility resolution"
+  },
+  {
+    "paging": null,
+    "name": "deleteAccountResponsibilitiesEvents",
+    "method": "DELETE",
+    "path": "/account/responsibilities/events/{eventId}",
+    "summary": "Explicitly delete an owned Event, including legacy membership inconsistencies"
+  },
+  {
+    "paging": null,
+    "name": "postAuthCliExchange",
+    "method": "POST",
+    "path": "/auth/cli/exchange",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "postAuthCliRevoke",
+    "method": "POST",
+    "path": "/auth/cli/revoke",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "inspectConsensualOwnershipTransfer",
+    "method": "GET",
+    "path": "/events/{eventId}/ownership-transfer",
+    "summary": "Inspect consensual ownership transfer"
+  },
+  {
+    "paging": null,
+    "name": "offerOwnershipToAnEligibleExistingMember",
+    "method": "POST",
+    "path": "/events/{eventId}/ownership-transfer",
+    "summary": "Offer ownership to an eligible existing member"
+  },
+  {
+    "paging": null,
+    "name": "acceptTheNamedOwnershipOffer",
+    "method": "POST",
+    "path": "/events/{eventId}/ownership-transfer/accept",
+    "summary": "accept the named ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "declineTheNamedOwnershipOffer",
+    "method": "POST",
+    "path": "/events/{eventId}/ownership-transfer/decline",
+    "summary": "decline the named ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "cancelTheNamedOwnershipOffer",
+    "method": "POST",
+    "path": "/events/{eventId}/ownership-transfer/cancel",
+    "summary": "cancel the named ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "readViewerSafeEventLogisticsBeforeJoining",
+    "method": "GET",
+    "path": "/events/{eventId}/logistics",
+    "summary": "Read viewer-safe event logistics before joining"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"title\": string; \"admissionPolicy\": \"INVITATION_ONLY\" | \"DIRECT\" | \"APPLY\"; \"entryAction\": \"JOIN\" | \"APPLY\" | \"INVITATION_ONLY\" | \"UNAVAILABLE\"; \"accessReasons\": { \"friends\": boolean; \"groups\": Array<{ \"groupId\": string; \"name\": string }> }; \"description\": string | null; \"location\": string | null; \"chosenDateTime\": number | null; \"imageUrl\": string | null; \"organizer\": { \"personId\": string; \"name\": string | null; \"username\": string | null } | null }"
+    },
+    "name": "discoverFriendsAndGroupEvents",
+    "method": "GET",
+    "path": "/events/discover",
+    "summary": "Discover Friends and Group events"
+  },
+  {
+    "paging": null,
+    "name": "joinADiscoverableEvent",
+    "method": "POST",
+    "path": "/events/{eventId}/join",
+    "summary": "Join a discoverable event"
+  },
+  {
+    "paging": null,
+    "name": "readEventVisibilityAdmissionAndPermissions",
+    "method": "GET",
+    "path": "/events/{eventId}/settings",
+    "summary": "Read event visibility, admission and permissions"
+  },
+  {
+    "paging": null,
+    "name": "updateEventVisibilityAdmissionAndPermissions",
+    "method": "PATCH",
+    "path": "/events/{eventId}/settings",
+    "summary": "Update event visibility, admission and permissions"
+  },
+  {
+    "paging": null,
+    "name": "readEventLifecycle",
+    "method": "GET",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Read Organizer lifecycle and revision"
+  },
+  {
+    "paging": null,
+    "name": "updateEventLifecycle",
+    "method": "POST",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Complete, reopen or reschedule as current Organizer"
+  },
+  {
+    "paging": null,
+    "name": "getEventsEventIdApplicationsForm",
+    "method": "GET",
+    "path": "/events/{eventId}/applications/form",
+    "summary": ""
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"eventId\": string; \"personId\": string; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"submittedAt\": number; \"updatedAt\": number; \"decisions\": Array<{ \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"actorId\"?: string; \"at\": number; \"reason\"?: string }> }"
+    },
+    "name": "getEventsEventIdApplicationsHistory",
+    "method": "GET",
+    "path": "/events/{eventId}/applications/history",
+    "summary": ""
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"eventId\": string; \"personId\": string; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"submittedAt\": number; \"updatedAt\": number; \"decisions\": Array<{ \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"actorId\"?: string; \"at\": number; \"reason\"?: string }>; \"applicant\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null } }"
+    },
+    "name": "getEventsEventIdApplicationsList",
+    "method": "GET",
+    "path": "/events/{eventId}/applications/list",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "putEventsEventIdApplicationsSettings",
+    "method": "PUT",
+    "path": "/events/{eventId}/applications/settings",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "postEventsEventIdApplications",
+    "method": "POST",
+    "path": "/events/{eventId}/applications",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "postEventApplicationsApplicationIdWithdraw",
+    "method": "POST",
+    "path": "/event-applications/{applicationId}/withdraw",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "postEventApplicationsApplicationIdDecision",
+    "method": "POST",
+    "path": "/event-applications/{applicationId}/decision",
+    "summary": ""
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "EventSummary"
+    },
+    "name": "listEvents",
+    "method": "GET",
+    "path": "/events",
+    "summary": "List events"
+  },
+  {
+    "paging": null,
+    "name": "createEvent",
+    "method": "POST",
+    "path": "/events",
+    "summary": "Create event"
+  },
+  {
+    "paging": null,
+    "name": "getEvent",
+    "method": "GET",
+    "path": "/events/{eventId}",
+    "summary": "Get event"
+  },
+  {
+    "paging": null,
+    "name": "updateEvent",
+    "method": "PATCH",
+    "path": "/events/{eventId}",
+    "summary": "Update event"
+  },
+  {
+    "paging": null,
+    "name": "deleteEvent",
+    "method": "DELETE",
+    "path": "/events/{eventId}",
+    "summary": "Delete event"
+  },
+  {
+    "paging": null,
+    "name": "inspectCurrentAccountAvatar",
+    "method": "GET",
+    "path": "/profile/avatar",
+    "summary": "Inspect current account avatar"
+  },
+  {
+    "paging": null,
+    "name": "replaceCurrentAccountAvatar",
+    "method": "PUT",
+    "path": "/profile/avatar",
+    "summary": "Replace current account avatar"
+  },
+  {
+    "paging": null,
+    "name": "removeCurrentAccountAvatar",
+    "method": "DELETE",
+    "path": "/profile/avatar",
+    "summary": "Remove current account avatar"
+  },
+  {
+    "paging": null,
+    "name": "inspectEventCover",
+    "method": "GET",
+    "path": "/events/{eventId}/cover",
+    "summary": "Inspect event cover"
+  },
+  {
+    "paging": null,
+    "name": "replaceEventCover",
+    "method": "PUT",
+    "path": "/events/{eventId}/cover",
+    "summary": "Replace event cover"
+  },
+  {
+    "paging": null,
+    "name": "removeEventCover",
+    "method": "DELETE",
+    "path": "/events/{eventId}/cover",
+    "summary": "Remove event cover"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"createdAt\": number; \"author\": { \"id\": string; \"kind\"?: \"user\" | \"integration\"; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } } | null; \"attachments\": Array<{ \"id\": string; \"storageId\": string; \"filename\": string; \"size\": number; \"mimeType\": string; \"url\": string | null }>; \"eventId\": string; \"title\": string; \"content\": string; \"editedAt\": number | null; \"replyCount\": number; \"repliesDisabled\"?: boolean; \"repliesRevision\"?: number; \"pinnedAt\"?: number; \"pinRevision\"?: number }"
+    },
+    "name": "listPosts",
+    "method": "GET",
+    "path": "/events/{parentId}/posts",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "getPost",
+    "method": "GET",
+    "path": "/posts/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "updatePost",
+    "method": "PATCH",
+    "path": "/posts/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "deletePost",
+    "method": "DELETE",
+    "path": "/posts/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "createPost",
+    "method": "POST",
+    "path": "/events/{id}/posts",
+    "summary": ""
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"createdAt\": number; \"author\": { \"id\": string; \"kind\"?: \"user\" | \"integration\"; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } } | null; \"attachments\": Array<{ \"id\": string; \"storageId\": string; \"filename\": string; \"size\": number; \"mimeType\": string; \"url\": string | null }>; \"postId\": string; \"text\": string; \"updatedAt\": number | null }"
+    },
+    "name": "listReplies",
+    "method": "GET",
+    "path": "/posts/{parentId}/replies",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "getReply",
+    "method": "GET",
+    "path": "/replies/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "updateReply",
+    "method": "PATCH",
+    "path": "/replies/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "deleteReply",
+    "method": "DELETE",
+    "path": "/replies/{id}",
+    "summary": ""
+  },
+  {
+    "paging": null,
+    "name": "createReply",
+    "method": "POST",
+    "path": "/posts/{id}/replies",
+    "summary": ""
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"role\": \"ORGANIZER\" | \"MODERATOR\" | \"ATTENDEE\"; \"rsvpStatus\": \"YES\" | \"MAYBE\" | \"NO\" | \"PENDING\"; \"joinedAt\": number; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } | null; \"personId\": string; \"rsvpNote\": string | null }"
+    },
+    "name": "listMembers",
+    "method": "GET",
+    "path": "/events/{eventId}/members",
+    "summary": "List members"
+  },
+  {
+    "paging": null,
+    "name": "updateMemberRole",
+    "method": "PATCH",
+    "path": "/events/{eventId}/members/{memberId}",
+    "summary": "Update member role"
+  },
+  {
+    "paging": null,
+    "name": "removeMember",
+    "method": "DELETE",
+    "path": "/events/{eventId}/members/{memberId}",
+    "summary": "Remove member"
+  },
+  {
+    "paging": null,
+    "name": "leaveEvent",
+    "method": "POST",
+    "path": "/events/{eventId}/leave",
+    "summary": "Leave event"
+  },
+  {
+    "paging": null,
+    "name": "updateRSVP",
+    "method": "PATCH",
+    "path": "/events/{eventId}/rsvp",
+    "summary": "Update RSVP"
+  },
+  {
+    "paging": null,
+    "name": "readYourRSVP",
+    "method": "GET",
+    "path": "/events/{eventId}/rsvp",
+    "summary": "Read your RSVP"
+  },
+  {
+    "paging": null,
+    "name": "readAvailabilityGrid",
+    "method": "GET",
+    "path": "/events/{eventId}/availability",
+    "summary": "Read availability grid"
+  },
+  {
+    "paging": null,
+    "name": "submitAvailability",
+    "method": "POST",
+    "path": "/events/{eventId}/availability",
+    "summary": "Submit availability"
+  },
+  {
+    "paging": null,
+    "name": "clearYourAvailability",
+    "method": "DELETE",
+    "path": "/events/{eventId}/availability",
+    "summary": "Clear your availability"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "PotentialDateTime"
+    },
+    "name": "listPotentialDates",
+    "method": "GET",
+    "path": "/events/{eventId}/potential-dates",
+    "summary": "List potential dates"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"potentialDateTime\": PotentialDateTime; \"status\": \"YES\" | \"MAYBE\" | \"NO\" | \"PENDING\"; \"note\": string | null; \"availabilityId\": string | null }"
+    },
+    "name": "readYourAvailability",
+    "method": "GET",
+    "path": "/events/{eventId}/availability/mine",
+    "summary": "Read your availability"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"membershipId\": string; \"personId\": string; \"user\": { \"id\": string; \"name\": string | null; \"email\": string | null; \"image\": string | null; \"username\": string | null } | null; \"status\": \"YES\" | \"MAYBE\" | \"NO\" | \"PENDING\"; \"note\": string | null }"
+    },
+    "name": "listAvailabilityResponses",
+    "method": "GET",
+    "path": "/events/{eventId}/availability/responses",
+    "summary": "List availability responses"
+  },
+  {
+    "paging": null,
+    "name": "chooseEventDate",
+    "method": "POST",
+    "path": "/events/{eventId}/date",
+    "summary": "Choose event date"
+  },
+  {
+    "paging": null,
+    "name": "resetEventDate",
+    "method": "DELETE",
+    "path": "/events/{eventId}/date",
+    "summary": "Reset event date"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "FriendSummary"
+    },
+    "name": "listFriends",
+    "method": "GET",
+    "path": "/friends",
+    "summary": "List friends"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "FriendRequest"
+    },
+    "name": "listIncomingRequests",
+    "method": "GET",
+    "path": "/friends/requests/incoming",
+    "summary": "List incoming requests"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "FriendRequest"
+    },
+    "name": "listOutgoingRequests",
+    "method": "GET",
+    "path": "/friends/requests/outgoing",
+    "summary": "List outgoing requests"
+  },
+  {
+    "paging": null,
+    "name": "searchUsers",
+    "method": "GET",
+    "path": "/friends/search",
+    "summary": "Search users"
+  },
+  {
+    "paging": null,
+    "name": "getFriendshipStatus",
+    "method": "GET",
+    "path": "/friends/status/{targetPersonId}",
+    "summary": "Get friendship status"
+  },
+  {
+    "paging": null,
+    "name": "sendFriendRequest",
+    "method": "POST",
+    "path": "/friends/requests",
+    "summary": "Send friend request"
+  },
+  {
+    "paging": null,
+    "name": "acceptFriendRequest",
+    "method": "POST",
+    "path": "/friends/requests/{friendshipId}/accept",
+    "summary": "Accept friend request"
+  },
+  {
+    "paging": null,
+    "name": "declineFriendRequest",
+    "method": "POST",
+    "path": "/friends/requests/{friendshipId}/decline",
+    "summary": "Decline friend request"
+  },
+  {
+    "paging": null,
+    "name": "cancelFriendRequest",
+    "method": "DELETE",
+    "path": "/friends/requests/{friendshipId}",
+    "summary": "Cancel friend request"
+  },
+  {
+    "paging": null,
+    "name": "removeFriend",
+    "method": "DELETE",
+    "path": "/friends/{friendshipId}",
+    "summary": "Remove friend"
+  },
+  {
+    "paging": null,
+    "name": "explicitlyAnnounceToPermittedGroupMembers",
+    "method": "POST",
+    "path": "/groups/{groupId}/announcements",
+    "summary": "Retired: use a post to share an update"
+  },
+  {
+    "paging": null,
+    "name": "recoverYourExplicitAnnouncementRequestStatus",
+    "method": "GET",
+    "path": "/groups/{groupId}/announcements/status",
+    "summary": "Recover your explicit announcement request status"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"kind\": \"FORM\" | \"POLL\" | \"LIST\"; \"title\": string; \"description\": string; \"resultsVisibility\": \"MANAGERS\" | \"MEMBERS\"; \"creatorId\"?: string; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "listPersistentGroupLists",
+    "method": "GET",
+    "path": "/groups/{groupId}/lists",
+    "summary": "list persistent Group lists"
+  },
+  {
+    "paging": null,
+    "name": "createPersistentGroupList",
+    "method": "POST",
+    "path": "/groups/{groupId}/lists",
+    "summary": "create persistent Group list"
+  },
+  {
+    "paging": null,
+    "name": "getPersistentGroupLists",
+    "method": "GET",
+    "path": "/groups/{groupId}/lists/{toolId}",
+    "summary": "get persistent Group lists"
+  },
+  {
+    "paging": null,
+    "name": "configurePersistentGroupList",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/lists/{toolId}",
+    "summary": "configure persistent Group list"
+  },
+  {
+    "paging": null,
+    "name": "removePersistentGroupList",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/lists/{toolId}",
+    "summary": "remove persistent Group list"
+  },
+  {
+    "paging": null,
+    "name": "settingsPersistentGroupLists",
+    "method": "GET",
+    "path": "/groups/{groupId}/lists/{toolId}/settings",
+    "summary": "settings persistent Group lists"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"actorId\"?: string; \"listTitle\": string; \"text\": string; \"completed\": boolean; \"revision\": number; \"canEdit\": boolean; \"canRemove\": boolean; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "entriesPersistentGroupLists",
+    "method": "GET",
+    "path": "/groups/{groupId}/lists/{toolId}/entries",
+    "summary": "entries persistent Group lists"
+  },
+  {
+    "paging": null,
+    "name": "addPersistentGroupList",
+    "method": "POST",
+    "path": "/groups/{groupId}/lists/{toolId}/entries",
+    "summary": "add persistent Group list"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"actorId\"?: string; \"listTitle\": string; \"text\": string; \"completed\": boolean; \"revision\": number; \"canEdit\": boolean; \"canRemove\": boolean; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "ownPersistentGroupLists",
+    "method": "GET",
+    "path": "/groups/{groupId}/lists/{toolId}/own",
+    "summary": "own persistent Group lists"
+  },
+  {
+    "paging": null,
+    "name": "editPersistentGroupList",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/lists/{toolId}/entries/{entryId}",
+    "summary": "edit persistent Group list"
+  },
+  {
+    "paging": null,
+    "name": "removeentryPersistentGroupList",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/lists/{toolId}/entries/{entryId}",
+    "summary": "removeEntry persistent Group list"
+  },
+  {
+    "paging": null,
+    "name": "readOwnerListAvailabilityAndCreationPolicy",
+    "method": "GET",
+    "path": "/groups/{groupId}/list-policy",
+    "summary": "Read owner list availability and creation policy"
+  },
+  {
+    "paging": null,
+    "name": "ownerConfiguresListAvailabilityAndCreation",
+    "method": "PUT",
+    "path": "/groups/{groupId}/list-policy",
+    "summary": "Owner configures list availability and creation"
+  },
+  {
+    "paging": null,
+    "name": "createAnIndependentPersistentOrdinaryForm",
+    "method": "POST",
+    "path": "/groups/{groupId}/forms",
+    "summary": "Create an independent persistent ordinary form"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"kind\": \"FORM\" | \"POLL\" | \"LIST\"; \"title\": string; \"description\": string; \"resultsVisibility\": \"MANAGERS\" | \"MEMBERS\"; \"creatorId\"?: string; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "listOrdinaryFormsIndependentlyOfTheJoiningQuestionnaire",
+    "method": "GET",
+    "path": "/groups/{groupId}/forms",
+    "summary": "List ordinary forms independently of the joining questionnaire"
+  },
+  {
+    "paging": null,
+    "name": "getGroupsFormsSettings",
+    "method": "GET",
+    "path": "/groups/{groupId}/forms/{toolId}/settings",
+    "summary": "Read preserved form configuration as a current eligible manager, including while disabled"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentFormAndYourCompatibleAnswers",
+    "method": "GET",
+    "path": "/groups/{groupId}/forms/{toolId}",
+    "summary": "Read current form and your compatible answers"
+  },
+  {
+    "paging": null,
+    "name": "patchGroupsForms",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/forms/{toolId}",
+    "summary": "Manage current form configuration without erasing saved definitions"
+  },
+  {
+    "paging": null,
+    "name": "explicitlyDeleteFormAndAllResponses",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/forms/{toolId}",
+    "summary": "Explicitly delete form and all responses"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"revision\": number; \"version\": number; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "readOnlyYourRetainedResponseSnapshots",
+    "method": "GET",
+    "path": "/groups/{groupId}/forms/{toolId}/history",
+    "summary": "Read only your retained response snapshots"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"revision\": number; \"version\": number; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "readStatedVisibilityLatestResponses",
+    "method": "GET",
+    "path": "/groups/{groupId}/forms/{toolId}/results",
+    "summary": "Read stated-visibility latest responses"
+  },
+  {
+    "paging": null,
+    "name": "putGroupsFormsResponse",
+    "method": "PUT",
+    "path": "/groups/{groupId}/forms/{toolId}/response",
+    "summary": "Submit or edit your validated response using current form and response revisions"
+  },
+  {
+    "paging": null,
+    "name": "removeYourResponseAndPrivateRetainedHistory",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/forms/{toolId}/response",
+    "summary": "Remove your response and private retained history"
+  },
+  {
+    "paging": null,
+    "name": "deleteGroupsFormsResults",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/forms/{toolId}/results/{responseId}",
+    "summary": "Moderate a current ordinary response including anonymous shared content"
+  },
+  {
+    "paging": null,
+    "name": "readFormAvailabilityCreationPolicy",
+    "method": "GET",
+    "path": "/groups/{groupId}/form-policy",
+    "summary": "Read form availability/creation policy"
+  },
+  {
+    "paging": null,
+    "name": "ownerControlsFormAvailabilityAndCreation",
+    "method": "PUT",
+    "path": "/groups/{groupId}/form-policy",
+    "summary": "Owner controls form availability and creation"
+  },
+  {
+    "paging": null,
+    "name": "createAnIndependentPersistentPersistentPoll",
+    "method": "POST",
+    "path": "/groups/{groupId}/polls",
+    "summary": "Create an independent persistent persistent poll"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"kind\": \"FORM\" | \"POLL\" | \"LIST\"; \"title\": string; \"description\": string; \"resultsVisibility\": \"MANAGERS\" | \"MEMBERS\"; \"creatorId\"?: string; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "getGroupsPolls",
+    "method": "GET",
+    "path": "/groups/{groupId}/polls",
+    "summary": "List persistent polls independently of the joining questionnaire"
+  },
+  {
+    "paging": null,
+    "name": "getGroupsPollsSettings",
+    "method": "GET",
+    "path": "/groups/{groupId}/polls/{toolId}/settings",
+    "summary": "Read preserved poll configuration as a current eligible manager, including while disabled"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentPollAndYourCompatibleSelections",
+    "method": "GET",
+    "path": "/groups/{groupId}/polls/{toolId}",
+    "summary": "Read current poll and your compatible selections"
+  },
+  {
+    "paging": null,
+    "name": "patchGroupsPolls",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/polls/{toolId}",
+    "summary": "Manage current poll configuration without erasing saved definitions"
+  },
+  {
+    "paging": null,
+    "name": "deleteAPollAndAllVotesAsACurrentEligibleManager",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/polls/{toolId}",
+    "summary": "Delete a poll and all votes as a current eligible manager"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"revision\": number; \"version\": number; \"semanticVersion\": number; \"mode\": \"SINGLE\" | \"MULTIPLE\"; \"options\": Array<{ \"id\": string; \"label\": string }>; \"selections\": Array<string>; \"removed\": boolean; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "readOnlyYourRetainedVoteSnapshots",
+    "method": "GET",
+    "path": "/groups/{groupId}/polls/{toolId}/history",
+    "summary": "Read only your retained vote snapshots"
+  },
+  {
+    "paging": {
+      "items": "page",
+      "cursor": "continueCursor",
+      "done": "isDone",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"toolId\": string; \"groupId\": string; \"personId\"?: string; \"revision\": number; \"version\": number; \"semanticVersion\": number; \"mode\": \"SINGLE\" | \"MULTIPLE\"; \"options\": Array<{ \"id\": string; \"label\": string }>; \"selections\": Array<string>; \"removed\": boolean; \"createdAt\": number; \"updatedAt\": number; \"isCurrent\": boolean }"
+    },
+    "name": "readStatedVisibilityLatestVotes",
+    "method": "GET",
+    "path": "/groups/{groupId}/polls/{toolId}/results",
+    "summary": "Read stated-visibility latest votes"
+  },
+  {
+    "paging": null,
+    "name": "putGroupsPollsVote",
+    "method": "PUT",
+    "path": "/groups/{groupId}/polls/{toolId}/vote",
+    "summary": "Submit or edit your validated vote using current poll and vote revisions"
+  },
+  {
+    "paging": null,
+    "name": "removeYourVoteAndPrivateHistoryUsingOptimisticRevision",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/polls/{toolId}/vote",
+    "summary": "Remove your vote and private history using optimistic revision"
+  },
+  {
+    "paging": null,
+    "name": "deleteGroupsPollsResults",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/polls/{toolId}/results/{voteId}",
+    "summary": "Moderate a current ordinary vote including anonymous shared content"
+  },
+  {
+    "paging": null,
+    "name": "readPollAvailabilityCreationPolicy",
+    "method": "GET",
+    "path": "/groups/{groupId}/poll-policy",
+    "summary": "Read poll availability/creation policy"
+  },
+  {
+    "paging": null,
+    "name": "ownerControlsPollAvailabilityAndCreation",
+    "method": "PUT",
+    "path": "/groups/{groupId}/poll-policy",
+    "summary": "Owner controls poll availability and creation"
+  },
+  {
+    "paging": null,
+    "name": "expelCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions",
+    "summary": "Commit coordinated community exclusion as staff"
+  },
+  {
+    "paging": null,
+    "name": "readCommunityExpulsion",
+    "method": "GET",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}",
+    "summary": "Reconcile coordinated exclusion progress as current staff"
+  },
+  {
+    "paging": null,
+    "name": "resumeCommunityExpulsion",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/resume",
+    "summary": "Resume cleanup with current independent Event authority"
+  },
+  {
+    "paging": null,
+    "name": "reinstateCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/reinstate",
+    "summary": "Reinstate after complete cleanup without restoring admission"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"joiningQuestionnaire\": { \"enabled\": boolean; \"requiredCompletion\": boolean; \"requiresCompletion\": boolean; \"canAccessMemberContent\": boolean; \"completed\": boolean; \"shouldPrompt\": boolean; \"version\": number }; \"_id\": string; \"_creationTime\": number; \"ownerId\": string; \"name\": string; \"description\"?: string; \"image\"?: string; \"createdAt\": number; \"updatedAt\": number; \"role\": \"OWNER\" | \"MODERATOR\" | \"MEMBER\"; \"viewerRole\": \"OWNER\" | \"MODERATOR\" | \"MEMBER\"; \"canManageIdentity\": boolean; \"memberCount\": number; \"eventSharingPolicy\": \"MANAGERS\" | \"MEMBERS\"; \"canShareEvents\": boolean; \"invitationsEnabled\": boolean; \"applicationsEnabled\": boolean; \"applicationQuestions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"canManageInvitations\": boolean; \"canManageMembers\": boolean; \"canManageRoles\": boolean; \"canLeave\": boolean }"
+    },
+    "name": "listYourGroups",
+    "method": "GET",
+    "path": "/groups",
+    "summary": "List your Groups"
+  },
+  {
+    "paging": null,
+    "name": "createAnOwnerOnlyGroup",
+    "method": "POST",
+    "path": "/groups",
+    "summary": "Create an owner-only Group"
+  },
+  {
+    "paging": null,
+    "name": "readAnAdmittedGroup",
+    "method": "GET",
+    "path": "/groups/{groupId}",
+    "summary": "Read an admitted Group"
+  },
+  {
+    "paging": null,
+    "name": "updateGroupIdentityAsOwner",
+    "method": "PATCH",
+    "path": "/groups/{groupId}",
+    "summary": "Update Group identity as owner"
+  },
+  {
+    "paging": null,
+    "name": "explicitlyDeleteAGroupAsOwner",
+    "method": "DELETE",
+    "path": "/groups/{groupId}",
+    "summary": "Explicitly delete a Group as owner"
+  },
+  {
+    "paging": null,
+    "name": "readOwnCommunityContext",
+    "method": "GET",
+    "path": "/groups/{groupId}/community-context",
+    "summary": "Read own community context"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentCommunityEvent",
+    "method": "GET",
+    "path": "/groups/{groupId}/current-event",
+    "summary": "Read the single current selected Group Event"
+  },
+  {
+    "paging": null,
+    "name": "joinCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/join",
+    "summary": "joinCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "setCommunityRsvp",
+    "method": "PUT",
+    "path": "/groups/{groupId}/events/{eventId}/own-rsvp",
+    "summary": "setCommunityRsvp"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/leave",
+    "summary": "leaveCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunity",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-leave",
+    "summary": "leaveCommunity"
+  },
+  {
+    "paging": null,
+    "name": "submitCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications",
+    "summary": "submitCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "editCommunityApplication",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/community-applications/{applicationId}",
+    "summary": "editCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "withdrawCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications/{applicationId}/withdraw",
+    "summary": "withdrawCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "setCommunityAnnouncementPreference",
+    "method": "PUT",
+    "path": "/groups/{groupId}/announcement-preference",
+    "summary": "Change own Group announcement subscription"
+  },
+  {
+    "paging": null,
+    "name": "readOwnGroupDiscordStatus",
+    "method": "GET",
+    "path": "/groups/{groupId}/discord",
+    "summary": "Read own selected Group Discord access and Open Discord destination"
+  },
+  {
+    "paging": null,
+    "name": "beginOwnGroupDiscordConnect",
+    "method": "POST",
+    "path": "/groups/{groupId}/discord/connect",
+    "summary": "Begin a Groupi-hosted member identity and consent journey"
+  },
+  {
+    "paging": null,
+    "name": "getGroupsJoiningQuestionnaire",
+    "method": "GET",
+    "path": "/groups/{groupId}/joining-questionnaire",
+    "summary": "Read your private joining questionnaire and current access status"
+  },
+  {
+    "paging": null,
+    "name": "putGroupsJoiningQuestionnaire",
+    "method": "PUT",
+    "path": "/groups/{groupId}/joining-questionnaire",
+    "summary": "Configure the joining questionnaire and completion policy as Group owner"
+  },
+  {
+    "paging": null,
+    "name": "submitOrEditPrivateAnswersAsAnAdmittedMember",
+    "method": "PUT",
+    "path": "/groups/{groupId}/joining-questionnaire/answers",
+    "summary": "Submit or edit private answers as an admitted member"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"groupId\": string; \"enabled\": boolean; \"requiredCompletion\": boolean; \"requiresCompletion\": boolean; \"canAccessMemberContent\": boolean; \"version\": number; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string>; \"version\": number }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"savedQuestions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string>; \"version\": number }>; \"completed\": boolean; \"shouldPrompt\": boolean; \"canEdit\": boolean; \"canConfigure\": boolean; \"canReview\": boolean; \"author\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null } }"
+    },
+    "name": "reviewPrivateAnswersAsCurrentOwnerOrModerator",
+    "method": "GET",
+    "path": "/groups/{groupId}/joining-questionnaire/responses",
+    "summary": "Review private answers as current owner or moderator"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"personId\": string; \"question\": { \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string>; \"version\": number }; \"answer\"?: (string | number | boolean | Array<string>); \"answeredAt\": number }"
+    },
+    "name": "getGroupsJoiningQuestionnaireHistory",
+    "method": "GET",
+    "path": "/groups/{groupId}/joining-questionnaire/history",
+    "summary": "Read own retained answer history or review an author as current manager"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"inviteId\": string; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"createdAt\": number; \"respondedAt\": number | null; \"group\": { \"groupId\": string; \"name\": string; \"description\": string | null; \"image\": string | null }; \"inviter\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null }; \"invitee\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null }; \"available\": boolean; \"canBan\": boolean }"
+    },
+    "name": "listYourPrivateGroupInvitations",
+    "method": "GET",
+    "path": "/group-invites",
+    "summary": "List your private Group invitations"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"inviteId\": string; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"createdAt\": number; \"respondedAt\": number | null; \"group\": { \"groupId\": string; \"name\": string; \"description\": string | null; \"image\": string | null }; \"inviter\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null }; \"invitee\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null }; \"available\": boolean; \"canBan\": boolean }"
+    },
+    "name": "listGroupInvitationsAsManager",
+    "method": "GET",
+    "path": "/groups/{groupId}/invitations",
+    "summary": "List Group invitations as manager"
+  },
+  {
+    "paging": null,
+    "name": "inviteAnExistingUserAsGroupOwner",
+    "method": "POST",
+    "path": "/groups/{groupId}/invitations",
+    "summary": "Invite an existing user as Group owner"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null; \"role\": \"OWNER\" | \"MODERATOR\" | \"MEMBER\"; \"joinedAt\": number; \"canRemove\": boolean; \"canBan\": boolean; \"canChangeRole\": boolean }"
+    },
+    "name": "readAdmittedGroupRoster",
+    "method": "GET",
+    "path": "/groups/{groupId}/members",
+    "summary": "Read admitted Group roster"
+  },
+  {
+    "paging": null,
+    "name": "configureGroupInvitationsAsOwner",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/invitation-policy",
+    "summary": "Configure Group invitations as owner"
+  },
+  {
+    "paging": null,
+    "name": "acceptYourGroupInvitation",
+    "method": "POST",
+    "path": "/group-invites/{inviteId}/accept",
+    "summary": "Accept your Group invitation"
+  },
+  {
+    "paging": null,
+    "name": "declineYourGroupInvitation",
+    "method": "POST",
+    "path": "/group-invites/{inviteId}/decline",
+    "summary": "Decline your Group invitation"
+  },
+  {
+    "paging": null,
+    "name": "cancelAPendingInvitationAsGroupManager",
+    "method": "POST",
+    "path": "/group-invites/{inviteId}/cancel",
+    "summary": "Cancel a pending invitation as Group manager"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null; \"bannedAt\": number }"
+    },
+    "name": "listActiveGroupBansAsManager",
+    "method": "GET",
+    "path": "/groups/{groupId}/bans",
+    "summary": "List active Group bans as manager"
+  },
+  {
+    "paging": null,
+    "name": "appointOrDemoteAGroupModeratorAsOwner",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/members/{personId}/role",
+    "summary": "Appoint or demote a Group moderator as owner"
+  },
+  {
+    "paging": null,
+    "name": "removeAnOrdinaryMemberWithoutBanning",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/members/{personId}",
+    "summary": "Remove an ordinary member without banning"
+  },
+  {
+    "paging": null,
+    "name": "banAnOrdinaryMemberOrNonmember",
+    "method": "PUT",
+    "path": "/groups/{groupId}/bans/{personId}",
+    "summary": "Ban an ordinary member or nonmember"
+  },
+  {
+    "paging": null,
+    "name": "liftAGroupBanWithoutAdmittingMembership",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/bans/{personId}",
+    "summary": "Lift a Group ban without admitting membership"
+  },
+  {
+    "paging": null,
+    "name": "leaveYourOwnGroupMembership",
+    "method": "POST",
+    "path": "/groups/{groupId}/leave",
+    "summary": "Leave your own Group membership"
+  },
+  {
+    "paging": null,
+    "name": "readPrivateParticipantOwnershipOfferStatus",
+    "method": "GET",
+    "path": "/groups/{groupId}/ownership-transfer",
+    "summary": "Read private participant ownership offer status"
+  },
+  {
+    "paging": null,
+    "name": "offerGroupResponsibilityToAnAdmittedMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/ownership-transfer",
+    "summary": "Offer Group responsibility to an admitted member"
+  },
+  {
+    "paging": null,
+    "name": "acceptTheObservedOwnershipOffer",
+    "method": "POST",
+    "path": "/groups/{groupId}/ownership-transfer/accept",
+    "summary": "accept the observed ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "declineTheObservedOwnershipOffer",
+    "method": "POST",
+    "path": "/groups/{groupId}/ownership-transfer/decline",
+    "summary": "decline the observed ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "cancelTheObservedOwnershipOffer",
+    "method": "POST",
+    "path": "/groups/{groupId}/ownership-transfer/cancel",
+    "summary": "cancel the observed ownership offer"
+  },
+  {
+    "paging": null,
+    "name": "readAdmissionQuestionsAndYourPrivatePendingApplication",
+    "method": "GET",
+    "path": "/groups/{groupId}/application-form",
+    "summary": "Read admission questions and your private pending application"
+  },
+  {
+    "paging": null,
+    "name": "configureGroupApplicationsAsOwner",
+    "method": "PUT",
+    "path": "/groups/{groupId}/application-settings",
+    "summary": "Configure Group applications as owner"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"personId\": string; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"submittedAt\": number; \"updatedAt\": number; \"decisions\": Array<{ \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"actorId\"?: string; \"at\": number; \"reason\"?: string }> }"
+    },
+    "name": "readYourRetainedPrivateGroupApplicationHistory",
+    "method": "GET",
+    "path": "/groups/{groupId}/applications/mine",
+    "summary": "Read your retained private Group application history"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"_id\": string; \"_creationTime\": number; \"groupId\": string; \"personId\": string; \"questions\": Array<{ \"id\": string; \"label\": string; \"required\": boolean; \"type\": \"SHORT_ANSWER\" | \"LONG_ANSWER\" | \"MULTIPLE_CHOICE\" | \"CHECKBOXES\" | \"NUMBER\" | \"DROPDOWN\" | \"YES_NO\"; \"options\"?: Array<string> }>; \"answers\": Record<string, (string | number | boolean | Array<string>)>; \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"submittedAt\": number; \"updatedAt\": number; \"decisions\": Array<{ \"status\": \"PENDING\" | \"WITHDRAWN\" | \"APPROVED\" | \"DECLINED\"; \"actorId\"?: string; \"at\": number; \"reason\"?: string }>; \"applicant\": { \"personId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null } }"
+    },
+    "name": "reviewPrivateGroupApplicationQueueAsManager",
+    "method": "GET",
+    "path": "/groups/{groupId}/applications",
+    "summary": "Review private Group application queue as manager"
+  },
+  {
+    "paging": null,
+    "name": "submitOrEditYourPendingAdmissionApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/applications",
+    "summary": "Submit or edit your pending admission application"
+  },
+  {
+    "paging": null,
+    "name": "readAPrivateApplicationAsItsAuthorOrCurrentManager",
+    "method": "GET",
+    "path": "/groups/{groupId}/applications/{applicationId}",
+    "summary": "Read a private application as its author or current manager"
+  },
+  {
+    "paging": null,
+    "name": "editYourPendingAnswersAgainstSavedQuestionDefinitions",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/applications/{applicationId}",
+    "summary": "Edit your pending answers against saved question definitions"
+  },
+  {
+    "paging": null,
+    "name": "withdrawYourPendingApplicationWithoutDeletingHistory",
+    "method": "POST",
+    "path": "/groups/{groupId}/applications/{applicationId}/withdraw",
+    "summary": "Withdraw your pending application without deleting history"
+  },
+  {
+    "paging": null,
+    "name": "approveOrDeclineAnApplicationAsCurrentGroupManager",
+    "method": "POST",
+    "path": "/groups/{groupId}/applications/{applicationId}/review",
+    "summary": "Approve or decline an application as current Group manager"
+  },
+  {
+    "paging": null,
+    "name": "getEventsAudiences",
+    "method": "GET",
+    "path": "/events/{eventId}/audiences",
+    "summary": "Read only viewer-visible Group associations and Organizer Friends setting"
+  },
+  {
+    "paging": null,
+    "name": "setIndependentFriendsAudienceAsCurrentOrganizer",
+    "method": "PUT",
+    "path": "/events/{eventId}/audiences/friends",
+    "summary": "Set independent Friends audience as current Organizer"
+  },
+  {
+    "paging": null,
+    "name": "configureWholeGroupEventSharingAsOwner",
+    "method": "PUT",
+    "path": "/groups/{groupId}/event-sharing",
+    "summary": "Configure whole-Group Event sharing as owner"
+  },
+  {
+    "paging": null,
+    "name": "shareWithAWholeGroupWithBothPermissions",
+    "method": "POST",
+    "path": "/events/{eventId}/audiences/groups/{groupId}",
+    "summary": "Share with a whole Group with both permissions"
+  },
+  {
+    "paging": null,
+    "name": "withdrawOneGroupGrantWithoutAffectingOtherAudiences",
+    "method": "DELETE",
+    "path": "/events/{eventId}/audiences/groups/{groupId}",
+    "summary": "Withdraw one Group grant without affecting other audiences"
+  },
+  {
+    "paging": null,
+    "name": "deleteGroupsEvents",
+    "method": "DELETE",
+    "path": "/groups/{groupId}/events/{eventId}",
+    "summary": "Withdraw this Group grant as current Group manager; conveys no Event authority"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"event\": { \"_id\": string; \"_creationTime\": number; \"title\": string; \"description\": string | null; \"location\": string | null; \"creatorId\": string; \"timezone\": string; \"visibility\": \"PRIVATE\" | \"FRIENDS\" | \"PUBLIC\"; \"admissionPolicy\": \"INVITATION_ONLY\" | \"DIRECT\" | \"APPLY\"; \"chosenDateTime\": number | null; \"chosenEndDateTime\": number | null; \"imageUrl\": string | null; \"imageFocalPoint\"?: { \"x\": number; \"y\": number }; \"createdAt\": number; \"updatedAt\": number; \"potentialDateTimeOptions\": Array<{ \"id\": string; \"start\": number; \"end\": number | null; \"note\": string | null }> }; \"canWithdraw\": boolean }"
+    },
+    "name": "getGroupsEvents",
+    "method": "GET",
+    "path": "/groups/{groupId}/events",
+    "summary": "Read safe upcoming/undated Group Event previews in bounded association-order pages"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"personId\": string; \"userId\": string; \"name\": string | null; \"username\": string | null; \"image\": string | null; \"blockedAt\": number }"
+    },
+    "name": "listBlockedUsersBoundedCursorPages",
+    "method": "GET",
+    "path": "/blocks",
+    "summary": "List blocked users (bounded cursor pages)"
+  },
+  {
+    "paging": null,
+    "name": "inspectBlockRelationship",
+    "method": "GET",
+    "path": "/blocks/{personId}",
+    "summary": "Inspect block relationship"
+  },
+  {
+    "paging": null,
+    "name": "blockUserAndRemoveFriendshipsRequests",
+    "method": "POST",
+    "path": "/blocks/{personId}",
+    "summary": "Block user and remove friendships/requests"
+  },
+  {
+    "paging": null,
+    "name": "unblockUser",
+    "method": "DELETE",
+    "path": "/blocks/{personId}",
+    "summary": "Unblock user"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"addonType\": string; \"name\": string; \"description\": string; \"version\": number; \"template\": { \"name\": string; \"description\": string; \"iconName\": string; \"settings\"?: { \"requiresCompletion\"?: boolean; \"supportsOptOut\"?: boolean; \"optOutLabel\"?: string; \"cardLinkLabel\"?: string; \"cardSubtitle\"?: string; \"cardOnly\"?: boolean }; \"sections\": Array<{ \"id\": string; \"title\": string; \"description\"?: string; \"layout\"?: \"form\" | \"interactive\"; \"fields\": Array<{ \"id\": string; \"type\": \"text\" | \"number\" | \"select\" | \"multiselect\" | \"yesno\" | \"list_item\" | \"vote\" | \"toggle\" | \"action_button\" | \"static_text\" | \"dynamic_summary\" | \"divider\" | \"info_callout\"; \"label\"?: string; \"required\": boolean; \"configurable\"?: boolean; \"variant\"?: \"short\" | \"long\"; \"placeholder\"?: string; \"maxLength\"?: number; \"min\"?: number; \"max\"?: number; \"options\"?: Array<string>; \"minSelections\"?: number; \"maxSelections\"?: number; \"items\"?: Array<{ \"id\": string; \"name\": string; \"quantity\": number }>; \"allowMultiple\"?: boolean; \"showResults\"?: boolean; \"content\"?: string; \"textFormat\"?: \"p\" | \"h1\" | \"h2\" | \"h3\"; \"summaryType\"?: \"response_count\" | \"vote_leader\" | \"signup_progress\" | \"custom_text\"; \"summaryLabel\"?: string; \"dividerLabel\"?: string; \"calloutVariant\"?: \"info\" | \"warning\" | \"success\"; \"calloutMessage\"?: string; \"buttonLabel\"?: string; \"buttonVariant\"?: \"default\" | \"secondary\" | \"outline\" | \"destructive\"; \"defaultEnabled\"?: boolean; \"actions\"?: Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }>; \"visibilityConditions\"?: Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }> }>; \"configurable\"?: boolean; \"allowedFieldTypes\"?: Array<\"text\" | \"number\" | \"select\" | \"multiselect\" | \"yesno\" | \"list_item\" | \"vote\" | \"toggle\" | \"action_button\" | \"static_text\" | \"dynamic_summary\" | \"divider\" | \"info_callout\">; \"visibilityConditions\"?: Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }> }>; \"submitButtonLabel\"?: string; \"onSubmitActions\"?: Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }>; \"automations\"?: Array<{ \"id\": string; \"name\": string; \"enabled\": boolean; \"trigger\": { \"type\": \"form_submitted\" | \"list_item_claimed\" | \"list_item_full\" | \"vote_cast\" | \"vote_threshold\" | \"toggle_changed\" | \"all_responses_in\" | \"member_joined\" | \"member_left\" | \"date_chosen\" | \"addon_enabled\"; \"fieldId\"?: string; \"threshold\"?: number }; \"conditions\": Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }>; \"actions\": Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }> }> } }"
+    },
+    "name": "listYourExistingPublishedCustomTemplates",
+    "method": "GET",
+    "path": "/addon-templates",
+    "summary": "List your existing published custom templates"
+  },
+  {
+    "paging": null,
+    "name": "postEventsAddonsParticipation",
+    "method": "POST",
+    "path": "/events/{eventId}/addons/{addonType}/participation",
+    "summary": "Perform an app-supported participant action as the current identity"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "AddonConfig"
+    },
+    "name": "listAddOns",
+    "method": "GET",
+    "path": "/events/{eventId}/addons",
+    "summary": "List add-ons"
+  },
+  {
+    "paging": null,
+    "name": "enableAddOn",
+    "method": "POST",
+    "path": "/events/{eventId}/addons/{addonType}/enable",
+    "summary": "Enable add-on"
+  },
+  {
+    "paging": null,
+    "name": "disableAddOn",
+    "method": "POST",
+    "path": "/events/{eventId}/addons/{addonType}/disable",
+    "summary": "Disable add-on"
+  },
+  {
+    "paging": null,
+    "name": "updateAddOnConfig",
+    "method": "PATCH",
+    "path": "/events/{eventId}/addons/{addonType}/config",
+    "summary": "Update add-on config"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "AddonDataEntry"
+    },
+    "name": "listAddOnData",
+    "method": "GET",
+    "path": "/events/{eventId}/addons/{addonType}/data",
+    "summary": "List add-on data"
+  },
+  {
+    "paging": null,
+    "name": "setAddOnData",
+    "method": "PUT",
+    "path": "/events/{eventId}/addons/{addonType}/data/{key}",
+    "summary": "Set add-on data"
+  },
+  {
+    "paging": null,
+    "name": "deleteAddOnData",
+    "method": "DELETE",
+    "path": "/events/{eventId}/addons/{addonType}/data/{key}",
+    "summary": "Delete add-on data"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"name\": string; \"description\": string; \"iconName\": string; \"template\": { \"name\": string; \"description\": string; \"iconName\": string; \"settings\"?: { \"requiresCompletion\"?: boolean; \"supportsOptOut\"?: boolean; \"optOutLabel\"?: string; \"cardLinkLabel\"?: string; \"cardSubtitle\"?: string; \"cardOnly\"?: boolean }; \"sections\": Array<{ \"id\": string; \"title\": string; \"description\"?: string; \"layout\"?: \"form\" | \"interactive\"; \"fields\": Array<{ \"id\": string; \"type\": \"text\" | \"number\" | \"select\" | \"multiselect\" | \"yesno\" | \"list_item\" | \"vote\" | \"toggle\" | \"action_button\" | \"static_text\" | \"dynamic_summary\" | \"divider\" | \"info_callout\"; \"label\"?: string; \"required\": boolean; \"configurable\"?: boolean; \"variant\"?: \"short\" | \"long\"; \"placeholder\"?: string; \"maxLength\"?: number; \"min\"?: number; \"max\"?: number; \"options\"?: Array<string>; \"minSelections\"?: number; \"maxSelections\"?: number; \"items\"?: Array<{ \"id\": string; \"name\": string; \"quantity\": number }>; \"allowMultiple\"?: boolean; \"showResults\"?: boolean; \"content\"?: string; \"textFormat\"?: \"p\" | \"h1\" | \"h2\" | \"h3\"; \"summaryType\"?: \"response_count\" | \"vote_leader\" | \"signup_progress\" | \"custom_text\"; \"summaryLabel\"?: string; \"dividerLabel\"?: string; \"calloutVariant\"?: \"info\" | \"warning\" | \"success\"; \"calloutMessage\"?: string; \"buttonLabel\"?: string; \"buttonVariant\"?: \"default\" | \"secondary\" | \"outline\" | \"destructive\"; \"defaultEnabled\"?: boolean; \"actions\"?: Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }>; \"visibilityConditions\"?: Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }> }>; \"configurable\"?: boolean; \"allowedFieldTypes\"?: Array<\"text\" | \"number\" | \"select\" | \"multiselect\" | \"yesno\" | \"list_item\" | \"vote\" | \"toggle\" | \"action_button\" | \"static_text\" | \"dynamic_summary\" | \"divider\" | \"info_callout\">; \"visibilityConditions\"?: Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }> }>; \"submitButtonLabel\"?: string; \"onSubmitActions\"?: Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }>; \"automations\"?: Array<{ \"id\": string; \"name\": string; \"enabled\": boolean; \"trigger\": { \"type\": \"form_submitted\" | \"list_item_claimed\" | \"list_item_full\" | \"vote_cast\" | \"vote_threshold\" | \"toggle_changed\" | \"all_responses_in\" | \"member_joined\" | \"member_left\" | \"date_chosen\" | \"addon_enabled\"; \"fieldId\"?: string; \"threshold\"?: number }; \"conditions\": Array<{ \"field\": string; \"operator\": \"equals\" | \"not_equals\" | \"contains\" | \"not_contains\" | \"greater_than\" | \"less_than\" | \"greater_or_equal\" | \"less_or_equal\" | \"is_empty\" | \"is_not_empty\" | \"in_list\" | \"not_in_list\"; \"value\"?: (string | number | boolean | null | Array<string>) }>; \"actions\": Array<{ \"type\": \"notify_members\" | \"notify_organizers\" | \"notify_submitter\" | \"create_post\" | \"update_event_description\" | \"set_addon_data\" | \"send_webhook\"; \"webhookUrl\"?: string; \"webhookHeaders\"?: Record<string, string>; \"message\"?: string; \"title\"?: string; \"key\"?: string; \"data\"?: (string | Record<string, (string | number | boolean | null | Array<string>)>); \"recipientToggleField\"?: string }> }> }; \"version\": number; \"isPublished\": boolean; \"createdAt\": number; \"updatedAt\": number }"
+    },
+    "name": "listOwnedDraftAndPublishedDefinitions",
+    "method": "GET",
+    "path": "/addon-template-definitions",
+    "summary": "List owned draft and published definitions"
+  },
+  {
+    "paging": null,
+    "name": "createACompleteDefinitionAsADraft",
+    "method": "POST",
+    "path": "/addon-template-definitions",
+    "summary": "Create a complete definition as a draft"
+  },
+  {
+    "paging": null,
+    "name": "readAnOwnedDefinition",
+    "method": "GET",
+    "path": "/addon-template-definitions/{id}",
+    "summary": "Read an owned definition"
+  },
+  {
+    "paging": null,
+    "name": "replaceAnOwnedDefinitionAtTheExpectedVersion",
+    "method": "PATCH",
+    "path": "/addon-template-definitions/{id}",
+    "summary": "Replace an owned definition at the expected version"
+  },
+  {
+    "paging": null,
+    "name": "deleteAddonTemplateDefinitions",
+    "method": "DELETE",
+    "path": "/addon-template-definitions/{id}",
+    "summary": "Delete an owned definition without changing enabled event snapshots"
+  },
+  {
+    "paging": null,
+    "name": "publishAnOwnedDefinition",
+    "method": "POST",
+    "path": "/addon-template-definitions/{id}/publish",
+    "summary": "publish an owned definition"
+  },
+  {
+    "paging": null,
+    "name": "unpublishAnOwnedDefinition",
+    "method": "POST",
+    "path": "/addon-template-definitions/{id}/unpublish",
+    "summary": "unpublish an owned definition"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"id\": string; \"name\": string; \"status\": \"available\" | \"invitable\"; \"authorizedAt\": number; \"expiresAt\": number }"
+    },
+    "name": "listCachedAuthorizedDiscordGuildsForThisIdentity",
+    "method": "GET",
+    "path": "/discord/guilds",
+    "summary": "List cached authorized Discord guilds for this identity"
+  },
+  {
+    "paging": null,
+    "name": "refreshThisIdentitySDiscordGuildAuthorizationCache",
+    "method": "POST",
+    "path": "/discord/guilds/refresh",
+    "summary": "Refresh this identity\u2019s Discord guild authorization cache"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "Notification"
+    },
+    "name": "listNotifications",
+    "method": "GET",
+    "path": "/notifications",
+    "summary": "List notifications"
+  },
+  {
+    "paging": null,
+    "name": "deleteAllNotifications",
+    "method": "DELETE",
+    "path": "/notifications",
+    "summary": "Delete all notifications"
+  },
+  {
+    "paging": null,
+    "name": "getUnreadCount",
+    "method": "GET",
+    "path": "/notifications/count",
+    "summary": "Get unread count"
+  },
+  {
+    "paging": null,
+    "name": "markNotificationAsRead",
+    "method": "POST",
+    "path": "/notifications/{notificationId}/read",
+    "summary": "Mark notification as read"
+  },
+  {
+    "paging": null,
+    "name": "markNotificationAsUnread",
+    "method": "POST",
+    "path": "/notifications/{notificationId}/unread",
+    "summary": "Mark notification as unread"
+  },
+  {
+    "paging": null,
+    "name": "markAllNotificationsAsRead",
+    "method": "POST",
+    "path": "/notifications/read-all",
+    "summary": "Mark all notifications as read"
+  },
+  {
+    "paging": null,
+    "name": "deleteNotification",
+    "method": "DELETE",
+    "path": "/notifications/{notificationId}",
+    "summary": "Delete notification"
+  },
+  {
+    "paging": null,
+    "name": "markEventsNotificationsRead",
+    "method": "POST",
+    "path": "/notifications/events/{scopeId}/read",
+    "summary": "Mark events notifications read"
+  },
+  {
+    "paging": null,
+    "name": "markPostsNotificationsRead",
+    "method": "POST",
+    "path": "/notifications/posts/{scopeId}/read",
+    "summary": "Mark posts notifications read"
+  },
+  {
+    "paging": null,
+    "name": "listMutedItems",
+    "method": "GET",
+    "path": "/muting",
+    "summary": "List muted items"
+  },
+  {
+    "paging": null,
+    "name": "muteEvent",
+    "method": "POST",
+    "path": "/muting/events/{eventId}",
+    "summary": "Mute event"
+  },
+  {
+    "paging": null,
+    "name": "unmuteEvent",
+    "method": "DELETE",
+    "path": "/muting/events/{eventId}",
+    "summary": "Unmute event"
+  },
+  {
+    "paging": null,
+    "name": "mutePost",
+    "method": "POST",
+    "path": "/muting/posts/{postId}",
+    "summary": "Mute post"
+  },
+  {
+    "paging": null,
+    "name": "unmutePost",
+    "method": "DELETE",
+    "path": "/muting/posts/{postId}",
+    "summary": "Unmute post"
+  },
+  {
+    "paging": null,
+    "name": "inspectEventsMuteStatus",
+    "method": "GET",
+    "path": "/muting/events/{targetId}",
+    "summary": "Inspect events mute status"
+  },
+  {
+    "paging": null,
+    "name": "inspectPostsMuteStatus",
+    "method": "GET",
+    "path": "/muting/posts/{targetId}",
+    "summary": "Inspect posts mute status"
+  },
+  {
+    "paging": null,
+    "name": "getCurrentProfile",
+    "method": "GET",
+    "path": "/profile",
+    "summary": "Get current profile"
+  },
+  {
+    "paging": null,
+    "name": "updateProfile",
+    "method": "PUT",
+    "path": "/profile",
+    "summary": "Update profile"
+  },
+  {
+    "paging": null,
+    "name": "getProfileByUsername",
+    "method": "GET",
+    "path": "/profile/{username}",
+    "summary": "Get profile by username"
+  },
+  {
+    "paging": null,
+    "name": "getPrivacySettings",
+    "method": "GET",
+    "path": "/settings/privacy",
+    "summary": "Get privacy settings"
+  },
+  {
+    "paging": null,
+    "name": "updatePrivacySettings",
+    "method": "PUT",
+    "path": "/settings/privacy",
+    "summary": "Update privacy settings"
+  },
+  {
+    "paging": null,
+    "name": "getNotificationSettings",
+    "method": "GET",
+    "path": "/settings/notifications",
+    "summary": "Get notification settings"
+  },
+  {
+    "paging": null,
+    "name": "saveNotificationPreferences",
+    "method": "PUT",
+    "path": "/settings/notifications",
+    "summary": "Save notification preferences"
+  },
+  {
+    "paging": null,
+    "name": "listCustomThemes",
+    "method": "GET",
+    "path": "/themes",
+    "summary": "List custom themes"
+  },
+  {
+    "paging": null,
+    "name": "createCustomTheme",
+    "method": "POST",
+    "path": "/themes",
+    "summary": "Create custom theme"
+  },
+  {
+    "paging": null,
+    "name": "getThemePreferences",
+    "method": "GET",
+    "path": "/themes/preferences",
+    "summary": "Get theme preferences"
+  },
+  {
+    "paging": null,
+    "name": "setThemePreferences",
+    "method": "PUT",
+    "path": "/themes/preferences",
+    "summary": "Set theme preferences"
+  },
+  {
+    "paging": null,
+    "name": "updateCustomTheme",
+    "method": "PUT",
+    "path": "/themes/{themeId}",
+    "summary": "Update custom theme"
+  },
+  {
+    "paging": null,
+    "name": "deleteCustomTheme",
+    "method": "DELETE",
+    "path": "/themes/{themeId}",
+    "summary": "Delete custom theme"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "InviteSummary"
+    },
+    "name": "listLinkAndEmailInvites",
+    "method": "GET",
+    "path": "/events/{eventId}/invites",
+    "summary": "List link and email invites"
+  },
+  {
+    "paging": null,
+    "name": "createLinkInvitation",
+    "method": "POST",
+    "path": "/events/{eventId}/invites",
+    "summary": "Create link invitation"
+  },
+  {
+    "paging": null,
+    "name": "createEmailInvitation",
+    "method": "POST",
+    "path": "/events/{eventId}/invites/email",
+    "summary": "Create email invitation"
+  },
+  {
+    "paging": null,
+    "name": "createMemberInvitation",
+    "method": "POST",
+    "path": "/events/{eventId}/member-invites",
+    "summary": "Create member invitation"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+    },
+    "name": "listUsernameInvitations",
+    "method": "GET",
+    "path": "/events/{eventId}/member-invites",
+    "summary": "List username invitations"
+  },
+  {
+    "paging": null,
+    "name": "createPendingInvitation",
+    "method": "POST",
+    "path": "/events/{eventId}/invites/send-pending",
+    "summary": "Create pending invitation"
+  },
+  {
+    "paging": null,
+    "name": "editInvitation",
+    "method": "PATCH",
+    "path": "/invites/{inviteId}",
+    "summary": "Edit invitation"
+  },
+  {
+    "paging": null,
+    "name": "deleteInvitation",
+    "method": "DELETE",
+    "path": "/invites/{inviteId}",
+    "summary": "Delete invitation"
+  },
+  {
+    "paging": null,
+    "name": "inspectBearerInvitation",
+    "method": "GET",
+    "path": "/invites/{token}",
+    "summary": "Inspect bearer invitation"
+  },
+  {
+    "paging": null,
+    "name": "acceptBearerInvitation",
+    "method": "POST",
+    "path": "/invites/{token}/accept",
+    "summary": "Accept bearer invitation"
+  },
+  {
+    "paging": {
+      "items": "items",
+      "cursor": "nextCursor",
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+    },
+    "name": "listUsernameInvitationsMemberInvites",
+    "method": "GET",
+    "path": "/member-invites",
+    "summary": "List username invitations"
+  },
+  {
+    "paging": null,
+    "name": "inspectUsernameInvitation",
+    "method": "GET",
+    "path": "/member-invites/{inviteId}",
+    "summary": "Inspect username invitation"
+  },
+  {
+    "paging": null,
+    "name": "cancelUsernameInvitation",
+    "method": "DELETE",
+    "path": "/member-invites/{inviteId}",
+    "summary": "cancel username invitation"
+  },
+  {
+    "paging": null,
+    "name": "acceptUsernameInvitation",
+    "method": "POST",
+    "path": "/member-invites/{inviteId}/accept",
+    "summary": "accept username invitation"
+  },
+  {
+    "paging": null,
+    "name": "declineUsernameInvitation",
+    "method": "POST",
+    "path": "/member-invites/{inviteId}/decline",
+    "summary": "decline username invitation"
+  },
+  {
+    "paging": null,
+    "name": "inviteAListSCurrentPeopleToAnEvent",
+    "method": "POST",
+    "path": "/invite-lists/{inviteListId}/invite-to-event",
+    "summary": "Invite a list\u2019s current people to an event"
+  },
+  {
+    "paging": null,
+    "name": "editAPrivateInviteList",
+    "method": "PATCH",
+    "path": "/invite-lists/{inviteListId}",
+    "summary": "Edit a private Invite list"
+  },
+  {
+    "paging": null,
+    "name": "deleteAPrivateInviteList",
+    "method": "DELETE",
+    "path": "/invite-lists/{inviteListId}",
+    "summary": "Delete a private Invite list"
+  },
+  {
+    "paging": null,
+    "name": "inspectAPrivateInviteList",
+    "method": "GET",
+    "path": "/invite-lists/{inviteListId}",
+    "summary": "Inspect a private Invite list"
+  },
+  {
+    "paging": null,
+    "name": "searchExistingPeopleByUsername",
+    "method": "GET",
+    "path": "/invite-lists/people/search",
+    "summary": "Search existing people by username"
+  },
+  {
+    "paging": null,
+    "name": "listAcceptedFriendChoices",
+    "method": "GET",
+    "path": "/invite-lists/people/friends",
+    "summary": "List accepted friend choices"
+  },
+  {
+    "paging": null,
+    "name": "listPrivateInviteLists",
+    "method": "GET",
+    "path": "/invite-lists",
+    "summary": "List private Invite lists"
+  },
+  {
+    "paging": null,
+    "name": "createAPrivateInviteList",
+    "method": "POST",
+    "path": "/invite-lists",
+    "summary": "Create a private Invite list"
+  },
+  {
+    "paging": null,
+    "name": "createReport",
+    "method": "POST",
+    "path": "/reports",
+    "summary": "Create report"
+  },
+  {
+    "paging": null,
+    "name": "listAllUsers",
+    "method": "GET",
+    "path": "/admin/users",
+    "summary": "List all users"
+  },
+  {
+    "paging": null,
+    "name": "deleteUser",
+    "method": "DELETE",
+    "path": "/admin/users/{userId}",
+    "summary": "Delete user"
+  },
+  {
+    "paging": null,
+    "name": "setUserRole",
+    "method": "PUT",
+    "path": "/admin/users/{userId}/role",
+    "summary": "Set user role"
+  },
+  {
+    "paging": null,
+    "name": "listAllEvents",
+    "method": "GET",
+    "path": "/admin/events",
+    "summary": "List all events"
+  },
+  {
+    "paging": null,
+    "name": "deleteEventAdmin",
+    "method": "DELETE",
+    "path": "/admin/events/{eventId}",
+    "summary": "Delete event (admin)"
+  },
+  {
+    "paging": null,
+    "name": "listAllReports",
+    "method": "GET",
+    "path": "/admin/reports",
+    "summary": "List all reports"
+  },
+  {
+    "paging": null,
+    "name": "inspectUpload",
+    "method": "GET",
+    "path": "/uploads/{storageId}",
+    "summary": "Read an accessible file descriptor"
+  }
+]

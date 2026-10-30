@@ -1,3 +1,4 @@
+import { template as templateValidator } from '../addons/contracts';
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -11,8 +12,9 @@ export const createTemplate = mutation({
     name: v.string(),
     description: v.string(),
     iconName: v.string(),
-    template: v.any(),
+    template: templateValidator,
   },
+  returns: v.id('addonTemplates'),
   handler: async (ctx, { name, description, iconName, template }) => {
     const { person } = await requireAuth(ctx);
 
@@ -52,8 +54,9 @@ export const updateTemplate = mutation({
     name: v.optional(v.string()),
     description: v.optional(v.string()),
     iconName: v.optional(v.string()),
-    template: v.optional(v.any()),
+    template: v.optional(templateValidator),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { templateId, ...updates }) => {
     const { person } = await requireAuth(ctx);
 
@@ -99,6 +102,7 @@ export const publishTemplate = mutation({
   args: {
     templateId: v.id('addonTemplates'),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { templateId }) => {
     const { person } = await requireAuth(ctx);
 
@@ -134,6 +138,7 @@ export const unpublishTemplate = mutation({
   args: {
     templateId: v.id('addonTemplates'),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { templateId }) => {
     const { person } = await requireAuth(ctx);
 
@@ -163,6 +168,7 @@ export const deleteTemplate = mutation({
   args: {
     templateId: v.id('addonTemplates'),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { templateId }) => {
     const { person } = await requireAuth(ctx);
 
@@ -186,6 +192,7 @@ export const duplicateTemplate = mutation({
   args: {
     templateId: v.id('addonTemplates'),
   },
+  returns: v.id('addonTemplates'),
   handler: async (ctx, { templateId }) => {
     const { person } = await requireAuth(ctx);
 

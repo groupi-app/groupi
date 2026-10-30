@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
+import { useCSSVariable } from 'uniwind';
 import { View } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
+  useReducedMotion,
+  cancelAnimation,
   useAnimatedStyle,
   withRepeat,
   withTiming,
@@ -25,18 +28,22 @@ interface LogoStickerProps {
 
 export function LogoSticker({
   size = 120,
-  color = '#8200AD',
+  color,
   waving = false,
 }: LogoStickerProps) {
   const rotation = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
+  const primary = String(useCSSVariable('--color-primary') ?? '');
+  const fillColor = color ?? primary;
 
   useEffect(() => {
-    if (waving) {
+    if (waving && !reducedMotion) {
       rotation.value = withRepeat(withTiming(-8, { duration: 400 }), -1, true);
     } else {
       rotation.value = 0;
     }
-  }, [waving, rotation]);
+    return () => cancelAnimation(rotation);
+  }, [waving, rotation, reducedMotion]);
 
   const armStyle = useAnimatedStyle(() => {
     'worklet';
@@ -57,7 +64,7 @@ export function LogoSticker({
           <Path d={HEAD_PATH} />
           <Path d={BODY_PATH} />
         </G>
-        <G fill={color}>
+        <G fill={fillColor}>
           <Path d={HEAD_PATH} />
           <Path d={BODY_PATH} />
         </G>
@@ -71,7 +78,7 @@ export function LogoSticker({
       >
         <Svg width={width} height={height} viewBox={VIEWBOX} fill='none'>
           <Path d={ARM_PATH} stroke='white' strokeWidth={12} fill='none' />
-          <Path d={ARM_PATH} fill={color} />
+          <Path d={ARM_PATH} fill={fillColor} />
         </Svg>
       </Animated.View>
     </View>

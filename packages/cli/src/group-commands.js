@@ -1,5 +1,8 @@
 import { registerGroupTransferCommands } from './group-transfer-commands.js';
-import { sendAnnouncement, announcementStatus } from './group-announcements.js';
+import {
+  retiredAnnouncement,
+  announcementStatus,
+} from './group-announcements.js';
 import { getProfile, credential } from './profiles.js';
 import { getGroup, listGroups, changeGroup } from './groups.js';
 /** @param {import('commander').Command} program @param {boolean} json */
@@ -69,6 +72,10 @@ export function registerGroupCommands(program, json) {
       'Explicitly retire an owned Group and its data; independent Events remain'
     )
     .option('--yes', 'Confirm Group deletion')
+    .option(
+      '--acknowledge-discord-handback',
+      'Hand retained Discord access to staff; owed removals continue, server and bot remain'
+    )
     .action(async (id, input) => {
       const { profile, key } = await connection();
       output(
@@ -78,28 +85,21 @@ export function registerGroupCommands(program, json) {
           'delete',
           id,
           {},
-          { yes: input.yes, json }
+          {
+            yes: input.yes,
+            json,
+            acknowledgeDiscordHandback: input.acknowledgeDiscordHandback,
+          }
         )
       );
     });
   groups
     .command('announce <group-id>')
-    .description(
-      'Explicitly announce to permitted members; reports queued notifications'
-    )
-    .requiredOption('--title <title>', 'Announcement title (1–100 characters)')
-    .requiredOption(
-      '--message <message>',
-      'Announcement message (1–2000 characters)'
-    )
-    .requiredOption(
-      '--request-id <id>',
-      'Stable <unix-ms>.<uuid-v4> key; preserve body on recovery'
-    )
-    .action(async (id, input) => {
-      const { profile, key } = await connection();
-      output(await sendAnnouncement(profile, key, id, input));
-    });
+    .description('Retired: create a post for Group updates instead')
+    .option('--title <title>', 'Legacy announcement title (unused)')
+    .option('--message <message>', 'Legacy announcement message (unused)')
+    .option('--request-id <id>', 'Legacy request key (unused)')
+    .action(() => retiredAnnouncement());
   groups
     .command('announcement-status <group-id>')
     .description('Recover your aggregate announcement status')

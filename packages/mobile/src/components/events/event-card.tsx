@@ -79,8 +79,8 @@ export function EventCard({
   const isOrganizer = membership.role === 'ORGANIZER';
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
   const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
-  const onPrimaryColor = String(
-    useCSSVariable('--color-primary-foreground') ?? ''
+  const warningForeground = String(
+    useCSSVariable('--color-warning-subtle-foreground') ?? ''
   );
 
   function handleLongPress() {
@@ -175,7 +175,7 @@ export function EventCard({
             </View>
 
             <View
-              className={`h-3 w-3 rounded-full border-[1.5px] border-card shadow-raised ${getRsvpColor(membership.rsvpStatus)}`}
+              className={`h-3 w-3 rounded-full border-[1.5px] border-card ${getRsvpColor(membership.rsvpStatus)}`}
             />
           </View>
 
@@ -215,9 +215,9 @@ export function EventCard({
           </View>
 
           {isOrganizer ? (
-            <View className='mt-2 self-start flex-row items-center gap-1 rounded-badge border-2 border-background bg-warning px-2 py-0.5 shadow-raised'>
-              <Ionicons name='star' size={10} color={onPrimaryColor} />
-              <Text className='text-xs font-semibold text-primary-foreground'>
+            <View className='mt-2 self-start flex-row items-center gap-1 rounded-badge border-2 border-sticker-edge bg-warning-subtle px-2 py-0.5'>
+              <Ionicons name='star' size={10} color={warningForeground} />
+              <Text className='text-xs font-semibold text-warning-subtle-foreground'>
                 Organizer
               </Text>
             </View>

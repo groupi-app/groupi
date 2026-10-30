@@ -1,5 +1,6 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
 import { useState } from 'react';
 import {
   Authenticated,
@@ -153,7 +154,9 @@ function AuthenticatedPrivacySettings() {
         <section className='space-y-3'>
           <div className='flex items-center gap-2'>
             <Users className='size-5 text-primary' />
-            <h2 className='text-lg font-semibold'>Friend Requests</h2>
+            <h2 className='font-heading text-lg font-semibold'>
+              Friend Requests
+            </h2>
           </div>
           <p className='text-sm text-muted-foreground'>
             Choose who can send you friend requests.
@@ -179,7 +182,9 @@ function AuthenticatedPrivacySettings() {
         <section className='space-y-3'>
           <div className='flex items-center gap-2'>
             <Calendar className='size-5 text-primary' />
-            <h2 className='text-lg font-semibold'>Event Invites</h2>
+            <h2 className='font-heading text-lg font-semibold'>
+              Event Invites
+            </h2>
           </div>
           <p className='text-sm text-muted-foreground'>
             Choose who can send you event invites.
@@ -201,7 +206,7 @@ function AuthenticatedPrivacySettings() {
         </section>
 
         <section className='space-y-3'>
-          <h2 className='text-lg font-semibold'>Group Invites</h2>
+          <h2 className='font-heading text-lg font-semibold'>Group Invites</h2>
           <p className='text-sm text-muted-foreground'>
             Choose who can send you Group invitations, separately from Event
             invites and friend requests.
@@ -225,6 +230,7 @@ function AuthenticatedPrivacySettings() {
 
         {/* Save Button */}
         <Button
+          icon={<ActionSave aria-hidden='true' className='size-4' />}
           onClick={handleSave}
           disabled={!hasChanges || isSaving}
           isLoading={isSaving}
@@ -237,7 +243,9 @@ function AuthenticatedPrivacySettings() {
         <section className='space-y-3 border-t pt-6'>
           <div className='flex items-center gap-2'>
             <ShieldOff className='size-5 text-destructive' />
-            <h2 className='text-lg font-semibold'>Blocked Users</h2>
+            <h2 className='font-heading text-lg font-semibold'>
+              Blocked Users
+            </h2>
           </div>
           <p className='text-sm text-muted-foreground'>
             Blocked users cannot send you friend requests, event invites, or

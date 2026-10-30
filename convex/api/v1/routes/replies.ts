@@ -111,6 +111,7 @@ export function createReplyRoutes() {
     request: {
       params: PostIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateReplyRequestSchema,
@@ -207,6 +208,7 @@ export function createReplyRoutes() {
     request: {
       params: ReplyIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateReplyRequestSchema,
@@ -219,7 +221,13 @@ export function createReplyRoutes() {
         description: 'Reply updated',
         content: {
           'application/json': {
-            schema: ReplyResponseSchema,
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                ReplyResponseSchema.shape.data,
+                z.object({ replyId: z.string() }),
+              ]),
+            }),
           },
         },
       },

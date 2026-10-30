@@ -1,3 +1,4 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { checkCanSendEventInvite } from '../lib/privacy';
@@ -9,6 +10,13 @@ export async function getEventInviteEligibility(
   eventId: Id<'events'>,
   inviteeId: Id<'persons'>
 ) {
+  if (await isEventExcludedForPerson(ctx, eventId, inviteeId))
+    return {
+      allowed: false as const,
+      reason: 'UNAVAILABLE' as const,
+      errorCode: 'FORBIDDEN' as const,
+      message: 'Community exclusion prevents invitation.',
+    };
   if (inviterId === inviteeId)
     return {
       allowed: false as const,

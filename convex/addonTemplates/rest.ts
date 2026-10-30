@@ -1,3 +1,4 @@
+import { definitionDocument, templateRecord } from '../addons/contracts';
 import { ConvexError, v } from 'convex/values';
 import { internalMutation, internalQuery } from '../_generated/server';
 import type { QueryCtx } from '../_generated/server';
@@ -43,7 +44,10 @@ export const list = internalQuery({
     limit: v.number(),
     cursor: v.union(v.string(), v.null()),
   },
-  returns: v.any(),
+  returns: v.object({
+    items: v.array(templateRecord),
+    nextCursor: v.union(v.string(), v.null()),
+  }),
   handler: async (ctx, args) => {
     const page = await ctx.db
       .query('addonTemplates')
@@ -61,13 +65,13 @@ export const list = internalQuery({
 });
 export const get = internalQuery({
   args: { personId: v.string(), id: v.string() },
-  returns: v.any(),
+  returns: templateRecord,
   handler: async (ctx, args) =>
     record(await owned(ctx, args.id, args.personId)),
 });
 export const create = internalMutation({
-  args: { personId: v.id('persons'), document: v.any() },
-  returns: v.any(),
+  args: { personId: v.id('persons'), document: definitionDocument },
+  returns: templateRecord,
   handler: async (ctx, args) => {
     const data = parse(args.document);
     const now = Date.now();
@@ -93,9 +97,12 @@ export const change = internalMutation({
       v.literal('unpublish'),
       v.literal('delete')
     ),
-    document: v.optional(v.any()),
+    document: v.optional(definitionDocument),
   },
-  returns: v.any(),
+  returns: v.union(
+    templateRecord,
+    v.object({ id: v.id('addonTemplates'), deleted: v.boolean() })
+  ),
   handler: async (ctx, args) => {
     const row = await owned(ctx, args.id, args.personId);
     if (!Number.isSafeInteger(args.expectedVersion) || args.expectedVersion < 1)

@@ -1,5 +1,7 @@
 'use client';
 
+import { Trash2 as ActionTrash2 } from 'lucide-react';
+import { Card, CardAction } from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,8 +87,9 @@ export function InviteLinkCard({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <div className='relative max-w-3xl'>
+      <Card treatment='interactive' className='relative max-w-3xl'>
         <Checkbox
+          aria-label={`Select ${name || 'invite link'}`}
           checked={selectedInvites.includes(id)}
           onCheckedChange={() => {
             if (!selectedInvites.includes(id)) {
@@ -106,16 +109,16 @@ export function InviteLinkCard({
           }}
           asChild
         >
-          <div
+          <CardAction
             className={cn(
-              'cursor-pointer border border-border shadow-floating rounded-lg py-3 px-6 hover:bg-accent/80 transition-all z-lifted overflow-hidden',
-              selectedInvites.includes(id) ? 'bg-primary/30' : 'bg-card'
+              'w-full py-3 px-6',
+              selectedInvites.includes(id) && 'ring-2 ring-primary rounded-card'
             )}
           >
             <div className='flex items-center md:pl-8'>
               <div className='flex md:items-center gap-2 md:gap-8 flex-col md:flex-row w-full'>
                 <div className='pl-8 md:pl-0 pr-8 md:pr-0 md:w-2/5'>
-                  <h1 className='text-2xl overflow-hidden text-ellipsis whitespace-nowrap'>
+                  <h1 className='font-heading text-2xl overflow-hidden text-ellipsis whitespace-nowrap'>
                     {name
                       ? name
                       : isPending
@@ -162,22 +165,23 @@ export function InviteLinkCard({
                 </div>
               </div>
             </div>
-          </div>
+          </CardAction>
         </DialogTrigger>
         <DialogTrigger asChild>
           <Button
-            className='hover:bg-destructive hover:text-destructive-foreground z-float absolute right-4 top-3 md:top-0 md:bottom-0 my-auto'
+            className='z-float absolute right-4 top-3 md:top-0 md:bottom-0 my-auto'
+            aria-label='Delete invite link'
             onClick={() => {
               setDialogType('delete');
               setIsOpen(true);
             }}
-            variant='outline'
+            variant='destructive-ghost'
             size='icon'
           >
             <Icons.delete className='size-5' />
           </Button>
         </DialogTrigger>
-      </div>
+      </Card>
 
       <DialogContent
         preventOverlayClose={dialogType === 'delete'}
@@ -273,7 +277,13 @@ export function InviteLinkCard({
                   <Button variant='ghost'>Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button onClick={handleDeleteInvite} variant='destructive'>
+                  <Button
+                    icon={
+                      <ActionTrash2 aria-hidden='true' className='size-4' />
+                    }
+                    onClick={handleDeleteInvite}
+                    variant='destructive'
+                  >
                     Delete
                   </Button>
                 </DialogClose>

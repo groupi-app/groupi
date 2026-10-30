@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import type { Id } from 'convex/_generated/dataModel';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { MemberAvatar } from '@/components/members/member-avatar';
 import { Timestamp } from '@/components/molecules';
 import {
@@ -25,16 +26,23 @@ export interface PostCardProps {
     content: string;
     _creationTime: number;
     updatedAt?: number;
-    authorId: string;
+    authorId?: string;
     author?: {
+      kind?: 'user' | 'integration';
       name?: string | null;
       image?: string | null;
-      person?: { _id: string; user?: { name: string; image?: string } };
-      user?: { name: string; image?: string } | null;
+      person?: {
+        _id: string;
+        user?: { name: string | null; image?: string | null };
+      };
+      user?: { name: string | null; image?: string | null } | null;
     } | null;
     replyCount?: number;
+    pinnedAt?: number;
+    repliesDisabled?: boolean;
   };
-  eventId: string;
+  eventId?: string;
+  groupId?: string;
   currentPersonId: string;
   userRole?: string;
 }
@@ -42,6 +50,7 @@ export interface PostCardProps {
 export function PostCard({
   post,
   eventId,
+  groupId,
   currentPersonId,
   userRole,
 }: PostCardProps) {
@@ -60,7 +69,15 @@ export function PostCard({
   const isEdited =
     post.updatedAt !== undefined && post.updatedAt !== post._creationTime;
   const isAuthor = post.authorId === currentPersonId;
-  const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
+  const canModerate =
+    userRole === 'ORGANIZER' ||
+    userRole === 'MODERATOR' ||
+    userRole === 'OWNER';
+  const path = groupId
+    ? `/groups/${groupId}/posts/${post._id}`
+    : eventId
+      ? `/event/${eventId}/post/${post._id}`
+      : undefined;
   const mutedState = useIsPostMuted(post._id);
   const isMuted = mutedState?.isMuted ?? false;
   const togglePostMute = useTogglePostMute();
@@ -80,12 +97,12 @@ export function PostCard({
       },
     ];
 
-    if (isAuthor) {
+    if (isAuthor || (groupId && canModerate)) {
       options.push({
         label: 'Edit Post',
         icon: 'create-outline',
         showChevron: true,
-        onPress: () => router.push(`/event/${eventId}/post/${post._id}/edit`),
+        onPress: () => path && router.push(`${path}/edit`),
       });
     } else {
       options.push({
@@ -128,23 +145,35 @@ export function PostCard({
 
   return (
     <Pressable
-      onPress={() => router.push(`/event/${eventId}/post/${post._id}`)}
+      onPress={() => path && router.push(path)}
       onLongPress={handleLongPress}
       accessibilityRole='button'
-      accessibilityLabel={`${post.title}, by ${authorName}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
+      accessibilityLabel={`${post.pinnedAt === undefined ? '' : 'Pinned, '}${post.title}, by ${authorName}${post.repliesDisabled ? ', replies closed' : ''}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
       accessibilityHint='Opens post and replies. Long press for post actions.'
     >
       <Card>
+        {post.pinnedAt !== undefined ? (
+          <Text className='mb-2 text-xs font-semibold text-muted-foreground'>
+            Pinned
+          </Text>
+        ) : null}
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
-          <MemberAvatar
-            personId={post.authorId as Id<'persons'>}
-            src={authorImage}
-            name={authorName}
-            size='sm'
-          />
+          {post.author?.kind === 'integration' || !post.authorId ? (
+            <UserAvatar src={authorImage} name={authorName} size='sm' />
+          ) : (
+            <MemberAvatar
+              personId={post.authorId as Id<'persons'>}
+              src={authorImage}
+              name={authorName}
+              size='sm'
+            />
+          )}
           <View className='flex-1'>
-            <Text variant='small'>{authorName}</Text>
+            <Text variant='small'>
+              {authorName}
+              {post.author?.kind === 'integration' ? ' · Integration' : ''}
+            </Text>
             <View className='flex-row items-center gap-1'>
               <Timestamp time={post._creationTime} className='text-xs' />
               {isEdited ? (
@@ -164,6 +193,11 @@ export function PostCard({
           {plainContent || post.content}
         </Text>
 
+        {post.repliesDisabled ? (
+          <Text className='mt-2 text-xs text-muted-foreground'>
+            Replies closed
+          </Text>
+        ) : null}
         {/* Reply count */}
         {replyCount !== undefined && replyCount > 0 ? (
           <View className='mt-3 flex-row items-center gap-1'>

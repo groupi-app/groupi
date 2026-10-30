@@ -27,6 +27,29 @@ echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
 # The URL is written to a static file that can be fetched by the E2E workflow
 BUILD_CMD='pnpm --filter @groupi/web build && node scripts/write-e2e-config.mjs'
 
+# Shared TEST is deployed separately after an exact-target check and backup.
+# Its frontend build must never provision a backend or rewrite auth credentials.
+if [ "$VERCEL_GIT_COMMIT_REF" = "test" ]; then
+  if [ "$VERCEL_ENV" != "preview" ]; then
+    echo "Error: test must build in the preview environment"
+    exit 1
+  fi
+  TEST_CONVEX_URL="https://zany-rooster-824.convex.cloud"
+  for configured_url in "${NEXT_PUBLIC_CONVEX_URL:-}" "${CONVEX_URL:-}"; do
+    if [ -n "$configured_url" ] && [ "$configured_url" != "$TEST_CONVEX_URL" ]; then
+      echo "Error: configured TEST backend does not match the reviewed deployment"
+      exit 1
+    fi
+  done
+  export NEXT_PUBLIC_CONVEX_URL="$TEST_CONVEX_URL"
+  export CONVEX_URL="$TEST_CONVEX_URL"
+  export NEXT_PUBLIC_CONVEX_SITE_URL="https://zany-rooster-824.convex.site"
+  echo "Building TEST frontend against the existing reviewed backend; no backend writes"
+  bash -c "$BUILD_CMD"
+  echo "=== Build Complete ==="
+  exit 0
+fi
+
 if [ "$VERCEL_ENV" = "production" ]; then
   echo "Deploying to Convex production..."
   npx convex deploy \
@@ -49,11 +72,11 @@ else
   fi
   PREVIEW_SITE_URL="https://$PREVIEW_HOST"
 
-  # Claim a fresh deployment before configuring it. The initial function push
-  # can fail because auth intentionally requires SITE_URL during analysis; the
-  # deployment is still created and can then be configured before the real push.
-  echo "Creating Convex preview: $PREVIEW_NAME..."
-  if ! npx convex deploy --preview-create "$PREVIEW_NAME"; then
+  # Claim or reuse the named preview without resetting its data or issuer.
+  # A fresh preview can fail its initial push because auth requires SITE_URL;
+  # it is still provisioned and can be configured before the final push.
+  echo "Preparing Convex preview: $PREVIEW_NAME..."
+  if ! npx convex deploy --preview-name "$PREVIEW_NAME"; then
     echo "Initial preview push deferred until auth environment is configured"
   fi
 

@@ -13,6 +13,7 @@
  */
 
 import * as fs from 'fs';
+import { getThemePresentationVariables } from '../lib/theme-presentation';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -123,6 +124,11 @@ function generateThemeBlock(): string {
     '     ========================================================================== */'
   );
   lines.push('');
+
+  // Opt-in derived colors. Existing defaults retain their current mappings.
+  for (const key of Object.keys(getThemePresentationVariables(baseThemes[0]))) {
+    lines.push(`  --color-${key.slice(2)}: var(${key});`);
+  }
 
   // Legacy color mappings (reference CSS vars)
   lines.push('  /* Legacy color tokens (for shadcn/ui compatibility) */');
@@ -357,6 +363,12 @@ function generateThemeVars(theme: BaseTheme, selector: string): string {
     '     ========================================================================== */'
   );
   lines.push('');
+
+  for (const [key, value] of Object.entries(
+    getThemePresentationVariables(theme)
+  )) {
+    lines.push(`  ${key}: ${value};`);
+  }
 
   // Legacy tokens (shadcn/ui compatibility)
   lines.push('  /* Legacy tokens (shadcn/ui) */');

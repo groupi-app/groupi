@@ -76,7 +76,7 @@ export function AttendeePagePreview({
                   return (
                     <Card
                       key={field.id}
-                      className={`rounded-card shadow-raised ${field.type === 'toggle' ? 'w-fit' : ''}`}
+                      className={`rounded-card  ${field.type === 'toggle' ? 'w-fit' : ''}`}
                     >
                       <CardContent className='space-y-1 p-4'>
                         {showLabel && (
@@ -106,7 +106,7 @@ export function AttendeePagePreview({
                   Section conditionally visible
                 </p>
               )}
-              <Card className='rounded-card shadow-raised'>
+              <Card className='rounded-card'>
                 <CardContent className='space-y-4 p-4'>
                   <PreviewSection
                     section={section}

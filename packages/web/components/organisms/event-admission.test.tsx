@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { useState } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getFunctionName } from 'convex/server';
 import { ConvexProvider, ConvexReactClient, useMutation } from 'convex/react';
@@ -12,7 +12,15 @@ import type { Id } from '@/convex/_generated/dataModel';
 
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
-const navigation = vi.hoisted(() => ({ push: vi.fn() }));
+const navigation = vi.hoisted(() => ({ push: vi.fn(), stage: vi.fn() }));
+vi.mock('@/features/event-settings', () => ({
+  useEventSettingsDraft: () => ({
+    values: { admissionPolicy: 'INVITATION_ONLY' },
+    setSection: navigation.stage,
+    busy: false,
+    epoch: 0,
+  }),
+}));
 vi.mock('next/navigation', () => ({
   useRouter: () => navigation,
   useParams: () => ({ eventId: 'event-one' }),
@@ -287,7 +295,7 @@ describe('event logistics preview using the actual app SDK', () => {
 
 import { EventAdmissionSettings } from './event-admission-settings';
 describe('Organizer admission settings', () => {
-  it('lets the Organizer change admission independently of Public visibility', async () => {
+  it('stages Organizer admission changes without independent writes', async () => {
     const { client, mutation } = clientFor();
     const mounted = render(
       <ConvexProvider client={client}>
@@ -296,20 +304,14 @@ describe('Organizer admission settings', () => {
     );
     const user = userEvent.setup();
     await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Admission policy' }),
+      screen.getByRole('combobox', { name: 'Admission' }),
       'DIRECT'
     );
-    await user.click(
-      screen.getByRole('button', { name: 'Save admission policy' })
-    );
-    await screen.findByRole('status');
-    expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
-      'events/mutations:updateAdmissionPolicy'
-    );
-    expect(mutation.mock.calls[0][1]).toEqual({
-      eventId,
-      admissionPolicy: 'DIRECT',
-    });
+    expect(navigation.stage).toHaveBeenCalledWith('admissionPolicy', 'DIRECT');
+    expect(mutation).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: /Save/ })
+    ).not.toBeInTheDocument();
     mounted.unmount();
     await client.close();
   });
@@ -323,7 +325,7 @@ describe('Organizer admission settings', () => {
         </ConvexProvider>
       );
       expect(
-        screen.queryByRole('combobox', { name: 'Admission policy' })
+        screen.queryByRole('combobox', { name: 'Admission' })
       ).not.toBeInTheDocument();
       expect(mutation).not.toHaveBeenCalled();
       mounted.unmount();
@@ -357,4 +359,108 @@ it('handles an unreadable event without mounting member data or joining', async 
   mounted.unmount();
   await client.close();
   report.mockRestore();
+});
+
+describe('public logistics loading transitions using the actual app SDK', () => {
+  function pendingClient() {
+    const { client, mutation } = clientFor();
+    let snapshot: unknown = undefined;
+    const subscribers = new Set<() => void>();
+    vi.mocked(client.watchQuery).mockImplementation(() => ({
+      onUpdate: callback => {
+        subscribers.add(callback);
+        return () => subscribers.delete(callback);
+      },
+      localQueryResult: () => {
+        if (snapshot instanceof Error) throw snapshot;
+        return snapshot;
+      },
+      journal: () => undefined,
+    }));
+    return {
+      client,
+      mutation,
+      settle: (value: unknown) => {
+        snapshot = value;
+        subscribers.forEach(callback => callback());
+      },
+    };
+  }
+
+  it.each([
+    ['Picnic', 'Bring lunch.'],
+    [
+      'A long public event title that wraps across several lines on a narrow screen',
+      'Extended public logistics description. '.repeat(10).trim(),
+    ],
+  ])(
+    'replaces its inert logistics skeleton with %s without joining',
+    async (title, description) => {
+      const { client, mutation, settle } = pendingClient();
+      const view = render(
+        <ConvexProvider client={client}>
+          <EventLogisticsPreview eventId={eventId} />
+        </ConvexProvider>
+      );
+      expect(screen.getAllByRole('status')).toHaveLength(1);
+      expect(screen.getByRole('status')).toHaveTextContent(/loading event/i);
+      expect(
+        view.container.querySelector('main[aria-busy="true"]')
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('heading')).toBeNull();
+      expect(screen.queryByRole('button')).toBeNull();
+      expect(screen.queryByRole('link')).toBeNull();
+      expect(screen.queryByText('Posts')).toBeNull();
+      expect(screen.queryByText('Attendees')).toBeNull();
+      await act(async () =>
+        settle({
+          ...fixture,
+          event: { ...fixture.event, title, description },
+          entryAction: 'JOIN',
+        })
+      );
+      expect(
+        screen.getByRole('heading', { level: 1, name: title })
+      ).toBeVisible();
+      expect(screen.getByText(description)).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Join Event' })).toBeVisible();
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(view.container.querySelector('[aria-busy="true"]')).toBeNull();
+      expect(mutation).not.toHaveBeenCalled();
+      view.unmount();
+      await client.close();
+    }
+  );
+
+  it.each(['missing', 'query error'] as const)(
+    'replaces unresolved logistics with the existing %s boundary',
+    async state => {
+      const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { client, mutation, settle } = pendingClient();
+      const view = render(
+        <ConvexProvider client={client}>
+          <EventLogisticsPreview eventId={eventId} />
+        </ConvexProvider>
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(/loading event/i);
+      await act(async () =>
+        settle(
+          state === 'missing' ? null : new Error('Not allowed to view event')
+        )
+      );
+      expect(
+        screen.getByRole('heading', { name: 'Event unavailable' })
+      ).toBeVisible();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'you do not have permission'
+      );
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Join Event' })).toBeNull();
+      expect(view.container.querySelector('[aria-busy="true"]')).toBeNull();
+      expect(mutation).not.toHaveBeenCalled();
+      view.unmount();
+      await client.close();
+      report.mockRestore();
+    }
+  );
 });

@@ -1,3 +1,5 @@
+import { TemplateSchema } from '../addonTemplates/definition';
+import { AddonConfigSchema } from './schemas';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { getAddonHandler } from './registry';
@@ -143,7 +145,7 @@ export async function validatedConfiguration(
   addonType: string,
   value: unknown,
   enabling: boolean
-): Promise<Record<string, unknown>> {
+) {
   await requireConfigurationRole(ctx, eventId, personId);
   const input = record(value);
   let config = input;
@@ -213,22 +215,22 @@ export async function validatedConfiguration(
     );
   }
   await requireDiscordGuildAuthorization(ctx, personId, addonType, config);
-  return config;
+  return AddonConfigSchema.parse(config);
 }
 
 /** Public config snapshots must never include webhook credentials or transport secrets. */
-export function publicConfiguration(
-  addonType: string,
-  value: unknown
-): unknown {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+export function publicConfiguration(addonType: string, value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid stored add-on configuration');
   if (!addonType.startsWith('custom:')) {
     const fields = topLevelFields[addonType] ?? [];
-    return Object.fromEntries(
-      Object.entries(value).filter(([key]) => fields.includes(key))
+    return AddonConfigSchema.parse(
+      Object.fromEntries(
+        Object.entries(value).filter(([key]) => fields.includes(key))
+      )
     );
   }
-  return redactWebhookSecrets(value);
+  return AddonConfigSchema.parse(redactWebhookSecrets(value));
 }
 function redactWebhookSecrets(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(redactWebhookSecrets);
@@ -296,4 +298,9 @@ export async function requireConfigurationRole(
     throw new Error(
       'Only organizers and moderators may configure event add-ons'
     );
+}
+
+/** Redacted template shape shared by event snapshots and the published picker. */
+export function publicTemplate(value: unknown) {
+  return TemplateSchema.parse(redactWebhookSecrets(value));
 }

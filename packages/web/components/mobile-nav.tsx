@@ -2,6 +2,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -27,7 +28,7 @@ import { useNotificationCloseStore } from '@/stores/notification-close-store';
 import { ProfileEditDialog } from './profile-edit-dialog';
 import { usePendingRequests } from '@/hooks/convex/use-friends';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
-import { Badge } from '@/components/ui/badge';
+import { UnreadIndicator } from '@/components/atoms/unread-indicator';
 import { AccountSwitcher, MobileStatusPicker } from '@/components/molecules';
 
 // Navigation item type
@@ -94,11 +95,13 @@ export function MobileNav({
                   className='flex items-center gap-2 text-primary dark:text-foreground'
                   href='/'
                 >
-                  <Icons.logo width='32' height='28' viewBox='0 0 197 225' />
                   <span className='text-xl'>{siteConfig.name}</span>
                 </Link>
               </SheetClose>
             </SheetTitle>
+            <SheetDescription className='sr-only'>
+              Navigate your events, Friends &amp; Groups, and account settings.
+            </SheetDescription>
           </SheetHeader>
 
           {userInfo.email && (
@@ -180,14 +183,9 @@ export function MobileNav({
                   className='flex items-center gap-3 w-full p-4 text-lg font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground border-b border-border/50'
                 >
                   <Icons.people className='size-6' />
-                  <span>Friends</span>
+                  <span>Friends &amp; Groups</span>
                   {pendingCount > 0 && (
-                    <Badge
-                      variant='destructive'
-                      className='ml-auto size-6 p-0 flex items-center justify-center text-sm'
-                    >
-                      {pendingCount}
-                    </Badge>
+                    <UnreadIndicator count={pendingCount} className='ml-auto' />
                   )}
                 </button>
                 <button

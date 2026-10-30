@@ -75,7 +75,16 @@ const filterOperators = v.union(
 const filterCondition = v.object({
   field: v.string(),
   operator: filterOperators,
-  value: v.optional(v.any()),
+  value: v.optional(
+    v.union(
+      v.string(),
+      v.number(),
+      v.boolean(),
+      v.null(),
+      v.array(v.string()),
+      v.array(v.number())
+    )
+  ),
 });
 
 // Define filter group (AND/OR logic)
@@ -367,6 +376,7 @@ async function executeUsersQuery(ctx: QueryCtx, params: QueryParams) {
   const personPostedInEventMap = new Map<string, Set<string>>();
   for (const post of allPosts) {
     const personIdStr = post.authorId.toString();
+    if (!post.eventId) continue;
     const eventIdStr = post.eventId.toString();
     if (!personPostedInEventMap.has(personIdStr)) {
       personPostedInEventMap.set(personIdStr, new Set());
@@ -422,12 +432,12 @@ async function executeUsersQuery(ctx: QueryCtx, params: QueryParams) {
 
       // rel_postedInEvent: list of eventIds this user has posted in
       const postedInEvents = Array.from(
-        personPostedInEventMap.get(personIdStr) || new Set()
+        personPostedInEventMap.get(personIdStr) ?? []
       );
 
       // rel_repliedToUser: list of personIds whose posts this user has replied to
       const repliedToUsers = Array.from(
-        personRepliedToMap.get(personIdStr) || new Set()
+        personRepliedToMap.get(personIdStr) ?? []
       );
 
       return {
@@ -550,6 +560,7 @@ async function executeEventsQuery(ctx: QueryCtx, params: QueryParams) {
   }
 
   for (const post of allPosts) {
+    if (!post.eventId) continue;
     const eventIdStr = post.eventId.toString();
     const personIdStr = post.authorId.toString();
     if (!eventPostersMap.has(eventIdStr)) {
@@ -639,10 +650,20 @@ async function executePostsQuery(ctx: QueryCtx, params: QueryParams) {
     allPosts.map(async post => {
       const [author, event] = await Promise.all([
         ctx.db.get(post.authorId),
-        ctx.db.get(post.eventId),
+        post.eventId ? ctx.db.get(post.eventId) : null,
       ]);
 
-      const authorUser = author ? await getUserInfo(ctx, author.userId) : null;
+      const authorUser = author
+        ? 'userId' in author
+          ? await getUserInfo(ctx, author.userId)
+          : {
+              name: author.name,
+              email: null,
+              image: null,
+              username: null,
+              role: null,
+            }
+        : null;
       const postIdStr = post._id.toString();
       const repliers = postRepliersMap.get(postIdStr) || new Set();
 
@@ -658,7 +679,7 @@ async function executePostsQuery(ctx: QueryCtx, params: QueryParams) {
         eventTitle: event?.title || null,
         replyCount: repliers.size,
         // Relationship fields
-        rel_inEvent: [post.eventId.toString()],
+        rel_inEvent: post.eventId ? [post.eventId.toString()] : [],
         rel_byUser: [post.authorId.toString()],
         rel_hasRepliesByUser: Array.from(repliers),
       };
@@ -705,8 +726,18 @@ async function executeRepliesQuery(ctx: QueryCtx, params: QueryParams) {
         ctx.db.get(reply.postId),
       ]);
 
-      const authorUser = author ? await getUserInfo(ctx, author.userId) : null;
-      const event = post ? await ctx.db.get(post.eventId) : null;
+      const authorUser = author
+        ? 'userId' in author
+          ? await getUserInfo(ctx, author.userId)
+          : {
+              name: author.name,
+              email: null,
+              image: null,
+              username: null,
+              role: null,
+            }
+        : null;
+      const event = post?.eventId ? await ctx.db.get(post.eventId) : null;
 
       return {
         id: reply._id,
@@ -1134,7 +1165,7 @@ export const searchEntities = query({
       const allPosts = await ctx.db.query('posts').collect();
       const postsWithEvents = await Promise.all(
         allPosts.map(async post => {
-          const event = await ctx.db.get(post.eventId);
+          const event = post.eventId ? await ctx.db.get(post.eventId) : null;
           return {
             id: post._id,
             label: post.title,

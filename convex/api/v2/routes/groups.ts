@@ -1,3 +1,18 @@
+import {
+  CurrentCommunityEventSchema,
+  CommunityParticipationReceiptSchema,
+  CommunityEventLeaveReceiptSchema,
+  CommunityLeaveReceiptSchema,
+  CommunityJoinSchema,
+  CommunityRsvpSchema,
+  CommunityEventLeaveSchema,
+  CommunityLeaveSchema,
+  CommunityApplicationReceiptSchema,
+  CommunityApplicationSubmitSchema,
+  CommunityApplicationEditSchema,
+  CommunityApplicationWithdrawSchema,
+  CommunityContextSchema,
+} from '../schemas/community';
 import { GroupApplicationQuestionSchema } from '../schemas/groupApplications';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { HTTPException } from 'hono/http-exception';
@@ -60,6 +75,11 @@ const errors = {
     description: 'Owner authority or Group scope required',
     content: { 'application/json': { schema: ErrorResponseSchema } },
   },
+  409: {
+    description:
+      'Protected ownership, existing exclusion or idempotency conflict',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
   404: {
     description: 'Group unavailable',
     content: { 'application/json': { schema: ErrorResponseSchema } },
@@ -67,8 +87,177 @@ const errors = {
 };
 export function createGroupRoutes() {
   const app = new OpenAPIHono<{
-    Variables: { ctx: ActionCtx; personId: string; userId: string };
+    Variables: {
+      ctx: ActionCtx;
+      personId: string;
+      userId: string;
+      credential: import('../../middleware/auth').CredentialContext;
+    };
   }>({ defaultHook: createValidationHook() });
+  app.use('/groups/:groupId/community-context', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    await next();
+  });
+  app.use('/groups/:groupId/coordinated-expulsions/*', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    await next();
+  });
+  const expulsion = z.object({
+    operationId: z.string(),
+    outcome: z.literal('committed'),
+    exclusion: z.enum(['active', 'inactive']),
+    generation: z.number(),
+    cleanup: z.enum(['pending', 'blocked', 'complete']),
+    conflicts: z.array(z.object({ eventId: z.string(), code: z.string() })),
+    events: z
+      .array(
+        z.object({
+          eventId: z.string(),
+          state: z.enum([
+            'pending',
+            'blocked',
+            'complete',
+            'preserved',
+            'retired',
+          ]),
+          code: z.string().optional(),
+        })
+      )
+      .optional(),
+  });
+  app.use('/groups/:groupId/coordinated-expulsions', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    await next();
+  });
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/groups/{groupId}/coordinated-expulsions',
+      tags: ['Groups'],
+      operationId: 'expelCommunityMember',
+      summary: 'Commit coordinated community exclusion as staff',
+      security: [{ apiKey: [] }],
+      request: {
+        params,
+        headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+        body: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: z
+                .object({
+                  personId: z.string(),
+                  policy: z.literal('coordinated'),
+                })
+                .strict(),
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description:
+            'Exclusion committed; cleanup remains pending or blocked',
+          content: { 'application/json': { schema: expulsion } },
+        },
+        ...errors,
+      },
+    }),
+    async c =>
+      c.json(
+        await c.get('ctx').runMutation(internal.groups.expulsions.expelRest, {
+          actorId: c.get('personId') as Id<'persons'>,
+          credentialId: c.get('credential').credentialId,
+          groupId: c.req.valid('param').groupId as Id<'groups'>,
+          personId: c.req.valid('json').personId as Id<'persons'>,
+          policy: 'coordinated',
+          operationId: c.req.valid('header')['Idempotency-Key'],
+        }),
+        200
+      )
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/coordinated-expulsions/{personId}',
+      tags: ['Groups'],
+      operationId: 'readCommunityExpulsion',
+      summary: 'Reconcile coordinated exclusion progress as current staff',
+      security: [{ apiKey: [] }],
+      request: { params: params.extend({ personId: z.string() }) },
+      responses: {
+        200: {
+          description: 'Current staff progress',
+          content: { 'application/json': { schema: expulsion.nullable() } },
+        },
+        ...errors,
+      },
+    }),
+    async c =>
+      c.json(
+        await c.get('ctx').runQuery(internal.groups.expulsions.progressRest, {
+          actorId: c.get('personId') as Id<'persons'>,
+          groupId: c.req.valid('param').groupId as Id<'groups'>,
+          personId: c.req.valid('param').personId as Id<'persons'>,
+        }),
+        200
+      )
+  );
+  for (const action of ['resume', 'reinstate'] as const) {
+    app.openapi(
+      createRoute({
+        method: 'post',
+        path: `/groups/{groupId}/coordinated-expulsions/{personId}/${action}`,
+        tags: ['Groups'],
+        operationId:
+          action === 'resume'
+            ? 'resumeCommunityExpulsion'
+            : 'reinstateCommunityMember',
+        summary:
+          action === 'resume'
+            ? 'Resume cleanup with current independent Event authority'
+            : 'Reinstate after complete cleanup without restoring admission',
+        security: [{ apiKey: [] }],
+        request: {
+          params: params.extend({ personId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: z
+                  .object({ generation: z.number().int().positive() })
+                  .strict(),
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Current committed resolution; reconcile progress before another intent',
+            content: { 'application/json': { schema: expulsion } },
+          },
+          ...errors,
+        },
+      }),
+      async c =>
+        c.json(
+          await c
+            .get('ctx')
+            .runMutation(internal.groups.expulsions.resolveRest, {
+              actorId: c.get('personId') as Id<'persons'>,
+              credentialId: c.get('credential').credentialId,
+              groupId: c.req.valid('param').groupId as Id<'groups'>,
+              personId: c.req.valid('param').personId as Id<'persons'>,
+              generation: c.req.valid('json').generation,
+              operationId: c.req.valid('header')['Idempotency-Key'],
+              action,
+            }),
+          200
+        )
+    );
+  }
   app.openapi(
     createRoute({
       method: 'get',
@@ -219,15 +408,272 @@ export function createGroupRoutes() {
       tags: ['Groups'],
       summary: 'Explicitly delete a Group as owner',
       security: [{ apiKey: [] }],
-      request: { params },
+      request: {
+        params,
+        query: z.object({
+          acknowledgeDiscordHandback: z
+            .enum(['true', 'false'])
+            .optional()
+            .openapi({
+              description:
+                'Explicitly acknowledge handback of retained Discord roles/server membership to Discord staff. Pending removals survive deletion; server and bot remain.',
+            }),
+        }),
+      },
       responses: { 204: { description: 'Deleted' }, ...errors },
     }),
     async c => {
       await c.get('ctx').runMutation(internal.groups.rest.remove, {
         personId: c.get('personId') as Id<'persons'>,
         groupId: c.req.valid('param').groupId as Id<'groups'>,
+        acknowledgeDiscordHandback:
+          c.req.valid('query').acknowledgeDiscordHandback === 'true',
       });
       return c.body(null, 204);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/community-context',
+      tags: ['Groups'],
+      operationId: 'readOwnCommunityContext',
+      summary: 'Read own community context',
+      security: [{ boundedBearer: [] }],
+      request: {
+        params,
+        query: z.object({ cursor: z.string().max(4096).optional() }),
+      },
+      responses: {
+        200: {
+          description: 'Selected Group own context; private no-store',
+          content: { 'application/json': { schema: CommunityContextSchema } },
+        },
+        ...errors,
+        503: {
+          description: 'Retryable unavailable service',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/current-event',
+      tags: ['Groups'],
+      operationId: 'readCurrentCommunityEvent',
+      summary: 'Read the single current selected Group Event',
+      security: [{ boundedBearer: [] }],
+      request: { params },
+      responses: {
+        200: {
+          description:
+            'Explicit absence, staff configuration conflict, or permitted Event logistics and own RSVP; private no-store',
+          content: {
+            'application/json': { schema: CurrentCommunityEventSchema },
+          },
+        },
+        ...errors,
+        503: {
+          description: 'Retryable unavailable service',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
+    }
+  );
+  for (const op of [
+    {
+      method: 'post' as const,
+      suffix: 'events/{eventId}/join',
+      name: 'joinCommunityEvent',
+      body: CommunityJoinSchema,
+      receipt: CommunityParticipationReceiptSchema,
+    },
+    {
+      method: 'put' as const,
+      suffix: 'events/{eventId}/own-rsvp',
+      name: 'setCommunityRsvp',
+      body: CommunityRsvpSchema,
+      receipt: CommunityParticipationReceiptSchema,
+    },
+    {
+      method: 'post' as const,
+      suffix: 'events/{eventId}/leave',
+      name: 'leaveCommunityEvent',
+      body: CommunityEventLeaveSchema,
+      receipt: CommunityEventLeaveReceiptSchema,
+    },
+    {
+      method: 'post' as const,
+      suffix: 'community-leave',
+      name: 'leaveCommunity',
+      body: CommunityLeaveSchema,
+      receipt: CommunityLeaveReceiptSchema,
+    },
+  ])
+    app.openapi(
+      createRoute({
+        method: op.method,
+        path: `/groups/{groupId}/${op.suffix}`,
+        tags: ['Groups'],
+        operationId: op.name,
+        summary: op.name,
+        security: [{ boundedBearer: [] }],
+        request: {
+          params:
+            op.name === 'leaveCommunity'
+              ? params
+              : params.extend({ eventId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: { 'application/json': { schema: op.body } },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Committed minimal receipt; independent participation is retained on Group departure',
+            content: {
+              'application/json': {
+                schema: op.receipt,
+              },
+            },
+          },
+          ...errors,
+          409: {
+            description:
+              'Stale intent, protected role, or operation replay conflict',
+            content: { 'application/json': { schema: ErrorResponseSchema } },
+          },
+        },
+      }),
+      async () => {
+        throw new HTTPException(403, {
+          message: 'Selected Group delegated credential required',
+        });
+      }
+    );
+  for (const operation of [
+    {
+      method: 'post' as const,
+      path: '/groups/{groupId}/community-applications',
+      name: 'submitCommunityApplication',
+      body: CommunityApplicationSubmitSchema,
+    },
+    {
+      method: 'patch' as const,
+      path: '/groups/{groupId}/community-applications/{applicationId}',
+      name: 'editCommunityApplication',
+      body: CommunityApplicationEditSchema,
+    },
+    {
+      method: 'post' as const,
+      path: '/groups/{groupId}/community-applications/{applicationId}/withdraw',
+      name: 'withdrawCommunityApplication',
+      body: CommunityApplicationWithdrawSchema,
+    },
+  ])
+    app.openapi(
+      createRoute({
+        method: operation.method,
+        path: operation.path,
+        tags: ['Groups'],
+        operationId: operation.name,
+        summary: operation.name,
+        security: [{ boundedBearer: [] }],
+        request: {
+          params:
+            operation.name === 'submitCommunityApplication'
+              ? params
+              : params.extend({ applicationId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: { 'application/json': { schema: operation.body } },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Committed minimal receipt; email delivery is independent',
+            content: {
+              'application/json': { schema: CommunityApplicationReceiptSchema },
+            },
+          },
+          ...errors,
+          409: {
+            description:
+              'Revision or operation intent conflict; reconcile authorized state',
+            content: { 'application/json': { schema: ErrorResponseSchema } },
+          },
+        },
+      }),
+      async () => {
+        throw new HTTPException(403, {
+          message: 'Selected Group delegated credential required',
+        });
+      }
+    );
+  app.openapi(
+    createRoute({
+      method: 'put',
+      path: '/groups/{groupId}/announcement-preference',
+      tags: ['Groups'],
+      operationId: 'setCommunityAnnouncementPreference',
+      summary: 'Change own Group announcement subscription',
+      security: [{ boundedBearer: [] }],
+      request: {
+        params,
+        headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+        body: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: z.object({ subscribed: z.boolean() }).strict(),
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Committed own preference',
+          content: {
+            'application/json': {
+              schema: z.object({
+                operationId: z.string(),
+                outcome: z.literal('committed'),
+                result: z.object({ subscribed: z.boolean() }),
+                effects: z.object({
+                  email: z.literal('not-requested'),
+                  cleanup: z.literal('not-requested'),
+                }),
+              }),
+            },
+          },
+        },
+        ...errors,
+        409: {
+          description: 'Operation intent conflict',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
     }
   );
   return app;

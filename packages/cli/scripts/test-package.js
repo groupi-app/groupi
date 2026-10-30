@@ -79,7 +79,9 @@ try {
     ],
     installed
   );
-  run(['exec', 'vitest', 'run', 'tests'], source, {
+  // These suites spawn CLI processes while Ink needs a responsive event loop.
+  // Bound process fan-out on hosted runners, as for the REST package checks.
+  run(['exec', 'vitest', 'run', '--maxWorkers=1', 'tests'], source, {
     ...process.env,
     CLI_TEST_BIN: resolve(installed, metadata.bin.groupi),
   });

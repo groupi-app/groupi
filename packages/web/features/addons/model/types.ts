@@ -1,3 +1,11 @@
+import type { FunctionArgs } from 'convex/server';
+import type { api } from '@/convex/_generated/api';
+export type AddonConfiguration = FunctionArgs<
+  typeof api.addons.mutations.enableAddon
+>['config'];
+export type AddonParticipantData = FunctionArgs<
+  typeof api.addons.mutations.setAddonData
+>['data'];
 import { type ComponentType } from 'react';
 import { type Icons } from '@/components/icons';
 import { type Id } from '@/convex/_generated/dataModel';
@@ -29,11 +37,13 @@ export interface EventCardProps {
 // ===== Manage Page Props =====
 
 export interface ManageConfigProps {
+  /** Stages new-feature edits in the Event settings draft without a backend write. */
+  onDraftChange?: (config: AddonConfiguration) => void;
   eventId: Id<'events'>;
   config: Record<string, unknown> | null;
   chosenDateTime?: number;
-  onSave: (config: Record<string, unknown>) => Promise<void>;
-  onDisable: () => Promise<void>;
+  onSave: (config: AddonConfiguration) => Promise<void | boolean>;
+  onDisable: () => Promise<void | boolean>;
   isSaving: boolean;
 }
 

@@ -1,6 +1,9 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
+import { requireEventPost } from '../lib/discussionAccess';
+import { getDiscussionActorWithUser } from '../posts/presentation';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth, getPersonWithUser } from '../auth';
+import { requireAuth } from '../auth';
 
 /**
  * Replies queries for the Convex backend
@@ -24,16 +27,16 @@ export const getRepliesByPost = query({
       throw new Error('Post not found');
     }
 
-    const membership = await ctx.db
+    const eventPost = requireEventPost(post);
+    await requireNoEventExclusion(ctx, eventPost.eventId, currentPerson._id);
+    const eventId = eventPost.eventId;
+    const member = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+        q.eq('personId', currentPerson._id).eq('eventId', eventId)
       )
       .first();
-
-    if (!membership) {
-      throw new Error('Access denied to this post');
-    }
+    if (!member) throw new Error('Access denied to this post');
 
     // Get all replies for this post
     const replies = await ctx.db
@@ -45,7 +48,10 @@ export const getRepliesByPost = query({
     // Enrich replies with author data and attachments
     const enrichedReplies = await Promise.all(
       replies.map(async reply => {
-        const authorData = await getPersonWithUser(ctx, reply.authorId);
+        const authorData = await getDiscussionActorWithUser(
+          ctx,
+          reply.authorId
+        );
 
         // Get attachments for this reply
         const attachments = await ctx.db
@@ -68,6 +74,7 @@ export const getRepliesByPost = query({
           ...reply,
           author: authorData
             ? {
+                kind: authorData.kind,
                 person: {
                   ...authorData.person,
                   user: authorData.user,

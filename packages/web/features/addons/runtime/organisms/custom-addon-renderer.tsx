@@ -1,5 +1,8 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
+import type { AddonParticipantData } from '../../model/types';
+
 import { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,8 +68,8 @@ function getTemplate(
 
 function renderField(
   field: TemplateField,
-  value: unknown,
-  onChange: (value: unknown) => void
+  value: AddonParticipantData[string] | undefined,
+  onChange: (value: AddonParticipantData[string]) => void
 ) {
   switch (field.type) {
     case 'text':
@@ -95,7 +98,7 @@ function renderField(
           type='number'
           value={(value as number) ?? ''}
           onChange={e =>
-            onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+            onChange(e.target.value ? parseFloat(e.target.value) : null)
           }
           min={field.min}
           max={field.max}
@@ -289,11 +292,11 @@ function DisplayFieldRenderer({
         : 'No content set';
       switch (field.textFormat) {
         case 'h1':
-          return <h1 className='text-2xl font-bold'>{text}</h1>;
+          return <h1 className='font-heading text-2xl font-bold'>{text}</h1>;
         case 'h2':
-          return <h2 className='text-xl font-semibold'>{text}</h2>;
+          return <h2 className='font-heading text-xl font-semibold'>{text}</h2>;
         case 'h3':
-          return <h3 className='text-lg font-semibold'>{text}</h3>;
+          return <h3 className='font-heading text-lg font-semibold'>{text}</h3>;
         default:
           return <p className='whitespace-pre-wrap text-sm'>{text}</p>;
       }
@@ -492,7 +495,7 @@ export function CustomAddonEventCard({
     : [];
 
   return (
-    <Card className='w-fit rounded-card shadow-raised'>
+    <Card className='w-fit rounded-card'>
       <CardContent className='flex items-center gap-3 p-4'>
         <div className='flex size-10 shrink-0 items-center justify-center rounded-button bg-bg-interactive'>
           <IconComponent className='size-5 text-primary' />
@@ -544,6 +547,7 @@ export function CustomAddonEventCard({
 
 export function CustomAddonManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -575,14 +579,19 @@ export function CustomAddonManageConfig({
   const handleTemplateChange = (updated: CustomAddonTemplate) => {
     setEditedTemplate(updated);
     setHasChanges(true);
+    if (typeof config?.templateId === 'string')
+      onDraftChange?.({ templateId: config.templateId, template: updated });
   };
 
   const handleSave = async () => {
-    if (!editedTemplate) return;
-    await onSave({
-      ...(config as Record<string, unknown>),
-      template: editedTemplate,
-    });
+    if (!editedTemplate || typeof config?.templateId !== 'string') return;
+    if (
+      (await onSave({
+        templateId: config.templateId,
+        template: editedTemplate,
+      })) === false
+    )
+      return;
     setHasChanges(false);
   };
 
@@ -603,7 +612,7 @@ export function CustomAddonManageConfig({
   };
 
   return (
-    <Card className='rounded-card shadow-raised'>
+    <Card className='rounded-card'>
       <Collapsible open={isOpen} onOpenChange={handleOpen}>
         <CardHeader className='flex flex-row items-center justify-between'>
           <div className='flex items-center gap-3'>
@@ -673,6 +682,7 @@ export function CustomAddonManageConfig({
               )}
 
               <Button
+                icon={<ActionSave aria-hidden='true' className='size-4' />}
                 className='w-full rounded-button'
                 onClick={handleSave}
                 disabled={!hasChanges || isSaving}
@@ -745,8 +755,8 @@ function FormSection({
   template,
 }: {
   section: TemplateSection;
-  values: Record<string, unknown>;
-  onChange: (fieldId: string, value: unknown) => void;
+  values: AddonParticipantData;
+  onChange: (fieldId: string, value: AddonParticipantData[string]) => void;
   eventId: Id<'events'>;
   addonType: string;
   template: CustomAddonTemplate | null;
@@ -754,7 +764,7 @@ function FormSection({
   return (
     <div className='space-y-3'>
       <div>
-        <h3 className='font-semibold'>{section.title}</h3>
+        <h3 className='font-heading font-semibold'>{section.title}</h3>
         {section.description && (
           <p className='text-sm text-muted-foreground'>{section.description}</p>
         )}
@@ -1117,7 +1127,7 @@ function StandaloneInteractiveField({
   switch (field.type) {
     case 'vote':
       return (
-        <Card className='rounded-card shadow-raised'>
+        <Card className='rounded-card'>
           <CardContent className='p-4'>
             <VoteField field={field} eventId={eventId} addonType={addonType} />
           </CardContent>
@@ -1125,7 +1135,7 @@ function StandaloneInteractiveField({
       );
     case 'list_item':
       return (
-        <Card className='rounded-card shadow-raised'>
+        <Card className='rounded-card'>
           <CardContent className='p-4'>
             <ListItemField
               field={field}
@@ -1137,7 +1147,7 @@ function StandaloneInteractiveField({
       );
     case 'toggle':
       return (
-        <Card className='w-fit rounded-card shadow-raised'>
+        <Card className='w-fit rounded-card'>
           <CardContent className='p-4'>
             <ToggleField
               field={field}
@@ -1171,7 +1181,7 @@ function StandaloneInteractiveField({
           );
         }
         return (
-          <Card className='rounded-card shadow-raised'>
+          <Card className='rounded-card'>
             <CardContent className='p-4'>
               <DisplayFieldRenderer
                 field={field}
@@ -1205,11 +1215,11 @@ export function CustomAddonPageComponent({
     const entry = (myData ?? []).find(
       (d: { key: string }) => d.key === `response:${personId}`
     );
-    return (entry?.data as Record<string, unknown>) ?? {};
+    return entry?.data && typeof entry.data === 'object' ? entry.data : {};
   }, [myData, personId]);
 
   const [formValues, setFormValues] =
-    useState<Record<string, unknown>>(existingResponse);
+    useState<AddonParticipantData>(existingResponse);
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync when existing response loads
@@ -1226,16 +1236,19 @@ export function CustomAddonPageComponent({
     [addonData, personId]
   );
 
-  const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
-    setFormValues(prev => ({ ...prev, [fieldId]: value }));
-  }, []);
+  const handleFieldChange = useCallback(
+    (fieldId: string, value: AddonParticipantData[string]) => {
+      setFormValues(prev => ({ ...prev, [fieldId]: value }));
+    },
+    []
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!personId || !addonType || !template) return;
     setIsSaving(true);
     try {
       // Only submit values for visible fields in visible sections
-      const visibleValues: Record<string, unknown> = {};
+      const visibleValues: AddonParticipantData = {};
       for (const section of template.sections) {
         if (section.layout === 'interactive') continue;
         // Skip hidden sections entirely
@@ -1333,7 +1346,7 @@ export function CustomAddonPageComponent({
         if (section.fields.length === 0) return null;
 
         return (
-          <Card key={section.id} className='rounded-card shadow-raised'>
+          <Card key={section.id} className='rounded-card'>
             <CardContent className='space-y-4 p-4'>
               <FormSection
                 section={section}

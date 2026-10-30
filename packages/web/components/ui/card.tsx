@@ -1,17 +1,24 @@
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 
 import { cn } from '@/lib/utils';
 
-export function Card({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Staged surface language. Interactive cards require a CardAction child. */
+  treatment?: 'quiet' | 'featured' | 'interactive';
+  /** Quiet edge for content cards that still have a primary action. */
+  edge?: 'none';
+}
+
+export function Card({ className, treatment, edge, ...props }: CardProps) {
   return (
     <div
       data-slot='card'
+      data-treatment={treatment}
+      data-edge={edge}
       className={cn(
         // Clean elevated surface - sticker effect reserved for accents (buttons, badges, avatars)
-        'rounded-card bg-card text-card-foreground border border-border shadow-raised transition-shadow duration-fast hover:shadow-floating',
+        'rounded-card bg-card text-card-foreground border border-border',
         className
       )}
       {...props}
@@ -82,6 +89,41 @@ export function CardFooter({
     <div
       data-slot='card-footer'
       className={cn('flex items-center p-6 pt-0', className)}
+      {...props}
+    />
+  );
+}
+
+/** A card's single primary destination. Use asChild for an anchor/Next Link.
+ * The stretched target keeps sibling controls separate: put them in CardActions.
+ * Never wrap a card containing secondary controls inside a link or button.
+ */
+export function CardAction({
+  asChild = false,
+  className,
+  type = 'button',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : 'button';
+  return (
+    <Comp
+      data-slot='card-action'
+      type={asChild ? undefined : type}
+      className={cn('soft-card-action text-left', className)}
+      {...props}
+    />
+  );
+}
+
+/** Independent controls rendered above the primary card hit target. */
+export function CardActions({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot='card-actions'
+      className={cn('relative z-lifted', className)}
       {...props}
     />
   );

@@ -1,5 +1,8 @@
 'use client';
 
+import { Save as ActionSave } from 'lucide-react';
+import type { AddonParticipantData } from '../../model/types';
+
 import { BUILTIN_COMPLETION } from '../../model/completion';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -319,13 +322,13 @@ function QuestionnaireEventCard({ eventId }: EventCardProps) {
     : 0;
 
   return (
-    <Card className='rounded-card shadow-raised p-4 w-fit'>
+    <Card className='rounded-card p-4 w-fit'>
       <div className='flex items-center gap-3'>
         <div className='flex items-center justify-center size-9 rounded-card bg-bg-info-subtle text-info shrink-0'>
           <Icons.listOrdered className='size-5' />
         </div>
         <div>
-          <p className='font-medium'>Questionnaire</p>
+          <p className='font-medium'>Your details</p>
           {isOrganizer ? (
             <p className='text-sm text-muted-foreground'>
               {responseCount} {responseCount === 1 ? 'response' : 'responses'}
@@ -352,6 +355,7 @@ function QuestionnaireEventCard({ eventId }: EventCardProps) {
 
 function QuestionnaireManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -360,13 +364,17 @@ function QuestionnaireManageConfig({
   const [questions, setQuestions] = useState<Question[]>(currentQuestions);
   const enabled = config !== null;
   const [expanded, setExpanded] = useState(false);
+  const [pendingEnable, setPendingEnable] = useState(false);
+  const isOn = enabled || pendingEnable;
 
   const handleToggle = async (checked: boolean) => {
     if (!checked) {
       setExpanded(false);
+      setPendingEnable(false);
       await onDisable();
     } else {
       setExpanded(true);
+      setPendingEnable(true);
       if (questions.length > 0) {
         await onSave({ questions });
       }
@@ -378,7 +386,7 @@ function QuestionnaireManageConfig({
       toast.error('Add at least one question');
       return;
     }
-    await onSave({ questions });
+    if ((await onSave({ questions })) !== false) setPendingEnable(false);
   };
 
   const hasChanges =
@@ -388,7 +396,7 @@ function QuestionnaireManageConfig({
     <Card
       className={cn(
         'transition-all duration-normal',
-        enabled && 'ring-2 ring-primary/30'
+        isOn && 'ring-2 ring-primary/30'
       )}
     >
       <div className='flex items-center gap-3 p-4'>
@@ -401,7 +409,7 @@ function QuestionnaireManageConfig({
             Ask attendees questions before the event
           </p>
         </div>
-        {enabled && (
+        {isOn && (
           <button
             type='button'
             onClick={() => setExpanded(prev => !prev)}
@@ -417,33 +425,42 @@ function QuestionnaireManageConfig({
           </button>
         )}
         <Switch
-          checked={enabled}
+          checked={isOn}
           onCheckedChange={handleToggle}
           disabled={isSaving}
           data-test='addon-toggle-questionnaire'
         />
       </div>
-      <Collapsible open={enabled && expanded}>
+      <Collapsible open={isOn && expanded}>
         <CollapsibleContent>
           <div className='px-4 pb-4 pt-0 space-y-3'>
-            <QuestionBuilder questions={questions} onChange={setQuestions} />
-            {hasChanges && questions.length > 0 && (
-              <>
-                <p className='text-sm text-warning'>
-                  Saving changes will reset all existing responses and notify
-                  members.
-                </p>
-                <Button
-                  type='button'
-                  size='sm'
-                  onClick={handleSaveQuestions}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                >
-                  Save Questions
-                </Button>
-              </>
-            )}
+            <QuestionBuilder
+              questions={questions}
+              onChange={next => {
+                setQuestions(next);
+                onDraftChange?.({ questions: next });
+              }}
+            />
+            {!onDraftChange &&
+              (hasChanges || pendingEnable) &&
+              questions.length > 0 && (
+                <>
+                  <p className='text-sm text-warning'>
+                    Saving changes will reset all existing responses and notify
+                    members.
+                  </p>
+                  <Button
+                    icon={<ActionSave aria-hidden='true' className='size-4' />}
+                    type='button'
+                    size='sm'
+                    onClick={handleSaveQuestions}
+                    disabled={isSaving}
+                    isLoading={isSaving}
+                  >
+                    Save Questions
+                  </Button>
+                </>
+              )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -460,24 +477,27 @@ function QuestionnaireResponseForm({
 }: {
   eventId: Id<'events'>;
   questions: Question[];
-  existingResponse: Record<string, unknown> | null;
+  existingResponse: AddonParticipantData | null;
 }) {
   const router = useRouter();
   const { person } = useGlobalUser();
   const setAddonData = useSetAddonData();
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [answers, setAnswers] = useState<AddonParticipantData>({});
   const [isSaving, setIsSaving] = useState(false);
 
   // Pre-fill from existing response
   useEffect(() => {
     if (existingResponse) {
-      setAnswers(existingResponse as Record<string, unknown>);
+      setAnswers(existingResponse);
     }
   }, [existingResponse]);
 
-  const updateAnswer = useCallback((questionId: string, value: unknown) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
-  }, []);
+  const updateAnswer = useCallback(
+    (questionId: string, value: AddonParticipantData[string]) => {
+      setAnswers(prev => ({ ...prev, [questionId]: value }));
+    },
+    []
+  );
 
   const handleSubmit = async () => {
     // Validate required fields
@@ -551,8 +571,8 @@ function QuestionInput({
   onChange,
 }: {
   question: Question;
-  value: unknown;
-  onChange: (value: unknown) => void;
+  value: AddonParticipantData[string] | undefined;
+  onChange: (value: AddonParticipantData[string]) => void;
 }) {
   switch (question.type) {
     case 'SHORT_ANSWER':
@@ -581,7 +601,7 @@ function QuestionInput({
           value={value !== undefined && value !== null ? String(value) : ''}
           onChange={e => {
             const v = e.target.value;
-            onChange(v === '' ? undefined : Number(v));
+            onChange(v === '' ? null : Number(v));
           }}
           placeholder='0'
         />
@@ -876,7 +896,7 @@ function QuestionnairePageComponent({ eventId, config }: AddonPageProps) {
     const entry = myData.find(
       (d: { key: string }) => d.key === `response:${person._id}`
     );
-    return entry ? (entry.data as Record<string, unknown>) : null;
+    return entry?.data && typeof entry.data === 'object' ? entry.data : null;
   }, [myData, person]);
 
   if (!config || questions.length === 0) {

@@ -1,5 +1,19 @@
-vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
+const groupNavigation = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => groupNavigation }));
+vi.mock('./group-discord-connect', () => ({ GroupDiscordConnect: () => null }));
+vi.mock('./group-ban-management', () => ({ GroupBanManagement: () => null }));
+vi.mock('./group-invitation-management', () => ({
+  GroupInvitationManagement: () => null,
+}));
+vi.mock('./group-discord-settings', () => ({
+  GroupDiscordRetiredStatus: () => null,
+  GroupDiscordSettings: () => <div>Discord manager settings</div>,
+}));
+vi.mock('./community-expulsion-progress', () => ({
+  CommunityExpulsionProgress: () => null,
+}));
+vi.mock('./community-expulsion-action', () => ({
+  CommunityExpulsionAction: () => null,
 }));
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,6 +23,14 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupTools: {
+      queries: {
+        getFormPolicy: 'toolPolicy',
+        getListPolicy: 'toolPolicy',
+        getPollPolicy: 'toolPolicy',
+      },
+    },
+    eventContent: { queries: { getContext: 'eventContext' } },
     groupTransfers: {
       queries: { status: 'transferStatus' },
       mutations: {
@@ -101,6 +123,8 @@ function setQueryResult(result: unknown) {
   vi.mocked(useQuery).mockImplementation((...[query]) => {
     if (String(query) === 'members' || String(query) === 'inbox')
       return { page: [], isDone: true, continueCursor: '' };
+    if (String(query) === 'toolPolicy')
+      return { enabled: true, creation: 'MANAGERS', canConfigure: false };
     if (String(query) === 'transferStatus') return null;
     if (String(query) === 'applicationForm')
       return {
@@ -216,6 +240,12 @@ describe('Friends & Groups creation', () => {
 });
 
 import { GroupDetail } from './group-detail';
+import GroupsPage from '@/app/(groups)/groups/page';
+import {
+  GroupEdit,
+  GroupDiscordManagement,
+  GroupOwnershipSettings,
+} from '@/features/groups';
 import { GroupLanding } from './group-landing';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -239,11 +269,13 @@ describe('Group identity and authority', () => {
     setQueryResult(group);
     const user = userEvent.setup();
     render(<GroupDetail groupId={groupId} />);
-    expect(screen.getByRole('link', { name: '/g/group-one' })).toHaveAttribute(
-      'href',
-      '/g/group-one'
-    );
-    await user.click(screen.getByRole('button', { name: 'Edit Group' }));
+    expect(
+      screen.queryByRole('link', { name: 'Edit Group' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Group settings' })
+    ).toHaveAttribute('href', '/groups/group-one/settings');
+    render(<GroupEdit groupId={groupId} />);
     await user.clear(screen.getByLabelText('Group name'));
     await user.type(screen.getByLabelText('Group name'), 'Garden Club');
     await user.clear(screen.getByLabelText('Description (optional)'));
@@ -274,7 +306,7 @@ describe('Group identity and authority', () => {
   it('requires explicit deletion confirmation before deleting a Group', async () => {
     setQueryResult(group);
     const user = userEvent.setup();
-    render(<GroupDetail groupId={groupId} />);
+    render(<GroupOwnershipSettings groupId={groupId} />);
     await user.click(screen.getByRole('button', { name: 'Delete Group' }));
     expect(
       screen.getByRole('button', { name: 'Permanently delete Group' })
@@ -283,7 +315,12 @@ describe('Group identity and authority', () => {
     await user.click(
       screen.getByRole('button', { name: 'Permanently delete Group' })
     );
-    await waitFor(() => expect(create).toHaveBeenCalledWith({ groupId }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({
+        groupId,
+        acknowledgeDiscordHandback: true,
+      })
+    );
   });
   it('preserves the landing path through sign-in and signup', () => {
     auth.isAuthenticated = false;
@@ -318,4 +355,180 @@ describe('Group identity and authority', () => {
       screen.queryByRole('button', { name: 'Edit Group' })
     ).not.toBeInTheDocument();
   });
+});
+
+it('shows Discord settings to Group moderators without owner role controls', () => {
+  setQueryResult({
+    ...group,
+    viewerRole: 'MODERATOR',
+    canManageIdentity: false,
+    canManageMembers: true,
+    canManageRoles: false,
+  });
+  render(<GroupDiscordManagement groupId={groupId} />);
+  expect(screen.getByText('Discord manager settings')).toBeInTheDocument();
+});
+
+it('routes the stable deletion anchor to owner settings', async () => {
+  setQueryResult(group);
+  window.history.replaceState(null, '', '/groups/group-one#delete-group');
+  render(<GroupDetail groupId={groupId} />);
+  await waitFor(() =>
+    expect(groupNavigation.replace).toHaveBeenCalledWith(
+      '/groups/group-one/settings/ownership#delete-group'
+    )
+  );
+  window.history.replaceState(null, '', '/');
+});
+it('routes application notification anchors to private review for managers', async () => {
+  setQueryResult({ ...group, canManageMembers: true });
+  window.history.replaceState(null, '', '/groups/group-one#group-applications');
+  render(<GroupDetail groupId={groupId} />);
+  await waitFor(() =>
+    expect(groupNavigation.replace).toHaveBeenCalledWith(
+      '/groups/group-one/settings/admissions#group-applications'
+    )
+  );
+  window.history.replaceState(null, '', '/');
+});
+it('keeps management forms off the owner overview', () => {
+  setQueryResult({
+    ...group,
+    canManageMembers: true,
+    canManageInvitations: true,
+    canManageRoles: true,
+  });
+  render(<GroupDetail groupId={groupId} />);
+  expect(screen.getByRole('link', { name: 'Group settings' })).toHaveAttribute(
+    'href',
+    '/groups/group-one/settings'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Delete Group' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument();
+  expect(
+    screen.queryByText('Discord manager settings')
+  ).not.toBeInTheDocument();
+});
+
+it('does not redirect ordinary members into management from legacy anchors', () => {
+  groupNavigation.replace.mockClear();
+  setQueryResult({
+    ...group,
+    viewerRole: 'MEMBER',
+    canManageIdentity: false,
+    canManageMembers: false,
+  });
+  window.history.replaceState(null, '', '/groups/group-one#group-applications');
+  render(<GroupDetail groupId={groupId} />);
+  expect(groupNavigation.replace).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole('link', { name: 'Group settings' })
+  ).not.toBeInTheDocument();
+  window.history.replaceState(null, '', '/');
+});
+
+describe('Groups directory navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.isAuthenticated = true;
+    auth.isLoading = false;
+  });
+  it('opens the authenticated directory with a single page heading and navigable Groups', async () => {
+    setQueryResult({ page: [group], isDone: true, continueCursor: '' });
+    render(<GroupsPage />);
+    expect(
+      screen.getByRole('heading', { name: 'Your Groups', level: 1 })
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('heading', { name: 'Your Groups' })
+    ).toHaveLength(1);
+    await userEvent
+      .setup()
+      .click(screen.getByRole('link', { name: 'Neighbors' }));
+    expect(groupNavigation.push).toHaveBeenCalledWith('/groups/group-one');
+  });
+  it('keeps card destinations keyboard-operable and creation at the page heading level', async () => {
+    setQueryResult({ page: [group], isDone: true, continueCursor: '' });
+    const user = userEvent.setup();
+    render(<GroupsPage />);
+    const destination = screen.getByRole('link', { name: 'Neighbors' });
+    destination.focus();
+    expect(destination).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(groupNavigation.push).toHaveBeenCalledWith('/groups/group-one');
+    expect(groupNavigation.push).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Create Group' }));
+    expect(
+      screen.getByRole('heading', { name: 'Create a Group', level: 1 })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Your Groups' })
+    ).not.toBeInTheDocument();
+  });
+  it('offers creation and the invitation inbox in the empty directory', () => {
+    setQueryResult({ page: [], isDone: true, continueCursor: '' });
+    render(<GroupsPage />);
+    expect(screen.getByText('No Groups yet')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Create Group' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Your Group invitations' })
+    ).toBeInTheDocument();
+  });
+  it('gates directory queries until sign-in and preserves its destination', () => {
+    auth.isAuthenticated = false;
+    render(<GroupsPage />);
+    expect(
+      screen.getByRole('link', { name: 'Sign in or sign up to view Groups' })
+    ).toHaveAttribute('href', '/sign-in?redirect=%2Fgroups');
+    expect(useQuery).not.toHaveBeenCalled();
+    auth.isAuthenticated = true;
+  });
+  it('returns from Group overview to the real directory', () => {
+    setQueryResult(group);
+    render(<GroupDetail groupId={groupId} />);
+    expect(screen.getByRole('link', { name: 'Your Groups' })).toHaveAttribute(
+      'href',
+      '/groups'
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Friends & Groups' })
+    ).not.toBeInTheDocument();
+  });
+  it('returns unavailable Groups to the directory', () => {
+    setQueryResult(null);
+    render(<GroupDetail groupId={groupId} />);
+    expect(screen.getByRole('link', { name: 'Your Groups' })).toHaveAttribute(
+      'href',
+      '/groups'
+    );
+  });
+});
+
+it('collects Group tools and sharing in keyboard-operable menus', async () => {
+  setQueryResult(group);
+  const user = userEvent.setup();
+  render(<GroupDetail groupId={groupId} />);
+  await user.click(screen.getByRole('button', { name: 'Group tools' }));
+  expect(
+    screen.getByRole('menuitem', { name: 'Forms and form settings' })
+  ).toHaveAttribute('href', '/groups/group-one/forms');
+  expect(
+    screen.getByRole('menuitem', { name: 'Polls and poll settings' })
+  ).toHaveAttribute('href', '/groups/group-one/polls');
+  expect(
+    screen.getByRole('menuitem', { name: 'Community lists and settings' })
+  ).toHaveAttribute('href', '/groups/group-one/lists');
+  await user.keyboard('{Escape}');
+  expect(screen.getByRole('button', { name: 'Group tools' })).toHaveFocus();
+  await user.click(screen.getByRole('button', { name: 'Group actions' }));
+  expect(
+    screen.getByRole('menuitem', { name: 'Open unlisted Group page' })
+  ).toHaveAttribute('href', '/g/group-one');
+  expect(
+    screen.getByRole('menuitem', { name: 'Your membership settings' })
+  ).toHaveAttribute('href', '/groups/group-one/settings/membership');
 });

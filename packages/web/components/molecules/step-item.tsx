@@ -1,5 +1,6 @@
 'use client';
 
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StepBadge, type StepBadgeColor } from '@/components/atoms';
 
@@ -38,25 +39,24 @@ export function StepItem({
   className,
 }: StepItemProps) {
   return (
-    <div
+    <Card
+      treatment='quiet'
       className={cn(
         // Card styles
         'flex items-start gap-4',
         'bg-card rounded-card p-5',
-        // Shadow for depth
-        'shadow-raised',
-        // Ring for subtle definition
-        'ring-1 ring-border/30',
         className
       )}
     >
       <StepBadge color={color}>{step}</StepBadge>
       <div className='pt-0.5'>
-        <h3 className='text-base font-bold text-foreground mb-1'>{title}</h3>
+        <h3 className='font-heading text-base font-bold text-foreground mb-1'>
+          {title}
+        </h3>
         <p className='text-muted-foreground text-sm leading-relaxed'>
           {description}
         </p>
       </div>
-    </div>
+    </Card>
   );
 }

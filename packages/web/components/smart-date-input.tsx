@@ -342,7 +342,7 @@ export function SmartDateInput({
                   date.selected
                     ? 'border-primary bg-primary/5'
                     : 'border-border bg-muted/50'
-                } ${date.validationErrors.length > 0 ? 'border-yellow-500/50' : ''}`}
+                } ${date.validationErrors.length > 0 ? 'border-border-warning' : ''}`}
               >
                 <Checkbox
                   checked={date.selected}

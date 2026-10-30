@@ -29,7 +29,10 @@ export function createGroupAnnouncementRoutes() {
       method: 'post',
       path: '/groups/{groupId}/announcements',
       tags: ['Groups'],
-      summary: 'Explicitly announce to permitted Group members',
+      summary: 'Retired: use a post to share an update',
+      deprecated: true,
+      description:
+        'New announcement sends and retries are retired. This compatibility endpoint rejects valid send requests; existing status reads remain available.',
       security: [{ apiKey: [] }],
       request: {
         params,

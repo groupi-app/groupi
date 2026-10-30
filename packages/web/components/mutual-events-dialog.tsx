@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Card, CardAction } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -62,45 +63,52 @@ export function MutualEventsDialog({
         ) : (
           <div className='flex flex-col gap-2'>
             {events.map(event => (
-              <Link
-                key={event.id}
-                href={`/event/${event.id}`}
-                onClick={() => onOpenChange(false)}
-              >
-                <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 border border-border shadow-raised p-3 hover:bg-accent/80 transition-all cursor-pointer rounded-md'>
-                  <h3 className='font-heading text-sm min-w-0 flex-1 truncate'>
-                    {event.title}
-                  </h3>
-                  <div className='flex items-center gap-3 flex-shrink-0'>
-                    {event.location && (
-                      <div className='flex items-center gap-1 min-w-0'>
-                        <Icons.location className='size-3 text-primary flex-shrink-0' />
-                        <span className='text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-[100px]'>
-                          {event.location}
-                        </span>
+              <Card key={event.id} treatment='interactive'>
+                <CardAction asChild>
+                  <Link
+                    href={`/event/${event.id}`}
+                    onClick={() => onOpenChange(false)}
+                    className='block'
+                  >
+                    <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 p-3'>
+                      <h3 className='font-heading text-sm min-w-0 flex-1 truncate'>
+                        {event.title}
+                      </h3>
+                      <div className='flex items-center gap-3 flex-shrink-0'>
+                        {event.location && (
+                          <div className='flex items-center gap-1 min-w-0'>
+                            <Icons.location className='size-3 text-primary flex-shrink-0' />
+                            <span className='text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-[100px]'>
+                              {event.location}
+                            </span>
+                          </div>
+                        )}
+                        <div className='flex items-center gap-1 flex-shrink-0'>
+                          <Icons.date className='size-3 text-primary' />
+                          {event.chosenDateTime ? (
+                            <span className='text-xs text-muted-foreground whitespace-nowrap'>
+                              {new Date(event.chosenDateTime).toLocaleString(
+                                [],
+                                {
+                                  weekday: 'short',
+                                  month: 'numeric',
+                                  day: 'numeric',
+                                  hour: 'numeric',
+                                  minute: 'numeric',
+                                }
+                              )}
+                            </span>
+                          ) : (
+                            <span className='text-xs text-muted-foreground whitespace-nowrap'>
+                              TBD
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <div className='flex items-center gap-1 flex-shrink-0'>
-                      <Icons.date className='size-3 text-primary' />
-                      {event.chosenDateTime ? (
-                        <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                          {new Date(event.chosenDateTime).toLocaleString([], {
-                            weekday: 'short',
-                            month: 'numeric',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: 'numeric',
-                          })}
-                        </span>
-                      ) : (
-                        <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                          TBD
-                        </span>
-                      )}
                     </div>
-                  </div>
-                </div>
-              </Link>
+                  </Link>
+                </CardAction>
+              </Card>
             ))}
           </div>
         )}

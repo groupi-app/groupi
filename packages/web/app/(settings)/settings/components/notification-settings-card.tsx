@@ -62,6 +62,10 @@ const notificationTypeLabels: Record<
     label: 'Group application declined',
     description: 'When your Group application is declined',
   },
+  GROUP_DISCORD_SYNC_BLOCKED: {
+    label: 'Discord synchronization blocked',
+    description: 'A Group you manage needs Discord permissions or retry.',
+  },
   GROUP_ONBOARDING_REQUIRED: {
     label: 'Required Group onboarding',
     description: 'current required Group answers need completing.',
@@ -209,7 +213,7 @@ export function NotificationSettingsCard({
             ) : (
               <Icons.bell />
             )}
-            <h3 className='text-lg font-semibold w-full truncate'>
+            <h3 className='font-heading text-lg font-semibold w-full truncate'>
               {cardTitle}
             </h3>
           </div>
@@ -242,8 +246,8 @@ export function NotificationSettingsCard({
             />
             <Button
               type='button'
-              variant='ghost'
-              className='hover:bg-destructive hover:text-destructive-foreground'
+              variant='destructive-ghost'
+              className=''
               size='icon'
               onClick={onRemove}
               aria-label='Remove method'
@@ -639,6 +643,7 @@ export function NotificationSettingsCard({
                         NotificationTypeEnum.GROUP_MEMBER_BANNED,
                         NotificationTypeEnum.GROUP_ANNOUNCEMENT,
                         NotificationTypeEnum.GROUP_ONBOARDING_REQUIRED,
+                        NotificationTypeEnum.GROUP_DISCORD_SYNC_BLOCKED,
                       ].map(type => renderCheckbox(type))}
                     </div>
                   </div>

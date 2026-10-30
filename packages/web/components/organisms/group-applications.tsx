@@ -1,6 +1,8 @@
 'use client';
 import { Component, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import type { ApplicationAnswers } from '@groupi/shared/hooks';
 import { Button } from '@/components/ui/button';
@@ -72,7 +74,10 @@ function ApplicationContent({
       className='space-y-4'
       aria-labelledby='group-apply-heading'
     >
-      <h2 id='group-apply-heading' className='text-xl font-semibold'>
+      <h2
+        id='group-apply-heading'
+        className='font-heading text-xl font-semibold'
+      >
         Apply to join this Group
       </h2>
       <p>
@@ -144,7 +149,11 @@ function ApplicantForm({
         void run(
           () =>
             pending
-              ? edit({ applicationId: pending._id, answers })
+              ? edit({
+                  applicationId: pending._id,
+                  answers,
+                  expectedRevision: pending.updatedAt,
+                })
               : submit({ groupId, answers }),
           pending ? 'Application updated.' : 'Application submitted for review.'
         );
@@ -172,7 +181,11 @@ function ApplicantForm({
             disabled={busy}
             onClick={() =>
               void run(
-                () => withdraw({ applicationId: pending._id }),
+                () =>
+                  withdraw({
+                    applicationId: pending._id,
+                    expectedRevision: pending.updatedAt,
+                  }),
                 'Application withdrawn.'
               )
             }
@@ -223,7 +236,7 @@ function ApplicationRecords({
           : 'Your Group application history'
       }
     >
-      <h2 className='text-xl font-semibold'>
+      <h2 className='font-heading text-xl font-semibold'>
         {review ? 'Review Group applications' : 'Your application history'}
       </h2>
       {review && (
@@ -298,6 +311,9 @@ function ApplicationRecord({
   applicantName?: string;
 }) {
   const decide = useReviewGroupApplication();
+  const retryDelivery = useMutation(
+    api.groupApplications.decisionDelivery.retry
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -305,7 +321,12 @@ function ApplicationRecord({
     setBusy(true);
     setError('');
     try {
-      await decide({ applicationId: application._id, decision: value });
+      await decide({
+        applicationId: application._id,
+        decision: value,
+        expectedRevision: application.updatedAt,
+        operationId: crypto.randomUUID(),
+      });
       setMessage(
         value === 'APPROVED'
           ? 'Approved. The applicant is now a Group member.'
@@ -324,7 +345,40 @@ function ApplicationRecord({
       className='rounded-card border border-border p-4 space-y-3'
       aria-label={`Application ${application._id}`}
     >
-      <h3 className='font-semibold'>{application.status}</h3>
+      <h3 className='font-heading font-semibold'>{application.status}</h3>
+      {review && application.decisionDelivery && (
+        <div>
+          <p role='status'>
+            Decision email: {application.decisionDelivery}. Delivery does not
+            change admission.
+          </p>
+          {(application.decisionDelivery === 'failed' ||
+            application.decisionDelivery === 'sending' ||
+            application.decisionDelivery === 'queued') && (
+            <Button
+              variant='outline'
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError('');
+                try {
+                  await retryDelivery({ applicationId: application._id });
+                } catch (cause) {
+                  setError(
+                    cause instanceof Error
+                      ? cause.message
+                      : 'Delivery retry unavailable.'
+                  );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Retry decision email
+            </Button>
+          )}
+        </div>
+      )}
       {review && <p>Applicant: {applicantName ?? application.personId}</p>}
       <dl className='space-y-2'>
         {application.questions.map(q => (

@@ -50,14 +50,13 @@ export function GroupApplicationSettings({
     >
       <h2
         id='group-application-settings-heading'
-        className='text-xl font-semibold'
+        className='font-heading text-lg font-semibold'
       >
         Group application settings
       </h2>
       <p>
-        Voluntary applications are independent of incoming invitation
-        preferences. Manager invitations remain usable. These private admission
-        questions are separate from any later member questionnaire.
+        Review applications before admitting members. Invitations and the
+        joining questionnaire are managed separately.
       </p>
       <label className='flex gap-2 items-center'>
         <input

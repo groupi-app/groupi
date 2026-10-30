@@ -392,3 +392,5 @@ export const tokens = sharedTokens;
  * @deprecated Use ThemeTokens type instead
  */
 export type Theme = typeof groupiLight | typeof groupiDark;
+
+export { resolveThemePresentation } from './presentation';

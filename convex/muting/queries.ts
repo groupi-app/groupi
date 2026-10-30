@@ -1,4 +1,9 @@
-import { hasEventAccess, requireEventAccess, requirePostAccess } from './model';
+import {
+  hasEventAccess,
+  hasPostAccess,
+  requireEventAccess,
+  requirePostAccess,
+} from './model';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -104,7 +109,7 @@ export const getMutedPosts = query({
         return {
           ...mute,
           post:
-            post && (await hasEventAccess(ctx, person._id, post.eventId))
+            post && (await hasPostAccess(ctx, person._id, post._id))
               ? post
               : null,
         };

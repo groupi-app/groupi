@@ -45,7 +45,7 @@ function MemberAnswersPage({ groupId }: { groupId: Id<'groups'> }) {
           key={record.author.personId}
           className='rounded-card border border-border p-4 space-y-3'
         >
-          <h3 className='font-semibold'>
+          <h3 className='font-heading font-semibold'>
             {record.author.name ||
               record.author.username ||
               'Unavailable member'}

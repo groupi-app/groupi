@@ -1,3 +1,4 @@
+import { canReadGroupDiscussion } from '../lib/notifications';
 import { groupNotificationReferences } from '../groupInvites/notificationProjection';
 import {
   readNotification,
@@ -190,9 +191,13 @@ async function enrichNotification(
     }
   }
 
+  const canReadPost =
+    !notification.groupId ||
+    !notification.postId ||
+    (await canReadGroupDiscussion(ctx, notification));
   // Get post if exists
   let post = null;
-  if (notification.postId) {
+  if (notification.postId && canReadPost) {
     const postDoc = await ctx.db.get(notification.postId);
     if (postDoc) {
       post = { id: postDoc._id, title: postDoc.title };
@@ -201,7 +206,7 @@ async function enrichNotification(
 
   // Get author if exists
   let author = null;
-  if (notification.authorId) {
+  if (notification.authorId && canReadPost) {
     const authorPerson = await ctx.db.get(notification.authorId);
     if (authorPerson) {
       const authorUser = await authComponent.getAnyUserById(
@@ -226,6 +231,7 @@ async function enrichNotification(
 
   return {
     ...(await groupNotificationReferences(ctx, notification)),
+    ...(!canReadPost ? { group: null } : {}),
     id: notification._id,
     personId: notification.personId,
     type: notification.type,
