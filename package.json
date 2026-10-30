@@ -57,13 +57,14 @@
     "version-packages": "pnpm changeset:version && pnpm generate:changelog",
     "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'",
     "check:workspace-source": "node scripts/check-workspace-source.mjs",
-    "test:contracts": "node --test scripts/check-convex-contracts.test.mjs scripts/vercel-build.test.mjs"
+    "test:contracts": "node --test scripts/check-convex-contracts.test.mjs scripts/vercel-build.test.mjs scripts/sentry-build-options.test.mjs"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
     "convex": "^1.43.0",
     "htmlparser2": "8.0.2",
-    "next": "16.1.7"
+    "next": "16.1.7",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
@@ -88,7 +89,6 @@
     "lint-staged": "^16.2.6",
     "next-devtools-mcp": "^0.2.3",
     "prettier": "^3.6.2",
-    "sharp": "^0.34.4",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "turbo": "^2.9.14",

@@ -7,7 +7,8 @@
     "deploymentEnabled": {
       "codex/shared-content-creation": false,
       "codex/content-pages-refinement": false,
-      "codex/management-ui-refinement": false
+      "codex/management-ui-refinement": false,
+      "codex/report-bug-test": false
     }
   }
 }

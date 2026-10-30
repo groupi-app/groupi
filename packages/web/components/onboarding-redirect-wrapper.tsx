@@ -28,7 +28,12 @@ export function OnboardingRedirectWrapper() {
     }
 
     // Don't redirect on API routes or auth pages
-    if (pathname?.startsWith('/api/') || pathname?.startsWith('/sign-in')) {
+    if (
+      pathname?.startsWith('/api/') ||
+      pathname?.startsWith('/sign-in') ||
+      pathname === '/report-bug' ||
+      pathname === '/support'
+    ) {
       return;
     }
 

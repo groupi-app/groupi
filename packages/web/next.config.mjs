@@ -1,4 +1,6 @@
+import process from 'node:process';
 import { withSentryConfig } from '@sentry/nextjs';
+import { sentryBuildIsolationOptions } from './sentry-build-options.mjs';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
@@ -101,11 +103,6 @@ export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Disable sourcemap uploads for preview deployments to avoid errors
-  // Sourcemaps are only needed for production deployments
-  disable:
-    process.env.VERCEL_ENV === 'preview' || !process.env.SENTRY_AUTH_TOKEN,
-
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
@@ -129,4 +126,7 @@ export default withSentryConfig(nextConfig, {
   // https://docs.sentry.io/product/crons/
   // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
+
+  // Sentry 10 uses these granular build options, not a top-level `disable`.
+  ...sentryBuildIsolationOptions(process.env),
 });

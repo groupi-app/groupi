@@ -1,3 +1,4 @@
+import { submit as submitBugReport } from './bugReports/http';
 import { appUpload } from './files/uploads';
 import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
@@ -16,6 +17,12 @@ import { inbox as appReviewInbox } from './appReview/http';
  */
 
 const http = httpRouter();
+http.route({ path: '/bug-reports', method: 'POST', handler: submitBugReport });
+http.route({
+  path: '/bug-reports/receipt',
+  method: 'POST',
+  handler: submitBugReport,
+});
 
 http.route({
   path: '/app-review/inbox',

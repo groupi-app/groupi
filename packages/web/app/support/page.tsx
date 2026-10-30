@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { LegalPage } from '@/components/templates/legal-page';
 
 export default function SupportPage() {
@@ -17,10 +18,9 @@ export default function SupportPage() {
       <section>
         <h2 className='font-heading'>Report a problem</h2>
         <p>
-          Include your device model, iOS version, Groupi version/build if
-          available, what you were trying to do, and what happened. Include
-          reproduction steps and, if helpful, a screenshot with private
-          information removed.
+          <Link href='/report-bug'>Report a Bug</Link> privately, even if you
+          cannot sign in. Describe what happened and optionally add steps or
+          images.
         </p>
         <p>
           Never send passwords, one-time codes, passkeys, API keys or other

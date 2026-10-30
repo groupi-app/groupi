@@ -57,6 +57,12 @@ export function SiteFooter() {
             Help and support
           </Link>
           <Link
+            href='/report-bug'
+            className='underline hover:text-primary-foreground/80'
+          >
+            Report a Bug
+          </Link>
+          <Link
             href={siteConfig.links.github}
             target='_blank'
             rel='noopener noreferrer'

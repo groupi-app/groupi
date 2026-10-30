@@ -57,6 +57,32 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  bugReportRateLimits: defineTable({
+    key: v.string(),
+    attempts: v.array(v.number()),
+    expiresAt: v.number(),
+  })
+    .index('by_key', ['key'])
+    .index('by_expiresAt', ['expiresAt']),
+  // Technical delivery receipts only. Never store report text, contact, or images.
+  bugReportReceipts: defineTable({
+    submissionId: v.string(),
+    payloadDigest: v.string(),
+    eventId: v.string(),
+    status: v.union(
+      v.literal('in-progress'),
+      v.literal('accepted'),
+      v.literal('failed'),
+      v.literal('outcome-unknown')
+    ),
+    code: v.optional(v.string()),
+    retryAt: v.optional(v.number()),
+    leaseUntil: v.number(),
+    expiresAt: v.number(),
+  })
+    .index('by_submissionId', ['submissionId'])
+    .index('by_status_and_leaseUntil', ['status', 'leaseUntil'])
+    .index('by_expiresAt', ['expiresAt']),
   groupDiscordJourneys: defineTable({
     stateHash: v.string(),
     credentialId: v.id('authorizationCredentials'),

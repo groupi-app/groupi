@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from '@sentry/nextjs';
+import { observeReplayTransport } from './lib/bug-report-replay-delivery';
 
 // Disable Sentry in development to avoid 431 header size errors
 const isDev = process.env.NODE_ENV === 'development';
@@ -12,6 +13,9 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   integrations: [],
+  // Preserve the public default fetch transport and all SDK-provided options.
+  transport: (options: Parameters<typeof Sentry.makeFetchTransport>[0]) =>
+    observeReplayTransport(Sentry.makeFetchTransport(options)),
 
   // Only propagate traces to non-auth API routes to avoid large headers causing 431 errors
   // Auth routes don't need distributed tracing and the baggage header can exceed header size limits

@@ -33,7 +33,8 @@
     "oidc-provider": "9.12.2",
     "fetch-to-node": "2.1.0",
     "jose": "6.2.12",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
@@ -41,6 +42,7 @@
     "convex-test": "^0.0.41",
     "typescript": "^5.9.3",
     "vitest": "^4.0.0",
-    "@types/oidc-provider": "9.12.1"
+    "@types/oidc-provider": "9.12.1",
+    "@types/node": "^24.9.2"
   }
 }
