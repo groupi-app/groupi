@@ -511,3 +511,9 @@ export { GROUP_POLL_TEMPLATES } from './group-poll-templates';
 export { groupListTemplates } from './group-list-templates';
 
 export { announcementRequestId as listEntryRequestId } from './announcement-request';
+
+export * from './bug-report';
+
+export * from './bug-report-contracts';
+
+export * from './bounded-text';

@@ -27,9 +27,15 @@ You are working on Groupi, a cross-platform event planning application with the 
 
 ### 3. Client-Only Applications
 
-- No server-side rendering, API routes, or server actions in Next.js
-- No middleware or server-side data fetching
+- No server-side rendering, API routes, or server actions in Next.js, except the narrow bug-report ingress below.
+- No middleware or server-side data fetching outside that approved transport boundary.
 - Pure client applications that consume Convex backend functions
+
+### Bug-report ingress exception
+
+`/api/bug-reports` and `/api/bug-reports/receipt` may proxy browser submissions to fixed Convex HTTP endpoints. This transport-only exception is required to establish trustworthy network abuse keys for signed-out reporters. It may bound request sizes, verify the hosting platform, derive a pseudonymous network key, and attach server-only proxy authentication. Validation, rate limits, receipt state, image processing, and Sentry forwarding remain in Convex.
+
+The proxy must fail closed without its security configuration, reject arbitrary destinations, and never forward cookies or expose its credentials. The Convex endpoint must reject direct requests without valid proxy authentication. This exception does not authorize other Next.js backend features or any deployment/security configuration change.
 
 ### 4. TypeScript & Convex Best Practices
 
@@ -96,7 +102,7 @@ changing grammar or time behavior; see `docs/shared-gdl-design.md`.
 - Implement platform adapters in `lib/platform.ts`
 - Use App Router with client components in `app/` directory
 - Style with Tailwind CSS and shadcn/ui components
-- NO server components, API routes, or server actions
+- No server components or server actions. API routes are limited to the bug-report ingress exception above.
 
 ### `/packages/mobile/` - React Native Mobile Application
 

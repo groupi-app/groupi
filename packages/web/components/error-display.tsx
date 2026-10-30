@@ -139,6 +139,11 @@ export function ErrorDisplay({
           {displayMessage}
         </p>
         <div className='flex items-center gap-2'>
+          {type === 'generic' && (
+            <Link className='underline' href='/report-bug'>
+              Report a Bug
+            </Link>
+          )}
           {showBackButton && (
             <Button
               variant='outline'
@@ -203,6 +208,11 @@ export function ErrorDisplay({
 
       {/* Action buttons */}
       <div className='flex flex-wrap items-center justify-center gap-3'>
+        {type === 'generic' && (
+          <Link className='underline' href='/report-bug'>
+            Report a Bug
+          </Link>
+        )}
         {showBackButton && (
           <Button
             variant='outline'

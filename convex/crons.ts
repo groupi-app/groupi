@@ -33,4 +33,11 @@ crons.interval(
   {}
 );
 
+crons.interval(
+  'prune bug report receipts',
+  { minutes: 5 },
+  internal.bugReports.receipts.prune,
+  {}
+);
+
 export default crons;
