@@ -63,7 +63,7 @@ test('a contributor follows the Introduction link while add-on references remain
   expect(screen.getByText(/^import \{ defineAddonHandler \}/)).toBeVisible();
   expect(screen.getByText(/schemaVersion/)).toBeVisible();
 });
-test('a reader selects versioned API reference and generated CLI command anchors', async () => {
+test('a reader selects the current API reference and switches to v1', async () => {
   const user = userEvent.setup();
   render(<Portal />);
   await user.click(screen.getByRole('link', { name: 'API reference' }));
@@ -77,6 +77,10 @@ test('a reader selects versioned API reference and generated CLI command anchors
   expect(
     screen.getByRole('heading', { name: 'REST v1 API reference' })
   ).toBeVisible();
+});
+test('a reader finds generated CLI command anchors from the public navigation', async () => {
+  const user = userEvent.setup();
+  render(<Portal />);
   await user.click(screen.getByRole('link', { name: 'CLI reference' }));
   expect(
     screen.getByRole('heading', { name: 'groupi events create' })

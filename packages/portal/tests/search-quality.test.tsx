@@ -2,6 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { test, expect } from 'vitest';
 import { Portal } from '../src';
 import { searchAcceptance } from './search-acceptance';
+// The 48-query rendered batch needs its own runner budget under CI contention.
+// This does not relax accuracy checks or the separately reported per-query p95.
 test('representative reader searches reach the correct passage in the first three at least ninety percent of the time', () => {
   render(<Portal />);
   const input = screen.getByRole('searchbox');
@@ -32,4 +34,4 @@ test('representative reader searches reach the correct passage in the first thre
   expect(misses.length, misses.join('\n')).toBeLessThanOrEqual(
     Math.floor(searchAcceptance.length * 0.1)
   );
-});
+}, 15_000);
