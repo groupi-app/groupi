@@ -1,5 +1,83 @@
 # @groupi/web
 
+## 1.0.0
+
+### Minor Changes
+
+- 35d0036: Save Event configuration atomically with shared drafts, and handle automatic completion and expired date polls while preserving participation history.
+- 4e96ee3: Add bounded credentials, independent integration authorship, and delegated sign-in with consent and app review.
+- 49da7c2: Selected-Group delegated applicant consent and private own-context read, with synchronized TypeScript/Python SDK and versioned synthetic integration contract.
+- 49da7c2: Add administrator-approved Developer app branding across hosted sign-in, magic-link email, minimal onboarding and consent, with explicit account selection and safe recovery.
+- 49da7c2: Expose a single current community Event with explicit absence and configuration conflicts, privacy-safe participation reads, and Organizer completion, reopening, and rescheduling controls with replay-safe SDK operations.
+- 49da7c2: Deliver approved community-branded application decisions with trusted status returns and staff-visible, deduplicated email retries independent of admission.
+- 49da7c2: Add explicit per-Group announcement opt-in and staff-triggered branded Event mail with durable recipient delivery, live eligibility checks, trusted preference returns and synchronized clients.
+- 49da7c2: Add coordinated community exclusion with immediate access enforcement and truthful staff cleanup progress.
+- 49da7c2: Resume coordinated community expulsion with authority-checked cleanup, persistent staff progress and explicit reinstatement that restores no participation, invitations or announcement consent.
+- 0b8c85c: Add formal Groups across web, mobile, the developer API, and CLI, with managed
+  membership, applications, joining questionnaires, persistent Group tools, and
+  explicit announcements. Keep Group Event visibility separate from invitations,
+  Event membership, and RSVP. New Event attendees start Pending, and ownership
+  transfers require recipient acceptance. Require explicit resolution of owned
+  Groups and Events before account deletion.
+- f5a7247: Add Group-managed Discord access with explicit member connections, role or server membership modes, durable access cleanup, and scoped API/SDK connection journeys.
+- 35d0036: Add Simple, Checklist and Bring list types in Events and Groups, with creator-managed participation settings, collaborative completion attribution and quantity claims while preserving existing lists.
+- 35d0036: Let post authors and moderators control replies, and let moderators pin up to three posts per Event or Group without additional notifications.
+- 9df172b: Add private invite lists across web, mobile, the developer API, and CLI. Manage
+  saved selections and explicitly send ordinary event invitations from an editable
+  recipient draft, with inline creation and protected retries. Anonymize deleted
+  recipients and provide Needs attention repair without changing event membership
+  or RSVP.
+- 35d0036: Retire new Group announcement and Event email sends in favor of posts, reject retired send/retry APIs and CLI sends, and redirect old management links while preserving stored records, read/status and unsubscribe compatibility.
+- b09e9c1: Add shared Post, Form, List and Poll creation across Events and Groups, integrate participant tools into Events, and move add-on management into Event Settings while preserving existing data.
+- de67671: Refresh shared and page-specific components with Groupi’s sticker-book design language, consistent hierarchy, accessible actions, and feedback.
+- bb0bd6e: Add an optional Support Groupi footer link for one-time contributions through a deployment-configured Stripe checkout.
+
+### Patch Changes
+
+- eaec01b: Support validated CLI add-on participation with participant isolation and consistent app automation behavior.
+- eaec01b: Add CLI cover and avatar upload, replacement, and removal with validated owned images and safe recovery.
+- eaec01b: Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.
+- e729fa1: Add secure CLI browser login with OS credential storage and profile-isolated authentication
+- 49da7c2: Support delegated own community application submission, saved-snapshot editing and withdrawal with revision-safe replay, and synchronized TypeScript/Python clients.
+- 49da7c2: Add independent community Event Join, revision-safe RSVP and Event Leave, plus own Group departure that retains independent Event participation, with synchronized clients.
+- 35d0036: Streamline Form, List and Poll editing and participation, save Poll votes directly, and use compact inline results with permission-gated Form actions.
+- 35d0036: Streamline Account and Developer settings, add-on authoring, Discord setup and application review with compact responsive controls and safer draft recovery.
+- 9c30df4: Show redirecting feedback and a safe continuation link after a consent decision while the browser returns to the requesting app.
+- dd246af: Show Discord server and profile cards with server icons, profile pictures, display names and usernames, while keeping connection problems visible.
+- 27216ac: Separate Group overview, editing and management into focused pages with responsive navigation and concise contextual help.
+- e93fe11: Improve Groups and Invite Lists layouts, selection feedback, and accessibility.
+- 27216ac: Show clear restart guidance and hide stale Discord connection controls when a hosted request expires.
+- 13a3485: Clarify the hosted Discord connection page with a compact app identity, clearer access details, and responsive actions.
+- 4e96ee3: Validate known backend and add-on data types and preserve cleared answers across web and mobile.
+- 81de951: Fix add-on completion and event-specific template behavior. Align native and REST permissions, notifications, reports, and add-on automations. Unify GDL date parsing across web, mobile, and REST with explicit timezones, overnight ranges, and daylight-saving validation. Organize add-ons and backend operations into focused modules and standardize shared workspace source consumption while preserving compiled package distribution.
+- 8a6a7d0: Fix control state announcements, action-menu labels, toast delivery, asynchronous confirmations, and misleading navigation and validation feedback.
+- 13c0249: Add public privacy policy and support pages with contact information and footer links.
+- 72b3689: Keep event pages usable when attendee-list visibility is restricted, without requesting or exposing a roster the viewer cannot access.
+- cd94e00: Fix attached tabs, compact RSVP and date controls, notification and presence indicators, unwanted surface borders, and duplicate event feedback. Move event ownership/deletion and Group management into permission-aware settings and menus.
+
+  Replace event loading text with responsive skeletons that match the event page and logistics preview.
+
+- d16afeb: Show requested app actions as checked, read-only permissions on the consent screen while keeping Allow and Deny as the explicit decision. Event selection and background access remain separate choices.
+- 84bb797: Refine Group pages with clearer identity, compact tool navigation, and responsive member and shared Event layouts.
+- Updated dependencies [35d0036]
+- Updated dependencies [4e96ee3]
+- Updated dependencies [eaec01b]
+- Updated dependencies [eaec01b]
+- Updated dependencies [49da7c2]
+- Updated dependencies [49da7c2]
+- Updated dependencies [49da7c2]
+- Updated dependencies [49da7c2]
+- Updated dependencies [dd246af]
+- Updated dependencies [0b8c85c]
+- Updated dependencies [f5a7247]
+- Updated dependencies [81de951]
+- Updated dependencies [35d0036]
+- Updated dependencies [35d0036]
+- Updated dependencies [9df172b]
+- Updated dependencies [b09e9c1]
+- Updated dependencies [de67671]
+  - @groupi/shared@1.0.0
+
 ## 0.4.0
 
 ### Minor Changes
