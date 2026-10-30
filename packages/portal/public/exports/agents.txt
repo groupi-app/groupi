@@ -1,0 +1,66 @@
+Build with Groupi — agent guide
+
+v2 · Current · Source: packages/portal/src/learning-content.ts
+Canonical document: http://localhost:4173/v2/agents.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
+
+Source availability does not establish hosted deployment or registry publication.
+
+Table of Contents
+
+- [Purpose and evidence](#purpose)
+- [Choose one integration task](#tasks)
+- [Select instance, account and credential mode](#identity)
+- [Simulation, preparation and real execution](#execution)
+- [Recovery and privacy](#recovery)
+- [Check completion against the task](#completion)
+
+<a id="purpose"></a>
+Purpose and evidence
+Canonical passage: http://localhost:4173/v2/agents#purpose
+
+Help the user build with Groupi in their existing framework and preferred language. Choose TypeScript, Python or cURL examples without replacing their stack. Canonical pinned guide: /v2/agents.md; /agents.md serves this same v2 guide. REST v2; source baseline ec33a44dce0ba9be828c3d8916d768ae81060a8c inspected 2026-10-30. Source support only. Deployment, issuer configuration and package registry availability are separately unverified. No SDK installation is required by these direct HTTP examples.
+
+- [Pinned v2 Markdown guide](http://localhost:4173/v2/agents.md)
+
+<a id="tasks"></a>
+Choose one integration task
+Canonical passage: http://localhost:4173/v2/agents#tasks
+
+First own-account Event: needs a legacy collection key and authority to create. Private Event widget: needs an existing readable Event and a private local rendering context. Group Events: needs legacy credentials and current eligible Group read authority; audience changes are a separate optional task. Event updates: needs events.update or legacy events-write and the current Event role. Connect another user: needs an eligible registered client, configured issuer, exact callback and explicit user consent. Follow only the task needed, then the exact API reference.
+
+- [First own-account Event](http://localhost:4173/v2/integrator.md)
+- [Private Event widget](http://localhost:4173/v2/event-widget.md)
+- [Group Events](http://localhost:4173/v2/group-events.md)
+- [Event updates](http://localhost:4173/v2/event-updates.md)
+- [Connect another user](http://localhost:4173/v2/connect-users.md)
+
+<a id="identity"></a>
+Select instance, account and credential mode
+Canonical passage: http://localhost:4173/v2/agents#identity
+
+Establish the intended API origin, matching website, account, requested operation and existing user authorization before requests. Legacy own-account creation verifies GET /profile and personId. Bounded Event reads/updates require explicit actions and resource selection intersected with current authority; not all bounded keys have identity access. For delegated tokens, global /profile is denied: validate exact issuer/audience, state, PKCE S256 and nonce; use permitted signed OIDC claims/userinfo. openid alone gives an opaque app-and-instance-specific subject. A bounded key or delegated token cannot create an Event. Stop if the capability or authority is missing; never substitute an owner key.
+
+- [Credential modes and supported actions](http://localhost:4173/exports/auth.md)
+
+<a id="execution"></a>
+Simulation, preparation and real execution
+Canonical passage: http://localhost:4173/v2/agents#execution
+
+Documentation access is not account authorization. Run in the portal changes fixtures only and accepts no key. Copy local examples for real work; keep credentials in the user’s local environment or secret manager, never prompts, URLs, browser bundles or logs. An agent must establish authorization separately before live writes, invitations, audience changes, app registration or publication. Do not install an assumed SDK package: registry availability is unverified; use the direct HTTP examples with their stated runtimes. Report a prepared integration, a simulation and verified real success distinctly.
+
+<a id="recovery"></a>
+Recovery and privacy
+Canonical passage: http://localhost:4173/v2/agents#recovery
+
+For POST /events retain the exact payload and <unix-ms>.<uuid-v4> Idempotency-Key before sending. On uncertain response replay unchanged within 24 hours; conflict, expiry or changed account/instance means inspect, not a blind new create. Other writes require operation-specific inspection rather than assuming this guarantee. 401/403 remain failures. An Event read grant is not permission to republish; the first widget is private/local. No automatic invitations, cleanup, audience changes or background consent.
+
+<a id="completion"></a>
+Check completion against the task
+Canonical passage: http://localhost:4173/v2/agents#completion
+
+First Event: one undated Event, matching permitted read-back and correct website /event/{id} link, retained replay identity, no invitations. Widget: private local display of permitted data with loading, empty, success and error states; no realtime promise. Group recipe: permitted upcoming/undated previews or empty success, correct pagination and no audience mutation; sharing is a separate authorized task. Update: permitted read-back matches the requested fields, or explicitly report that read permission is missing. Delegation: validated identity and permitted selected-resource operation; disconnect denial verified only when authorized. Record the actual environment and evidence; source availability is not deployed acceptance.
+
+- [REST v2 Markdown reference](http://localhost:4173/exports/api-v2.md)
+- [REST v2 OpenAPI schemas](http://localhost:4173/exports/openapi-v2.json)
+- [Availability and evidence](http://localhost:4173/exports/versions.md)

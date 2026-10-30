@@ -1,0 +1,13 @@
+# Self-hosting status
+
+v2 · Proposed · Source: docs/self-hosting.md
+Canonical document: http://localhost:4173/v2/self-hosting.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
+
+Source availability does not establish hosted deployment or registry publication.
+
+<a id="status"></a>
+## Proposed Linux Compose journey
+Canonical passage: http://localhost:4173/v2/self-hosting#status
+
+A supported Linux Compose installation, enrollment, backup/restore and recovery journey is proposed and excluded from this implementation. Existing profile URL selection does not certify self-hosting. There is no runnable installation quickstart here. Self-hosting is not a launch dependency of this portal.

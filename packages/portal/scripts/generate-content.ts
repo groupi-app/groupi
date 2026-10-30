@@ -15,6 +15,37 @@ import { guides, type Page } from '../src/content';
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const output = fileURLToPath(new URL('../public/exports/', import.meta.url));
 const check = process.argv.includes('--check');
+// Until a docs deployment is configured, exports explicitly target local preview.
+if (
+  process.env.VERCEL_ENV === 'production' &&
+  !process.env.PORTAL_DOCS_ORIGIN
+) {
+  throw new Error(
+    'Set PORTAL_DOCS_ORIGIN to the verified public documentation origin before production publication.'
+  );
+}
+const docsOrigin = new URL(
+  process.env.PORTAL_DOCS_ORIGIN ?? 'http://localhost:4173'
+);
+if (
+  docsOrigin.pathname !== '/' ||
+  docsOrigin.search ||
+  docsOrigin.hash ||
+  docsOrigin.username ||
+  docsOrigin.password ||
+  (docsOrigin.protocol !== 'https:' &&
+    !(
+      docsOrigin.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(docsOrigin.hostname)
+    ))
+)
+  throw new Error(
+    'PORTAL_DOCS_ORIGIN must be a verified HTTPS origin, or loopback for local preview.'
+  );
+const canonical = (path: string) => new URL(path, docsOrigin).href;
+const publicArtifacts = new Map<string, string>();
+const referenceRevision = 'ec33a44dce0ba9be828c3d8916d768ae81060a8c';
+
 execFileSync(
   process.execPath,
   [resolve(root, 'packages/cli/scripts/generate-reference.js'), '--check'],
@@ -27,7 +58,7 @@ const cli = JSON.parse(await readFile(resolve(root, cliPath), 'utf8')) as {
   commands: { path: string; help: string }[];
 };
 const pages: Page[] = [
-  ...guides,
+  ...guides.filter(page => page.id !== 'contributor'),
   {
     id: 'cli-reference',
     path: `/cli/${cli.version}/reference`,
@@ -175,6 +206,8 @@ const dependencies = [
   ...new Set([
     ...guides.map(page => page.source),
     'packages/portal/src/content.ts',
+    'packages/portal/src/learning-content.ts',
+    'packages/portal/src/learning-examples.ts',
     'docs/adr/0007-optional-convex-sdk-subscriptions.md',
     'packages/sdk/package.json',
     'packages/sdk/operations.json',
@@ -210,6 +243,9 @@ const corpus = {
   schemaVersion: 1,
   owner: '@TheiaSurette',
   evidence: 'source-generated; deployment and registry release unverified',
+  referenceRevision,
+  documentationOrigin: docsOrigin.origin,
+  verifiedOn: '2026-10-30',
   sources: hashes,
   pages,
 };
@@ -237,12 +273,25 @@ for (const page of pages) {
       `# ${page.title}`,
       '',
       `${page.version} · ${page.availability} · Source: ${page.source}`,
+      `Canonical document: ${canonical(`${page.path}.md`)}`,
+      `Public contract baseline: ${referenceRevision} · verified 2026-10-30`,
       '',
       'Source availability does not establish hosted deployment or registry publication.',
       '',
+      ...(page.passages.length >= 3
+        ? [
+            '## Table of Contents',
+            '',
+            ...page.passages.map(
+              passage => `- [${passage.title}](#${passage.id})`
+            ),
+            '',
+          ]
+        : []),
       ...page.passages.flatMap(passage => [
+        `<a id="${passage.id}"></a>`,
         `## ${passage.title}`,
-        `Canonical passage: ${page.path}#${passage.id}`,
+        `Canonical passage: ${canonical(`${page.path}#${passage.id}`)}`,
         '',
         passage.text,
         '',
@@ -250,7 +299,7 @@ for (const page of pages) {
           ? [`\`\`\`${passage.language ?? 'text'}`, passage.code, '```', '']
           : []),
         ...(passage.references?.flatMap(reference => [
-          `- [${reference.title}](${reference.href})`,
+          `- [${reference.title}](${reference.href.startsWith('/') ? canonical(reference.href) : reference.href})`,
         ]) ?? []),
         ...(passage.references?.length ? [''] : []),
       ]),
@@ -258,6 +307,8 @@ for (const page of pages) {
       .join('\n')
       .trimEnd() + '\n';
   artifacts.set(`${page.id}.md`, markdown);
+  publicArtifacts.set(`${page.path.slice(1)}.md`, markdown);
+  if (page.id === 'agents') publicArtifacts.set('agents.md', markdown);
   artifacts.set(
     `${page.id}.txt`,
     markdown
@@ -292,22 +343,63 @@ for (const name of ['corpus.json', 'search-index.json']) {
       throw new Error(`Stale client corpus ${name}`);
   } else await writeFile(path, value);
 }
-const llms =
-  [
-    '# Groupi developer documentation',
-    '',
-    'Public source-verified documentation. Availability and version labels are part of each page; package release and deployment are separate evidence.',
-    '',
-    ...pages.map(
-      page =>
-        `- [${page.title}](/exports/${page.id}.md): ${page.version}, ${page.availability}`
-    ),
-  ].join('\n') + '\n';
-const llmsPath = resolve(output, '../llms.txt');
-if (check) {
-  if ((await readFile(llmsPath, 'utf8')) !== llms)
-    throw new Error('Stale llms.txt');
-} else await writeFile(llmsPath, llms);
+const integrationPages = [
+  'agents',
+  'introduction',
+  'integrator',
+  'event-widget',
+  'group-events',
+  'event-updates',
+  'connect-users',
+  'concepts',
+  'auth',
+  'sdks',
+  'versions',
+  'cli',
+  'cli-reference',
+  'api-v2',
+  'api-v1',
+];
+const llms = [
+  '# Build with Groupi',
+  '',
+  'Public integration documentation. Start with the agent guide, then retrieve only the task and reference pages you need. Documentation does not grant account access.',
+  '',
+  `Public contract baseline: ${referenceRevision}. Source support, hosted deployment and registry publication are separate evidence.`,
+  '',
+  ...integrationPages.map(id => {
+    const page = pages.find(candidate => candidate.id === id);
+    if (!page) throw new Error(`Missing integration discovery page: ${id}`);
+    return `- [${page.title}](${canonical(`${page.path}.md`)}): ${page.version}, ${page.availability}`;
+  }),
+  '',
+].join('\n');
+publicArtifacts.set('llms.txt', llms);
+const introduction = artifacts.get('introduction.md');
+if (introduction) {
+  // Preserve old downloads while retiring the parallel contributor course.
+  publicArtifacts.set('v2/contributor.md', introduction);
+  publicArtifacts.set('exports/contributor.md', introduction);
+  publicArtifacts.set(
+    'exports/contributor.txt',
+    artifacts.get('introduction.txt')!
+  );
+}
+for (const [name, value] of publicArtifacts) {
+  const path = resolve(output, '..', name);
+  if (check) {
+    let previous = '';
+    try {
+      previous = await readFile(path, 'utf8');
+    } catch {
+      /* Missing means stale. */
+    }
+    if (previous !== value) throw new Error(`Stale public document ${name}`);
+  } else {
+    await mkdir(resolve(path, '..'), { recursive: true });
+    await writeFile(path, value);
+  }
+}
 console.log(
   `${check ? 'Checked' : 'Generated'} ${pages.length} public pages, ${index.length} passages and ${artifacts.size + 1} exports.`
 );

@@ -1,11 +1,299 @@
 # CLI 0.1.0 command reference
 
 cli-0.1.0 · Current · Source: packages/cli/docs/command-reference.json
+Canonical document: http://localhost:4173/cli/0.1.0/reference.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+## Table of Contents
+
+- [groupi](#groupi)
+- [groupi tui](#groupi-tui)
+- [groupi auth](#groupi-auth)
+- [groupi auth login](#groupi-auth-login)
+- [groupi auth status](#groupi-auth-status)
+- [groupi auth logout](#groupi-auth-logout)
+- [groupi profile](#groupi-profile)
+- [groupi profile add](#groupi-profile-add)
+- [groupi events](#groupi-events)
+- [groupi events create](#groupi-events-create)
+- [groupi events edit](#groupi-events-edit)
+- [groupi events list](#groupi-events-list)
+- [groupi events get](#groupi-events-get)
+- [groupi events audiences](#groupi-events-audiences)
+- [groupi events share-group](#groupi-events-share-group)
+- [groupi events unshare-group](#groupi-events-unshare-group)
+- [groupi events friends-audience](#groupi-events-friends-audience)
+- [groupi events mute](#groupi-events-mute)
+- [groupi events unmute](#groupi-events-unmute)
+- [groupi events mute-status](#groupi-events-mute-status)
+- [groupi events rsvp](#groupi-events-rsvp)
+- [groupi events rsvp get](#groupi-events-rsvp-get)
+- [groupi events rsvp set](#groupi-events-rsvp-set)
+- [groupi events availability](#groupi-events-availability)
+- [groupi events availability set](#groupi-events-availability-set)
+- [groupi events availability clear](#groupi-events-availability-clear)
+- [groupi events availability get](#groupi-events-availability-get)
+- [groupi events availability responses](#groupi-events-availability-responses)
+- [groupi events dates](#groupi-events-dates)
+- [groupi events dates choose](#groupi-events-dates-choose)
+- [groupi events dates reset](#groupi-events-dates-reset)
+- [groupi events dates list](#groupi-events-dates-list)
+- [groupi events members](#groupi-events-members)
+- [groupi events cover](#groupi-events-cover)
+- [groupi events cover get](#groupi-events-cover-get)
+- [groupi events cover set](#groupi-events-cover-set)
+- [groupi events cover remove](#groupi-events-cover-remove)
+- [groupi events transfer](#groupi-events-transfer)
+- [groupi events transfer status](#groupi-events-transfer-status)
+- [groupi events transfer offer](#groupi-events-transfer-offer)
+- [groupi events transfer accept](#groupi-events-transfer-accept)
+- [groupi events transfer decline](#groupi-events-transfer-decline)
+- [groupi events transfer cancel](#groupi-events-transfer-cancel)
+- [groupi events applications](#groupi-events-applications)
+- [groupi events applications form](#groupi-events-applications-form)
+- [groupi events applications history](#groupi-events-applications-history)
+- [groupi events applications list](#groupi-events-applications-list)
+- [groupi events applications configure](#groupi-events-applications-configure)
+- [groupi events applications submit](#groupi-events-applications-submit)
+- [groupi events applications withdraw](#groupi-events-applications-withdraw)
+- [groupi events applications approve](#groupi-events-applications-approve)
+- [groupi events applications decline](#groupi-events-applications-decline)
+- [groupi events preview](#groupi-events-preview)
+- [groupi events discover](#groupi-events-discover)
+- [groupi events join](#groupi-events-join)
+- [groupi events leave](#groupi-events-leave)
+- [groupi events delete](#groupi-events-delete)
+- [groupi events membership](#groupi-events-membership)
+- [groupi events membership role](#groupi-events-membership-role)
+- [groupi events membership remove](#groupi-events-membership-remove)
+- [groupi events settings](#groupi-events-settings)
+- [groupi events settings get](#groupi-events-settings-get)
+- [groupi events settings set](#groupi-events-settings-set)
+- [groupi discord](#groupi-discord)
+- [groupi discord guilds](#groupi-discord-guilds)
+- [groupi discord guilds list](#groupi-discord-guilds-list)
+- [groupi discord guilds refresh](#groupi-discord-guilds-refresh)
+- [groupi addons](#groupi-addons)
+- [groupi addons definitions](#groupi-addons-definitions)
+- [groupi addons definitions create](#groupi-addons-definitions-create)
+- [groupi addons definitions import](#groupi-addons-definitions-import)
+- [groupi addons definitions get](#groupi-addons-definitions-get)
+- [groupi addons definitions export](#groupi-addons-definitions-export)
+- [groupi addons definitions list](#groupi-addons-definitions-list)
+- [groupi addons definitions edit](#groupi-addons-definitions-edit)
+- [groupi addons definitions publish](#groupi-addons-definitions-publish)
+- [groupi addons definitions unpublish](#groupi-addons-definitions-unpublish)
+- [groupi addons definitions delete](#groupi-addons-definitions-delete)
+- [groupi addons get](#groupi-addons-get)
+- [groupi addons list](#groupi-addons-list)
+- [groupi addons templates](#groupi-addons-templates)
+- [groupi addons enable](#groupi-addons-enable)
+- [groupi addons configure](#groupi-addons-configure)
+- [groupi addons disable](#groupi-addons-disable)
+- [groupi addons data](#groupi-addons-data)
+- [groupi addons respond](#groupi-addons-respond)
+- [groupi addons claim](#groupi-addons-claim)
+- [groupi addons vote](#groupi-addons-vote)
+- [groupi addons toggle](#groupi-addons-toggle)
+- [groupi addons execute](#groupi-addons-execute)
+- [groupi addons opt-in](#groupi-addons-opt-in)
+- [groupi addons opt-out](#groupi-addons-opt-out)
+- [groupi addons clear-response](#groupi-addons-clear-response)
+- [groupi addons clear-claims](#groupi-addons-clear-claims)
+- [groupi friends](#groupi-friends)
+- [groupi friends list](#groupi-friends-list)
+- [groupi friends incoming](#groupi-friends-incoming)
+- [groupi friends outgoing](#groupi-friends-outgoing)
+- [groupi friends status](#groupi-friends-status)
+- [groupi friends request](#groupi-friends-request)
+- [groupi friends accept](#groupi-friends-accept)
+- [groupi friends decline](#groupi-friends-decline)
+- [groupi friends cancel](#groupi-friends-cancel)
+- [groupi friends remove](#groupi-friends-remove)
+- [groupi blocks](#groupi-blocks)
+- [groupi blocks list](#groupi-blocks-list)
+- [groupi blocks status](#groupi-blocks-status)
+- [groupi blocks block](#groupi-blocks-block)
+- [groupi blocks unblock](#groupi-blocks-unblock)
+- [groupi groups](#groupi-groups)
+- [groupi groups transfer](#groupi-groups-transfer)
+- [groupi groups transfer status](#groupi-groups-transfer-status)
+- [groupi groups transfer offer](#groupi-groups-transfer-offer)
+- [groupi groups transfer accept](#groupi-groups-transfer-accept)
+- [groupi groups transfer decline](#groupi-groups-transfer-decline)
+- [groupi groups transfer cancel](#groupi-groups-transfer-cancel)
+- [groupi groups list](#groupi-groups-list)
+- [groupi groups get](#groupi-groups-get)
+- [groupi groups create](#groupi-groups-create)
+- [groupi groups edit](#groupi-groups-edit)
+- [groupi groups delete](#groupi-groups-delete)
+- [groupi groups announce](#groupi-groups-announce)
+- [groupi groups announcement-status](#groupi-groups-announcement-status)
+- [groupi groups members](#groupi-groups-members)
+- [groupi groups invites](#groupi-groups-invites)
+- [groupi groups invite](#groupi-groups-invite)
+- [groupi groups invitation-policy](#groupi-groups-invitation-policy)
+- [groupi groups member-role](#groupi-groups-member-role)
+- [groupi groups remove-member](#groupi-groups-remove-member)
+- [groupi groups ban](#groupi-groups-ban)
+- [groupi groups lift-ban](#groupi-groups-lift-ban)
+- [groupi groups leave](#groupi-groups-leave)
+- [groupi groups bans](#groupi-groups-bans)
+- [groupi groups questionnaire](#groupi-groups-questionnaire)
+- [groupi groups questionnaire get](#groupi-groups-questionnaire-get)
+- [groupi groups questionnaire status](#groupi-groups-questionnaire-status)
+- [groupi groups questionnaire history](#groupi-groups-questionnaire-history)
+- [groupi groups questionnaire responses](#groupi-groups-questionnaire-responses)
+- [groupi groups questionnaire configure](#groupi-groups-questionnaire-configure)
+- [groupi groups questionnaire submit](#groupi-groups-questionnaire-submit)
+- [groupi groups forms](#groupi-groups-forms)
+- [groupi groups forms list](#groupi-groups-forms-list)
+- [groupi groups forms get](#groupi-groups-forms-get)
+- [groupi groups forms settings](#groupi-groups-forms-settings)
+- [groupi groups forms history](#groupi-groups-forms-history)
+- [groupi groups forms results](#groupi-groups-forms-results)
+- [groupi groups forms create](#groupi-groups-forms-create)
+- [groupi groups forms configure](#groupi-groups-forms-configure)
+- [groupi groups forms submit](#groupi-groups-forms-submit)
+- [groupi groups forms remove-own](#groupi-groups-forms-remove-own)
+- [groupi groups forms delete](#groupi-groups-forms-delete)
+- [groupi groups forms moderate](#groupi-groups-forms-moderate)
+- [groupi groups forms policy](#groupi-groups-forms-policy)
+- [groupi groups forms policy get](#groupi-groups-forms-policy-get)
+- [groupi groups forms policy set](#groupi-groups-forms-policy-set)
+- [groupi groups polls](#groupi-groups-polls)
+- [groupi groups polls list](#groupi-groups-polls-list)
+- [groupi groups polls get](#groupi-groups-polls-get)
+- [groupi groups polls settings](#groupi-groups-polls-settings)
+- [groupi groups polls history](#groupi-groups-polls-history)
+- [groupi groups polls results](#groupi-groups-polls-results)
+- [groupi groups polls create](#groupi-groups-polls-create)
+- [groupi groups polls configure](#groupi-groups-polls-configure)
+- [groupi groups polls submit](#groupi-groups-polls-submit)
+- [groupi groups polls remove-own](#groupi-groups-polls-remove-own)
+- [groupi groups polls delete](#groupi-groups-polls-delete)
+- [groupi groups polls moderate](#groupi-groups-polls-moderate)
+- [groupi groups polls policy](#groupi-groups-polls-policy)
+- [groupi groups polls policy get](#groupi-groups-polls-policy-get)
+- [groupi groups polls policy set](#groupi-groups-polls-policy-set)
+- [groupi groups lists](#groupi-groups-lists)
+- [groupi groups lists list](#groupi-groups-lists-list)
+- [groupi groups lists get](#groupi-groups-lists-get)
+- [groupi groups lists settings](#groupi-groups-lists-settings)
+- [groupi groups lists entries](#groupi-groups-lists-entries)
+- [groupi groups lists own](#groupi-groups-lists-own)
+- [groupi groups lists create](#groupi-groups-lists-create)
+- [groupi groups lists configure](#groupi-groups-lists-configure)
+- [groupi groups lists add](#groupi-groups-lists-add)
+- [groupi groups lists edit](#groupi-groups-lists-edit)
+- [groupi groups lists remove](#groupi-groups-lists-remove)
+- [groupi groups lists delete](#groupi-groups-lists-delete)
+- [groupi groups lists policy](#groupi-groups-lists-policy)
+- [groupi groups lists policy get](#groupi-groups-lists-policy-get)
+- [groupi groups lists policy set](#groupi-groups-lists-policy-set)
+- [groupi groups application-form](#groupi-groups-application-form)
+- [groupi groups application-get](#groupi-groups-application-get)
+- [groupi groups application-history](#groupi-groups-application-history)
+- [groupi groups applications](#groupi-groups-applications)
+- [groupi groups application-settings](#groupi-groups-application-settings)
+- [groupi groups apply](#groupi-groups-apply)
+- [groupi groups application-edit](#groupi-groups-application-edit)
+- [groupi groups application-withdraw](#groupi-groups-application-withdraw)
+- [groupi groups application-review](#groupi-groups-application-review)
+- [groupi groups events](#groupi-groups-events)
+- [groupi groups withdraw-event](#groupi-groups-withdraw-event)
+- [groupi groups event-sharing](#groupi-groups-event-sharing)
+- [groupi group-invites](#groupi-group-invites)
+- [groupi group-invites list](#groupi-group-invites-list)
+- [groupi group-invites accept](#groupi-group-invites-accept)
+- [groupi group-invites decline](#groupi-group-invites-decline)
+- [groupi group-invites cancel](#groupi-group-invites-cancel)
+- [groupi account](#groupi-account)
+- [groupi account avatar](#groupi-account-avatar)
+- [groupi account avatar get](#groupi-account-avatar-get)
+- [groupi account avatar set](#groupi-account-avatar-set)
+- [groupi account avatar remove](#groupi-account-avatar-remove)
+- [groupi account get](#groupi-account-get)
+- [groupi account edit](#groupi-account-edit)
+- [groupi account passkeys](#groupi-account-passkeys)
+- [groupi account linked-accounts](#groupi-account-linked-accounts)
+- [groupi account responsibilities](#groupi-account-responsibilities)
+- [groupi account readiness](#groupi-account-readiness)
+- [groupi account delete-event](#groupi-account-delete-event)
+- [groupi account delete](#groupi-account-delete)
+- [groupi settings](#groupi-settings)
+- [groupi settings privacy](#groupi-settings-privacy)
+- [groupi settings privacy get](#groupi-settings-privacy-get)
+- [groupi settings privacy set](#groupi-settings-privacy-set)
+- [groupi settings notifications](#groupi-settings-notifications)
+- [groupi settings notifications get](#groupi-settings-notifications-get)
+- [groupi settings notifications set](#groupi-settings-notifications-set)
+- [groupi settings theme](#groupi-settings-theme)
+- [groupi settings theme get](#groupi-settings-theme-get)
+- [groupi settings theme set](#groupi-settings-theme-set)
+- [groupi posts](#groupi-posts)
+- [groupi posts list](#groupi-posts-list)
+- [groupi posts get](#groupi-posts-get)
+- [groupi posts create](#groupi-posts-create)
+- [groupi posts edit](#groupi-posts-edit)
+- [groupi posts delete](#groupi-posts-delete)
+- [groupi posts attachments](#groupi-posts-attachments)
+- [groupi posts attachments list](#groupi-posts-attachments-list)
+- [groupi posts attachments remove](#groupi-posts-attachments-remove)
+- [groupi posts mute](#groupi-posts-mute)
+- [groupi posts unmute](#groupi-posts-unmute)
+- [groupi posts mute-status](#groupi-posts-mute-status)
+- [groupi replies](#groupi-replies)
+- [groupi replies list](#groupi-replies-list)
+- [groupi replies get](#groupi-replies-get)
+- [groupi replies create](#groupi-replies-create)
+- [groupi replies edit](#groupi-replies-edit)
+- [groupi replies delete](#groupi-replies-delete)
+- [groupi replies attachments](#groupi-replies-attachments)
+- [groupi replies attachments list](#groupi-replies-attachments-list)
+- [groupi replies attachments remove](#groupi-replies-attachments-remove)
+- [groupi invites](#groupi-invites)
+- [groupi invites links](#groupi-invites-links)
+- [groupi invites links create](#groupi-invites-links-create)
+- [groupi invites links edit](#groupi-invites-links-edit)
+- [groupi invites links accept](#groupi-invites-links-accept)
+- [groupi invites links revoke](#groupi-invites-links-revoke)
+- [groupi invites links get](#groupi-invites-links-get)
+- [groupi invites links list](#groupi-invites-links-list)
+- [groupi invites email](#groupi-invites-email)
+- [groupi invites email send](#groupi-invites-email-send)
+- [groupi invites email send-pending](#groupi-invites-email-send-pending)
+- [groupi invites members](#groupi-invites-members)
+- [groupi invites members send](#groupi-invites-members-send)
+- [groupi invites members accept](#groupi-invites-members-accept)
+- [groupi invites members decline](#groupi-invites-members-decline)
+- [groupi invites members revoke](#groupi-invites-members-revoke)
+- [groupi invites members get](#groupi-invites-members-get)
+- [groupi invites members list](#groupi-invites-members-list)
+- [groupi invite-lists](#groupi-invite-lists)
+- [groupi invite-lists create](#groupi-invite-lists-create)
+- [groupi invite-lists list](#groupi-invite-lists-list)
+- [groupi invite-lists get](#groupi-invite-lists-get)
+- [groupi invite-lists edit](#groupi-invite-lists-edit)
+- [groupi invite-lists delete](#groupi-invite-lists-delete)
+- [groupi invite-lists invite](#groupi-invite-lists-invite)
+- [groupi invite-lists people](#groupi-invite-lists-people)
+- [groupi notifications](#groupi-notifications)
+- [groupi notifications list](#groupi-notifications-list)
+- [groupi notifications count](#groupi-notifications-count)
+- [groupi notifications read](#groupi-notifications-read)
+- [groupi notifications unread](#groupi-notifications-unread)
+- [groupi notifications read-all](#groupi-notifications-read-all)
+- [groupi notifications read-event](#groupi-notifications-read-event)
+- [groupi notifications read-post](#groupi-notifications-read-post)
+- [groupi notifications clear](#groupi-notifications-clear)
+- [groupi notifications clear-all](#groupi-notifications-clear-all)
+
+<a id="groupi"></a>
 ## groupi
-Canonical passage: /cli/0.1.0/reference#groupi
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -44,8 +332,9 @@ Commands:
   notifications      Read and clear your notifications
 ```
 
+<a id="groupi-tui"></a>
 ## groupi tui
-Canonical passage: /cli/0.1.0/reference#groupi-tui
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-tui
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -58,8 +347,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-auth"></a>
 ## groupi auth
-Canonical passage: /cli/0.1.0/reference#groupi-auth
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-auth
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -78,8 +368,9 @@ Commands:
   help [command]    display help for command
 ```
 
+<a id="groupi-auth-login"></a>
 ## groupi auth login
-Canonical passage: /cli/0.1.0/reference#groupi-auth-login
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-auth-login
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -95,8 +386,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-auth-status"></a>
 ## groupi auth status
-Canonical passage: /cli/0.1.0/reference#groupi-auth-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-auth-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -109,8 +401,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-auth-logout"></a>
 ## groupi auth logout
-Canonical passage: /cli/0.1.0/reference#groupi-auth-logout
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-auth-logout
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -124,8 +417,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-profile"></a>
 ## groupi profile
-Canonical passage: /cli/0.1.0/reference#groupi-profile
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-profile
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -142,8 +436,9 @@ Commands:
   help [command]        display help for command
 ```
 
+<a id="groupi-profile-add"></a>
 ## groupi profile add
-Canonical passage: /cli/0.1.0/reference#groupi-profile-add
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-profile-add
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -156,8 +451,9 @@ Options:
   -h, --help       display help for command
 ```
 
+<a id="groupi-events"></a>
 ## groupi events
-Canonical passage: /cli/0.1.0/reference#groupi-events
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -212,8 +508,9 @@ Commands:
   help [command]                                 display help for command
 ```
 
+<a id="groupi-events-create"></a>
 ## groupi events create
-Canonical passage: /cli/0.1.0/reference#groupi-events-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -233,8 +530,9 @@ Options:
   -h, --help             display help for command
 ```
 
+<a id="groupi-events-edit"></a>
 ## groupi events edit
-Canonical passage: /cli/0.1.0/reference#groupi-events-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -252,8 +550,9 @@ Options:
   -h, --help             display help for command
 ```
 
+<a id="groupi-events-list"></a>
 ## groupi events list
-Canonical passage: /cli/0.1.0/reference#groupi-events-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -267,8 +566,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-get"></a>
 ## groupi events get
-Canonical passage: /cli/0.1.0/reference#groupi-events-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -281,8 +581,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-audiences"></a>
 ## groupi events audiences
-Canonical passage: /cli/0.1.0/reference#groupi-events-audiences
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-audiences
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -295,8 +596,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-share-group"></a>
 ## groupi events share-group
-Canonical passage: /cli/0.1.0/reference#groupi-events-share-group
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-share-group
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -309,8 +611,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-unshare-group"></a>
 ## groupi events unshare-group
-Canonical passage: /cli/0.1.0/reference#groupi-events-unshare-group
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-unshare-group
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -324,8 +627,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-friends-audience"></a>
 ## groupi events friends-audience
-Canonical passage: /cli/0.1.0/reference#groupi-events-friends-audience
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-friends-audience
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -339,8 +643,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-events-mute"></a>
 ## groupi events mute
-Canonical passage: /cli/0.1.0/reference#groupi-events-mute
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-mute
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -353,8 +658,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-unmute"></a>
 ## groupi events unmute
-Canonical passage: /cli/0.1.0/reference#groupi-events-unmute
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-unmute
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -367,8 +673,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-mute-status"></a>
 ## groupi events mute-status
-Canonical passage: /cli/0.1.0/reference#groupi-events-mute-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-mute-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -381,8 +688,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-rsvp"></a>
 ## groupi events rsvp
-Canonical passage: /cli/0.1.0/reference#groupi-events-rsvp
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-rsvp
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -400,8 +708,9 @@ Commands:
   help [command]            display help for command
 ```
 
+<a id="groupi-events-rsvp-get"></a>
 ## groupi events rsvp get
-Canonical passage: /cli/0.1.0/reference#groupi-events-rsvp-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-rsvp-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -412,8 +721,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-rsvp-set"></a>
 ## groupi events rsvp set
-Canonical passage: /cli/0.1.0/reference#groupi-events-rsvp-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-rsvp-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -426,8 +736,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-availability"></a>
 ## groupi events availability
-Canonical passage: /cli/0.1.0/reference#groupi-events-availability
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-availability
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -447,8 +758,9 @@ Commands:
   help [command]                  display help for command
 ```
 
+<a id="groupi-events-availability-set"></a>
 ## groupi events availability set
-Canonical passage: /cli/0.1.0/reference#groupi-events-availability-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-availability-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -460,8 +772,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-events-availability-clear"></a>
 ## groupi events availability clear
-Canonical passage: /cli/0.1.0/reference#groupi-events-availability-clear
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-availability-clear
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -475,8 +788,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-availability-get"></a>
 ## groupi events availability get
-Canonical passage: /cli/0.1.0/reference#groupi-events-availability-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-availability-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -492,8 +806,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-availability-responses"></a>
 ## groupi events availability responses
-Canonical passage: /cli/0.1.0/reference#groupi-events-availability-responses
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-availability-responses
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -510,8 +825,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-dates"></a>
 ## groupi events dates
-Canonical passage: /cli/0.1.0/reference#groupi-events-dates
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-dates
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -531,8 +847,9 @@ Commands:
   help [command]               display help for command
 ```
 
+<a id="groupi-events-dates-choose"></a>
 ## groupi events dates choose
-Canonical passage: /cli/0.1.0/reference#groupi-events-dates-choose
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-dates-choose
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -549,8 +866,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-events-dates-reset"></a>
 ## groupi events dates reset
-Canonical passage: /cli/0.1.0/reference#groupi-events-dates-reset
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-dates-reset
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -564,8 +882,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-dates-list"></a>
 ## groupi events dates list
-Canonical passage: /cli/0.1.0/reference#groupi-events-dates-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-dates-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -581,8 +900,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-members"></a>
 ## groupi events members
-Canonical passage: /cli/0.1.0/reference#groupi-events-members
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-members
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -598,8 +918,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-cover"></a>
 ## groupi events cover
-Canonical passage: /cli/0.1.0/reference#groupi-events-cover
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-cover
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -618,8 +939,9 @@ Commands:
   help [command]               display help for command
 ```
 
+<a id="groupi-events-cover-get"></a>
 ## groupi events cover get
-Canonical passage: /cli/0.1.0/reference#groupi-events-cover-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-cover-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -630,8 +952,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-cover-set"></a>
 ## groupi events cover set
-Canonical passage: /cli/0.1.0/reference#groupi-events-cover-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-cover-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -645,8 +968,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-events-cover-remove"></a>
 ## groupi events cover remove
-Canonical passage: /cli/0.1.0/reference#groupi-events-cover-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-cover-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -658,8 +982,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-transfer"></a>
 ## groupi events transfer
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -680,8 +1005,9 @@ Commands:
   help [command]                              display help for command
 ```
 
+<a id="groupi-events-transfer-status"></a>
 ## groupi events transfer status
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -694,8 +1020,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-transfer-offer"></a>
 ## groupi events transfer offer
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer-offer
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer-offer
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -709,8 +1036,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-transfer-accept"></a>
 ## groupi events transfer accept
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -724,8 +1052,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-transfer-decline"></a>
 ## groupi events transfer decline
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -739,8 +1068,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-transfer-cancel"></a>
 ## groupi events transfer cancel
-Canonical passage: /cli/0.1.0/reference#groupi-events-transfer-cancel
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-transfer-cancel
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -754,8 +1084,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-applications"></a>
 ## groupi events applications
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -782,8 +1113,9 @@ Commands:
   help [command]                      display help for command
 ```
 
+<a id="groupi-events-applications-form"></a>
 ## groupi events applications form
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-form
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-form
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -796,8 +1128,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-applications-history"></a>
 ## groupi events applications history
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-history
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-history
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -812,8 +1145,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-applications-list"></a>
 ## groupi events applications list
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -828,8 +1162,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-applications-configure"></a>
 ## groupi events applications configure
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -845,8 +1180,9 @@ Options:
   -h, --help                  display help for command
 ```
 
+<a id="groupi-events-applications-submit"></a>
 ## groupi events applications submit
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-submit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-submit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -858,8 +1194,9 @@ Options:
   -h, --help        display help for command
 ```
 
+<a id="groupi-events-applications-withdraw"></a>
 ## groupi events applications withdraw
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-withdraw
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-withdraw
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -870,8 +1207,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-applications-approve"></a>
 ## groupi events applications approve
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-approve
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-approve
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -885,8 +1223,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-applications-decline"></a>
 ## groupi events applications decline
-Canonical passage: /cli/0.1.0/reference#groupi-events-applications-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-applications-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -900,8 +1239,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-preview"></a>
 ## groupi events preview
-Canonical passage: /cli/0.1.0/reference#groupi-events-preview
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-preview
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -914,8 +1254,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-discover"></a>
 ## groupi events discover
-Canonical passage: /cli/0.1.0/reference#groupi-events-discover
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-discover
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -931,8 +1272,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-events-join"></a>
 ## groupi events join
-Canonical passage: /cli/0.1.0/reference#groupi-events-join
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-join
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -945,8 +1287,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-leave"></a>
 ## groupi events leave
-Canonical passage: /cli/0.1.0/reference#groupi-events-leave
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-leave
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -960,8 +1303,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-delete"></a>
 ## groupi events delete
-Canonical passage: /cli/0.1.0/reference#groupi-events-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -975,8 +1319,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-membership"></a>
 ## groupi events membership
-Canonical passage: /cli/0.1.0/reference#groupi-events-membership
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-membership
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -994,8 +1339,9 @@ Commands:
   help [command]                           display help for command
 ```
 
+<a id="groupi-events-membership-role"></a>
 ## groupi events membership role
-Canonical passage: /cli/0.1.0/reference#groupi-events-membership-role
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-membership-role
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1008,8 +1354,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-events-membership-remove"></a>
 ## groupi events membership remove
-Canonical passage: /cli/0.1.0/reference#groupi-events-membership-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-membership-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1021,8 +1368,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-settings"></a>
 ## groupi events settings
-Canonical passage: /cli/0.1.0/reference#groupi-events-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1040,8 +1388,9 @@ Commands:
   help [command]            display help for command
 ```
 
+<a id="groupi-events-settings-get"></a>
 ## groupi events settings get
-Canonical passage: /cli/0.1.0/reference#groupi-events-settings-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-settings-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1052,8 +1401,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-events-settings-set"></a>
 ## groupi events settings set
-Canonical passage: /cli/0.1.0/reference#groupi-events-settings-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-events-settings-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1073,8 +1423,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-discord"></a>
 ## groupi discord
-Canonical passage: /cli/0.1.0/reference#groupi-discord
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-discord
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1091,8 +1442,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-discord-guilds"></a>
 ## groupi discord guilds
-Canonical passage: /cli/0.1.0/reference#groupi-discord-guilds
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-discord-guilds
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1111,8 +1463,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-discord-guilds-list"></a>
 ## groupi discord guilds list
-Canonical passage: /cli/0.1.0/reference#groupi-discord-guilds-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-discord-guilds-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1128,8 +1481,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-discord-guilds-refresh"></a>
 ## groupi discord guilds refresh
-Canonical passage: /cli/0.1.0/reference#groupi-discord-guilds-refresh
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-discord-guilds-refresh
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1142,8 +1496,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-addons"></a>
 ## groupi addons
-Canonical passage: /cli/0.1.0/reference#groupi-addons
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1187,8 +1542,9 @@ Commands:
   help [command]                                    display help for command
 ```
 
+<a id="groupi-addons-definitions"></a>
 ## groupi addons definitions
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1215,8 +1571,9 @@ Commands:
   help [command]                     display help for command
 ```
 
+<a id="groupi-addons-definitions-create"></a>
 ## groupi addons definitions create
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1231,8 +1588,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-addons-definitions-import"></a>
 ## groupi addons definitions import
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-import
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-import
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1247,8 +1605,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-addons-definitions-get"></a>
 ## groupi addons definitions get
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1261,8 +1620,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-addons-definitions-export"></a>
 ## groupi addons definitions export
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-export
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-export
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1275,8 +1635,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-addons-definitions-list"></a>
 ## groupi addons definitions list
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1292,8 +1653,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-addons-definitions-edit"></a>
 ## groupi addons definitions edit
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1310,8 +1672,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-addons-definitions-publish"></a>
 ## groupi addons definitions publish
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-publish
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-publish
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1326,8 +1689,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-addons-definitions-unpublish"></a>
 ## groupi addons definitions unpublish
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-unpublish
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-unpublish
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1342,8 +1706,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-addons-definitions-delete"></a>
 ## groupi addons definitions delete
-Canonical passage: /cli/0.1.0/reference#groupi-addons-definitions-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-definitions-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1358,8 +1723,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-addons-get"></a>
 ## groupi addons get
-Canonical passage: /cli/0.1.0/reference#groupi-addons-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1372,8 +1738,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-addons-list"></a>
 ## groupi addons list
-Canonical passage: /cli/0.1.0/reference#groupi-addons-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1389,8 +1756,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-addons-templates"></a>
 ## groupi addons templates
-Canonical passage: /cli/0.1.0/reference#groupi-addons-templates
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-templates
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1406,8 +1774,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-addons-enable"></a>
 ## groupi addons enable
-Canonical passage: /cli/0.1.0/reference#groupi-addons-enable
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-enable
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1429,8 +1798,9 @@ Options:
   -h, --help                  display help for command
 ```
 
+<a id="groupi-addons-configure"></a>
 ## groupi addons configure
-Canonical passage: /cli/0.1.0/reference#groupi-addons-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1452,8 +1822,9 @@ Options:
   -h, --help                  display help for command
 ```
 
+<a id="groupi-addons-disable"></a>
 ## groupi addons disable
-Canonical passage: /cli/0.1.0/reference#groupi-addons-disable
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-disable
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1467,8 +1838,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-addons-data"></a>
 ## groupi addons data
-Canonical passage: /cli/0.1.0/reference#groupi-addons-data
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-data
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1484,8 +1856,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-addons-respond"></a>
 ## groupi addons respond
-Canonical passage: /cli/0.1.0/reference#groupi-addons-respond
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-respond
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1502,8 +1875,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-claim"></a>
 ## groupi addons claim
-Canonical passage: /cli/0.1.0/reference#groupi-addons-claim
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-claim
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1520,8 +1894,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-vote"></a>
 ## groupi addons vote
-Canonical passage: /cli/0.1.0/reference#groupi-addons-vote
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-vote
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1538,8 +1913,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-toggle"></a>
 ## groupi addons toggle
-Canonical passage: /cli/0.1.0/reference#groupi-addons-toggle
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-toggle
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1556,8 +1932,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-execute"></a>
 ## groupi addons execute
-Canonical passage: /cli/0.1.0/reference#groupi-addons-execute
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-execute
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1574,8 +1951,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-opt-in"></a>
 ## groupi addons opt-in
-Canonical passage: /cli/0.1.0/reference#groupi-addons-opt-in
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-opt-in
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1592,8 +1970,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-opt-out"></a>
 ## groupi addons opt-out
-Canonical passage: /cli/0.1.0/reference#groupi-addons-opt-out
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-opt-out
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1610,8 +1989,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-clear-response"></a>
 ## groupi addons clear-response
-Canonical passage: /cli/0.1.0/reference#groupi-addons-clear-response
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-clear-response
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1628,8 +2008,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-addons-clear-claims"></a>
 ## groupi addons clear-claims
-Canonical passage: /cli/0.1.0/reference#groupi-addons-clear-claims
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-addons-clear-claims
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1646,8 +2027,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-friends"></a>
 ## groupi friends
-Canonical passage: /cli/0.1.0/reference#groupi-friends
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1672,8 +2054,9 @@ Commands:
   help [command]                     display help for command
 ```
 
+<a id="groupi-friends-list"></a>
 ## groupi friends list
-Canonical passage: /cli/0.1.0/reference#groupi-friends-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1689,8 +2072,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-friends-incoming"></a>
 ## groupi friends incoming
-Canonical passage: /cli/0.1.0/reference#groupi-friends-incoming
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-incoming
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1706,8 +2090,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-friends-outgoing"></a>
 ## groupi friends outgoing
-Canonical passage: /cli/0.1.0/reference#groupi-friends-outgoing
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-outgoing
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1723,8 +2108,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-friends-status"></a>
 ## groupi friends status
-Canonical passage: /cli/0.1.0/reference#groupi-friends-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1737,8 +2123,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-friends-request"></a>
 ## groupi friends request
-Canonical passage: /cli/0.1.0/reference#groupi-friends-request
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-request
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1751,8 +2138,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-friends-accept"></a>
 ## groupi friends accept
-Canonical passage: /cli/0.1.0/reference#groupi-friends-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1765,8 +2153,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-friends-decline"></a>
 ## groupi friends decline
-Canonical passage: /cli/0.1.0/reference#groupi-friends-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1780,8 +2169,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-friends-cancel"></a>
 ## groupi friends cancel
-Canonical passage: /cli/0.1.0/reference#groupi-friends-cancel
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-cancel
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1795,8 +2185,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-friends-remove"></a>
 ## groupi friends remove
-Canonical passage: /cli/0.1.0/reference#groupi-friends-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-friends-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1810,8 +2201,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-blocks"></a>
 ## groupi blocks
-Canonical passage: /cli/0.1.0/reference#groupi-blocks
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-blocks
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1831,8 +2223,9 @@ Commands:
   help [command]                 display help for command
 ```
 
+<a id="groupi-blocks-list"></a>
 ## groupi blocks list
-Canonical passage: /cli/0.1.0/reference#groupi-blocks-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-blocks-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1848,8 +2241,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-blocks-status"></a>
 ## groupi blocks status
-Canonical passage: /cli/0.1.0/reference#groupi-blocks-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-blocks-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1862,8 +2256,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-blocks-block"></a>
 ## groupi blocks block
-Canonical passage: /cli/0.1.0/reference#groupi-blocks-block
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-blocks-block
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1877,8 +2272,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-blocks-unblock"></a>
 ## groupi blocks unblock
-Canonical passage: /cli/0.1.0/reference#groupi-blocks-unblock
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-blocks-unblock
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1892,8 +2288,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups"></a>
 ## groupi groups
-Canonical passage: /cli/0.1.0/reference#groupi-groups
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1943,8 +2340,9 @@ Commands:
   help [command]                                              display help for command
 ```
 
+<a id="groupi-groups-transfer"></a>
 ## groupi groups transfer
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1967,8 +2365,9 @@ Commands:
   help [command]                              display help for command
 ```
 
+<a id="groupi-groups-transfer-status"></a>
 ## groupi groups transfer status
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1981,8 +2380,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-transfer-offer"></a>
 ## groupi groups transfer offer
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer-offer
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer-offer
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -1996,8 +2396,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-transfer-accept"></a>
 ## groupi groups transfer accept
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2011,8 +2412,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-transfer-decline"></a>
 ## groupi groups transfer decline
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2026,8 +2428,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-transfer-cancel"></a>
 ## groupi groups transfer cancel
-Canonical passage: /cli/0.1.0/reference#groupi-groups-transfer-cancel
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-transfer-cancel
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2041,8 +2444,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-list"></a>
 ## groupi groups list
-Canonical passage: /cli/0.1.0/reference#groupi-groups-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2058,8 +2462,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-get"></a>
 ## groupi groups get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2072,8 +2477,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-create"></a>
 ## groupi groups create
-Canonical passage: /cli/0.1.0/reference#groupi-groups-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2089,8 +2495,9 @@ Options:
   -h, --help            display help for command
 ```
 
+<a id="groupi-groups-edit"></a>
 ## groupi groups edit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2108,8 +2515,9 @@ Options:
   -h, --help            display help for command
 ```
 
+<a id="groupi-groups-delete"></a>
 ## groupi groups delete
-Canonical passage: /cli/0.1.0/reference#groupi-groups-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2125,8 +2533,9 @@ Options:
   -h, --help                      display help for command
 ```
 
+<a id="groupi-groups-announce"></a>
 ## groupi groups announce
-Canonical passage: /cli/0.1.0/reference#groupi-groups-announce
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-announce
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2142,8 +2551,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-announcement-status"></a>
 ## groupi groups announcement-status
-Canonical passage: /cli/0.1.0/reference#groupi-groups-announcement-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-announcement-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2157,8 +2567,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-members"></a>
 ## groupi groups members
-Canonical passage: /cli/0.1.0/reference#groupi-groups-members
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-members
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2174,8 +2585,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-invites"></a>
 ## groupi groups invites
-Canonical passage: /cli/0.1.0/reference#groupi-groups-invites
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-invites
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2192,8 +2604,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-invite"></a>
 ## groupi groups invite
-Canonical passage: /cli/0.1.0/reference#groupi-groups-invite
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-invite
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2206,8 +2619,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-invitation-policy"></a>
 ## groupi groups invitation-policy
-Canonical passage: /cli/0.1.0/reference#groupi-groups-invitation-policy
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-invitation-policy
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2221,8 +2635,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-member-role"></a>
 ## groupi groups member-role
-Canonical passage: /cli/0.1.0/reference#groupi-groups-member-role
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-member-role
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2237,8 +2652,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-groups-remove-member"></a>
 ## groupi groups remove-member
-Canonical passage: /cli/0.1.0/reference#groupi-groups-remove-member
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-remove-member
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2252,8 +2668,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-ban"></a>
 ## groupi groups ban
-Canonical passage: /cli/0.1.0/reference#groupi-groups-ban
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-ban
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2267,8 +2684,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-lift-ban"></a>
 ## groupi groups lift-ban
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lift-ban
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lift-ban
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2282,8 +2700,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-leave"></a>
 ## groupi groups leave
-Canonical passage: /cli/0.1.0/reference#groupi-groups-leave
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-leave
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2297,8 +2716,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-bans"></a>
 ## groupi groups bans
-Canonical passage: /cli/0.1.0/reference#groupi-groups-bans
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-bans
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2314,8 +2734,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-questionnaire"></a>
 ## groupi groups questionnaire
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2338,8 +2759,9 @@ Commands:
   help [command]                  display help for command
 ```
 
+<a id="groupi-groups-questionnaire-get"></a>
 ## groupi groups questionnaire get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2352,8 +2774,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-questionnaire-status"></a>
 ## groupi groups questionnaire status
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2366,8 +2789,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-questionnaire-history"></a>
 ## groupi groups questionnaire history
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-history
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-history
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2383,8 +2807,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-questionnaire-responses"></a>
 ## groupi groups questionnaire responses
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-responses
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-responses
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2399,8 +2824,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-questionnaire-configure"></a>
 ## groupi groups questionnaire configure
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2416,8 +2842,9 @@ Options:
   -h, --help                       display help for command
 ```
 
+<a id="groupi-groups-questionnaire-submit"></a>
 ## groupi groups questionnaire submit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-questionnaire-submit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-questionnaire-submit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2432,8 +2859,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-forms"></a>
 ## groupi groups forms
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2466,8 +2894,9 @@ Commands:
   help [command]                                         display help for command
 ```
 
+<a id="groupi-groups-forms-list"></a>
 ## groupi groups forms list
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2482,8 +2911,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-forms-get"></a>
 ## groupi groups forms get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2496,8 +2926,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-settings"></a>
 ## groupi groups forms settings
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2510,8 +2941,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-history"></a>
 ## groupi groups forms history
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-history
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-history
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2526,8 +2958,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-forms-results"></a>
 ## groupi groups forms results
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-results
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-results
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2542,8 +2975,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-forms-create"></a>
 ## groupi groups forms create
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2560,8 +2994,9 @@ Options:
   -h, --help                         display help for command
 ```
 
+<a id="groupi-groups-forms-configure"></a>
 ## groupi groups forms configure
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2578,8 +3013,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-forms-submit"></a>
 ## groupi groups forms submit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-submit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-submit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2595,8 +3031,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-forms-remove-own"></a>
 ## groupi groups forms remove-own
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-remove-own
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-remove-own
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2610,8 +3047,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-delete"></a>
 ## groupi groups forms delete
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2625,8 +3063,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-moderate"></a>
 ## groupi groups forms moderate
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-moderate
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-moderate
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2640,8 +3079,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-policy"></a>
 ## groupi groups forms policy
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-policy
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-policy
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2659,8 +3099,9 @@ Commands:
   help [command]            display help for command
 ```
 
+<a id="groupi-groups-forms-policy-get"></a>
 ## groupi groups forms policy get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-policy-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-policy-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2673,8 +3114,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-forms-policy-set"></a>
 ## groupi groups forms policy set
-Canonical passage: /cli/0.1.0/reference#groupi-groups-forms-policy-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-forms-policy-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2689,8 +3131,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-polls"></a>
 ## groupi groups polls
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2723,8 +3166,9 @@ Commands:
   help [command]                                     display help for command
 ```
 
+<a id="groupi-groups-polls-list"></a>
 ## groupi groups polls list
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2739,8 +3183,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-polls-get"></a>
 ## groupi groups polls get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2753,8 +3198,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-polls-settings"></a>
 ## groupi groups polls settings
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2767,8 +3213,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-polls-history"></a>
 ## groupi groups polls history
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-history
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-history
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2783,8 +3230,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-polls-results"></a>
 ## groupi groups polls results
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-results
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-results
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2799,8 +3247,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-polls-create"></a>
 ## groupi groups polls create
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2818,8 +3267,9 @@ Options:
   -h, --help                         display help for command
 ```
 
+<a id="groupi-groups-polls-configure"></a>
 ## groupi groups polls configure
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2837,8 +3287,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-polls-submit"></a>
 ## groupi groups polls submit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-submit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-submit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2854,8 +3305,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-polls-remove-own"></a>
 ## groupi groups polls remove-own
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-remove-own
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-remove-own
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2870,8 +3322,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-polls-delete"></a>
 ## groupi groups polls delete
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2885,8 +3338,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-polls-moderate"></a>
 ## groupi groups polls moderate
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-moderate
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-moderate
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2901,8 +3355,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-polls-policy"></a>
 ## groupi groups polls policy
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-policy
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-policy
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2920,8 +3375,9 @@ Commands:
   help [command]            display help for command
 ```
 
+<a id="groupi-groups-polls-policy-get"></a>
 ## groupi groups polls policy get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-policy-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-policy-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2934,8 +3390,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-polls-policy-set"></a>
 ## groupi groups polls policy set
-Canonical passage: /cli/0.1.0/reference#groupi-groups-polls-policy-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-polls-policy-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2950,8 +3407,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-lists"></a>
 ## groupi groups lists
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2982,8 +3440,9 @@ Commands:
   help [command]                                    display help for command
 ```
 
+<a id="groupi-groups-lists-list"></a>
 ## groupi groups lists list
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -2998,8 +3457,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-lists-get"></a>
 ## groupi groups lists get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3012,8 +3472,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-lists-settings"></a>
 ## groupi groups lists settings
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3026,8 +3487,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-lists-entries"></a>
 ## groupi groups lists entries
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-entries
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-entries
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3042,8 +3504,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-lists-own"></a>
 ## groupi groups lists own
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-own
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-own
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3058,8 +3521,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-lists-create"></a>
 ## groupi groups lists create
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3075,8 +3539,9 @@ Options:
   -h, --help                         display help for command
 ```
 
+<a id="groupi-groups-lists-configure"></a>
 ## groupi groups lists configure
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-configure
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-configure
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3092,8 +3557,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-lists-add"></a>
 ## groupi groups lists add
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-add
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-add
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3110,8 +3576,9 @@ Options:
   -h, --help               display help for command
 ```
 
+<a id="groupi-groups-lists-edit"></a>
 ## groupi groups lists edit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3128,8 +3595,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-lists-remove"></a>
 ## groupi groups lists remove
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3144,8 +3612,9 @@ Options:
   -h, --help                    display help for command
 ```
 
+<a id="groupi-groups-lists-delete"></a>
 ## groupi groups lists delete
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3159,8 +3628,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-lists-policy"></a>
 ## groupi groups lists policy
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-policy
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-policy
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3178,8 +3648,9 @@ Commands:
   help [command]            display help for command
 ```
 
+<a id="groupi-groups-lists-policy-get"></a>
 ## groupi groups lists policy get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-policy-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-policy-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3190,8 +3661,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-lists-policy-set"></a>
 ## groupi groups lists policy set
-Canonical passage: /cli/0.1.0/reference#groupi-groups-lists-policy-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-lists-policy-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3204,8 +3676,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-application-form"></a>
 ## groupi groups application-form
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-form
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-form
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3218,8 +3691,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-application-get"></a>
 ## groupi groups application-get
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3232,8 +3706,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-application-history"></a>
 ## groupi groups application-history
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-history
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-history
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3249,8 +3724,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-applications"></a>
 ## groupi groups applications
-Canonical passage: /cli/0.1.0/reference#groupi-groups-applications
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-applications
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3267,8 +3743,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-application-settings"></a>
 ## groupi groups application-settings
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3283,8 +3760,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-groups-apply"></a>
 ## groupi groups apply
-Canonical passage: /cli/0.1.0/reference#groupi-groups-apply
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-apply
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3298,8 +3776,9 @@ Options:
   -h, --help        display help for command
 ```
 
+<a id="groupi-groups-application-edit"></a>
 ## groupi groups application-edit
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3313,8 +3792,9 @@ Options:
   -h, --help        display help for command
 ```
 
+<a id="groupi-groups-application-withdraw"></a>
 ## groupi groups application-withdraw
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-withdraw
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-withdraw
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3328,8 +3808,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-application-review"></a>
 ## groupi groups application-review
-Canonical passage: /cli/0.1.0/reference#groupi-groups-application-review
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-application-review
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3344,8 +3825,9 @@ Options:
   -h, --help             display help for command
 ```
 
+<a id="groupi-groups-events"></a>
 ## groupi groups events
-Canonical passage: /cli/0.1.0/reference#groupi-groups-events
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-events
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3361,8 +3843,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-groups-withdraw-event"></a>
 ## groupi groups withdraw-event
-Canonical passage: /cli/0.1.0/reference#groupi-groups-withdraw-event
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-withdraw-event
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3376,8 +3859,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-groups-event-sharing"></a>
 ## groupi groups event-sharing
-Canonical passage: /cli/0.1.0/reference#groupi-groups-event-sharing
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-groups-event-sharing
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3391,8 +3875,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-group-invites"></a>
 ## groupi group-invites
-Canonical passage: /cli/0.1.0/reference#groupi-group-invites
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-group-invites
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3412,8 +3897,9 @@ Commands:
   help [command]                 display help for command
 ```
 
+<a id="groupi-group-invites-list"></a>
 ## groupi group-invites list
-Canonical passage: /cli/0.1.0/reference#groupi-group-invites-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-group-invites-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3430,8 +3916,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-group-invites-accept"></a>
 ## groupi group-invites accept
-Canonical passage: /cli/0.1.0/reference#groupi-group-invites-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-group-invites-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3444,8 +3931,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-group-invites-decline"></a>
 ## groupi group-invites decline
-Canonical passage: /cli/0.1.0/reference#groupi-group-invites-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-group-invites-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3459,8 +3947,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-group-invites-cancel"></a>
 ## groupi group-invites cancel
-Canonical passage: /cli/0.1.0/reference#groupi-group-invites-cancel
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-group-invites-cancel
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3474,8 +3963,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account"></a>
 ## groupi account
-Canonical passage: /cli/0.1.0/reference#groupi-account
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3504,8 +3994,9 @@ Commands:
   help [command]                     display help for command
 ```
 
+<a id="groupi-account-avatar"></a>
 ## groupi account avatar
-Canonical passage: /cli/0.1.0/reference#groupi-account-avatar
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-avatar
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3524,8 +4015,9 @@ Commands:
   help [command]    display help for command
 ```
 
+<a id="groupi-account-avatar-get"></a>
 ## groupi account avatar get
-Canonical passage: /cli/0.1.0/reference#groupi-account-avatar-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-avatar-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3536,8 +4028,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-avatar-set"></a>
 ## groupi account avatar set
-Canonical passage: /cli/0.1.0/reference#groupi-account-avatar-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-avatar-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3549,8 +4042,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-account-avatar-remove"></a>
 ## groupi account avatar remove
-Canonical passage: /cli/0.1.0/reference#groupi-account-avatar-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-avatar-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3562,8 +4056,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-get"></a>
 ## groupi account get
-Canonical passage: /cli/0.1.0/reference#groupi-account-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3576,8 +4071,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-edit"></a>
 ## groupi account edit
-Canonical passage: /cli/0.1.0/reference#groupi-account-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3594,8 +4090,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-account-passkeys"></a>
 ## groupi account passkeys
-Canonical passage: /cli/0.1.0/reference#groupi-account-passkeys
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-passkeys
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3608,8 +4105,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-linked-accounts"></a>
 ## groupi account linked-accounts
-Canonical passage: /cli/0.1.0/reference#groupi-account-linked-accounts
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-linked-accounts
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3622,8 +4120,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-responsibilities"></a>
 ## groupi account responsibilities
-Canonical passage: /cli/0.1.0/reference#groupi-account-responsibilities
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-responsibilities
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3640,8 +4139,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-account-readiness"></a>
 ## groupi account readiness
-Canonical passage: /cli/0.1.0/reference#groupi-account-readiness
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-readiness
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3654,8 +4154,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-delete-event"></a>
 ## groupi account delete-event
-Canonical passage: /cli/0.1.0/reference#groupi-account-delete-event
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-delete-event
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3669,8 +4170,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-account-delete"></a>
 ## groupi account delete
-Canonical passage: /cli/0.1.0/reference#groupi-account-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-account-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3685,8 +4187,9 @@ Options:
   -h, --help                     display help for command
 ```
 
+<a id="groupi-settings"></a>
 ## groupi settings
-Canonical passage: /cli/0.1.0/reference#groupi-settings
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3705,8 +4208,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-settings-privacy"></a>
 ## groupi settings privacy
-Canonical passage: /cli/0.1.0/reference#groupi-settings-privacy
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-privacy
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3724,8 +4228,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-settings-privacy-get"></a>
 ## groupi settings privacy get
-Canonical passage: /cli/0.1.0/reference#groupi-settings-privacy-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-privacy-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3736,8 +4241,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-settings-privacy-set"></a>
 ## groupi settings privacy set
-Canonical passage: /cli/0.1.0/reference#groupi-settings-privacy-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-privacy-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3751,8 +4257,9 @@ Options:
   -h, --help                      display help for command
 ```
 
+<a id="groupi-settings-notifications"></a>
 ## groupi settings notifications
-Canonical passage: /cli/0.1.0/reference#groupi-settings-notifications
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-notifications
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3770,8 +4277,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-settings-notifications-get"></a>
 ## groupi settings notifications get
-Canonical passage: /cli/0.1.0/reference#groupi-settings-notifications-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-notifications-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3782,8 +4290,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-settings-notifications-set"></a>
 ## groupi settings notifications set
-Canonical passage: /cli/0.1.0/reference#groupi-settings-notifications-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-notifications-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3796,8 +4305,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-settings-theme"></a>
 ## groupi settings theme
-Canonical passage: /cli/0.1.0/reference#groupi-settings-theme
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-theme
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3815,8 +4325,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-settings-theme-get"></a>
 ## groupi settings theme get
-Canonical passage: /cli/0.1.0/reference#groupi-settings-theme-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-theme-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3827,8 +4338,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-settings-theme-set"></a>
 ## groupi settings theme set
-Canonical passage: /cli/0.1.0/reference#groupi-settings-theme-set
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-settings-theme-set
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3841,8 +4353,9 @@ Options:
   -h, --help     display help for command
 ```
 
+<a id="groupi-posts"></a>
 ## groupi posts
-Canonical passage: /cli/0.1.0/reference#groupi-posts
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3868,8 +4381,9 @@ Commands:
   help [command]              display help for command
 ```
 
+<a id="groupi-posts-list"></a>
 ## groupi posts list
-Canonical passage: /cli/0.1.0/reference#groupi-posts-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3883,8 +4397,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-posts-get"></a>
 ## groupi posts get
-Canonical passage: /cli/0.1.0/reference#groupi-posts-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3897,8 +4412,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-create"></a>
 ## groupi posts create
-Canonical passage: /cli/0.1.0/reference#groupi-posts-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3919,8 +4435,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-posts-edit"></a>
 ## groupi posts edit
-Canonical passage: /cli/0.1.0/reference#groupi-posts-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3941,8 +4458,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-posts-delete"></a>
 ## groupi posts delete
-Canonical passage: /cli/0.1.0/reference#groupi-posts-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3954,8 +4472,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-attachments"></a>
 ## groupi posts attachments
-Canonical passage: /cli/0.1.0/reference#groupi-posts-attachments
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-attachments
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3973,8 +4492,9 @@ Commands:
   help [command]                         display help for command
 ```
 
+<a id="groupi-posts-attachments-list"></a>
 ## groupi posts attachments list
-Canonical passage: /cli/0.1.0/reference#groupi-posts-attachments-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-attachments-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3985,8 +4505,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-attachments-remove"></a>
 ## groupi posts attachments remove
-Canonical passage: /cli/0.1.0/reference#groupi-posts-attachments-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-attachments-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -3998,8 +4519,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-mute"></a>
 ## groupi posts mute
-Canonical passage: /cli/0.1.0/reference#groupi-posts-mute
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-mute
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4012,8 +4534,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-unmute"></a>
 ## groupi posts unmute
-Canonical passage: /cli/0.1.0/reference#groupi-posts-unmute
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-unmute
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4026,8 +4549,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-posts-mute-status"></a>
 ## groupi posts mute-status
-Canonical passage: /cli/0.1.0/reference#groupi-posts-mute-status
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-posts-mute-status
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4040,8 +4564,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-replies"></a>
 ## groupi replies
-Canonical passage: /cli/0.1.0/reference#groupi-replies
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4064,8 +4589,9 @@ Commands:
   help [command]              display help for command
 ```
 
+<a id="groupi-replies-list"></a>
 ## groupi replies list
-Canonical passage: /cli/0.1.0/reference#groupi-replies-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4079,8 +4605,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-replies-get"></a>
 ## groupi replies get
-Canonical passage: /cli/0.1.0/reference#groupi-replies-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4093,8 +4620,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-replies-create"></a>
 ## groupi replies create
-Canonical passage: /cli/0.1.0/reference#groupi-replies-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4114,8 +4642,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-replies-edit"></a>
 ## groupi replies edit
-Canonical passage: /cli/0.1.0/reference#groupi-replies-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4135,8 +4664,9 @@ Options:
   -h, --help                   display help for command
 ```
 
+<a id="groupi-replies-delete"></a>
 ## groupi replies delete
-Canonical passage: /cli/0.1.0/reference#groupi-replies-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4148,8 +4678,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-replies-attachments"></a>
 ## groupi replies attachments
-Canonical passage: /cli/0.1.0/reference#groupi-replies-attachments
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-attachments
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4167,8 +4698,9 @@ Commands:
   help [command]                         display help for command
 ```
 
+<a id="groupi-replies-attachments-list"></a>
 ## groupi replies attachments list
-Canonical passage: /cli/0.1.0/reference#groupi-replies-attachments-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-attachments-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4179,8 +4711,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-replies-attachments-remove"></a>
 ## groupi replies attachments remove
-Canonical passage: /cli/0.1.0/reference#groupi-replies-attachments-remove
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-replies-attachments-remove
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4192,8 +4725,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites"></a>
 ## groupi invites
-Canonical passage: /cli/0.1.0/reference#groupi-invites
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4212,8 +4746,9 @@ Commands:
   help [command]  display help for command
 ```
 
+<a id="groupi-invites-links"></a>
 ## groupi invites links
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4236,8 +4771,9 @@ Commands:
   help [command]                display help for command
 ```
 
+<a id="groupi-invites-links-create"></a>
 ## groupi invites links create
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4254,8 +4790,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-invites-links-edit"></a>
 ## groupi invites links edit
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4274,8 +4811,9 @@ Options:
   -h, --help       display help for command
 ```
 
+<a id="groupi-invites-links-accept"></a>
 ## groupi invites links accept
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4287,8 +4825,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-links-revoke"></a>
 ## groupi invites links revoke
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-revoke
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-revoke
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4300,8 +4839,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-links-get"></a>
 ## groupi invites links get
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4314,8 +4854,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-links-list"></a>
 ## groupi invites links list
-Canonical passage: /cli/0.1.0/reference#groupi-invites-links-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-links-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4332,8 +4873,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-invites-email"></a>
 ## groupi invites email
-Canonical passage: /cli/0.1.0/reference#groupi-invites-email
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-email
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4351,8 +4893,9 @@ Commands:
   help [command]                     display help for command
 ```
 
+<a id="groupi-invites-email-send"></a>
 ## groupi invites email send
-Canonical passage: /cli/0.1.0/reference#groupi-invites-email-send
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-email-send
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4368,8 +4911,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-invites-email-send-pending"></a>
 ## groupi invites email send-pending
-Canonical passage: /cli/0.1.0/reference#groupi-invites-email-send-pending
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-email-send-pending
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4383,8 +4927,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-invites-members"></a>
 ## groupi invites members
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4406,8 +4951,9 @@ Commands:
   help [command]                 display help for command
 ```
 
+<a id="groupi-invites-members-send"></a>
 ## groupi invites members send
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-send
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-send
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4422,8 +4968,9 @@ Options:
   -h, --help             display help for command
 ```
 
+<a id="groupi-invites-members-accept"></a>
 ## groupi invites members accept
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-accept
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-accept
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4435,8 +4982,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-members-decline"></a>
 ## groupi invites members decline
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-decline
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-decline
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4448,8 +4996,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-members-revoke"></a>
 ## groupi invites members revoke
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-revoke
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-revoke
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4461,8 +5010,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-members-get"></a>
 ## groupi invites members get
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4475,8 +5025,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invites-members-list"></a>
 ## groupi invites members list
-Canonical passage: /cli/0.1.0/reference#groupi-invites-members-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invites-members-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4494,8 +5045,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-invite-lists"></a>
 ## groupi invite-lists
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4523,8 +5075,9 @@ Commands:
   help [command]              display help for command
 ```
 
+<a id="groupi-invite-lists-create"></a>
 ## groupi invite-lists create
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-create
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-create
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4539,8 +5092,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-invite-lists-list"></a>
 ## groupi invite-lists list
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4553,8 +5107,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invite-lists-get"></a>
 ## groupi invite-lists get
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-get
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-get
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4567,8 +5122,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invite-lists-edit"></a>
 ## groupi invite-lists edit
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-edit
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-edit
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4584,8 +5140,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-invite-lists-delete"></a>
 ## groupi invite-lists delete
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-delete
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-delete
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4599,8 +5156,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-invite-lists-invite"></a>
 ## groupi invite-lists invite
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-invite
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-invite
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4619,8 +5177,9 @@ Options:
   -h, --help          display help for command
 ```
 
+<a id="groupi-invite-lists-people"></a>
 ## groupi invite-lists people
-Canonical passage: /cli/0.1.0/reference#groupi-invite-lists-people
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-invite-lists-people
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4635,8 +5194,9 @@ Options:
   -h, --help           display help for command
 ```
 
+<a id="groupi-notifications"></a>
 ## groupi notifications
-Canonical passage: /cli/0.1.0/reference#groupi-notifications
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4661,8 +5221,9 @@ Commands:
   help [command]                     display help for command
 ```
 
+<a id="groupi-notifications-list"></a>
 ## groupi notifications list
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-list
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-list
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4679,8 +5240,9 @@ Options:
   -h, --help         display help for command
 ```
 
+<a id="groupi-notifications-count"></a>
 ## groupi notifications count
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-count
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-count
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4693,8 +5255,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-read"></a>
 ## groupi notifications read
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-read
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-read
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4705,8 +5268,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-unread"></a>
 ## groupi notifications unread
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-unread
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-unread
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4717,8 +5281,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-read-all"></a>
 ## groupi notifications read-all
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-read-all
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-read-all
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4729,8 +5294,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-read-event"></a>
 ## groupi notifications read-event
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-read-event
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-read-event
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4741,8 +5307,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-read-post"></a>
 ## groupi notifications read-post
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-read-post
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-read-post
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4753,8 +5320,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-clear"></a>
 ## groupi notifications clear
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-clear
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-clear
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 
@@ -4766,8 +5334,9 @@ Options:
   -h, --help  display help for command
 ```
 
+<a id="groupi-notifications-clear-all"></a>
 ## groupi notifications clear-all
-Canonical passage: /cli/0.1.0/reference#groupi-notifications-clear-all
+Canonical passage: http://localhost:4173/cli/0.1.0/reference#groupi-notifications-clear-all
 
 Generated @groupi/cli 0.1.0 command help. Source/local availability; registry release unverified.
 

@@ -137,3 +137,7 @@ packages/mobile/ios/
 packages/portal/src/generated/
 packages/portal/public/exports/
 packages/portal/public/llms.txt
+packages/portal/public/agents.md
+packages/portal/public/v1/**/*.md
+packages/portal/public/v2/**/*.md
+packages/portal/public/cli/**/*.md

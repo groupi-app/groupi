@@ -10,7 +10,8 @@
     "lint:tokens": "tsx scripts/lint-tokens.ts",
     "content:generate": "tsx scripts/generate-content.ts",
     "content:check": "tsx scripts/generate-content.ts --check",
-    "build": "pnpm content:check && vite build"
+    "build": "pnpm content:check && vite build",
+    "test:examples": "node --import tsx scripts/verify-local-examples.ts"
   },
   "dependencies": {
     "react": "19.2.0",

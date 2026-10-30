@@ -1,11 +1,14 @@
 # Canonical docs for your own agent
 
 v2 · Current · Source: packages/portal/scripts/generate-content.ts
+Canonical document: http://localhost:4173/v2/exports.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+<a id="formats"></a>
 ## Public Markdown, text and JSON
-Canonical passage: /v2/exports#formats
+Canonical passage: http://localhost:4173/v2/exports#formats
 
 Download Markdown or plain text for any page, or retrieve the public JSON passage index and llms.txt. Exports use the same canonical corpus, versions, availability and source hashes as the portal. No account, hosted answer assistant or authenticated machine-query service is needed. Private events, credentials and repository planning are excluded.
 

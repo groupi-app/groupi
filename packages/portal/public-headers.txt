@@ -1,3 +1,5 @@
-Static hosting: preserve /exports/*, /llms.txt and /assets/* files; rewrite remaining reader paths to /index.html.
+Static hosting: serve /agents.md, /v2/*.md, /v1/*.md, /cli/**/*.md, /exports/*, /llms.txt, /examples/* and /assets/* as files. Never rewrite missing Markdown or example assets to HTML. Rewrite other reader paths to /index.html.
+Markdown Content-Type: text/markdown; charset=utf-8. Index Content-Type: text/plain; charset=utf-8.
 Recommended response headers: X-Content-Type-Options: nosniff; Referrer-Policy: strict-origin-when-cross-origin.
-No credential storage or live API requests are used by the simulated explorer.
+Set PORTAL_DOCS_ORIGIN to the verified HTTPS documentation origin when generating and checking release exports. Without it, canonical URLs explicitly target http://localhost:4173 for local preview only. Do not publish that local artifact as production documentation.
+No credential storage or live API requests are used by simulations.

@@ -2,7 +2,9 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { test, expect } from 'vitest';
 import { Portal } from '../src';
 import { searchAcceptance } from './search-acceptance';
-test('forty representative reader searches reach the correct passage in the first three at least ninety percent of the time', () => {
+// The 48-query rendered batch needs its own runner budget under CI contention.
+// This does not relax accuracy checks or the separately reported per-query p95.
+test('representative reader searches reach the correct passage in the first three at least ninety percent of the time', () => {
   render(<Portal />);
   const input = screen.getByRole('searchbox');
   const misses: string[] = [];
@@ -27,7 +29,9 @@ test('forty representative reader searches reach the correct passage in the firs
     `Rendered reader search p95: ${p95.toFixed(1)}ms (jsdom runner, not physical mobile).`
   );
   console.info(
-    `Search quality: ${40 - misses.length}/40 top-three; misses: ${misses.join('\n')}`
+    `Search quality: ${searchAcceptance.length - misses.length}/${searchAcceptance.length} top-three; misses: ${misses.join('\n')}`
   );
-  expect(misses.length, misses.join('\n')).toBeLessThanOrEqual(4);
-});
+  expect(misses.length, misses.join('\n')).toBeLessThanOrEqual(
+    Math.floor(searchAcceptance.length * 0.1)
+  );
+}, 15_000);

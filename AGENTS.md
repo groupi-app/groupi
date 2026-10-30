@@ -10,7 +10,7 @@ Groupi is a cross-platform event planner: Convex backend, Next.js web, React Nat
 
 ## Workflow
 
-- **Commands:** Read [script policy](.agents/rules/scripts.md) before running scripts. Use `pnpm check` for lint/types/format and one-shot tests for behavior. Local dev servers, verification builds, preview servers, and Convex deployment commands are prohibited under repository policy; explicit user authorization governs any exception.
+- **Commands:** Read [script policy](.agents/rules/scripts.md) before running scripts. Use `pnpm check` for lint/types/format and one-shot tests for behavior. Local dev servers, builds and preview servers are permitted for verification. Convex commands with remote effects and other deployments still require appropriate authorization.
 - **Runtime verification:** At feature kickoff, use the [readiness procedure](docs/agents/workflow.md#runtime-readiness). Establish the matching frontend/backend and isolated test session before promising browser or device checks.
 - **Architecture:** Before domain exploration, read [domain context](docs/agents/domain.md); before implementation, read [architecture rules](.agents/rules/architecture.md). Implement backend → generated declarations (`pnpm generate`) → shared hooks → platform UI.
 - **Release notes:** For user-facing work, follow [changeset approval](docs/agents/workflow.md#changeset-approval). Prepare one reviewable batch for agreed scope; user confirmation is required before creation.
