@@ -1,3 +1,4 @@
+import { firstEventPassages, learningPages } from './learning-content';
 export type Availability = 'Current' | 'Upcoming' | 'Proposed';
 export interface Passage {
   id: string;
@@ -23,82 +24,30 @@ export const guides: Page[] = [
     id: 'integrator',
     path: '/v2/integrator',
     title: 'Read and create your first event',
-    audience: 'Build',
+    audience: 'Learn',
     version: 'v2',
     availability: 'Current',
     source: 'convex/api/v2/routes/events.ts',
-    passages: [
-      {
-        id: 'credentials',
-        title: 'Choose an instance and credential',
-        text: 'Use the HTTP-actions origin of your intended instance plus /api/v2. Obtain an API key from Settings → Account → API Keys in that instance. Keep the key in your terminal or secret manager. Never put an owner secret in a browser bundle. Source-verified examples require an instance running the matching API; hosted deployment and registry release are not established here.',
-        keywords: ['authentication', 'auth', 'x-api-key'],
-        code: 'export GROUPI_API_URL="https://YOUR-INSTANCE.convex.site/api/v2"\n# Set GROUPI_API_KEY privately in your terminal or secret manager.\ncurl --fail-with-body "$GROUPI_API_URL/profile" -H "x-api-key: $GROUPI_API_KEY"',
-        language: 'sh',
-      },
-      {
-        id: 'read-events',
-        title: 'Read your events',
-        text: 'First verify the account with GET /profile, then list accessible events. REST v2 returns resource bodies directly, rather than the v1 success/data wrapper.',
-        code: 'curl --fail-with-body "$GROUPI_API_URL/events?pagination=cursor&limit=20" \\\n  -H "x-api-key: $GROUPI_API_KEY"',
-        language: 'sh',
-      },
-      {
-        id: 'empty-pages',
-        title: 'Empty success and pagination',
-        text: 'An empty list is a successful response. With pagination=cursor the envelope is {items: [], nextCursor: null}. Continue using the opaque nextCursor until it is null, including after an empty page. Do not parse or manufacture cursors. Without pagination, some operations retain legacy arrays; consult each operation.',
-        keywords: ['pagination', 'next page', 'continuation'],
-      },
-      {
-        id: 'create-event',
-        title: 'Create one event',
-        text: 'Generate and retain the request identifier before sending the request. The JSON response contains eventId. Fixed times need an explicit UTC offset; this minimal example creates an undated event.',
-        code: 'REQUEST_ID=$(node -e \'console.log(Date.now()+"."+require("node:crypto").randomUUID())\')\ncurl --fail-with-body "$GROUPI_API_URL/events" \\\n  -H "x-api-key: $GROUPI_API_KEY" -H "Content-Type: application/json" \\\n  -H "Idempotency-Key: $REQUEST_ID" --data \'{"title":"Developer dinner"}\'',
-        language: 'sh',
-      },
-      {
-        id: 'uncertain-write',
-        title: 'Recover an uncertain create',
-        text: 'For this event creation example, retry an uncertain response with the same Idempotency-Key, same identity and identical body within 24 hours of its Unix-millisecond timestamp. A conflict or expired identifier requires inspection, not a new blind create. Other writes have operation-specific guarantees: inspect current state before deliberately resubmitting. Do not automatically retry arbitrary mutations.',
-        keywords: ['Idempotency-Key', 'timeout', 'retry', 'replay'],
-      },
-      {
-        id: 'authority',
-        title: 'Account authority and credential bounds',
-        text: 'A credential never grants more than the account’s current authority. Organizer and moderator roles belong to an event; a platform administrator is a separate role. A collection scope is not an event-specific grant. Verify distinct organizer and attendee identities independently with /profile; an attendee attempting organizer-only management must receive permission denied. 401 means credential/account eligibility; 403 means insufficient scope or current authority. Do not switch to an owner key to conceal the denial.',
-      },
-    ],
+    passages: firstEventPassages,
   },
 ];
 guides.push(
   {
     id: 'contributor',
     path: '/v2/contributor',
-    title: 'Run, test and submit a contribution',
-    audience: 'Contribute',
+    title: 'Contributing',
+    audience: 'Learn',
     version: 'v2',
     availability: 'Current',
-    source: 'package.json',
+    source: 'CONTRIBUTING.md',
     passages: [
       {
         id: 'setup',
-        title: 'Start with general programming prerequisites',
-        text: 'Use Git, Node.js 22 or 24 and pnpm 10.12.1 (the root packageManager). React/TypeScript familiarity helps for UI work; Convex knowledge is introduced progressively. Clone the current repository and install its locked dependencies. A focused shared-package test does not require a live account or credentials.',
-        code: 'git clone https://github.com/groupi-app/groupi.git\ncd groupi\ncorepack enable\npnpm install --frozen-lockfile',
-        language: 'sh',
-        keywords: ['contribute', 'prerequisites', 'Node version'],
-      },
-      {
-        id: 'tests',
-        title: 'Run one focused check',
-        text: 'The shared GDL conformance suite is a useful first success with no service credentials. Run the workspace quality checks before submission. If pnpm reports an unsupported runtime, use Node 22 or 24; if the lock is stale, confirm the branch instead of rewriting it blindly. Humans can follow the repository development setup for servers; automated agents must use already-running services and must never run dev, start, build or Convex deployment commands.',
-        code: 'pnpm --filter @groupi/shared exec vitest run src/gdl/conformance.test.ts\npnpm check\npnpm lint:tokens',
-        language: 'sh',
-      },
-      {
-        id: 'submit',
-        title: 'Submit a reviewed contribution',
-        text: 'Create a focused branch, explain the affected user flow and tests in your pull request, and follow CONTRIBUTING.md. Include a changeset for a user-facing change after agreeing its summary with the maintainer. Review permissions, compatibility and accessibility before requesting review. Never commit environment files or credentials.',
+        title: 'Introduction contribution link',
+        text: 'Contribution guidance now lives in the Introduction.',
+        references: [
+          { title: 'Introduction', href: '/v2/introduction#contributing' },
+        ],
       },
     ],
   },
@@ -278,7 +227,7 @@ guides.push(
     passages: [
       {
         id: 'availability',
-        title: 'Source candidates and published packages',
+        title: 'TypeScript and Python SDK installation availability',
         text: 'The repository contains unpublished TypeScript and Python REST v2 SDK candidates. TypeScript supports Node.js 22 and 24; Python requires 3.11 or later and provides synchronous and asynchronous clients. Publication, hosted API compatibility and additional runtime support require separate release evidence. Use the source package instructions rather than assuming a registry package is available.',
       },
       {
@@ -403,3 +352,5 @@ guides.push(
     ],
   }
 );
+
+guides.unshift(...learningPages);

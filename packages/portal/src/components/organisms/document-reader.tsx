@@ -1,4 +1,6 @@
 'use client';
+import { PrivateWidgetLesson } from './private-widget-lesson';
+import { FirstEventLesson } from './learning-lesson';
 import type { Page } from '../../content';
 import { CodeExample } from '../molecules/code-example';
 import { StatusBadge } from '../atoms/status-badge';
@@ -36,6 +38,10 @@ export function DocumentReader({ page }: { page: Page }) {
           </a>
         </div>
       ) : null}
+      {page.id === 'integrator' ? <FirstEventLesson key={page.id} /> : null}
+      {page.id === 'event-widget' ? (
+        <PrivateWidgetLesson key={page.id} />
+      ) : null}
       <nav aria-label='On this page'>
         <ul>
           {page.passages.map(section => (
@@ -61,7 +67,20 @@ export function DocumentReader({ page }: { page: Page }) {
             </ul>
           ) : null}
           {section.code ? (
-            <CodeExample title={section.title} code={section.code} />
+            [
+              'integrator',
+              'event-widget',
+              'group-events',
+              'event-updates',
+              'connect-users',
+            ].includes(page.id) && section.code.split('\n').length > 40 ? (
+              <details>
+                <summary>Show complete {section.title.toLowerCase()}</summary>
+                <CodeExample title={section.title} code={section.code} />
+              </details>
+            ) : (
+              <CodeExample title={section.title} code={section.code} />
+            )
           ) : null}
         </section>
       ))}

@@ -1,11 +1,93 @@
 # REST v1 API reference
 
 v1 · Current · Source: convex/api/v1/index.ts
+Canonical document: http://localhost:4173/v1/reference/api.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+## Table of Contents
+
+- [GET /api/v1/events](#get-events)
+- [POST /api/v1/events](#post-events)
+- [GET /api/v1/events/{eventId}](#get-events-eventId)
+- [PATCH /api/v1/events/{eventId}](#patch-events-eventId)
+- [DELETE /api/v1/events/{eventId}](#delete-events-eventId)
+- [GET /api/v1/events/{eventId}/posts](#get-events-eventId-posts)
+- [POST /api/v1/events/{eventId}/posts](#post-events-eventId-posts)
+- [GET /api/v1/posts/{postId}](#get-posts-postId)
+- [PATCH /api/v1/posts/{postId}](#patch-posts-postId)
+- [DELETE /api/v1/posts/{postId}](#delete-posts-postId)
+- [GET /api/v1/posts/{postId}/replies](#get-posts-postId-replies)
+- [POST /api/v1/posts/{postId}/replies](#post-posts-postId-replies)
+- [PATCH /api/v1/replies/{replyId}](#patch-replies-replyId)
+- [DELETE /api/v1/replies/{replyId}](#delete-replies-replyId)
+- [GET /api/v1/events/{eventId}/members](#get-events-eventId-members)
+- [PATCH /api/v1/events/{eventId}/members/{memberId}](#patch-events-eventId-members-memberId)
+- [DELETE /api/v1/events/{eventId}/members/{memberId}](#delete-events-eventId-members-memberId)
+- [POST /api/v1/events/{eventId}/leave](#post-events-eventId-leave)
+- [PATCH /api/v1/events/{eventId}/rsvp](#patch-events-eventId-rsvp)
+- [GET /api/v1/events/{eventId}/availability](#get-events-eventId-availability)
+- [POST /api/v1/events/{eventId}/availability](#post-events-eventId-availability)
+- [GET /api/v1/events/{eventId}/potential-dates](#get-events-eventId-potential-dates)
+- [GET /api/v1/friends](#get-friends)
+- [GET /api/v1/friends/requests/incoming](#get-friends-requests-incoming)
+- [GET /api/v1/friends/requests/outgoing](#get-friends-requests-outgoing)
+- [GET /api/v1/friends/search](#get-friends-search)
+- [GET /api/v1/friends/status/{targetPersonId}](#get-friends-status-targetPersonId)
+- [POST /api/v1/friends/requests](#post-friends-requests)
+- [POST /api/v1/friends/requests/{friendshipId}/accept](#post-friends-requests-friendshipId-accept)
+- [POST /api/v1/friends/requests/{friendshipId}/decline](#post-friends-requests-friendshipId-decline)
+- [DELETE /api/v1/friends/requests/{friendshipId}](#delete-friends-requests-friendshipId)
+- [DELETE /api/v1/friends/{friendshipId}](#delete-friends-friendshipId)
+- [GET /api/v1/addon-templates](#get-addon-templates)
+- [GET /api/v1/events/{eventId}/addons](#get-events-eventId-addons)
+- [POST /api/v1/events/{eventId}/addons/{addonType}/enable](#post-events-eventId-addons-addonType-enable)
+- [POST /api/v1/events/{eventId}/addons/{addonType}/disable](#post-events-eventId-addons-addonType-disable)
+- [PATCH /api/v1/events/{eventId}/addons/{addonType}/config](#patch-events-eventId-addons-addonType-config)
+- [GET /api/v1/events/{eventId}/addons/{addonType}/data](#get-events-eventId-addons-addonType-data)
+- [PUT /api/v1/events/{eventId}/addons/{addonType}/data/{key}](#put-events-eventId-addons-addonType-data-key)
+- [DELETE /api/v1/events/{eventId}/addons/{addonType}/data/{key}](#delete-events-eventId-addons-addonType-data-key)
+- [GET /api/v1/notifications](#get-notifications)
+- [DELETE /api/v1/notifications](#delete-notifications)
+- [GET /api/v1/notifications/count](#get-notifications-count)
+- [POST /api/v1/notifications/{notificationId}/read](#post-notifications-notificationId-read)
+- [POST /api/v1/notifications/{notificationId}/unread](#post-notifications-notificationId-unread)
+- [POST /api/v1/notifications/read-all](#post-notifications-read-all)
+- [DELETE /api/v1/notifications/{notificationId}](#delete-notifications-notificationId)
+- [GET /api/v1/muting](#get-muting)
+- [POST /api/v1/muting/events/{eventId}](#post-muting-events-eventId)
+- [DELETE /api/v1/muting/events/{eventId}](#delete-muting-events-eventId)
+- [POST /api/v1/muting/posts/{postId}](#post-muting-posts-postId)
+- [DELETE /api/v1/muting/posts/{postId}](#delete-muting-posts-postId)
+- [GET /api/v1/profile](#get-profile)
+- [PUT /api/v1/profile](#put-profile)
+- [GET /api/v1/profile/{username}](#get-profile-username)
+- [GET /api/v1/settings/privacy](#get-settings-privacy)
+- [PUT /api/v1/settings/privacy](#put-settings-privacy)
+- [GET /api/v1/settings/notifications](#get-settings-notifications)
+- [GET /api/v1/themes](#get-themes)
+- [POST /api/v1/themes](#post-themes)
+- [GET /api/v1/themes/preferences](#get-themes-preferences)
+- [PUT /api/v1/themes/preferences](#put-themes-preferences)
+- [PUT /api/v1/themes/{themeId}](#put-themes-themeId)
+- [DELETE /api/v1/themes/{themeId}](#delete-themes-themeId)
+- [GET /api/v1/events/{eventId}/invites](#get-events-eventId-invites)
+- [POST /api/v1/events/{eventId}/invites](#post-events-eventId-invites)
+- [DELETE /api/v1/invites/{inviteId}](#delete-invites-inviteId)
+- [GET /api/v1/invites/{token}](#get-invites-token)
+- [POST /api/v1/invites/{token}/accept](#post-invites-token-accept)
+- [POST /api/v1/reports](#post-reports)
+- [GET /api/v1/admin/users](#get-admin-users)
+- [DELETE /api/v1/admin/users/{userId}](#delete-admin-users-userId)
+- [PUT /api/v1/admin/users/{userId}/role](#put-admin-users-userId-role)
+- [GET /api/v1/admin/events](#get-admin-events)
+- [DELETE /api/v1/admin/events/{eventId}](#delete-admin-events-eventId)
+- [GET /api/v1/admin/reports](#get-admin-reports)
+
+<a id="get-events"></a>
 ## GET /api/v1/events
-Canonical passage: /v1/reference/api#get-events
+Canonical passage: http://localhost:4173/v1/reference/api#get-events
 
 List events Get all events the authenticated user is a member of Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -36,8 +118,9 @@ List events Get all events the authenticated user is a member of Source-generate
 }
 ```
 
+<a id="post-events"></a>
 ## POST /api/v1/events
-Canonical passage: /v1/reference/api#post-events
+Canonical passage: http://localhost:4173/v1/reference/api#post-events
 
 Create event Create a new event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -88,8 +171,9 @@ Create event Create a new event Source-generated operation; schemas and per-oper
 }
 ```
 
+<a id="get-events-eventId"></a>
 ## GET /api/v1/events/{eventId}
-Canonical passage: /v1/reference/api#get-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId
 
 Get event Get details of a specific event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -153,8 +237,9 @@ Get event Get details of a specific event Source-generated operation; schemas an
 }
 ```
 
+<a id="patch-events-eventId"></a>
 ## PATCH /api/v1/events/{eventId}
-Canonical passage: /v1/reference/api#patch-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#patch-events-eventId
 
 Update event Update an event (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -258,8 +343,9 @@ Update event Update an event (requires MODERATOR role or higher) Source-generate
 }
 ```
 
+<a id="delete-events-eventId"></a>
 ## DELETE /api/v1/events/{eventId}
-Canonical passage: /v1/reference/api#delete-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-events-eventId
 
 Delete event Delete an event (requires ORGANIZER role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -346,8 +432,9 @@ Delete event Delete an event (requires ORGANIZER role) Source-generated operatio
 }
 ```
 
+<a id="get-events-eventId-posts"></a>
 ## GET /api/v1/events/{eventId}/posts
-Canonical passage: /v1/reference/api#get-events-eventId-posts
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-posts
 
 List posts Get all posts for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -401,8 +488,9 @@ List posts Get all posts for an event Source-generated operation; schemas and pe
 }
 ```
 
+<a id="post-events-eventId-posts"></a>
 ## POST /api/v1/events/{eventId}/posts
-Canonical passage: /v1/reference/api#post-events-eventId-posts
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-posts
 
 Create post Create a new post in an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -476,8 +564,9 @@ Create post Create a new post in an event Source-generated operation; schemas an
 }
 ```
 
+<a id="get-posts-postId"></a>
 ## GET /api/v1/posts/{postId}
-Canonical passage: /v1/reference/api#get-posts-postId
+Canonical passage: http://localhost:4173/v1/reference/api#get-posts-postId
 
 Get post Get details of a specific post with replies Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -541,8 +630,9 @@ Get post Get details of a specific post with replies Source-generated operation;
 }
 ```
 
+<a id="patch-posts-postId"></a>
 ## PATCH /api/v1/posts/{postId}
-Canonical passage: /v1/reference/api#patch-posts-postId
+Canonical passage: http://localhost:4173/v1/reference/api#patch-posts-postId
 
 Update post Update a post (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -646,8 +736,9 @@ Update post Update a post (requires author or MODERATOR role) Source-generated o
 }
 ```
 
+<a id="delete-posts-postId"></a>
 ## DELETE /api/v1/posts/{postId}
-Canonical passage: /v1/reference/api#delete-posts-postId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-posts-postId
 
 Delete post Delete a post (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -734,8 +825,9 @@ Delete post Delete a post (requires author or MODERATOR role) Source-generated o
 }
 ```
 
+<a id="get-posts-postId-replies"></a>
 ## GET /api/v1/posts/{postId}/replies
-Canonical passage: /v1/reference/api#get-posts-postId-replies
+Canonical passage: http://localhost:4173/v1/reference/api#get-posts-postId-replies
 
 List replies Get all replies for a post Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -799,8 +891,9 @@ List replies Get all replies for a post Source-generated operation; schemas and 
 }
 ```
 
+<a id="post-posts-postId-replies"></a>
 ## POST /api/v1/posts/{postId}/replies
-Canonical passage: /v1/reference/api#post-posts-postId-replies
+Canonical passage: http://localhost:4173/v1/reference/api#post-posts-postId-replies
 
 Create reply Create a new reply to a post Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -884,8 +977,9 @@ Create reply Create a new reply to a post Source-generated operation; schemas an
 }
 ```
 
+<a id="patch-replies-replyId"></a>
 ## PATCH /api/v1/replies/{replyId}
-Canonical passage: /v1/reference/api#patch-replies-replyId
+Canonical passage: http://localhost:4173/v1/reference/api#patch-replies-replyId
 
 Update reply Update a reply (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -989,8 +1083,9 @@ Update reply Update a reply (requires author or MODERATOR role) Source-generated
 }
 ```
 
+<a id="delete-replies-replyId"></a>
 ## DELETE /api/v1/replies/{replyId}
-Canonical passage: /v1/reference/api#delete-replies-replyId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-replies-replyId
 
 Delete reply Delete a reply (requires author or MODERATOR role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1077,8 +1172,9 @@ Delete reply Delete a reply (requires author or MODERATOR role) Source-generated
 }
 ```
 
+<a id="get-events-eventId-members"></a>
 ## GET /api/v1/events/{eventId}/members
-Canonical passage: /v1/reference/api#get-events-eventId-members
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-members
 
 List members Get all members of an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1132,8 +1228,9 @@ List members Get all members of an event Source-generated operation; schemas and
 }
 ```
 
+<a id="patch-events-eventId-members-memberId"></a>
 ## PATCH /api/v1/events/{eventId}/members/{memberId}
-Canonical passage: /v1/reference/api#patch-events-eventId-members-memberId
+Canonical passage: http://localhost:4173/v1/reference/api#patch-events-eventId-members-memberId
 
 Update member role Update a member's role (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1212,8 +1309,9 @@ Update member role Update a member's role (requires MODERATOR role or higher) So
 }
 ```
 
+<a id="delete-events-eventId-members-memberId"></a>
 ## DELETE /api/v1/events/{eventId}/members/{memberId}
-Canonical passage: /v1/reference/api#delete-events-eventId-members-memberId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-events-eventId-members-memberId
 
 Remove member Remove a member from an event (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1282,8 +1380,9 @@ Remove member Remove a member from an event (requires MODERATOR role or higher) 
 }
 ```
 
+<a id="post-events-eventId-leave"></a>
 ## POST /api/v1/events/{eventId}/leave
-Canonical passage: /v1/reference/api#post-events-eventId-leave
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-leave
 
 Leave event Leave an event (remove yourself from membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1337,8 +1436,9 @@ Leave event Leave an event (remove yourself from membership) Source-generated op
 }
 ```
 
+<a id="patch-events-eventId-rsvp"></a>
 ## PATCH /api/v1/events/{eventId}/rsvp
-Canonical passage: /v1/reference/api#patch-events-eventId-rsvp
+Canonical passage: http://localhost:4173/v1/reference/api#patch-events-eventId-rsvp
 
 Update RSVP Update your RSVP status for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1402,8 +1502,9 @@ Update RSVP Update your RSVP status for an event Source-generated operation; sch
 }
 ```
 
+<a id="get-events-eventId-availability"></a>
 ## GET /api/v1/events/{eventId}/availability
-Canonical passage: /v1/reference/api#get-events-eventId-availability
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-availability
 
 Get availability grid Get the availability voting grid for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1457,8 +1558,9 @@ Get availability grid Get the availability voting grid for an event Source-gener
 }
 ```
 
+<a id="post-events-eventId-availability"></a>
 ## POST /api/v1/events/{eventId}/availability
-Canonical passage: /v1/reference/api#post-events-eventId-availability
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-availability
 
 Submit availability Submit or update availability for potential dates Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1532,8 +1634,9 @@ Submit availability Submit or update availability for potential dates Source-gen
 }
 ```
 
+<a id="get-events-eventId-potential-dates"></a>
 ## GET /api/v1/events/{eventId}/potential-dates
-Canonical passage: /v1/reference/api#get-events-eventId-potential-dates
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-potential-dates
 
 Get potential dates Get the list of potential date options for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1587,8 +1690,9 @@ Get potential dates Get the list of potential date options for an event Source-g
 }
 ```
 
+<a id="get-friends"></a>
 ## GET /api/v1/friends
-Canonical passage: /v1/reference/api#get-friends
+Canonical passage: http://localhost:4173/v1/reference/api#get-friends
 
 List friends Get list of all friends for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1619,8 +1723,9 @@ List friends Get list of all friends for the authenticated user Source-generated
 }
 ```
 
+<a id="get-friends-requests-incoming"></a>
 ## GET /api/v1/friends/requests/incoming
-Canonical passage: /v1/reference/api#get-friends-requests-incoming
+Canonical passage: http://localhost:4173/v1/reference/api#get-friends-requests-incoming
 
 List incoming requests Get list of pending friend requests received Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1651,8 +1756,9 @@ List incoming requests Get list of pending friend requests received Source-gener
 }
 ```
 
+<a id="get-friends-requests-outgoing"></a>
 ## GET /api/v1/friends/requests/outgoing
-Canonical passage: /v1/reference/api#get-friends-requests-outgoing
+Canonical passage: http://localhost:4173/v1/reference/api#get-friends-requests-outgoing
 
 List outgoing requests Get list of pending friend requests sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1683,8 +1789,9 @@ List outgoing requests Get list of pending friend requests sent Source-generated
 }
 ```
 
+<a id="get-friends-search"></a>
 ## GET /api/v1/friends/search
-Canonical passage: /v1/reference/api#get-friends-search
+Canonical passage: http://localhost:4173/v1/reference/api#get-friends-search
 
 Search users Search for users by name or username to send friend requests Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1729,8 +1836,9 @@ Search users Search for users by name or username to send friend requests Source
 }
 ```
 
+<a id="get-friends-status-targetPersonId"></a>
 ## GET /api/v1/friends/status/{targetPersonId}
-Canonical passage: /v1/reference/api#get-friends-status-targetPersonId
+Canonical passage: http://localhost:4173/v1/reference/api#get-friends-status-targetPersonId
 
 Get friendship status Get the friendship status with another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1771,8 +1879,9 @@ Get friendship status Get the friendship status with another user Source-generat
 }
 ```
 
+<a id="post-friends-requests"></a>
 ## POST /api/v1/friends/requests
-Canonical passage: /v1/reference/api#post-friends-requests
+Canonical passage: http://localhost:4173/v1/reference/api#post-friends-requests
 
 Send friend request Send a friend request to another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1823,8 +1932,9 @@ Send friend request Send a friend request to another user Source-generated opera
 }
 ```
 
+<a id="post-friends-requests-friendshipId-accept"></a>
 ## POST /api/v1/friends/requests/{friendshipId}/accept
-Canonical passage: /v1/reference/api#post-friends-requests-friendshipId-accept
+Canonical passage: http://localhost:4173/v1/reference/api#post-friends-requests-friendshipId-accept
 
 Accept friend request Accept a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1888,8 +1998,9 @@ Accept friend request Accept a pending friend request Source-generated operation
 }
 ```
 
+<a id="post-friends-requests-friendshipId-decline"></a>
 ## POST /api/v1/friends/requests/{friendshipId}/decline
-Canonical passage: /v1/reference/api#post-friends-requests-friendshipId-decline
+Canonical passage: http://localhost:4173/v1/reference/api#post-friends-requests-friendshipId-decline
 
 Decline friend request Decline a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1953,8 +2064,9 @@ Decline friend request Decline a pending friend request Source-generated operati
 }
 ```
 
+<a id="delete-friends-requests-friendshipId"></a>
 ## DELETE /api/v1/friends/requests/{friendshipId}
-Canonical passage: /v1/reference/api#delete-friends-requests-friendshipId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-friends-requests-friendshipId
 
 Cancel friend request Cancel a pending friend request you sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2018,8 +2130,9 @@ Cancel friend request Cancel a pending friend request you sent Source-generated 
 }
 ```
 
+<a id="delete-friends-friendshipId"></a>
 ## DELETE /api/v1/friends/{friendshipId}
-Canonical passage: /v1/reference/api#delete-friends-friendshipId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-friends-friendshipId
 
 Remove friend Remove a friend from your friends list Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2083,8 +2196,9 @@ Remove friend Remove a friend from your friends list Source-generated operation;
 }
 ```
 
+<a id="get-addon-templates"></a>
 ## GET /api/v1/addon-templates
-Canonical passage: /v1/reference/api#get-addon-templates
+Canonical passage: http://localhost:4173/v1/reference/api#get-addon-templates
 
 List existing published templates owned by this identity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3811,8 +3925,9 @@ List existing published templates owned by this identity  Source-generated opera
 }
 ```
 
+<a id="get-events-eventId-addons"></a>
 ## GET /api/v1/events/{eventId}/addons
-Canonical passage: /v1/reference/api#get-events-eventId-addons
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-addons
 
 List add-ons Get all add-on configurations for an event, including disabled add-ons Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3938,8 +4053,9 @@ List add-ons Get all add-on configurations for an event, including disabled add-
 }
 ```
 
+<a id="post-events-eventId-addons-addonType-enable"></a>
 ## POST /api/v1/events/{eventId}/addons/{addonType}/enable
-Canonical passage: /v1/reference/api#post-events-eventId-addons-addonType-enable
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-addons-addonType-enable
 
 Enable add-on Enable an add-on for an event with validated config. Existing custom add-ons can use {templateId} from /addon-templates; only app-supported configurable template settings are mutable. Re-enabling an enabled add-on updates config through its lifecycle. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4024,8 +4140,9 @@ Enable add-on Enable an add-on for an event with validated config. Existing cust
 }
 ```
 
+<a id="post-events-eventId-addons-addonType-disable"></a>
 ## POST /api/v1/events/{eventId}/addons/{addonType}/disable
-Canonical passage: /v1/reference/api#post-events-eventId-addons-addonType-disable
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-addons-addonType-disable
 
 Disable add-on Disable an add-on for an event. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4090,8 +4207,9 @@ Disable add-on Disable an add-on for an event. Requires MODERATOR role or higher
 }
 ```
 
+<a id="patch-events-eventId-addons-addonType-config"></a>
 ## PATCH /api/v1/events/{eventId}/addons/{addonType}/config
-Canonical passage: /v1/reference/api#patch-events-eventId-addons-addonType-config
+Canonical passage: http://localhost:4173/v1/reference/api#patch-events-eventId-addons-addonType-config
 
 Update add-on config Replace the configuration for an enabled add-on, invoking its response-reset and notification lifecycle. Custom definition fields are protected. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4176,8 +4294,9 @@ Update add-on config Replace the configuration for an enabled add-on, invoking i
 }
 ```
 
+<a id="get-events-eventId-addons-addonType-data"></a>
 ## GET /api/v1/events/{eventId}/addons/{addonType}/data
-Canonical passage: /v1/reference/api#get-events-eventId-addons-addonType-data
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-addons-addonType-data
 
 List add-on data Get all data entries for an add-on on an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4242,8 +4361,9 @@ List add-on data Get all data entries for an add-on on an event Source-generated
 }
 ```
 
+<a id="put-events-eventId-addons-addonType-data-key"></a>
 ## PUT /api/v1/events/{eventId}/addons/{addonType}/data/{key}
-Canonical passage: /v1/reference/api#put-events-eventId-addons-addonType-data-key
+Canonical passage: http://localhost:4173/v1/reference/api#put-events-eventId-addons-addonType-data-key
 
 Set add-on data Create or update a data entry for an add-on. The key is used for upsert. Updating an existing entry requires being the creator or MODERATOR+. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4339,8 +4459,9 @@ Set add-on data Create or update a data entry for an add-on. The key is used for
 }
 ```
 
+<a id="delete-events-eventId-addons-addonType-data-key"></a>
 ## DELETE /api/v1/events/{eventId}/addons/{addonType}/data/{key}
-Canonical passage: /v1/reference/api#delete-events-eventId-addons-addonType-data-key
+Canonical passage: http://localhost:4173/v1/reference/api#delete-events-eventId-addons-addonType-data-key
 
 Delete add-on data Delete a data entry for an add-on. Requires being the creator or MODERATOR+. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4439,8 +4560,9 @@ Delete add-on data Delete a data entry for an add-on. Requires being the creator
 }
 ```
 
+<a id="get-notifications"></a>
 ## GET /api/v1/notifications
-Canonical passage: /v1/reference/api#get-notifications
+Canonical passage: http://localhost:4173/v1/reference/api#get-notifications
 
 List notifications Get all notifications for the authenticated user. Optionally filter to unread only. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4484,8 +4606,9 @@ List notifications Get all notifications for the authenticated user. Optionally 
 }
 ```
 
+<a id="delete-notifications"></a>
 ## DELETE /api/v1/notifications
-Canonical passage: /v1/reference/api#delete-notifications
+Canonical passage: http://localhost:4173/v1/reference/api#delete-notifications
 
 Delete all notifications Delete all notifications for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4516,8 +4639,9 @@ Delete all notifications Delete all notifications for the authenticated user Sou
 }
 ```
 
+<a id="get-notifications-count"></a>
 ## GET /api/v1/notifications/count
-Canonical passage: /v1/reference/api#get-notifications-count
+Canonical passage: http://localhost:4173/v1/reference/api#get-notifications-count
 
 Get unread count Get the number of unread notifications Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4548,8 +4672,9 @@ Get unread count Get the number of unread notifications Source-generated operati
 }
 ```
 
+<a id="post-notifications-notificationId-read"></a>
 ## POST /api/v1/notifications/{notificationId}/read
-Canonical passage: /v1/reference/api#post-notifications-notificationId-read
+Canonical passage: http://localhost:4173/v1/reference/api#post-notifications-notificationId-read
 
 Mark notification as read Mark a single notification as read Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4603,8 +4728,9 @@ Mark notification as read Mark a single notification as read Source-generated op
 }
 ```
 
+<a id="post-notifications-notificationId-unread"></a>
 ## POST /api/v1/notifications/{notificationId}/unread
-Canonical passage: /v1/reference/api#post-notifications-notificationId-unread
+Canonical passage: http://localhost:4173/v1/reference/api#post-notifications-notificationId-unread
 
 Mark notification as unread Mark a single notification as unread Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4658,8 +4784,9 @@ Mark notification as unread Mark a single notification as unread Source-generate
 }
 ```
 
+<a id="post-notifications-read-all"></a>
 ## POST /api/v1/notifications/read-all
-Canonical passage: /v1/reference/api#post-notifications-read-all
+Canonical passage: http://localhost:4173/v1/reference/api#post-notifications-read-all
 
 Mark all notifications as read Mark all notifications as read for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4690,8 +4817,9 @@ Mark all notifications as read Mark all notifications as read for the authentica
 }
 ```
 
+<a id="delete-notifications-notificationId"></a>
 ## DELETE /api/v1/notifications/{notificationId}
-Canonical passage: /v1/reference/api#delete-notifications-notificationId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-notifications-notificationId
 
 Delete notification Delete a single notification Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4745,8 +4873,9 @@ Delete notification Delete a single notification Source-generated operation; sch
 }
 ```
 
+<a id="get-muting"></a>
 ## GET /api/v1/muting
-Canonical passage: /v1/reference/api#get-muting
+Canonical passage: http://localhost:4173/v1/reference/api#get-muting
 
 List muted items Get all muted events and posts for the authenticated user. Optionally filter by type. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4794,8 +4923,9 @@ List muted items Get all muted events and posts for the authenticated user. Opti
 }
 ```
 
+<a id="post-muting-events-eventId"></a>
 ## POST /api/v1/muting/events/{eventId}
-Canonical passage: /v1/reference/api#post-muting-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#post-muting-events-eventId
 
 Mute event Mute an event to stop receiving notifications for it. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4859,8 +4989,9 @@ Mute event Mute an event to stop receiving notifications for it. Requires event 
 }
 ```
 
+<a id="delete-muting-events-eventId"></a>
 ## DELETE /api/v1/muting/events/{eventId}
-Canonical passage: /v1/reference/api#delete-muting-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-muting-events-eventId
 
 Unmute event Unmute an event to resume receiving notifications for it Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4914,8 +5045,9 @@ Unmute event Unmute an event to resume receiving notifications for it Source-gen
 }
 ```
 
+<a id="post-muting-posts-postId"></a>
 ## POST /api/v1/muting/posts/{postId}
-Canonical passage: /v1/reference/api#post-muting-posts-postId
+Canonical passage: http://localhost:4173/v1/reference/api#post-muting-posts-postId
 
 Mute post Mute a post to stop receiving notifications for replies. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4979,8 +5111,9 @@ Mute post Mute a post to stop receiving notifications for replies. Requires even
 }
 ```
 
+<a id="delete-muting-posts-postId"></a>
 ## DELETE /api/v1/muting/posts/{postId}
-Canonical passage: /v1/reference/api#delete-muting-posts-postId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-muting-posts-postId
 
 Unmute post Unmute a post to resume receiving notifications for replies Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5034,8 +5167,9 @@ Unmute post Unmute a post to resume receiving notifications for replies Source-g
 }
 ```
 
+<a id="get-profile"></a>
 ## GET /api/v1/profile
-Canonical passage: /v1/reference/api#get-profile
+Canonical passage: http://localhost:4173/v1/reference/api#get-profile
 
 Get current profile Get the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5076,8 +5210,9 @@ Get current profile Get the authenticated user's profile Source-generated operat
 }
 ```
 
+<a id="put-profile"></a>
 ## PUT /api/v1/profile
-Canonical passage: /v1/reference/api#put-profile
+Canonical passage: http://localhost:4173/v1/reference/api#put-profile
 
 Update profile Update the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5128,8 +5263,9 @@ Update profile Update the authenticated user's profile Source-generated operatio
 }
 ```
 
+<a id="get-profile-username"></a>
 ## GET /api/v1/profile/{username}
-Canonical passage: /v1/reference/api#get-profile-username
+Canonical passage: http://localhost:4173/v1/reference/api#get-profile-username
 
 Get profile by username Get a user's public profile by their username Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5193,8 +5329,9 @@ Get profile by username Get a user's public profile by their username Source-gen
 }
 ```
 
+<a id="get-settings-privacy"></a>
 ## GET /api/v1/settings/privacy
-Canonical passage: /v1/reference/api#get-settings-privacy
+Canonical passage: http://localhost:4173/v1/reference/api#get-settings-privacy
 
 Get privacy settings Get the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5225,8 +5362,9 @@ Get privacy settings Get the authenticated user's privacy settings Source-genera
 }
 ```
 
+<a id="put-settings-privacy"></a>
 ## PUT /api/v1/settings/privacy
-Canonical passage: /v1/reference/api#put-settings-privacy
+Canonical passage: http://localhost:4173/v1/reference/api#put-settings-privacy
 
 Update privacy settings Update the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5277,8 +5415,9 @@ Update privacy settings Update the authenticated user's privacy settings Source-
 }
 ```
 
+<a id="get-settings-notifications"></a>
 ## GET /api/v1/settings/notifications
-Canonical passage: /v1/reference/api#get-settings-notifications
+Canonical passage: http://localhost:4173/v1/reference/api#get-settings-notifications
 
 Get notification settings Get the authenticated user's notification methods and type-level settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5309,8 +5448,9 @@ Get notification settings Get the authenticated user's notification methods and 
 }
 ```
 
+<a id="get-themes"></a>
 ## GET /api/v1/themes
-Canonical passage: /v1/reference/api#get-themes
+Canonical passage: http://localhost:4173/v1/reference/api#get-themes
 
 List custom themes Get all custom themes created by the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5341,8 +5481,9 @@ List custom themes Get all custom themes created by the authenticated user Sourc
 }
 ```
 
+<a id="post-themes"></a>
 ## POST /api/v1/themes
-Canonical passage: /v1/reference/api#post-themes
+Canonical passage: http://localhost:4173/v1/reference/api#post-themes
 
 Create custom theme Create a new custom theme Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5393,8 +5534,9 @@ Create custom theme Create a new custom theme Source-generated operation; schema
 }
 ```
 
+<a id="get-themes-preferences"></a>
 ## GET /api/v1/themes/preferences
-Canonical passage: /v1/reference/api#get-themes-preferences
+Canonical passage: http://localhost:4173/v1/reference/api#get-themes-preferences
 
 Get theme preferences Get the authenticated user's theme preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5425,8 +5567,9 @@ Get theme preferences Get the authenticated user's theme preferences Source-gene
 }
 ```
 
+<a id="put-themes-preferences"></a>
 ## PUT /api/v1/themes/preferences
-Canonical passage: /v1/reference/api#put-themes-preferences
+Canonical passage: http://localhost:4173/v1/reference/api#put-themes-preferences
 
 Set theme preferences Set the authenticated user's active theme and system preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5477,8 +5620,9 @@ Set theme preferences Set the authenticated user's active theme and system prefe
 }
 ```
 
+<a id="put-themes-themeId"></a>
 ## PUT /api/v1/themes/{themeId}
-Canonical passage: /v1/reference/api#put-themes-themeId
+Canonical passage: http://localhost:4173/v1/reference/api#put-themes-themeId
 
 Update custom theme Update a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5562,8 +5706,9 @@ Update custom theme Update a custom theme (must be the owner) Source-generated o
 }
 ```
 
+<a id="delete-themes-themeId"></a>
 ## DELETE /api/v1/themes/{themeId}
-Canonical passage: /v1/reference/api#delete-themes-themeId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-themes-themeId
 
 Delete custom theme Delete a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5650,8 +5795,9 @@ Delete custom theme Delete a custom theme (must be the owner) Source-generated o
 }
 ```
 
+<a id="get-events-eventId-invites"></a>
 ## GET /api/v1/events/{eventId}/invites
-Canonical passage: /v1/reference/api#get-events-eventId-invites
+Canonical passage: http://localhost:4173/v1/reference/api#get-events-eventId-invites
 
 List event invites Get all invites for an event (requires membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5705,8 +5851,9 @@ List event invites Get all invites for an event (requires membership) Source-gen
 }
 ```
 
+<a id="post-events-eventId-invites"></a>
 ## POST /api/v1/events/{eventId}/invites
-Canonical passage: /v1/reference/api#post-events-eventId-invites
+Canonical passage: http://localhost:4173/v1/reference/api#post-events-eventId-invites
 
 Create invite Create a new invite link for an event (requires membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5797,8 +5944,9 @@ Create invite Create a new invite link for an event (requires membership) Source
 }
 ```
 
+<a id="delete-invites-inviteId"></a>
 ## DELETE /api/v1/invites/{inviteId}
-Canonical passage: /v1/reference/api#delete-invites-inviteId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-invites-inviteId
 
 Delete invite Delete an invite link Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5875,8 +6023,9 @@ Delete invite Delete an invite link Source-generated operation; schemas and per-
 }
 ```
 
+<a id="get-invites-token"></a>
 ## GET /api/v1/invites/{token}
-Canonical passage: /v1/reference/api#get-invites-token
+Canonical passage: http://localhost:4173/v1/reference/api#get-invites-token
 
 Get invite by token Get public invite information by token (no auth required) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5920,8 +6069,9 @@ Get invite by token Get public invite information by token (no auth required) So
 }
 ```
 
+<a id="post-invites-token-accept"></a>
 ## POST /api/v1/invites/{token}/accept
-Canonical passage: /v1/reference/api#post-invites-token-accept
+Canonical passage: http://localhost:4173/v1/reference/api#post-invites-token-accept
 
 Accept invite Accept an invite and join the event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5985,8 +6135,9 @@ Accept invite Accept an invite and join the event Source-generated operation; sc
 }
 ```
 
+<a id="post-reports"></a>
 ## POST /api/v1/reports
-Canonical passage: /v1/reference/api#post-reports
+Canonical passage: http://localhost:4173/v1/reference/api#post-reports
 
 Create report Report content for review by administrators Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6037,8 +6188,9 @@ Create report Report content for review by administrators Source-generated opera
 }
 ```
 
+<a id="get-admin-users"></a>
 ## GET /api/v1/admin/users
-Canonical passage: /v1/reference/api#get-admin-users
+Canonical passage: http://localhost:4173/v1/reference/api#get-admin-users
 
 List all users List all users in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6079,8 +6231,9 @@ List all users List all users in the system (admin only) Source-generated operat
 }
 ```
 
+<a id="delete-admin-users-userId"></a>
 ## DELETE /api/v1/admin/users/{userId}
-Canonical passage: /v1/reference/api#delete-admin-users-userId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-admin-users-userId
 
 Delete user Delete a user and their associated data (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6177,8 +6330,9 @@ Delete user Delete a user and their associated data (admin only) Source-generate
 }
 ```
 
+<a id="put-admin-users-userId-role"></a>
 ## PUT /api/v1/admin/users/{userId}/role
-Canonical passage: /v1/reference/api#put-admin-users-userId-role
+Canonical passage: http://localhost:4173/v1/reference/api#put-admin-users-userId-role
 
 Set user role Update a user's role (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6275,8 +6429,9 @@ Set user role Update a user's role (admin only) Source-generated operation; sche
 }
 ```
 
+<a id="get-admin-events"></a>
 ## GET /api/v1/admin/events
-Canonical passage: /v1/reference/api#get-admin-events
+Canonical passage: http://localhost:4173/v1/reference/api#get-admin-events
 
 List all events List all events in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6317,8 +6472,9 @@ List all events List all events in the system (admin only) Source-generated oper
 }
 ```
 
+<a id="delete-admin-events-eventId"></a>
 ## DELETE /api/v1/admin/events/{eventId}
-Canonical passage: /v1/reference/api#delete-admin-events-eventId
+Canonical passage: http://localhost:4173/v1/reference/api#delete-admin-events-eventId
 
 Delete event (admin) Delete an event as admin (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6405,8 +6561,9 @@ Delete event (admin) Delete an event as admin (admin only) Source-generated oper
 }
 ```
 
+<a id="get-admin-reports"></a>
 ## GET /api/v1/admin/reports
-Canonical passage: /v1/reference/api#get-admin-reports
+Canonical passage: http://localhost:4173/v1/reference/api#get-admin-reports
 
 List all reports List all content reports (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 

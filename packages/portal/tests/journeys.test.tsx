@@ -24,14 +24,18 @@ test('a reader distinguishes the planned realtime design from the current API re
     'https://docs.convex.dev/realtime'
   );
 });
-test('a public reader chooses equal Build and Contribute journeys and opens the integrator guide', async () => {
+test('a public reader chooses the first Event learning journey', async () => {
   const user = userEvent.setup();
   render(<Portal />);
-  expect(screen.getByRole('link', { name: 'Build with Groupi' })).toBeVisible();
   expect(
-    screen.getByRole('link', { name: 'Contribute to Groupi' })
+    screen.getByRole('link', { name: 'Create your first Event' })
   ).toBeVisible();
-  await user.click(screen.getByRole('link', { name: 'Build with Groupi' }));
+  expect(
+    screen.queryByRole('link', { name: 'Contribute to Groupi' })
+  ).not.toBeInTheDocument();
+  await user.click(
+    screen.getByRole('link', { name: 'Create your first Event' })
+  );
   expect(
     screen.getByRole('heading', { name: 'Read and create your first event' })
   ).toBeVisible();
@@ -39,16 +43,19 @@ test('a public reader chooses equal Build and Contribute journeys and opens the 
     screen.getByText(/empty list is a successful response/i)
   ).toBeVisible();
 });
-test('a contributor reaches executable focused checks and source-author versus template paths', async () => {
+test('a contributor follows the Introduction link while add-on references remain available', async () => {
   const user = userEvent.setup();
+  window.history.replaceState({}, '', '/v2/contributor#setup');
   render(<Portal />);
-  await user.click(screen.getByRole('link', { name: 'Contribute to Groupi' }));
+  expect(screen.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  expect(window.location.pathname).toBe('/v2/introduction');
+  expect(window.location.hash).toBe('#contributing');
   expect(
-    screen.getByRole('heading', { name: 'Run, test and submit a contribution' })
-  ).toBeVisible();
-  expect(
-    screen.getByText(/pnpm --filter @groupi\/shared exec vitest run/)
-  ).toBeVisible();
+    screen.getByRole('link', { name: 'Contribution guide' })
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/groupi-app/groupi/blob/main/CONTRIBUTING.md'
+  );
   await user.click(screen.getByRole('link', { name: 'Add-ons' }));
   expect(
     screen.getByRole('heading', { name: 'Choose an add-on author path' })
@@ -56,7 +63,7 @@ test('a contributor reaches executable focused checks and source-author versus t
   expect(screen.getByText(/^import \{ defineAddonHandler \}/)).toBeVisible();
   expect(screen.getByText(/schemaVersion/)).toBeVisible();
 });
-test('a reader selects versioned API reference and generated CLI command anchors', async () => {
+test('a reader selects the current API reference and switches to v1', async () => {
   const user = userEvent.setup();
   render(<Portal />);
   await user.click(screen.getByRole('link', { name: 'API reference' }));
@@ -70,6 +77,10 @@ test('a reader selects versioned API reference and generated CLI command anchors
   expect(
     screen.getByRole('heading', { name: 'REST v1 API reference' })
   ).toBeVisible();
+});
+test('a reader finds generated CLI command anchors from the public navigation', async () => {
+  const user = userEvent.setup();
+  render(<Portal />);
   await user.click(screen.getByRole('link', { name: 'CLI reference' }));
   expect(
     screen.getByRole('heading', { name: 'groupi events create' })
@@ -101,15 +112,20 @@ test('search retrieves exact identifiers, highlights passages and recovers from 
 test('a reader downloads canonical docs and copies an executable example', async () => {
   const user = userEvent.setup();
   render(<Portal />);
-  await user.click(screen.getByRole('link', { name: 'Build with Groupi' }));
+  await user.click(
+    screen.getByRole('link', { name: 'Create your first Event' })
+  );
   expect(
     screen.getByRole('link', { name: 'Download Markdown' })
   ).toHaveAttribute('href', '/exports/integrator.md');
   expect(
     screen.getByRole('link', { name: 'Download plain text' })
   ).toHaveAttribute('href', '/exports/integrator.txt');
+  await user.click(screen.getByText('Show complete local typescript example'));
   await user.click(
-    screen.getByRole('button', { name: 'Copy example: Read your events' })
+    screen.getByRole('button', {
+      name: 'Copy example: Local TypeScript example',
+    })
   );
   expect(
     screen.getByRole('status', { name: 'Code copy result' })

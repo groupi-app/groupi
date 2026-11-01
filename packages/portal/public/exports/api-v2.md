@@ -1,11 +1,273 @@
 # REST v2 API reference
 
 v2 · Current · Source: convex/api/v2/index.ts
+Canonical document: http://localhost:4173/v2/reference/api.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+## Table of Contents
+
+- [GET /api/v2/account/responsibilities](#get-account-responsibilities)
+- [GET /api/v2/account/readiness](#get-account-readiness)
+- [POST /api/v2/account/delete](#post-account-delete)
+- [DELETE /api/v2/account/responsibilities/events/{eventId}](#delete-account-responsibilities-events-eventId)
+- [POST /api/v2/auth/cli/exchange](#post-auth-cli-exchange)
+- [POST /api/v2/auth/cli/revoke](#post-auth-cli-revoke)
+- [GET /api/v2/events/{eventId}/ownership-transfer](#get-events-eventId-ownership-transfer)
+- [POST /api/v2/events/{eventId}/ownership-transfer](#post-events-eventId-ownership-transfer)
+- [POST /api/v2/events/{eventId}/ownership-transfer/accept](#post-events-eventId-ownership-transfer-accept)
+- [POST /api/v2/events/{eventId}/ownership-transfer/decline](#post-events-eventId-ownership-transfer-decline)
+- [POST /api/v2/events/{eventId}/ownership-transfer/cancel](#post-events-eventId-ownership-transfer-cancel)
+- [GET /api/v2/events/{eventId}/logistics](#get-events-eventId-logistics)
+- [GET /api/v2/events/discover](#get-events-discover)
+- [POST /api/v2/events/{eventId}/join](#post-events-eventId-join)
+- [GET /api/v2/events/{eventId}/settings](#get-events-eventId-settings)
+- [PATCH /api/v2/events/{eventId}/settings](#patch-events-eventId-settings)
+- [GET /api/v2/events/{eventId}/lifecycle](#get-events-eventId-lifecycle)
+- [POST /api/v2/events/{eventId}/lifecycle](#post-events-eventId-lifecycle)
+- [GET /api/v2/events/{eventId}/applications/form](#get-events-eventId-applications-form)
+- [GET /api/v2/events/{eventId}/applications/history](#get-events-eventId-applications-history)
+- [GET /api/v2/events/{eventId}/applications/list](#get-events-eventId-applications-list)
+- [PUT /api/v2/events/{eventId}/applications/settings](#put-events-eventId-applications-settings)
+- [POST /api/v2/events/{eventId}/applications](#post-events-eventId-applications)
+- [POST /api/v2/event-applications/{applicationId}/withdraw](#post-event-applications-applicationId-withdraw)
+- [POST /api/v2/event-applications/{applicationId}/decision](#post-event-applications-applicationId-decision)
+- [GET /api/v2/events](#get-events)
+- [POST /api/v2/events](#post-events)
+- [GET /api/v2/events/{eventId}](#get-events-eventId)
+- [PATCH /api/v2/events/{eventId}](#patch-events-eventId)
+- [DELETE /api/v2/events/{eventId}](#delete-events-eventId)
+- [GET /api/v2/profile/avatar](#get-profile-avatar)
+- [PUT /api/v2/profile/avatar](#put-profile-avatar)
+- [DELETE /api/v2/profile/avatar](#delete-profile-avatar)
+- [GET /api/v2/events/{eventId}/cover](#get-events-eventId-cover)
+- [PUT /api/v2/events/{eventId}/cover](#put-events-eventId-cover)
+- [DELETE /api/v2/events/{eventId}/cover](#delete-events-eventId-cover)
+- [GET /api/v2/events/{parentId}/posts](#get-events-parentId-posts)
+- [GET /api/v2/posts/{id}](#get-posts-id)
+- [PATCH /api/v2/posts/{id}](#patch-posts-id)
+- [DELETE /api/v2/posts/{id}](#delete-posts-id)
+- [POST /api/v2/events/{id}/posts](#post-events-id-posts)
+- [GET /api/v2/posts/{parentId}/replies](#get-posts-parentId-replies)
+- [GET /api/v2/replies/{id}](#get-replies-id)
+- [PATCH /api/v2/replies/{id}](#patch-replies-id)
+- [DELETE /api/v2/replies/{id}](#delete-replies-id)
+- [POST /api/v2/posts/{id}/replies](#post-posts-id-replies)
+- [GET /api/v2/events/{eventId}/members](#get-events-eventId-members)
+- [PATCH /api/v2/events/{eventId}/members/{memberId}](#patch-events-eventId-members-memberId)
+- [DELETE /api/v2/events/{eventId}/members/{memberId}](#delete-events-eventId-members-memberId)
+- [POST /api/v2/events/{eventId}/leave](#post-events-eventId-leave)
+- [PATCH /api/v2/events/{eventId}/rsvp](#patch-events-eventId-rsvp)
+- [GET /api/v2/events/{eventId}/rsvp](#get-events-eventId-rsvp)
+- [GET /api/v2/events/{eventId}/availability](#get-events-eventId-availability)
+- [POST /api/v2/events/{eventId}/availability](#post-events-eventId-availability)
+- [DELETE /api/v2/events/{eventId}/availability](#delete-events-eventId-availability)
+- [GET /api/v2/events/{eventId}/potential-dates](#get-events-eventId-potential-dates)
+- [GET /api/v2/events/{eventId}/availability/mine](#get-events-eventId-availability-mine)
+- [GET /api/v2/events/{eventId}/availability/responses](#get-events-eventId-availability-responses)
+- [POST /api/v2/events/{eventId}/date](#post-events-eventId-date)
+- [DELETE /api/v2/events/{eventId}/date](#delete-events-eventId-date)
+- [GET /api/v2/friends](#get-friends)
+- [GET /api/v2/friends/requests/incoming](#get-friends-requests-incoming)
+- [GET /api/v2/friends/requests/outgoing](#get-friends-requests-outgoing)
+- [GET /api/v2/friends/search](#get-friends-search)
+- [GET /api/v2/friends/status/{targetPersonId}](#get-friends-status-targetPersonId)
+- [POST /api/v2/friends/requests](#post-friends-requests)
+- [POST /api/v2/friends/requests/{friendshipId}/accept](#post-friends-requests-friendshipId-accept)
+- [POST /api/v2/friends/requests/{friendshipId}/decline](#post-friends-requests-friendshipId-decline)
+- [DELETE /api/v2/friends/requests/{friendshipId}](#delete-friends-requests-friendshipId)
+- [DELETE /api/v2/friends/{friendshipId}](#delete-friends-friendshipId)
+- [POST /api/v2/groups/{groupId}/announcements](#post-groups-groupId-announcements)
+- [GET /api/v2/groups/{groupId}/announcements/status](#get-groups-groupId-announcements-status)
+- [GET /api/v2/groups/{groupId}/lists](#get-groups-groupId-lists)
+- [POST /api/v2/groups/{groupId}/lists](#post-groups-groupId-lists)
+- [GET /api/v2/groups/{groupId}/lists/{toolId}](#get-groups-groupId-lists-toolId)
+- [PATCH /api/v2/groups/{groupId}/lists/{toolId}](#patch-groups-groupId-lists-toolId)
+- [DELETE /api/v2/groups/{groupId}/lists/{toolId}](#delete-groups-groupId-lists-toolId)
+- [GET /api/v2/groups/{groupId}/lists/{toolId}/settings](#get-groups-groupId-lists-toolId-settings)
+- [GET /api/v2/groups/{groupId}/lists/{toolId}/entries](#get-groups-groupId-lists-toolId-entries)
+- [POST /api/v2/groups/{groupId}/lists/{toolId}/entries](#post-groups-groupId-lists-toolId-entries)
+- [GET /api/v2/groups/{groupId}/lists/{toolId}/own](#get-groups-groupId-lists-toolId-own)
+- [PATCH /api/v2/groups/{groupId}/lists/{toolId}/entries/{entryId}](#patch-groups-groupId-lists-toolId-entries-entryId)
+- [DELETE /api/v2/groups/{groupId}/lists/{toolId}/entries/{entryId}](#delete-groups-groupId-lists-toolId-entries-entryId)
+- [GET /api/v2/groups/{groupId}/list-policy](#get-groups-groupId-list-policy)
+- [PUT /api/v2/groups/{groupId}/list-policy](#put-groups-groupId-list-policy)
+- [POST /api/v2/groups/{groupId}/forms](#post-groups-groupId-forms)
+- [GET /api/v2/groups/{groupId}/forms](#get-groups-groupId-forms)
+- [GET /api/v2/groups/{groupId}/forms/{toolId}/settings](#get-groups-groupId-forms-toolId-settings)
+- [GET /api/v2/groups/{groupId}/forms/{toolId}](#get-groups-groupId-forms-toolId)
+- [PATCH /api/v2/groups/{groupId}/forms/{toolId}](#patch-groups-groupId-forms-toolId)
+- [DELETE /api/v2/groups/{groupId}/forms/{toolId}](#delete-groups-groupId-forms-toolId)
+- [GET /api/v2/groups/{groupId}/forms/{toolId}/history](#get-groups-groupId-forms-toolId-history)
+- [GET /api/v2/groups/{groupId}/forms/{toolId}/results](#get-groups-groupId-forms-toolId-results)
+- [PUT /api/v2/groups/{groupId}/forms/{toolId}/response](#put-groups-groupId-forms-toolId-response)
+- [DELETE /api/v2/groups/{groupId}/forms/{toolId}/response](#delete-groups-groupId-forms-toolId-response)
+- [DELETE /api/v2/groups/{groupId}/forms/{toolId}/results/{responseId}](#delete-groups-groupId-forms-toolId-results-responseId)
+- [GET /api/v2/groups/{groupId}/form-policy](#get-groups-groupId-form-policy)
+- [PUT /api/v2/groups/{groupId}/form-policy](#put-groups-groupId-form-policy)
+- [POST /api/v2/groups/{groupId}/polls](#post-groups-groupId-polls)
+- [GET /api/v2/groups/{groupId}/polls](#get-groups-groupId-polls)
+- [GET /api/v2/groups/{groupId}/polls/{toolId}/settings](#get-groups-groupId-polls-toolId-settings)
+- [GET /api/v2/groups/{groupId}/polls/{toolId}](#get-groups-groupId-polls-toolId)
+- [PATCH /api/v2/groups/{groupId}/polls/{toolId}](#patch-groups-groupId-polls-toolId)
+- [DELETE /api/v2/groups/{groupId}/polls/{toolId}](#delete-groups-groupId-polls-toolId)
+- [GET /api/v2/groups/{groupId}/polls/{toolId}/history](#get-groups-groupId-polls-toolId-history)
+- [GET /api/v2/groups/{groupId}/polls/{toolId}/results](#get-groups-groupId-polls-toolId-results)
+- [PUT /api/v2/groups/{groupId}/polls/{toolId}/vote](#put-groups-groupId-polls-toolId-vote)
+- [DELETE /api/v2/groups/{groupId}/polls/{toolId}/vote](#delete-groups-groupId-polls-toolId-vote)
+- [DELETE /api/v2/groups/{groupId}/polls/{toolId}/results/{voteId}](#delete-groups-groupId-polls-toolId-results-voteId)
+- [GET /api/v2/groups/{groupId}/poll-policy](#get-groups-groupId-poll-policy)
+- [PUT /api/v2/groups/{groupId}/poll-policy](#put-groups-groupId-poll-policy)
+- [POST /api/v2/groups/{groupId}/coordinated-expulsions](#post-groups-groupId-coordinated-expulsions)
+- [GET /api/v2/groups/{groupId}/coordinated-expulsions/{personId}](#get-groups-groupId-coordinated-expulsions-personId)
+- [POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/resume](#post-groups-groupId-coordinated-expulsions-personId-resume)
+- [POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/reinstate](#post-groups-groupId-coordinated-expulsions-personId-reinstate)
+- [GET /api/v2/groups](#get-groups)
+- [POST /api/v2/groups](#post-groups)
+- [GET /api/v2/groups/{groupId}](#get-groups-groupId)
+- [PATCH /api/v2/groups/{groupId}](#patch-groups-groupId)
+- [DELETE /api/v2/groups/{groupId}](#delete-groups-groupId)
+- [GET /api/v2/groups/{groupId}/community-context](#get-groups-groupId-community-context)
+- [GET /api/v2/groups/{groupId}/current-event](#get-groups-groupId-current-event)
+- [POST /api/v2/groups/{groupId}/events/{eventId}/join](#post-groups-groupId-events-eventId-join)
+- [PUT /api/v2/groups/{groupId}/events/{eventId}/own-rsvp](#put-groups-groupId-events-eventId-own-rsvp)
+- [POST /api/v2/groups/{groupId}/events/{eventId}/leave](#post-groups-groupId-events-eventId-leave)
+- [POST /api/v2/groups/{groupId}/community-leave](#post-groups-groupId-community-leave)
+- [POST /api/v2/groups/{groupId}/community-applications](#post-groups-groupId-community-applications)
+- [PATCH /api/v2/groups/{groupId}/community-applications/{applicationId}](#patch-groups-groupId-community-applications-applicationId)
+- [POST /api/v2/groups/{groupId}/community-applications/{applicationId}/withdraw](#post-groups-groupId-community-applications-applicationId-withdraw)
+- [PUT /api/v2/groups/{groupId}/announcement-preference](#put-groups-groupId-announcement-preference)
+- [GET /api/v2/groups/{groupId}/discord](#get-groups-groupId-discord)
+- [POST /api/v2/groups/{groupId}/discord/connect](#post-groups-groupId-discord-connect)
+- [GET /api/v2/groups/{groupId}/joining-questionnaire](#get-groups-groupId-joining-questionnaire)
+- [PUT /api/v2/groups/{groupId}/joining-questionnaire](#put-groups-groupId-joining-questionnaire)
+- [PUT /api/v2/groups/{groupId}/joining-questionnaire/answers](#put-groups-groupId-joining-questionnaire-answers)
+- [GET /api/v2/groups/{groupId}/joining-questionnaire/responses](#get-groups-groupId-joining-questionnaire-responses)
+- [GET /api/v2/groups/{groupId}/joining-questionnaire/history](#get-groups-groupId-joining-questionnaire-history)
+- [GET /api/v2/group-invites](#get-group-invites)
+- [GET /api/v2/groups/{groupId}/invitations](#get-groups-groupId-invitations)
+- [POST /api/v2/groups/{groupId}/invitations](#post-groups-groupId-invitations)
+- [GET /api/v2/groups/{groupId}/members](#get-groups-groupId-members)
+- [PATCH /api/v2/groups/{groupId}/invitation-policy](#patch-groups-groupId-invitation-policy)
+- [POST /api/v2/group-invites/{inviteId}/accept](#post-group-invites-inviteId-accept)
+- [POST /api/v2/group-invites/{inviteId}/decline](#post-group-invites-inviteId-decline)
+- [POST /api/v2/group-invites/{inviteId}/cancel](#post-group-invites-inviteId-cancel)
+- [GET /api/v2/groups/{groupId}/bans](#get-groups-groupId-bans)
+- [PATCH /api/v2/groups/{groupId}/members/{personId}/role](#patch-groups-groupId-members-personId-role)
+- [DELETE /api/v2/groups/{groupId}/members/{personId}](#delete-groups-groupId-members-personId)
+- [PUT /api/v2/groups/{groupId}/bans/{personId}](#put-groups-groupId-bans-personId)
+- [DELETE /api/v2/groups/{groupId}/bans/{personId}](#delete-groups-groupId-bans-personId)
+- [POST /api/v2/groups/{groupId}/leave](#post-groups-groupId-leave)
+- [GET /api/v2/groups/{groupId}/ownership-transfer](#get-groups-groupId-ownership-transfer)
+- [POST /api/v2/groups/{groupId}/ownership-transfer](#post-groups-groupId-ownership-transfer)
+- [POST /api/v2/groups/{groupId}/ownership-transfer/accept](#post-groups-groupId-ownership-transfer-accept)
+- [POST /api/v2/groups/{groupId}/ownership-transfer/decline](#post-groups-groupId-ownership-transfer-decline)
+- [POST /api/v2/groups/{groupId}/ownership-transfer/cancel](#post-groups-groupId-ownership-transfer-cancel)
+- [GET /api/v2/groups/{groupId}/application-form](#get-groups-groupId-application-form)
+- [PUT /api/v2/groups/{groupId}/application-settings](#put-groups-groupId-application-settings)
+- [GET /api/v2/groups/{groupId}/applications/mine](#get-groups-groupId-applications-mine)
+- [GET /api/v2/groups/{groupId}/applications](#get-groups-groupId-applications)
+- [POST /api/v2/groups/{groupId}/applications](#post-groups-groupId-applications)
+- [GET /api/v2/groups/{groupId}/applications/{applicationId}](#get-groups-groupId-applications-applicationId)
+- [PATCH /api/v2/groups/{groupId}/applications/{applicationId}](#patch-groups-groupId-applications-applicationId)
+- [POST /api/v2/groups/{groupId}/applications/{applicationId}/withdraw](#post-groups-groupId-applications-applicationId-withdraw)
+- [POST /api/v2/groups/{groupId}/applications/{applicationId}/review](#post-groups-groupId-applications-applicationId-review)
+- [GET /api/v2/events/{eventId}/audiences](#get-events-eventId-audiences)
+- [PUT /api/v2/events/{eventId}/audiences/friends](#put-events-eventId-audiences-friends)
+- [PUT /api/v2/groups/{groupId}/event-sharing](#put-groups-groupId-event-sharing)
+- [POST /api/v2/events/{eventId}/audiences/groups/{groupId}](#post-events-eventId-audiences-groups-groupId)
+- [DELETE /api/v2/events/{eventId}/audiences/groups/{groupId}](#delete-events-eventId-audiences-groups-groupId)
+- [DELETE /api/v2/groups/{groupId}/events/{eventId}](#delete-groups-groupId-events-eventId)
+- [GET /api/v2/groups/{groupId}/events](#get-groups-groupId-events)
+- [GET /api/v2/blocks](#get-blocks)
+- [GET /api/v2/blocks/{personId}](#get-blocks-personId)
+- [POST /api/v2/blocks/{personId}](#post-blocks-personId)
+- [DELETE /api/v2/blocks/{personId}](#delete-blocks-personId)
+- [GET /api/v2/addon-templates](#get-addon-templates)
+- [POST /api/v2/events/{eventId}/addons/{addonType}/participation](#post-events-eventId-addons-addonType-participation)
+- [GET /api/v2/events/{eventId}/addons](#get-events-eventId-addons)
+- [POST /api/v2/events/{eventId}/addons/{addonType}/enable](#post-events-eventId-addons-addonType-enable)
+- [POST /api/v2/events/{eventId}/addons/{addonType}/disable](#post-events-eventId-addons-addonType-disable)
+- [PATCH /api/v2/events/{eventId}/addons/{addonType}/config](#patch-events-eventId-addons-addonType-config)
+- [GET /api/v2/events/{eventId}/addons/{addonType}/data](#get-events-eventId-addons-addonType-data)
+- [PUT /api/v2/events/{eventId}/addons/{addonType}/data/{key}](#put-events-eventId-addons-addonType-data-key)
+- [DELETE /api/v2/events/{eventId}/addons/{addonType}/data/{key}](#delete-events-eventId-addons-addonType-data-key)
+- [GET /api/v2/addon-template-definitions](#get-addon-template-definitions)
+- [POST /api/v2/addon-template-definitions](#post-addon-template-definitions)
+- [GET /api/v2/addon-template-definitions/{id}](#get-addon-template-definitions-id)
+- [PATCH /api/v2/addon-template-definitions/{id}](#patch-addon-template-definitions-id)
+- [DELETE /api/v2/addon-template-definitions/{id}](#delete-addon-template-definitions-id)
+- [POST /api/v2/addon-template-definitions/{id}/publish](#post-addon-template-definitions-id-publish)
+- [POST /api/v2/addon-template-definitions/{id}/unpublish](#post-addon-template-definitions-id-unpublish)
+- [GET /api/v2/discord/guilds](#get-discord-guilds)
+- [POST /api/v2/discord/guilds/refresh](#post-discord-guilds-refresh)
+- [GET /api/v2/notifications](#get-notifications)
+- [DELETE /api/v2/notifications](#delete-notifications)
+- [GET /api/v2/notifications/count](#get-notifications-count)
+- [POST /api/v2/notifications/{notificationId}/read](#post-notifications-notificationId-read)
+- [POST /api/v2/notifications/{notificationId}/unread](#post-notifications-notificationId-unread)
+- [POST /api/v2/notifications/read-all](#post-notifications-read-all)
+- [DELETE /api/v2/notifications/{notificationId}](#delete-notifications-notificationId)
+- [POST /api/v2/notifications/events/{scopeId}/read](#post-notifications-events-scopeId-read)
+- [POST /api/v2/notifications/posts/{scopeId}/read](#post-notifications-posts-scopeId-read)
+- [GET /api/v2/muting](#get-muting)
+- [POST /api/v2/muting/events/{eventId}](#post-muting-events-eventId)
+- [DELETE /api/v2/muting/events/{eventId}](#delete-muting-events-eventId)
+- [POST /api/v2/muting/posts/{postId}](#post-muting-posts-postId)
+- [DELETE /api/v2/muting/posts/{postId}](#delete-muting-posts-postId)
+- [GET /api/v2/muting/events/{targetId}](#get-muting-events-targetId)
+- [GET /api/v2/muting/posts/{targetId}](#get-muting-posts-targetId)
+- [GET /api/v2/profile](#get-profile)
+- [PUT /api/v2/profile](#put-profile)
+- [GET /api/v2/profile/{username}](#get-profile-username)
+- [GET /api/v2/settings/privacy](#get-settings-privacy)
+- [PUT /api/v2/settings/privacy](#put-settings-privacy)
+- [GET /api/v2/settings/notifications](#get-settings-notifications)
+- [PUT /api/v2/settings/notifications](#put-settings-notifications)
+- [GET /api/v2/themes](#get-themes)
+- [POST /api/v2/themes](#post-themes)
+- [GET /api/v2/themes/preferences](#get-themes-preferences)
+- [PUT /api/v2/themes/preferences](#put-themes-preferences)
+- [PUT /api/v2/themes/{themeId}](#put-themes-themeId)
+- [DELETE /api/v2/themes/{themeId}](#delete-themes-themeId)
+- [GET /api/v2/events/{eventId}/invites](#get-events-eventId-invites)
+- [POST /api/v2/events/{eventId}/invites](#post-events-eventId-invites)
+- [POST /api/v2/events/{eventId}/invites/email](#post-events-eventId-invites-email)
+- [POST /api/v2/events/{eventId}/member-invites](#post-events-eventId-member-invites)
+- [GET /api/v2/events/{eventId}/member-invites](#get-events-eventId-member-invites)
+- [POST /api/v2/events/{eventId}/invites/send-pending](#post-events-eventId-invites-send-pending)
+- [PATCH /api/v2/invites/{inviteId}](#patch-invites-inviteId)
+- [DELETE /api/v2/invites/{inviteId}](#delete-invites-inviteId)
+- [GET /api/v2/invites/{token}](#get-invites-token)
+- [POST /api/v2/invites/{token}/accept](#post-invites-token-accept)
+- [GET /api/v2/member-invites](#get-member-invites)
+- [GET /api/v2/member-invites/{inviteId}](#get-member-invites-inviteId)
+- [DELETE /api/v2/member-invites/{inviteId}](#delete-member-invites-inviteId)
+- [POST /api/v2/member-invites/{inviteId}/accept](#post-member-invites-inviteId-accept)
+- [POST /api/v2/member-invites/{inviteId}/decline](#post-member-invites-inviteId-decline)
+- [POST /api/v2/invite-lists/{inviteListId}/invite-to-event](#post-invite-lists-inviteListId-invite-to-event)
+- [PATCH /api/v2/invite-lists/{inviteListId}](#patch-invite-lists-inviteListId)
+- [DELETE /api/v2/invite-lists/{inviteListId}](#delete-invite-lists-inviteListId)
+- [GET /api/v2/invite-lists/{inviteListId}](#get-invite-lists-inviteListId)
+- [GET /api/v2/invite-lists/people/search](#get-invite-lists-people-search)
+- [GET /api/v2/invite-lists/people/friends](#get-invite-lists-people-friends)
+- [GET /api/v2/invite-lists](#get-invite-lists)
+- [POST /api/v2/invite-lists](#post-invite-lists)
+- [POST /api/v2/reports](#post-reports)
+- [GET /api/v2/admin/users](#get-admin-users)
+- [DELETE /api/v2/admin/users/{userId}](#delete-admin-users-userId)
+- [PUT /api/v2/admin/users/{userId}/role](#put-admin-users-userId-role)
+- [GET /api/v2/admin/events](#get-admin-events)
+- [DELETE /api/v2/admin/events/{eventId}](#delete-admin-events-eventId)
+- [GET /api/v2/admin/reports](#get-admin-reports)
+- [POST /api/v2/uploads](#post-uploads)
+- [GET /api/v2/uploads/{storageId}](#get-uploads-storageId)
+- [DELETE /api/v2/uploads/{storageId}](#delete-uploads-storageId)
+
+<a id="get-account-responsibilities"></a>
 ## GET /api/v2/account/responsibilities
-Canonical passage: /v2/reference/api#get-account-responsibilities
+Canonical passage: http://localhost:4173/v2/reference/api#get-account-responsibilities
 
 Enumerate all current owned Groups or Events, including unresolved offers  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -165,8 +427,9 @@ Enumerate all current owned Groups or Events, including unresolved offers  Sourc
 }
 ```
 
+<a id="get-account-readiness"></a>
 ## GET /api/v2/account/readiness
-Canonical passage: /v2/reference/api#get-account-readiness
+Canonical passage: http://localhost:4173/v2/reference/api#get-account-readiness
 
 Read live readiness; final deletion revalidates  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -243,8 +506,9 @@ Read live readiness; final deletion revalidates  Source-generated operation; sch
 }
 ```
 
+<a id="post-account-delete"></a>
 ## POST /api/v2/account/delete
-Canonical passage: /v2/reference/api#post-account-delete
+Canonical passage: http://localhost:4173/v2/reference/api#post-account-delete
 
 Permanently delete the authenticated account after live responsibility resolution  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -334,8 +598,9 @@ Permanently delete the authenticated account after live responsibility resolutio
 }
 ```
 
+<a id="delete-account-responsibilities-events-eventId"></a>
 ## DELETE /api/v2/account/responsibilities/events/{eventId}
-Canonical passage: /v2/reference/api#delete-account-responsibilities-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-account-responsibilities-events-eventId
 
 Explicitly delete an owned Event, including legacy membership inconsistencies  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -401,8 +666,9 @@ Explicitly delete an owned Event, including legacy membership inconsistencies  S
 }
 ```
 
+<a id="post-auth-cli-exchange"></a>
 ## POST /api/v2/auth/cli/exchange
-Canonical passage: /v2/reference/api#post-auth-cli-exchange
+Canonical passage: http://localhost:4173/v2/reference/api#post-auth-cli-exchange
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -551,8 +817,9 @@ Canonical passage: /v2/reference/api#post-auth-cli-exchange
 }
 ```
 
+<a id="post-auth-cli-revoke"></a>
 ## POST /api/v2/auth/cli/revoke
-Canonical passage: /v2/reference/api#post-auth-cli-revoke
+Canonical passage: http://localhost:4173/v2/reference/api#post-auth-cli-revoke
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -584,8 +851,9 @@ Canonical passage: /v2/reference/api#post-auth-cli-revoke
 }
 ```
 
+<a id="get-events-eventId-ownership-transfer"></a>
 ## GET /api/v2/events/{eventId}/ownership-transfer
-Canonical passage: /v2/reference/api#get-events-eventId-ownership-transfer
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-ownership-transfer
 
 Inspect consensual ownership transfer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -686,8 +954,9 @@ Inspect consensual ownership transfer  Source-generated operation; schemas and p
 }
 ```
 
+<a id="post-events-eventId-ownership-transfer"></a>
 ## POST /api/v2/events/{eventId}/ownership-transfer
-Canonical passage: /v2/reference/api#post-events-eventId-ownership-transfer
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-ownership-transfer
 
 Offer ownership to an eligible existing member Responsibility changes only on acceptance. Friends visibility then follows the new Organizer. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -807,8 +1076,9 @@ Offer ownership to an eligible existing member Responsibility changes only on ac
 }
 ```
 
+<a id="post-events-eventId-ownership-transfer-accept"></a>
 ## POST /api/v2/events/{eventId}/ownership-transfer/accept
-Canonical passage: /v2/reference/api#post-events-eventId-ownership-transfer-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-ownership-transfer-accept
 
 accept the named ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -928,8 +1198,9 @@ accept the named ownership offer  Source-generated operation; schemas and per-op
 }
 ```
 
+<a id="post-events-eventId-ownership-transfer-decline"></a>
 ## POST /api/v2/events/{eventId}/ownership-transfer/decline
-Canonical passage: /v2/reference/api#post-events-eventId-ownership-transfer-decline
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-ownership-transfer-decline
 
 decline the named ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1049,8 +1320,9 @@ decline the named ownership offer  Source-generated operation; schemas and per-o
 }
 ```
 
+<a id="post-events-eventId-ownership-transfer-cancel"></a>
 ## POST /api/v2/events/{eventId}/ownership-transfer/cancel
-Canonical passage: /v2/reference/api#post-events-eventId-ownership-transfer-cancel
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-ownership-transfer-cancel
 
 cancel the named ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1170,8 +1442,9 @@ cancel the named ownership offer  Source-generated operation; schemas and per-op
 }
 ```
 
+<a id="get-events-eventId-logistics"></a>
 ## GET /api/v2/events/{eventId}/logistics
-Canonical passage: /v2/reference/api#get-events-eventId-logistics
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-logistics
 
 Read viewer-safe event logistics before joining Audience-qualified viewers can read logistics without membership or RSVP changes. Discussion, attendance, availability responses and tool data remain member-only. Public readability alone does not enable joining. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1412,8 +1685,9 @@ Read viewer-safe event logistics before joining Audience-qualified viewers can r
 }
 ```
 
+<a id="get-events-discover"></a>
 ## GET /api/v2/events/discover
-Canonical passage: /v2/reference/api#get-events-discover
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-discover
 
 Discover Friends and Group events Bounded creation-order cursor pages. Only upcoming or undated Events with a current Friends or Group grant are returned; existing memberships and bans are excluded. Empty pages may have a continuation cursor. Defaults to 20, maximum 100. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1628,8 +1902,9 @@ Discover Friends and Group events Bounded creation-order cursor pages. Only upco
 }
 ```
 
+<a id="post-events-eventId-join"></a>
 ## POST /api/v2/events/{eventId}/join
-Canonical passage: /v2/reference/api#post-events-eventId-join
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-join
 
 Join a discoverable event Requires Direct admission and current audience eligibility, with block and ban checks; creates Attendee membership with Pending RSVP (joining does not confirm attendance) and dispatches notifications/add-on lifecycle. Not replay-safe. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1729,8 +2004,9 @@ Join a discoverable event Requires Direct admission and current audience eligibi
 }
 ```
 
+<a id="get-events-eventId-settings"></a>
 ## GET /api/v2/events/{eventId}/settings
-Canonical passage: /v2/reference/api#get-events-eventId-settings
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-settings
 
 Read event visibility, admission and permissions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -1865,8 +2141,9 @@ Read event visibility, admission and permissions  Source-generated operation; sc
 }
 ```
 
+<a id="patch-events-eventId-settings"></a>
 ## PATCH /api/v2/events/{eventId}/settings
-Canonical passage: /v2/reference/api#patch-events-eventId-settings
+Canonical passage: http://localhost:4173/v2/reference/api#patch-events-eventId-settings
 
 Update event visibility, admission and permissions Requires organizer authority. Admission is independent of visibility; legacy Friends events default Direct and other legacy events default Invitation only. Updating visibility reuses app event-edit notifications; permissions update follows the app. Not replay-safe. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2060,8 +2337,9 @@ Update event visibility, admission and permissions Requires organizer authority.
 }
 ```
 
+<a id="get-events-eventId-lifecycle"></a>
 ## GET /api/v2/events/{eventId}/lifecycle
-Canonical passage: /v2/reference/api#get-events-eventId-lifecycle
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-lifecycle
 
 Read Organizer lifecycle and revision  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2181,8 +2459,9 @@ Read Organizer lifecycle and revision  Source-generated operation; schemas and p
 }
 ```
 
+<a id="post-events-eventId-lifecycle"></a>
 ## POST /api/v2/events/{eventId}/lifecycle
-Canonical passage: /v2/reference/api#post-events-eventId-lifecycle
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-lifecycle
 
 Complete, reopen or reschedule as current Organizer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2368,8 +2647,9 @@ Complete, reopen or reschedule as current Organizer  Source-generated operation;
 }
 ```
 
+<a id="get-events-eventId-applications-form"></a>
 ## GET /api/v2/events/{eventId}/applications/form
-Canonical passage: /v2/reference/api#get-events-eventId-applications-form
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-applications-form
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2673,8 +2953,9 @@ Canonical passage: /v2/reference/api#get-events-eventId-applications-form
 }
 ```
 
+<a id="get-events-eventId-applications-history"></a>
 ## GET /api/v2/events/{eventId}/applications/history
-Canonical passage: /v2/reference/api#get-events-eventId-applications-history
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-applications-history
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -2943,8 +3224,9 @@ Canonical passage: /v2/reference/api#get-events-eventId-applications-history
 }
 ```
 
+<a id="get-events-eventId-applications-list"></a>
 ## GET /api/v2/events/{eventId}/applications/list
-Canonical passage: /v2/reference/api#get-events-eventId-applications-list
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-applications-list
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3240,8 +3522,9 @@ Canonical passage: /v2/reference/api#get-events-eventId-applications-list
 }
 ```
 
+<a id="put-events-eventId-applications-settings"></a>
 ## PUT /api/v2/events/{eventId}/applications/settings
-Canonical passage: /v2/reference/api#put-events-eventId-applications-settings
+Canonical passage: http://localhost:4173/v2/reference/api#put-events-eventId-applications-settings
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3453,8 +3736,9 @@ Canonical passage: /v2/reference/api#put-events-eventId-applications-settings
 }
 ```
 
+<a id="post-events-eventId-applications"></a>
 ## POST /api/v2/events/{eventId}/applications
-Canonical passage: /v2/reference/api#post-events-eventId-applications
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-applications
 
  Creates an application, or updates pending answers against its retained questions. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3586,8 +3870,9 @@ Canonical passage: /v2/reference/api#post-events-eventId-applications
 }
 ```
 
+<a id="post-event-applications-applicationId-withdraw"></a>
 ## POST /api/v2/event-applications/{applicationId}/withdraw
-Canonical passage: /v2/reference/api#post-event-applications-applicationId-withdraw
+Canonical passage: http://localhost:4173/v2/reference/api#post-event-applications-applicationId-withdraw
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3676,8 +3961,9 @@ Canonical passage: /v2/reference/api#post-event-applications-applicationId-withd
 }
 ```
 
+<a id="post-event-applications-applicationId-decision"></a>
 ## POST /api/v2/event-applications/{applicationId}/decision
-Canonical passage: /v2/reference/api#post-event-applications-applicationId-decision
+Canonical passage: http://localhost:4173/v2/reference/api#post-event-applications-applicationId-decision
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3793,8 +4079,9 @@ Canonical passage: /v2/reference/api#post-event-applications-applicationId-decis
 }
 ```
 
+<a id="get-events"></a>
 ## GET /api/v2/events
-Canonical passage: /v2/reference/api#get-events
+Canonical passage: http://localhost:4173/v2/reference/api#get-events
 
 List events Get member events. Without pagination returns the legacy array. Set pagination=cursor for bounded membership-order pages (default 20, maximum 100); continue until nextCursor is null, including after an empty page. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3875,8 +4162,9 @@ List events Get member events. Without pagination returns the legacy array. Set 
 }
 ```
 
+<a id="post-events"></a>
 ## POST /api/v2/events
-Canonical passage: /v2/reference/api#post-events
+Canonical passage: http://localhost:4173/v2/reference/api#post-events
 
 Create event Create an event. Optional Idempotency-Key (<unix-ms>.<uuid-v4>) provides atomic replay for 24 hours from its timestamp. Reuse returns the original IDs; changed payload or expired key returns 409. Keys over five minutes in the future are rejected. Without a key creation is not replay-safe. Dates require explicit offsets and are stored as UTC instants. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -3947,8 +4235,9 @@ Create event Create an event. Optional Idempotency-Key (<unix-ms>.<uuid-v4>) pro
 }
 ```
 
+<a id="get-events-eventId"></a>
 ## GET /api/v2/events/{eventId}
-Canonical passage: /v2/reference/api#get-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId
 
 Get event Get details of a specific event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4012,8 +4301,9 @@ Get event Get details of a specific event Source-generated operation; schemas an
 }
 ```
 
+<a id="patch-events-eventId"></a>
 ## PATCH /api/v2/events/{eventId}
-Canonical passage: /v2/reference/api#patch-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-events-eventId
 
 Update event Edit basic fields as moderator/organizer, or replace proposed date options as organizer. Replacement deletes previous votes and notifies members. PATCH is not replay-safe. Confirmed dates must be reset before replacing proposed dates. The legacy reminderOffset field updates the reminders add-on; other add-on configuration uses separate operations. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4122,8 +4412,9 @@ Update event Edit basic fields as moderator/organizer, or replace proposed date 
 }
 ```
 
+<a id="delete-events-eventId"></a>
 ## DELETE /api/v2/events/{eventId}
-Canonical passage: /v2/reference/api#delete-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId
 
 Delete event Delete an event (requires ORGANIZER role) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4180,8 +4471,9 @@ Delete event Delete an event (requires ORGANIZER role) Source-generated operatio
 }
 ```
 
+<a id="get-profile-avatar"></a>
 ## GET /api/v2/profile/avatar
-Canonical passage: /v2/reference/api#get-profile-avatar
+Canonical passage: http://localhost:4173/v2/reference/api#get-profile-avatar
 
 Inspect current account avatar Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4268,8 +4560,9 @@ Inspect current account avatar Upload with POST /uploads using the corresponding
 }
 ```
 
+<a id="put-profile-avatar"></a>
 ## PUT /api/v2/profile/avatar
-Canonical passage: /v2/reference/api#put-profile-avatar
+Canonical passage: http://localhost:4173/v2/reference/api#put-profile-avatar
 
 Replace current account avatar Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4376,8 +4669,9 @@ Replace current account avatar Upload with POST /uploads using the corresponding
 }
 ```
 
+<a id="delete-profile-avatar"></a>
 ## DELETE /api/v2/profile/avatar
-Canonical passage: /v2/reference/api#delete-profile-avatar
+Canonical passage: http://localhost:4173/v2/reference/api#delete-profile-avatar
 
 Remove current account avatar Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4464,8 +4758,9 @@ Remove current account avatar Upload with POST /uploads using the corresponding 
 }
 ```
 
+<a id="get-events-eventId-cover"></a>
 ## GET /api/v2/events/{eventId}/cover
-Canonical passage: /v2/reference/api#get-events-eventId-cover
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-cover
 
 Inspect event cover Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4563,8 +4858,9 @@ Inspect event cover Upload with POST /uploads using the corresponding cover/avat
 }
 ```
 
+<a id="put-events-eventId-cover"></a>
 ## PUT /api/v2/events/{eventId}/cover
-Canonical passage: /v2/reference/api#put-events-eventId-cover
+Canonical passage: http://localhost:4173/v2/reference/api#put-events-eventId-cover
 
 Replace event cover Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4703,8 +4999,9 @@ Replace event cover Upload with POST /uploads using the corresponding cover/avat
 }
 ```
 
+<a id="delete-events-eventId-cover"></a>
 ## DELETE /api/v2/events/{eventId}/cover
-Canonical passage: /v2/reference/api#delete-events-eventId-cover
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-cover
 
 Remove event cover Upload with POST /uploads using the corresponding cover/avatar purpose before PUT. Images are image-only and at most 10 MiB. PUT claims an owned unclaimed upload atomically. Failed claims preserve the current image; owned orphan uploads are discarded. Writes are not automatically replayed; inspect this endpoint after uncertain outcomes. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -4802,8 +5099,9 @@ Remove event cover Upload with POST /uploads using the corresponding cover/avata
 }
 ```
 
+<a id="get-events-parentId-posts"></a>
 ## GET /api/v2/events/{parentId}/posts
-Canonical passage: /v2/reference/api#get-events-parentId-posts
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-parentId-posts
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5155,8 +5453,9 @@ Canonical passage: /v2/reference/api#get-events-parentId-posts
 }
 ```
 
+<a id="get-posts-id"></a>
 ## GET /api/v2/posts/{id}
-Canonical passage: /v2/reference/api#get-posts-id
+Canonical passage: http://localhost:4173/v2/reference/api#get-posts-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5440,8 +5739,9 @@ Canonical passage: /v2/reference/api#get-posts-id
 }
 ```
 
+<a id="patch-posts-id"></a>
 ## PATCH /api/v2/posts/{id}
-Canonical passage: /v2/reference/api#patch-posts-id
+Canonical passage: http://localhost:4173/v2/reference/api#patch-posts-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5860,8 +6160,9 @@ Canonical passage: /v2/reference/api#patch-posts-id
 }
 ```
 
+<a id="delete-posts-id"></a>
 ## DELETE /api/v2/posts/{id}
-Canonical passage: /v2/reference/api#delete-posts-id
+Canonical passage: http://localhost:4173/v2/reference/api#delete-posts-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -5885,8 +6186,9 @@ Canonical passage: /v2/reference/api#delete-posts-id
 }
 ```
 
+<a id="post-events-id-posts"></a>
 ## POST /api/v2/events/{id}/posts
-Canonical passage: /v2/reference/api#post-events-id-posts
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-id-posts
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6045,8 +6347,9 @@ Canonical passage: /v2/reference/api#post-events-id-posts
 }
 ```
 
+<a id="get-posts-parentId-replies"></a>
 ## GET /api/v2/posts/{parentId}/replies
-Canonical passage: /v2/reference/api#get-posts-parentId-replies
+Canonical passage: http://localhost:4173/v2/reference/api#get-posts-parentId-replies
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6358,8 +6661,9 @@ Canonical passage: /v2/reference/api#get-posts-parentId-replies
 }
 ```
 
+<a id="get-replies-id"></a>
 ## GET /api/v2/replies/{id}
-Canonical passage: /v2/reference/api#get-replies-id
+Canonical passage: http://localhost:4173/v2/reference/api#get-replies-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6503,8 +6807,9 @@ Canonical passage: /v2/reference/api#get-replies-id
 }
 ```
 
+<a id="patch-replies-id"></a>
 ## PATCH /api/v2/replies/{id}
-Canonical passage: /v2/reference/api#patch-replies-id
+Canonical passage: http://localhost:4173/v2/reference/api#patch-replies-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6783,8 +7088,9 @@ Canonical passage: /v2/reference/api#patch-replies-id
 }
 ```
 
+<a id="delete-replies-id"></a>
 ## DELETE /api/v2/replies/{id}
-Canonical passage: /v2/reference/api#delete-replies-id
+Canonical passage: http://localhost:4173/v2/reference/api#delete-replies-id
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6808,8 +7114,9 @@ Canonical passage: /v2/reference/api#delete-replies-id
 }
 ```
 
+<a id="post-posts-id-replies"></a>
 ## POST /api/v2/posts/{id}/replies
-Canonical passage: /v2/reference/api#post-posts-id-replies
+Canonical passage: http://localhost:4173/v2/reference/api#post-posts-id-replies
 
   Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -6968,8 +7275,9 @@ Canonical passage: /v2/reference/api#post-posts-id-replies
 }
 ```
 
+<a id="get-events-eventId-members"></a>
 ## GET /api/v2/events/{eventId}/members
-Canonical passage: /v2/reference/api#get-events-eventId-members
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-members
 
 List members Get all members of an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7074,8 +7382,9 @@ List members Get all members of an event Source-generated operation; schemas and
 }
 ```
 
+<a id="patch-events-eventId-members-memberId"></a>
 ## PATCH /api/v2/events/{eventId}/members/{memberId}
-Canonical passage: /v2/reference/api#patch-events-eventId-members-memberId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-events-eventId-members-memberId
 
 Update member role Update a member's role (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7154,8 +7463,9 @@ Update member role Update a member's role (requires MODERATOR role or higher) So
 }
 ```
 
+<a id="delete-events-eventId-members-memberId"></a>
 ## DELETE /api/v2/events/{eventId}/members/{memberId}
-Canonical passage: /v2/reference/api#delete-events-eventId-members-memberId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-members-memberId
 
 Remove member Remove a member from an event (requires MODERATOR role or higher) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7217,8 +7527,9 @@ Remove member Remove a member from an event (requires MODERATOR role or higher) 
 }
 ```
 
+<a id="post-events-eventId-leave"></a>
 ## POST /api/v2/events/{eventId}/leave
-Canonical passage: /v2/reference/api#post-events-eventId-leave
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-leave
 
 Leave event Leave an event (remove yourself from membership) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7272,8 +7583,9 @@ Leave event Leave an event (remove yourself from membership) Source-generated op
 }
 ```
 
+<a id="patch-events-eventId-rsvp"></a>
 ## PATCH /api/v2/events/{eventId}/rsvp
-Canonical passage: /v2/reference/api#patch-events-eventId-rsvp
+Canonical passage: http://localhost:4173/v2/reference/api#patch-events-eventId-rsvp
 
 Update RSVP Update your RSVP status for an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7337,8 +7649,9 @@ Update RSVP Update your RSVP status for an event Source-generated operation; sch
 }
 ```
 
+<a id="get-events-eventId-rsvp"></a>
 ## GET /api/v2/events/{eventId}/rsvp
-Canonical passage: /v2/reference/api#get-events-eventId-rsvp
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-rsvp
 
 Read your RSVP  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7402,8 +7715,9 @@ Read your RSVP  Source-generated operation; schemas and per-operation responses 
 }
 ```
 
+<a id="get-events-eventId-availability"></a>
 ## GET /api/v2/events/{eventId}/availability
-Canonical passage: /v2/reference/api#get-events-eventId-availability
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-availability
 
 Read availability grid  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7467,8 +7781,9 @@ Read availability grid  Source-generated operation; schemas and per-operation re
 }
 ```
 
+<a id="post-events-eventId-availability"></a>
 ## POST /api/v2/events/{eventId}/availability
-Canonical passage: /v2/reference/api#post-events-eventId-availability
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-availability
 
 Submit availability  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7542,8 +7857,9 @@ Submit availability  Source-generated operation; schemas and per-operation respo
 }
 ```
 
+<a id="delete-events-eventId-availability"></a>
 ## DELETE /api/v2/events/{eventId}/availability
-Canonical passage: /v2/reference/api#delete-events-eventId-availability
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-availability
 
 Clear your availability  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7619,8 +7935,9 @@ Clear your availability  Source-generated operation; schemas and per-operation r
 }
 ```
 
+<a id="get-events-eventId-potential-dates"></a>
 ## GET /api/v2/events/{eventId}/potential-dates
-Canonical passage: /v2/reference/api#get-events-eventId-potential-dates
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-potential-dates
 
 List potential dates  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7738,8 +8055,9 @@ List potential dates  Source-generated operation; schemas and per-operation resp
 }
 ```
 
+<a id="get-events-eventId-availability-mine"></a>
 ## GET /api/v2/events/{eventId}/availability/mine
-Canonical passage: /v2/reference/api#get-events-eventId-availability-mine
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-availability-mine
 
 Read your availability  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -7880,8 +8198,9 @@ Read your availability  Source-generated operation; schemas and per-operation re
 }
 ```
 
+<a id="get-events-eventId-availability-responses"></a>
 ## GET /api/v2/events/{eventId}/availability/responses
-Canonical passage: /v2/reference/api#get-events-eventId-availability-responses
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-availability-responses
 
 List availability responses  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8041,8 +8360,9 @@ List availability responses  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="post-events-eventId-date"></a>
 ## POST /api/v2/events/{eventId}/date
-Canonical passage: /v2/reference/api#post-events-eventId-date
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-date
 
 Choose event date  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8161,8 +8481,9 @@ Choose event date  Source-generated operation; schemas and per-operation respons
 }
 ```
 
+<a id="delete-events-eventId-date"></a>
 ## DELETE /api/v2/events/{eventId}/date
-Canonical passage: /v2/reference/api#delete-events-eventId-date
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-date
 
 Reset event date  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8226,8 +8547,9 @@ Reset event date  Source-generated operation; schemas and per-operation response
 }
 ```
 
+<a id="get-friends"></a>
 ## GET /api/v2/friends
-Canonical passage: /v2/reference/api#get-friends
+Canonical passage: http://localhost:4173/v2/reference/api#get-friends
 
 List friends Get list of all friends for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8333,8 +8655,9 @@ List friends Get list of all friends for the authenticated user Source-generated
 }
 ```
 
+<a id="get-friends-requests-incoming"></a>
 ## GET /api/v2/friends/requests/incoming
-Canonical passage: /v2/reference/api#get-friends-requests-incoming
+Canonical passage: http://localhost:4173/v2/reference/api#get-friends-requests-incoming
 
 List incoming requests Get list of pending friend requests received Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8440,8 +8763,9 @@ List incoming requests Get list of pending friend requests received Source-gener
 }
 ```
 
+<a id="get-friends-requests-outgoing"></a>
 ## GET /api/v2/friends/requests/outgoing
-Canonical passage: /v2/reference/api#get-friends-requests-outgoing
+Canonical passage: http://localhost:4173/v2/reference/api#get-friends-requests-outgoing
 
 List outgoing requests Get list of pending friend requests sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8547,8 +8871,9 @@ List outgoing requests Get list of pending friend requests sent Source-generated
 }
 ```
 
+<a id="get-friends-search"></a>
 ## GET /api/v2/friends/search
-Canonical passage: /v2/reference/api#get-friends-search
+Canonical passage: http://localhost:4173/v2/reference/api#get-friends-search
 
 Search users Search for users by name or username to send friend requests Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8603,8 +8928,9 @@ Search users Search for users by name or username to send friend requests Source
 }
 ```
 
+<a id="get-friends-status-targetPersonId"></a>
 ## GET /api/v2/friends/status/{targetPersonId}
-Canonical passage: /v2/reference/api#get-friends-status-targetPersonId
+Canonical passage: http://localhost:4173/v2/reference/api#get-friends-status-targetPersonId
 
 Get friendship status Get the friendship status with another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8655,8 +8981,9 @@ Get friendship status Get the friendship status with another user Source-generat
 }
 ```
 
+<a id="post-friends-requests"></a>
 ## POST /api/v2/friends/requests
-Canonical passage: /v2/reference/api#post-friends-requests
+Canonical passage: http://localhost:4173/v2/reference/api#post-friends-requests
 
 Send friend request Send a friend request to another user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8717,8 +9044,9 @@ Send friend request Send a friend request to another user Source-generated opera
 }
 ```
 
+<a id="post-friends-requests-friendshipId-accept"></a>
 ## POST /api/v2/friends/requests/{friendshipId}/accept
-Canonical passage: /v2/reference/api#post-friends-requests-friendshipId-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-friends-requests-friendshipId-accept
 
 Accept friend request Accept a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8792,8 +9120,9 @@ Accept friend request Accept a pending friend request Source-generated operation
 }
 ```
 
+<a id="post-friends-requests-friendshipId-decline"></a>
 ## POST /api/v2/friends/requests/{friendshipId}/decline
-Canonical passage: /v2/reference/api#post-friends-requests-friendshipId-decline
+Canonical passage: http://localhost:4173/v2/reference/api#post-friends-requests-friendshipId-decline
 
 Decline friend request Decline a pending friend request Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8867,8 +9196,9 @@ Decline friend request Decline a pending friend request Source-generated operati
 }
 ```
 
+<a id="delete-friends-requests-friendshipId"></a>
 ## DELETE /api/v2/friends/requests/{friendshipId}
-Canonical passage: /v2/reference/api#delete-friends-requests-friendshipId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-friends-requests-friendshipId
 
 Cancel friend request Cancel a pending friend request you sent Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -8935,8 +9265,9 @@ Cancel friend request Cancel a pending friend request you sent Source-generated 
 }
 ```
 
+<a id="delete-friends-friendshipId"></a>
 ## DELETE /api/v2/friends/{friendshipId}
-Canonical passage: /v2/reference/api#delete-friends-friendshipId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-friends-friendshipId
 
 Remove friend Remove a friend from your friends list Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9003,8 +9334,9 @@ Remove friend Remove a friend from your friends list Source-generated operation;
 }
 ```
 
+<a id="post-groups-groupId-announcements"></a>
 ## POST /api/v2/groups/{groupId}/announcements
-Canonical passage: /v2/reference/api#post-groups-groupId-announcements
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-announcements
 
 Retired: use a post to share an update New announcement sends and retries are retired. This compatibility endpoint rejects valid send requests; existing status reads remain available. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9151,8 +9483,9 @@ Retired: use a post to share an update New announcement sends and retries are re
 }
 ```
 
+<a id="get-groups-groupId-announcements-status"></a>
 ## GET /api/v2/groups/{groupId}/announcements/status
-Canonical passage: /v2/reference/api#get-groups-groupId-announcements-status
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-announcements-status
 
 Recover your explicit announcement request status  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9273,8 +9606,9 @@ Recover your explicit announcement request status  Source-generated operation; s
 }
 ```
 
+<a id="get-groups-groupId-lists"></a>
 ## GET /api/v2/groups/{groupId}/lists
-Canonical passage: /v2/reference/api#get-groups-groupId-lists
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-lists
 
 list persistent Group lists  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9449,8 +9783,9 @@ list persistent Group lists  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="post-groups-groupId-lists"></a>
 ## POST /api/v2/groups/{groupId}/lists
-Canonical passage: /v2/reference/api#post-groups-groupId-lists
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-lists
 
 create persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9574,8 +9909,9 @@ create persistent Group list  Source-generated operation; schemas and per-operat
 }
 ```
 
+<a id="get-groups-groupId-lists-toolId"></a>
 ## GET /api/v2/groups/{groupId}/lists/{toolId}
-Canonical passage: /v2/reference/api#get-groups-groupId-lists-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-lists-toolId
 
 get persistent Group lists  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9728,8 +10064,9 @@ get persistent Group lists  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="patch-groups-groupId-lists-toolId"></a>
 ## PATCH /api/v2/groups/{groupId}/lists/{toolId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-lists-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-lists-toolId
 
 configure persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9846,8 +10183,9 @@ configure persistent Group list  Source-generated operation; schemas and per-ope
 }
 ```
 
+<a id="delete-groups-groupId-lists-toolId"></a>
 ## DELETE /api/v2/groups/{groupId}/lists/{toolId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-lists-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-lists-toolId
 
 remove persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -9933,8 +10271,9 @@ remove persistent Group list  Source-generated operation; schemas and per-operat
 }
 ```
 
+<a id="get-groups-groupId-lists-toolId-settings"></a>
 ## GET /api/v2/groups/{groupId}/lists/{toolId}/settings
-Canonical passage: /v2/reference/api#get-groups-groupId-lists-toolId-settings
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-lists-toolId-settings
 
 settings persistent Group lists  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10087,8 +10426,9 @@ settings persistent Group lists  Source-generated operation; schemas and per-ope
 }
 ```
 
+<a id="get-groups-groupId-lists-toolId-entries"></a>
 ## GET /api/v2/groups/{groupId}/lists/{toolId}/entries
-Canonical passage: /v2/reference/api#get-groups-groupId-lists-toolId-entries
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-lists-toolId-entries
 
 entries persistent Group lists  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10279,8 +10619,9 @@ entries persistent Group lists  Source-generated operation; schemas and per-oper
 }
 ```
 
+<a id="post-groups-groupId-lists-toolId-entries"></a>
 ## POST /api/v2/groups/{groupId}/lists/{toolId}/entries
-Canonical passage: /v2/reference/api#post-groups-groupId-lists-toolId-entries
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-lists-toolId-entries
 
 add persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10426,8 +10767,9 @@ add persistent Group list  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="get-groups-groupId-lists-toolId-own"></a>
 ## GET /api/v2/groups/{groupId}/lists/{toolId}/own
-Canonical passage: /v2/reference/api#get-groups-groupId-lists-toolId-own
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-lists-toolId-own
 
 own persistent Group lists  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10618,8 +10960,9 @@ own persistent Group lists  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="patch-groups-groupId-lists-toolId-entries-entryId"></a>
 ## PATCH /api/v2/groups/{groupId}/lists/{toolId}/entries/{entryId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-lists-toolId-entries-entryId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-lists-toolId-entries-entryId
 
 edit persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10767,8 +11110,9 @@ edit persistent Group list  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="delete-groups-groupId-lists-toolId-entries-entryId"></a>
 ## DELETE /api/v2/groups/{groupId}/lists/{toolId}/entries/{entryId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-lists-toolId-entries-entryId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-lists-toolId-entries-entryId
 
 removeEntry persistent Group list  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -10885,8 +11229,9 @@ removeEntry persistent Group list  Source-generated operation; schemas and per-o
 }
 ```
 
+<a id="get-groups-groupId-list-policy"></a>
 ## GET /api/v2/groups/{groupId}/list-policy
-Canonical passage: /v2/reference/api#get-groups-groupId-list-policy
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-list-policy
 
 Read owner list availability and creation policy  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11000,8 +11345,9 @@ Read owner list availability and creation policy  Source-generated operation; sc
 }
 ```
 
+<a id="put-groups-groupId-list-policy"></a>
 ## PUT /api/v2/groups/{groupId}/list-policy
-Canonical passage: /v2/reference/api#put-groups-groupId-list-policy
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-list-policy
 
 Owner configures list availability and creation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11119,8 +11465,9 @@ Owner configures list availability and creation  Source-generated operation; sch
 }
 ```
 
+<a id="post-groups-groupId-forms"></a>
 ## POST /api/v2/groups/{groupId}/forms
-Canonical passage: /v2/reference/api#post-groups-groupId-forms
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-forms
 
 Create an independent persistent ordinary form  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11295,8 +11642,9 @@ Create an independent persistent ordinary form  Source-generated operation; sche
 }
 ```
 
+<a id="get-groups-groupId-forms"></a>
 ## GET /api/v2/groups/{groupId}/forms
-Canonical passage: /v2/reference/api#get-groups-groupId-forms
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-forms
 
 List ordinary forms independently of the joining questionnaire  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11471,8 +11819,9 @@ List ordinary forms independently of the joining questionnaire  Source-generated
 }
 ```
 
+<a id="get-groups-groupId-forms-toolId-settings"></a>
 ## GET /api/v2/groups/{groupId}/forms/{toolId}/settings
-Canonical passage: /v2/reference/api#get-groups-groupId-forms-toolId-settings
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-forms-toolId-settings
 
 Read preserved form configuration as a current eligible manager, including while disabled  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11678,8 +12027,9 @@ Read preserved form configuration as a current eligible manager, including while
 }
 ```
 
+<a id="get-groups-groupId-forms-toolId"></a>
 ## GET /api/v2/groups/{groupId}/forms/{toolId}
-Canonical passage: /v2/reference/api#get-groups-groupId-forms-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-forms-toolId
 
 Read current form and your compatible answers  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -11996,8 +12346,9 @@ Read current form and your compatible answers  Source-generated operation; schem
 }
 ```
 
+<a id="patch-groups-groupId-forms-toolId"></a>
 ## PATCH /api/v2/groups/{groupId}/forms/{toolId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-forms-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-forms-toolId
 
 Manage current form configuration without erasing saved definitions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12165,8 +12516,9 @@ Manage current form configuration without erasing saved definitions  Source-gene
 }
 ```
 
+<a id="delete-groups-groupId-forms-toolId"></a>
 ## DELETE /api/v2/groups/{groupId}/forms/{toolId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-forms-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-forms-toolId
 
 Explicitly delete form and all responses  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12252,8 +12604,9 @@ Explicitly delete form and all responses  Source-generated operation; schemas an
 }
 ```
 
+<a id="get-groups-groupId-forms-toolId-history"></a>
 ## GET /api/v2/groups/{groupId}/forms/{toolId}/history
-Canonical passage: /v2/reference/api#get-groups-groupId-forms-toolId-history
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-forms-toolId-history
 
 Read only your retained response snapshots  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12501,8 +12854,9 @@ Read only your retained response snapshots  Source-generated operation; schemas 
 }
 ```
 
+<a id="get-groups-groupId-forms-toolId-results"></a>
 ## GET /api/v2/groups/{groupId}/forms/{toolId}/results
-Canonical passage: /v2/reference/api#get-groups-groupId-forms-toolId-results
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-forms-toolId-results
 
 Read stated-visibility latest responses  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12750,8 +13104,9 @@ Read stated-visibility latest responses  Source-generated operation; schemas and
 }
 ```
 
+<a id="put-groups-groupId-forms-toolId-response"></a>
 ## PUT /api/v2/groups/{groupId}/forms/{toolId}/response
-Canonical passage: /v2/reference/api#put-groups-groupId-forms-toolId-response
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-forms-toolId-response
 
 Submit or edit your validated response using current form and response revisions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12906,8 +13261,9 @@ Submit or edit your validated response using current form and response revisions
 }
 ```
 
+<a id="delete-groups-groupId-forms-toolId-response"></a>
 ## DELETE /api/v2/groups/{groupId}/forms/{toolId}/response
-Canonical passage: /v2/reference/api#delete-groups-groupId-forms-toolId-response
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-forms-toolId-response
 
 Remove your response and private retained history  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -12993,8 +13349,9 @@ Remove your response and private retained history  Source-generated operation; s
 }
 ```
 
+<a id="delete-groups-groupId-forms-toolId-results-responseId"></a>
 ## DELETE /api/v2/groups/{groupId}/forms/{toolId}/results/{responseId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-forms-toolId-results-responseId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-forms-toolId-results-responseId
 
 Moderate a current ordinary response including anonymous shared content  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13090,8 +13447,9 @@ Moderate a current ordinary response including anonymous shared content  Source-
 }
 ```
 
+<a id="get-groups-groupId-form-policy"></a>
 ## GET /api/v2/groups/{groupId}/form-policy
-Canonical passage: /v2/reference/api#get-groups-groupId-form-policy
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-form-policy
 
 Read form availability/creation policy  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13205,8 +13563,9 @@ Read form availability/creation policy  Source-generated operation; schemas and 
 }
 ```
 
+<a id="put-groups-groupId-form-policy"></a>
 ## PUT /api/v2/groups/{groupId}/form-policy
-Canonical passage: /v2/reference/api#put-groups-groupId-form-policy
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-form-policy
 
 Owner controls form availability and creation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13324,8 +13683,9 @@ Owner controls form availability and creation  Source-generated operation; schem
 }
 ```
 
+<a id="post-groups-groupId-polls"></a>
 ## POST /api/v2/groups/{groupId}/polls
-Canonical passage: /v2/reference/api#post-groups-groupId-polls
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-polls
 
 Create an independent persistent persistent poll  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13482,8 +13842,9 @@ Create an independent persistent persistent poll  Source-generated operation; sc
 }
 ```
 
+<a id="get-groups-groupId-polls"></a>
 ## GET /api/v2/groups/{groupId}/polls
-Canonical passage: /v2/reference/api#get-groups-groupId-polls
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-polls
 
 List persistent polls independently of the joining questionnaire  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13658,8 +14019,9 @@ List persistent polls independently of the joining questionnaire  Source-generat
 }
 ```
 
+<a id="get-groups-groupId-polls-toolId-settings"></a>
 ## GET /api/v2/groups/{groupId}/polls/{toolId}/settings
-Canonical passage: /v2/reference/api#get-groups-groupId-polls-toolId-settings
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-polls-toolId-settings
 
 Read preserved poll configuration as a current eligible manager, including while disabled  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -13850,8 +14212,9 @@ Read preserved poll configuration as a current eligible manager, including while
 }
 ```
 
+<a id="get-groups-groupId-polls-toolId"></a>
 ## GET /api/v2/groups/{groupId}/polls/{toolId}
-Canonical passage: /v2/reference/api#get-groups-groupId-polls-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-polls-toolId
 
 Read current poll and your compatible selections  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14107,8 +14470,9 @@ Read current poll and your compatible selections  Source-generated operation; sc
 }
 ```
 
+<a id="patch-groups-groupId-polls-toolId"></a>
 ## PATCH /api/v2/groups/{groupId}/polls/{toolId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-polls-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-polls-toolId
 
 Manage current poll configuration without erasing saved definitions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14258,8 +14622,9 @@ Manage current poll configuration without erasing saved definitions  Source-gene
 }
 ```
 
+<a id="delete-groups-groupId-polls-toolId"></a>
 ## DELETE /api/v2/groups/{groupId}/polls/{toolId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-polls-toolId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-polls-toolId
 
 Delete a poll and all votes as a current eligible manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14345,8 +14710,9 @@ Delete a poll and all votes as a current eligible manager  Source-generated oper
 }
 ```
 
+<a id="get-groups-groupId-polls-toolId-history"></a>
 ## GET /api/v2/groups/{groupId}/polls/{toolId}/history
-Canonical passage: /v2/reference/api#get-groups-groupId-polls-toolId-history
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-polls-toolId-history
 
 Read only your retained vote snapshots  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14569,8 +14935,9 @@ Read only your retained vote snapshots  Source-generated operation; schemas and 
 }
 ```
 
+<a id="get-groups-groupId-polls-toolId-results"></a>
 ## GET /api/v2/groups/{groupId}/polls/{toolId}/results
-Canonical passage: /v2/reference/api#get-groups-groupId-polls-toolId-results
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-polls-toolId-results
 
 Read stated-visibility latest votes  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14792,8 +15159,9 @@ Read stated-visibility latest votes  Source-generated operation; schemas and per
 }
 ```
 
+<a id="put-groups-groupId-polls-toolId-vote"></a>
 ## PUT /api/v2/groups/{groupId}/polls/{toolId}/vote
-Canonical passage: /v2/reference/api#put-groups-groupId-polls-toolId-vote
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-polls-toolId-vote
 
 Submit or edit your validated vote using current poll and vote revisions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -14931,8 +15299,9 @@ Submit or edit your validated vote using current poll and vote revisions  Source
 }
 ```
 
+<a id="delete-groups-groupId-polls-toolId-vote"></a>
 ## DELETE /api/v2/groups/{groupId}/polls/{toolId}/vote
-Canonical passage: /v2/reference/api#delete-groups-groupId-polls-toolId-vote
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-polls-toolId-vote
 
 Remove your vote and private history using optimistic revision  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15038,8 +15407,9 @@ Remove your vote and private history using optimistic revision  Source-generated
 }
 ```
 
+<a id="delete-groups-groupId-polls-toolId-results-voteId"></a>
 ## DELETE /api/v2/groups/{groupId}/polls/{toolId}/results/{voteId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-polls-toolId-results-voteId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-polls-toolId-results-voteId
 
 Moderate a current ordinary vote including anonymous shared content  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15155,8 +15525,9 @@ Moderate a current ordinary vote including anonymous shared content  Source-gene
 }
 ```
 
+<a id="get-groups-groupId-poll-policy"></a>
 ## GET /api/v2/groups/{groupId}/poll-policy
-Canonical passage: /v2/reference/api#get-groups-groupId-poll-policy
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-poll-policy
 
 Read poll availability/creation policy  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15270,8 +15641,9 @@ Read poll availability/creation policy  Source-generated operation; schemas and 
 }
 ```
 
+<a id="put-groups-groupId-poll-policy"></a>
 ## PUT /api/v2/groups/{groupId}/poll-policy
-Canonical passage: /v2/reference/api#put-groups-groupId-poll-policy
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-poll-policy
 
 Owner controls poll availability and creation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15389,8 +15761,9 @@ Owner controls poll availability and creation  Source-generated operation; schem
 }
 ```
 
+<a id="post-groups-groupId-coordinated-expulsions"></a>
 ## POST /api/v2/groups/{groupId}/coordinated-expulsions
-Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-coordinated-expulsions
 
 Commit coordinated community exclusion as staff  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15591,8 +15964,9 @@ Commit coordinated community exclusion as staff  Source-generated operation; sch
 }
 ```
 
+<a id="get-groups-groupId-coordinated-expulsions-personId"></a>
 ## GET /api/v2/groups/{groupId}/coordinated-expulsions/{personId}
-Canonical passage: /v2/reference/api#get-groups-groupId-coordinated-expulsions-personId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-coordinated-expulsions-personId
 
 Reconcile coordinated exclusion progress as current staff  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15767,8 +16141,9 @@ Reconcile coordinated exclusion progress as current staff  Source-generated oper
 }
 ```
 
+<a id="post-groups-groupId-coordinated-expulsions-personId-resume"></a>
 ## POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/resume
-Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-resume
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-resume
 
 Resume cleanup with current independent Event authority  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -15972,8 +16347,9 @@ Resume cleanup with current independent Event authority  Source-generated operat
 }
 ```
 
+<a id="post-groups-groupId-coordinated-expulsions-personId-reinstate"></a>
 ## POST /api/v2/groups/{groupId}/coordinated-expulsions/{personId}/reinstate
-Canonical passage: /v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-reinstate
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-coordinated-expulsions-personId-reinstate
 
 Reinstate after complete cleanup without restoring admission  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -16177,8 +16553,9 @@ Reinstate after complete cleanup without restoring admission  Source-generated o
 }
 ```
 
+<a id="get-groups"></a>
 ## GET /api/v2/groups
-Canonical passage: /v2/reference/api#get-groups
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups
 
 List your Groups  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -16469,8 +16846,9 @@ List your Groups  Source-generated operation; schemas and per-operation response
 }
 ```
 
+<a id="post-groups"></a>
 ## POST /api/v2/groups
-Canonical passage: /v2/reference/api#post-groups
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups
 
 Create an owner-only Group  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -16579,8 +16957,9 @@ Create an owner-only Group  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="get-groups-groupId"></a>
 ## GET /api/v2/groups/{groupId}
-Canonical passage: /v2/reference/api#get-groups-groupId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId
 
 Read an admitted Group  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -16845,8 +17224,9 @@ Read an admitted Group  Source-generated operation; schemas and per-operation re
 }
 ```
 
+<a id="patch-groups-groupId"></a>
 ## PATCH /api/v2/groups/{groupId}
-Canonical passage: /v2/reference/api#patch-groups-groupId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId
 
 Update Group identity as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -16951,8 +17331,9 @@ Update Group identity as owner  Source-generated operation; schemas and per-oper
 }
 ```
 
+<a id="delete-groups-groupId"></a>
 ## DELETE /api/v2/groups/{groupId}
-Canonical passage: /v2/reference/api#delete-groups-groupId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId
 
 Explicitly delete a Group as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -17042,8 +17423,9 @@ Explicitly delete a Group as owner  Source-generated operation; schemas and per-
 }
 ```
 
+<a id="get-groups-groupId-community-context"></a>
 ## GET /api/v2/groups/{groupId}/community-context
-Canonical passage: /v2/reference/api#get-groups-groupId-community-context
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-community-context
 
 Read own community context  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -17463,8 +17845,9 @@ Read own community context  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="get-groups-groupId-current-event"></a>
 ## GET /api/v2/groups/{groupId}/current-event
-Canonical passage: /v2/reference/api#get-groups-groupId-current-event
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-current-event
 
 Read the single current selected Group Event  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -17727,8 +18110,9 @@ Read the single current selected Group Event  Source-generated operation; schema
 }
 ```
 
+<a id="post-groups-groupId-events-eventId-join"></a>
 ## POST /api/v2/groups/{groupId}/events/{eventId}/join
-Canonical passage: /v2/reference/api#post-groups-groupId-events-eventId-join
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-events-eventId-join
 
 joinCommunityEvent  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -17916,8 +18300,9 @@ joinCommunityEvent  Source-generated operation; schemas and per-operation respon
 }
 ```
 
+<a id="put-groups-groupId-events-eventId-own-rsvp"></a>
 ## PUT /api/v2/groups/{groupId}/events/{eventId}/own-rsvp
-Canonical passage: /v2/reference/api#put-groups-groupId-events-eventId-own-rsvp
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-events-eventId-own-rsvp
 
 setCommunityRsvp  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -18123,8 +18508,9 @@ setCommunityRsvp  Source-generated operation; schemas and per-operation response
 }
 ```
 
+<a id="post-groups-groupId-events-eventId-leave"></a>
 ## POST /api/v2/groups/{groupId}/events/{eventId}/leave
-Canonical passage: /v2/reference/api#post-groups-groupId-events-eventId-leave
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-events-eventId-leave
 
 leaveCommunityEvent  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -18298,8 +18684,9 @@ leaveCommunityEvent  Source-generated operation; schemas and per-operation respo
 }
 ```
 
+<a id="post-groups-groupId-community-leave"></a>
 ## POST /api/v2/groups/{groupId}/community-leave
-Canonical passage: /v2/reference/api#post-groups-groupId-community-leave
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-community-leave
 
 leaveCommunity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -18467,8 +18854,9 @@ leaveCommunity  Source-generated operation; schemas and per-operation responses 
 }
 ```
 
+<a id="post-groups-groupId-community-applications"></a>
 ## POST /api/v2/groups/{groupId}/community-applications
-Canonical passage: /v2/reference/api#post-groups-groupId-community-applications
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-community-applications
 
 submitCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -18669,8 +19057,9 @@ submitCommunityApplication  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="patch-groups-groupId-community-applications-applicationId"></a>
 ## PATCH /api/v2/groups/{groupId}/community-applications/{applicationId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-community-applications-applicationId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-community-applications-applicationId
 
 editCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -18880,8 +19269,9 @@ editCommunityApplication  Source-generated operation; schemas and per-operation 
 }
 ```
 
+<a id="post-groups-groupId-community-applications-applicationId-withdraw"></a>
 ## POST /api/v2/groups/{groupId}/community-applications/{applicationId}/withdraw
-Canonical passage: /v2/reference/api#post-groups-groupId-community-applications-applicationId-withdraw
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-community-applications-applicationId-withdraw
 
 withdrawCommunityApplication  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -19065,8 +19455,9 @@ withdrawCommunityApplication  Source-generated operation; schemas and per-operat
 }
 ```
 
+<a id="put-groups-groupId-announcement-preference"></a>
 ## PUT /api/v2/groups/{groupId}/announcement-preference
-Canonical passage: /v2/reference/api#put-groups-groupId-announcement-preference
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-announcement-preference
 
 Change own Group announcement subscription  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -19226,8 +19617,9 @@ Change own Group announcement subscription  Source-generated operation; schemas 
 }
 ```
 
+<a id="get-groups-groupId-discord"></a>
 ## GET /api/v2/groups/{groupId}/discord
-Canonical passage: /v2/reference/api#get-groups-groupId-discord
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-discord
 
 Read own selected Group Discord access and Open Discord destination  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -19343,8 +19735,9 @@ Read own selected Group Discord access and Open Discord destination  Source-gene
 }
 ```
 
+<a id="post-groups-groupId-discord-connect"></a>
 ## POST /api/v2/groups/{groupId}/discord/connect
-Canonical passage: /v2/reference/api#post-groups-groupId-discord-connect
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-discord-connect
 
 Begin a Groupi-hosted member identity and consent journey  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -19431,8 +19824,9 @@ Begin a Groupi-hosted member identity and consent journey  Source-generated oper
 }
 ```
 
+<a id="get-groups-groupId-joining-questionnaire"></a>
 ## GET /api/v2/groups/{groupId}/joining-questionnaire
-Canonical passage: /v2/reference/api#get-groups-groupId-joining-questionnaire
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-joining-questionnaire
 
 Read your private joining questionnaire and current access status  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -19698,8 +20092,9 @@ Read your private joining questionnaire and current access status  Source-genera
 }
 ```
 
+<a id="put-groups-groupId-joining-questionnaire"></a>
 ## PUT /api/v2/groups/{groupId}/joining-questionnaire
-Canonical passage: /v2/reference/api#put-groups-groupId-joining-questionnaire
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-joining-questionnaire
 
 Configure the joining questionnaire and completion policy as Group owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -20038,8 +20433,9 @@ Configure the joining questionnaire and completion policy as Group owner  Source
 }
 ```
 
+<a id="put-groups-groupId-joining-questionnaire-answers"></a>
 ## PUT /api/v2/groups/{groupId}/joining-questionnaire/answers
-Canonical passage: /v2/reference/api#put-groups-groupId-joining-questionnaire-answers
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-joining-questionnaire-answers
 
 Submit or edit private answers as an admitted member  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -20350,8 +20746,9 @@ Submit or edit private answers as an admitted member  Source-generated operation
 }
 ```
 
+<a id="get-groups-groupId-joining-questionnaire-responses"></a>
 ## GET /api/v2/groups/{groupId}/joining-questionnaire/responses
-Canonical passage: /v2/reference/api#get-groups-groupId-joining-questionnaire-responses
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-joining-questionnaire-responses
 
 Review private answers as current owner or moderator  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -20680,8 +21077,9 @@ Review private answers as current owner or moderator  Source-generated operation
 }
 ```
 
+<a id="get-groups-groupId-joining-questionnaire-history"></a>
 ## GET /api/v2/groups/{groupId}/joining-questionnaire/history
-Canonical passage: /v2/reference/api#get-groups-groupId-joining-questionnaire-history
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-joining-questionnaire-history
 
 Read own retained answer history or review an author as current manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -20906,8 +21304,9 @@ Read own retained answer history or review an author as current manager  Source-
 }
 ```
 
+<a id="get-group-invites"></a>
 ## GET /api/v2/group-invites
-Canonical passage: /v2/reference/api#get-group-invites
+Canonical passage: http://localhost:4173/v2/reference/api#get-group-invites
 
 List your private Group invitations  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21145,8 +21544,9 @@ List your private Group invitations  Source-generated operation; schemas and per
 }
 ```
 
+<a id="get-groups-groupId-invitations"></a>
 ## GET /api/v2/groups/{groupId}/invitations
-Canonical passage: /v2/reference/api#get-groups-groupId-invitations
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-invitations
 
 List Group invitations as manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21394,8 +21794,9 @@ List Group invitations as manager  Source-generated operation; schemas and per-o
 }
 ```
 
+<a id="post-groups-groupId-invitations"></a>
 ## POST /api/v2/groups/{groupId}/invitations
-Canonical passage: /v2/reference/api#post-groups-groupId-invitations
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-invitations
 
 Invite an existing user as Group owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21514,8 +21915,9 @@ Invite an existing user as Group owner  Source-generated operation; schemas and 
 }
 ```
 
+<a id="get-groups-groupId-members"></a>
 ## GET /api/v2/groups/{groupId}/members
-Canonical passage: /v2/reference/api#get-groups-groupId-members
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-members
 
 Read admitted Group roster  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21682,8 +22084,9 @@ Read admitted Group roster  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="patch-groups-groupId-invitation-policy"></a>
 ## PATCH /api/v2/groups/{groupId}/invitation-policy
-Canonical passage: /v2/reference/api#patch-groups-groupId-invitation-policy
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-invitation-policy
 
 Configure Group invitations as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21778,8 +22181,9 @@ Configure Group invitations as owner  Source-generated operation; schemas and pe
 }
 ```
 
+<a id="post-group-invites-inviteId-accept"></a>
 ## POST /api/v2/group-invites/{inviteId}/accept
-Canonical passage: /v2/reference/api#post-group-invites-inviteId-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-group-invites-inviteId-accept
 
 Accept your Group invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -21917,8 +22321,9 @@ Accept your Group invitation  Source-generated operation; schemas and per-operat
 }
 ```
 
+<a id="post-group-invites-inviteId-decline"></a>
 ## POST /api/v2/group-invites/{inviteId}/decline
-Canonical passage: /v2/reference/api#post-group-invites-inviteId-decline
+Canonical passage: http://localhost:4173/v2/reference/api#post-group-invites-inviteId-decline
 
 Decline your Group invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22013,8 +22418,9 @@ Decline your Group invitation  Source-generated operation; schemas and per-opera
 }
 ```
 
+<a id="post-group-invites-inviteId-cancel"></a>
 ## POST /api/v2/group-invites/{inviteId}/cancel
-Canonical passage: /v2/reference/api#post-group-invites-inviteId-cancel
+Canonical passage: http://localhost:4173/v2/reference/api#post-group-invites-inviteId-cancel
 
 Cancel a pending invitation as Group manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22109,8 +22515,9 @@ Cancel a pending invitation as Group manager  Source-generated operation; schema
 }
 ```
 
+<a id="get-groups-groupId-bans"></a>
 ## GET /api/v2/groups/{groupId}/bans
-Canonical passage: /v2/reference/api#get-groups-groupId-bans
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-bans
 
 List active Group bans as manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22256,8 +22663,9 @@ List active Group bans as manager  Source-generated operation; schemas and per-o
 }
 ```
 
+<a id="patch-groups-groupId-members-personId-role"></a>
 ## PATCH /api/v2/groups/{groupId}/members/{personId}/role
-Canonical passage: /v2/reference/api#patch-groups-groupId-members-personId-role
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-members-personId-role
 
 Appoint or demote a Group moderator as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22385,8 +22793,9 @@ Appoint or demote a Group moderator as owner  Source-generated operation; schema
 }
 ```
 
+<a id="delete-groups-groupId-members-personId"></a>
 ## DELETE /api/v2/groups/{groupId}/members/{personId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-members-personId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-members-personId
 
 Remove an ordinary member without banning  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22487,8 +22896,9 @@ Remove an ordinary member without banning  Source-generated operation; schemas a
 }
 ```
 
+<a id="put-groups-groupId-bans-personId"></a>
 ## PUT /api/v2/groups/{groupId}/bans/{personId}
-Canonical passage: /v2/reference/api#put-groups-groupId-bans-personId
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-bans-personId
 
 Ban an ordinary member or nonmember  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22589,8 +22999,9 @@ Ban an ordinary member or nonmember  Source-generated operation; schemas and per
 }
 ```
 
+<a id="delete-groups-groupId-bans-personId"></a>
 ## DELETE /api/v2/groups/{groupId}/bans/{personId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-bans-personId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-bans-personId
 
 Lift a Group ban without admitting membership  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22691,8 +23102,9 @@ Lift a Group ban without admitting membership  Source-generated operation; schem
 }
 ```
 
+<a id="post-groups-groupId-leave"></a>
 ## POST /api/v2/groups/{groupId}/leave
-Canonical passage: /v2/reference/api#post-groups-groupId-leave
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-leave
 
 Leave your own Group membership  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22783,8 +23195,9 @@ Leave your own Group membership  Source-generated operation; schemas and per-ope
 }
 ```
 
+<a id="get-groups-groupId-ownership-transfer"></a>
 ## GET /api/v2/groups/{groupId}/ownership-transfer
-Canonical passage: /v2/reference/api#get-groups-groupId-ownership-transfer
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-ownership-transfer
 
 Read private participant ownership offer status  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -22954,8 +23367,9 @@ Read private participant ownership offer status  Source-generated operation; sch
 }
 ```
 
+<a id="post-groups-groupId-ownership-transfer"></a>
 ## POST /api/v2/groups/{groupId}/ownership-transfer
-Canonical passage: /v2/reference/api#post-groups-groupId-ownership-transfer
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-ownership-transfer
 
 Offer Group responsibility to an admitted member The current owner remains responsible until acceptance. Independent Events are unaffected. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -23146,8 +23560,9 @@ Offer Group responsibility to an admitted member The current owner remains respo
 }
 ```
 
+<a id="post-groups-groupId-ownership-transfer-accept"></a>
 ## POST /api/v2/groups/{groupId}/ownership-transfer/accept
-Canonical passage: /v2/reference/api#post-groups-groupId-ownership-transfer-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-ownership-transfer-accept
 
 accept the observed ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -23338,8 +23753,9 @@ accept the observed ownership offer  Source-generated operation; schemas and per
 }
 ```
 
+<a id="post-groups-groupId-ownership-transfer-decline"></a>
 ## POST /api/v2/groups/{groupId}/ownership-transfer/decline
-Canonical passage: /v2/reference/api#post-groups-groupId-ownership-transfer-decline
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-ownership-transfer-decline
 
 decline the observed ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -23530,8 +23946,9 @@ decline the observed ownership offer  Source-generated operation; schemas and pe
 }
 ```
 
+<a id="post-groups-groupId-ownership-transfer-cancel"></a>
 ## POST /api/v2/groups/{groupId}/ownership-transfer/cancel
-Canonical passage: /v2/reference/api#post-groups-groupId-ownership-transfer-cancel
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-ownership-transfer-cancel
 
 cancel the observed ownership offer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -23722,8 +24139,9 @@ cancel the observed ownership offer  Source-generated operation; schemas and per
 }
 ```
 
+<a id="get-groups-groupId-application-form"></a>
 ## GET /api/v2/groups/{groupId}/application-form
-Canonical passage: /v2/reference/api#get-groups-groupId-application-form
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-application-form
 
 Read admission questions and your private pending application  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -24022,8 +24440,9 @@ Read admission questions and your private pending application  Source-generated 
 }
 ```
 
+<a id="put-groups-groupId-application-settings"></a>
 ## PUT /api/v2/groups/{groupId}/application-settings
-Canonical passage: /v2/reference/api#put-groups-groupId-application-settings
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-application-settings
 
 Configure Group applications as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -24187,8 +24606,9 @@ Configure Group applications as owner  Source-generated operation; schemas and p
 }
 ```
 
+<a id="get-groups-groupId-applications-mine"></a>
 ## GET /api/v2/groups/{groupId}/applications/mine
-Canonical passage: /v2/reference/api#get-groups-groupId-applications-mine
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-applications-mine
 
 Read your retained private Group application history  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -24452,8 +24872,9 @@ Read your retained private Group application history  Source-generated operation
 }
 ```
 
+<a id="get-groups-groupId-applications"></a>
 ## GET /api/v2/groups/{groupId}/applications
-Canonical passage: /v2/reference/api#get-groups-groupId-applications
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-applications
 
 Review private Group application queue as manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -24758,8 +25179,9 @@ Review private Group application queue as manager  Source-generated operation; s
 }
 ```
 
+<a id="post-groups-groupId-applications"></a>
 ## POST /api/v2/groups/{groupId}/applications
-Canonical passage: /v2/reference/api#post-groups-groupId-applications
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-applications
 
 Submit or edit your pending admission application  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -24937,8 +25359,9 @@ Submit or edit your pending admission application  Source-generated operation; s
 }
 ```
 
+<a id="get-groups-groupId-applications-applicationId"></a>
 ## GET /api/v2/groups/{groupId}/applications/{applicationId}
-Canonical passage: /v2/reference/api#get-groups-groupId-applications-applicationId
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-applications-applicationId
 
 Read a private application as its author or current manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25176,8 +25599,9 @@ Read a private application as its author or current manager  Source-generated op
 }
 ```
 
+<a id="patch-groups-groupId-applications-applicationId"></a>
 ## PATCH /api/v2/groups/{groupId}/applications/{applicationId}
-Canonical passage: /v2/reference/api#patch-groups-groupId-applications-applicationId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-groups-groupId-applications-applicationId
 
 Edit your pending answers against saved question definitions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25368,8 +25792,9 @@ Edit your pending answers against saved question definitions  Source-generated o
 }
 ```
 
+<a id="post-groups-groupId-applications-applicationId-withdraw"></a>
 ## POST /api/v2/groups/{groupId}/applications/{applicationId}/withdraw
-Canonical passage: /v2/reference/api#post-groups-groupId-applications-applicationId-withdraw
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-applications-applicationId-withdraw
 
 Withdraw your pending application without deleting history  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25516,8 +25941,9 @@ Withdraw your pending application without deleting history  Source-generated ope
 }
 ```
 
+<a id="post-groups-groupId-applications-applicationId-review"></a>
 ## POST /api/v2/groups/{groupId}/applications/{applicationId}/review
-Canonical passage: /v2/reference/api#post-groups-groupId-applications-applicationId-review
+Canonical passage: http://localhost:4173/v2/reference/api#post-groups-groupId-applications-applicationId-review
 
 Approve or decline an application as current Group manager  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25694,8 +26120,9 @@ Approve or decline an application as current Group manager  Source-generated ope
 }
 ```
 
+<a id="get-events-eventId-audiences"></a>
 ## GET /api/v2/events/{eventId}/audiences
-Canonical passage: /v2/reference/api#get-events-eventId-audiences
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-audiences
 
 Read only viewer-visible Group associations and Organizer Friends setting  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25808,8 +26235,9 @@ Read only viewer-visible Group associations and Organizer Friends setting  Sourc
 }
 ```
 
+<a id="put-events-eventId-audiences-friends"></a>
 ## PUT /api/v2/events/{eventId}/audiences/friends
-Canonical passage: /v2/reference/api#put-events-eventId-audiences-friends
+Canonical passage: http://localhost:4173/v2/reference/api#put-events-eventId-audiences-friends
 
 Set independent Friends audience as current Organizer  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -25913,8 +26341,9 @@ Set independent Friends audience as current Organizer  Source-generated operatio
 }
 ```
 
+<a id="put-groups-groupId-event-sharing"></a>
 ## PUT /api/v2/groups/{groupId}/event-sharing
-Canonical passage: /v2/reference/api#put-groups-groupId-event-sharing
+Canonical passage: http://localhost:4173/v2/reference/api#put-groups-groupId-event-sharing
 
 Configure whole-Group Event sharing as owner  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26021,8 +26450,9 @@ Configure whole-Group Event sharing as owner  Source-generated operation; schema
 }
 ```
 
+<a id="post-events-eventId-audiences-groups-groupId"></a>
 ## POST /api/v2/events/{eventId}/audiences/groups/{groupId}
-Canonical passage: /v2/reference/api#post-events-eventId-audiences-groups-groupId
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-audiences-groups-groupId
 
 Share with a whole Group with both permissions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26121,8 +26551,9 @@ Share with a whole Group with both permissions  Source-generated operation; sche
 }
 ```
 
+<a id="delete-events-eventId-audiences-groups-groupId"></a>
 ## DELETE /api/v2/events/{eventId}/audiences/groups/{groupId}
-Canonical passage: /v2/reference/api#delete-events-eventId-audiences-groups-groupId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-audiences-groups-groupId
 
 Withdraw one Group grant without affecting other audiences  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26221,8 +26652,9 @@ Withdraw one Group grant without affecting other audiences  Source-generated ope
 }
 ```
 
+<a id="delete-groups-groupId-events-eventId"></a>
 ## DELETE /api/v2/groups/{groupId}/events/{eventId}
-Canonical passage: /v2/reference/api#delete-groups-groupId-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-groups-groupId-events-eventId
 
 Withdraw this Group grant as current Group manager; conveys no Event authority  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26321,8 +26753,9 @@ Withdraw this Group grant as current Group manager; conveys no Event authority  
 }
 ```
 
+<a id="get-groups-groupId-events"></a>
 ## GET /api/v2/groups/{groupId}/events
-Canonical passage: /v2/reference/api#get-groups-groupId-events
+Canonical passage: http://localhost:4173/v2/reference/api#get-groups-groupId-events
 
 Read safe upcoming/undated Group Event previews in bounded association-order pages Pages scan at most limit associations (1–100), omitting past or currently unreadable Events. Continue nextCursor even on an empty page. No admission, membership, invitation, RSVP or tool action is performed. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26562,8 +26995,9 @@ Read safe upcoming/undated Group Event previews in bounded association-order pag
 }
 ```
 
+<a id="get-blocks"></a>
 ## GET /api/v2/blocks
-Canonical passage: /v2/reference/api#get-blocks
+Canonical passage: http://localhost:4173/v2/reference/api#get-blocks
 
 List blocked users (bounded cursor pages)  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26697,8 +27131,9 @@ List blocked users (bounded cursor pages)  Source-generated operation; schemas a
 }
 ```
 
+<a id="get-blocks-personId"></a>
 ## GET /api/v2/blocks/{personId}
-Canonical passage: /v2/reference/api#get-blocks-personId
+Canonical passage: http://localhost:4173/v2/reference/api#get-blocks-personId
 
 Inspect block relationship  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26772,8 +27207,9 @@ Inspect block relationship  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="post-blocks-personId"></a>
 ## POST /api/v2/blocks/{personId}
-Canonical passage: /v2/reference/api#post-blocks-personId
+Canonical passage: http://localhost:4173/v2/reference/api#post-blocks-personId
 
 Block user and remove friendships/requests  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26835,8 +27271,9 @@ Block user and remove friendships/requests  Source-generated operation; schemas 
 }
 ```
 
+<a id="delete-blocks-personId"></a>
 ## DELETE /api/v2/blocks/{personId}
-Canonical passage: /v2/reference/api#delete-blocks-personId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-blocks-personId
 
 Unblock user  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -26891,8 +27328,9 @@ Unblock user  Source-generated operation; schemas and per-operation responses ar
 }
 ```
 
+<a id="get-addon-templates"></a>
 ## GET /api/v2/addon-templates
-Canonical passage: /v2/reference/api#get-addon-templates
+Canonical passage: http://localhost:4173/v2/reference/api#get-addon-templates
 
 List your existing published custom templates  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -28604,8 +29042,9 @@ List your existing published custom templates  Source-generated operation; schem
 }
 ```
 
+<a id="post-events-eventId-addons-addonType-participation"></a>
 ## POST /api/v2/events/{eventId}/addons/{addonType}/participation
-Canonical passage: /v2/reference/api#post-events-eventId-addons-addonType-participation
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-addons-addonType-participation
 
 Perform an app-supported participant action as the current identity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -28758,8 +29197,9 @@ Perform an app-supported participant action as the current identity  Source-gene
 }
 ```
 
+<a id="get-events-eventId-addons"></a>
 ## GET /api/v2/events/{eventId}/addons
-Canonical passage: /v2/reference/api#get-events-eventId-addons
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-addons
 
 List add-ons Get all add-on configurations for an event, including disabled add-ons Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -28867,8 +29307,9 @@ List add-ons Get all add-on configurations for an event, including disabled add-
 }
 ```
 
+<a id="post-events-eventId-addons-addonType-enable"></a>
 ## POST /api/v2/events/{eventId}/addons/{addonType}/enable
-Canonical passage: /v2/reference/api#post-events-eventId-addons-addonType-enable
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-addons-addonType-enable
 
 Enable add-on Enable validated configuration. Custom add-ons use {templateId} from /addon-templates or app-supported configurable template settings. Re-enabling an enabled add-on invokes configuration-update lifecycle. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -28953,8 +29394,9 @@ Enable add-on Enable validated configuration. Custom add-ons use {templateId} fr
 }
 ```
 
+<a id="post-events-eventId-addons-addonType-disable"></a>
 ## POST /api/v2/events/{eventId}/addons/{addonType}/disable
-Canonical passage: /v2/reference/api#post-events-eventId-addons-addonType-disable
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-addons-addonType-disable
 
 Disable add-on Disable an add-on for an event. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -29019,8 +29461,9 @@ Disable add-on Disable an add-on for an event. Requires MODERATOR role or higher
 }
 ```
 
+<a id="patch-events-eventId-addons-addonType-config"></a>
 ## PATCH /api/v2/events/{eventId}/addons/{addonType}/config
-Canonical passage: /v2/reference/api#patch-events-eventId-addons-addonType-config
+Canonical passage: http://localhost:4173/v2/reference/api#patch-events-eventId-addons-addonType-config
 
 Update add-on config Replace enabled configuration, invoking response reset and notification lifecycle. Custom definition and secret fields are protected. Requires MODERATOR role or higher. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -29105,8 +29548,9 @@ Update add-on config Replace enabled configuration, invoking response reset and 
 }
 ```
 
+<a id="get-events-eventId-addons-addonType-data"></a>
 ## GET /api/v2/events/{eventId}/addons/{addonType}/data
-Canonical passage: /v2/reference/api#get-events-eventId-addons-addonType-data
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-addons-addonType-data
 
 List add-on data Get all data entries for an add-on on an event Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -29226,8 +29670,9 @@ List add-on data Get all data entries for an add-on on an event Source-generated
 }
 ```
 
+<a id="put-events-eventId-addons-addonType-data-key"></a>
 ## PUT /api/v2/events/{eventId}/addons/{addonType}/data/{key}
-Canonical passage: /v2/reference/api#put-events-eventId-addons-addonType-data-key
+Canonical passage: http://localhost:4173/v2/reference/api#put-events-eventId-addons-addonType-data-key
 
 Set add-on data Create or update a validated participant entry for an enabled add-on. Response, claims, vote and toggle keys must belong to the authenticated identity, including for moderators. Dispatches the same submission lifecycle as the apps. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -29323,8 +29768,9 @@ Set add-on data Create or update a validated participant entry for an enabled ad
 }
 ```
 
+<a id="delete-events-eventId-addons-addonType-data-key"></a>
 ## DELETE /api/v2/events/{eventId}/addons/{addonType}/data/{key}
-Canonical passage: /v2/reference/api#delete-events-eventId-addons-addonType-data-key
+Canonical passage: http://localhost:4173/v2/reference/api#delete-events-eventId-addons-addonType-data-key
 
 Delete add-on data Clear an owned participant record for an enabled add-on. Other participants and system records cannot be deleted. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -29393,8 +29839,9 @@ Delete add-on data Clear an owned participant record for an enabled add-on. Othe
 }
 ```
 
+<a id="get-addon-template-definitions"></a>
 ## GET /api/v2/addon-template-definitions
-Canonical passage: /v2/reference/api#get-addon-template-definitions
+Canonical passage: http://localhost:4173/v2/reference/api#get-addon-template-definitions
 
 List owned draft and published definitions  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -30362,8 +30809,9 @@ List owned draft and published definitions  Source-generated operation; schemas 
 }
 ```
 
+<a id="post-addon-template-definitions"></a>
 ## POST /api/v2/addon-template-definitions
-Canonical passage: /v2/reference/api#post-addon-template-definitions
+Canonical passage: http://localhost:4173/v2/reference/api#post-addon-template-definitions
 
 Create a complete definition as a draft Strict portable document schema version 1. send_webhook actions are not supported. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -32124,8 +32572,9 @@ Create a complete definition as a draft Strict portable document schema version 
 }
 ```
 
+<a id="get-addon-template-definitions-id"></a>
 ## GET /api/v2/addon-template-definitions/{id}
-Canonical passage: /v2/reference/api#get-addon-template-definitions-id
+Canonical passage: http://localhost:4173/v2/reference/api#get-addon-template-definitions-id
 
 Read an owned definition  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -33066,8 +33515,9 @@ Read an owned definition  Source-generated operation; schemas and per-operation 
 }
 ```
 
+<a id="patch-addon-template-definitions-id"></a>
 ## PATCH /api/v2/addon-template-definitions/{id}
-Canonical passage: /v2/reference/api#patch-addon-template-definitions-id
+Canonical passage: http://localhost:4173/v2/reference/api#patch-addon-template-definitions-id
 
 Replace an owned definition at the expected version  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -34845,8 +35295,9 @@ Replace an owned definition at the expected version  Source-generated operation;
 }
 ```
 
+<a id="delete-addon-template-definitions-id"></a>
 ## DELETE /api/v2/addon-template-definitions/{id}
-Canonical passage: /v2/reference/api#delete-addon-template-definitions-id
+Canonical passage: http://localhost:4173/v2/reference/api#delete-addon-template-definitions-id
 
 Delete an owned definition without changing enabled event snapshots  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -34984,8 +35435,9 @@ Delete an owned definition without changing enabled event snapshots  Source-gene
 }
 ```
 
+<a id="post-addon-template-definitions-id-publish"></a>
 ## POST /api/v2/addon-template-definitions/{id}/publish
-Canonical passage: /v2/reference/api#post-addon-template-definitions-id-publish
+Canonical passage: http://localhost:4173/v2/reference/api#post-addon-template-definitions-id-publish
 
 publish an owned definition  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -35947,8 +36399,9 @@ publish an owned definition  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="post-addon-template-definitions-id-unpublish"></a>
 ## POST /api/v2/addon-template-definitions/{id}/unpublish
-Canonical passage: /v2/reference/api#post-addon-template-definitions-id-unpublish
+Canonical passage: http://localhost:4173/v2/reference/api#post-addon-template-definitions-id-unpublish
 
 unpublish an owned definition  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -36910,8 +37363,9 @@ unpublish an owned definition  Source-generated operation; schemas and per-opera
 }
 ```
 
+<a id="get-discord-guilds"></a>
 ## GET /api/v2/discord/guilds
-Canonical passage: /v2/reference/api#get-discord-guilds
+Canonical passage: http://localhost:4173/v2/reference/api#get-discord-guilds
 
 List cached authorized Discord guilds for this identity  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -36998,8 +37452,9 @@ List cached authorized Discord guilds for this identity  Source-generated operat
 }
 ```
 
+<a id="post-discord-guilds-refresh"></a>
 ## POST /api/v2/discord/guilds/refresh
-Canonical passage: /v2/reference/api#post-discord-guilds-refresh
+Canonical passage: http://localhost:4173/v2/reference/api#post-discord-guilds-refresh
 
 Refresh this identity’s Discord guild authorization cache Checks linked OAuth credentials and MANAGE_GUILD plus bot presence. Does not change events. Linking a missing Discord account requires the app browser flow. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37056,8 +37511,9 @@ Refresh this identity’s Discord guild authorization cache Checks linked OAuth 
 }
 ```
 
+<a id="get-notifications"></a>
 ## GET /api/v2/notifications
-Canonical passage: /v2/reference/api#get-notifications
+Canonical passage: http://localhost:4173/v2/reference/api#get-notifications
 
 List notifications Get all notifications for the authenticated user. Optionally filter to unread only. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37165,8 +37621,9 @@ List notifications Get all notifications for the authenticated user. Optionally 
 }
 ```
 
+<a id="delete-notifications"></a>
 ## DELETE /api/v2/notifications
-Canonical passage: /v2/reference/api#delete-notifications
+Canonical passage: http://localhost:4173/v2/reference/api#delete-notifications
 
 Delete all notifications Delete all notifications for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37190,8 +37647,9 @@ Delete all notifications Delete all notifications for the authenticated user Sou
 }
 ```
 
+<a id="get-notifications-count"></a>
 ## GET /api/v2/notifications/count
-Canonical passage: /v2/reference/api#get-notifications-count
+Canonical passage: http://localhost:4173/v2/reference/api#get-notifications-count
 
 Get unread count Get the number of unread notifications Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37222,8 +37680,9 @@ Get unread count Get the number of unread notifications Source-generated operati
 }
 ```
 
+<a id="post-notifications-notificationId-read"></a>
 ## POST /api/v2/notifications/{notificationId}/read
-Canonical passage: /v2/reference/api#post-notifications-notificationId-read
+Canonical passage: http://localhost:4173/v2/reference/api#post-notifications-notificationId-read
 
 Mark notification as read Mark a single notification as read Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37277,8 +37736,9 @@ Mark notification as read Mark a single notification as read Source-generated op
 }
 ```
 
+<a id="post-notifications-notificationId-unread"></a>
 ## POST /api/v2/notifications/{notificationId}/unread
-Canonical passage: /v2/reference/api#post-notifications-notificationId-unread
+Canonical passage: http://localhost:4173/v2/reference/api#post-notifications-notificationId-unread
 
 Mark notification as unread Mark a single notification as unread Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37332,8 +37792,9 @@ Mark notification as unread Mark a single notification as unread Source-generate
 }
 ```
 
+<a id="post-notifications-read-all"></a>
 ## POST /api/v2/notifications/read-all
-Canonical passage: /v2/reference/api#post-notifications-read-all
+Canonical passage: http://localhost:4173/v2/reference/api#post-notifications-read-all
 
 Mark all notifications as read Mark all notifications as read for the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37364,8 +37825,9 @@ Mark all notifications as read Mark all notifications as read for the authentica
 }
 ```
 
+<a id="delete-notifications-notificationId"></a>
 ## DELETE /api/v2/notifications/{notificationId}
-Canonical passage: /v2/reference/api#delete-notifications-notificationId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-notifications-notificationId
 
 Delete notification Delete a single notification Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37412,8 +37874,9 @@ Delete notification Delete a single notification Source-generated operation; sch
 }
 ```
 
+<a id="post-notifications-events-scopeId-read"></a>
 ## POST /api/v2/notifications/events/{scopeId}/read
-Canonical passage: /v2/reference/api#post-notifications-events-scopeId-read
+Canonical passage: http://localhost:4173/v2/reference/api#post-notifications-events-scopeId-read
 
 Mark events notifications read  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37466,8 +37929,9 @@ Mark events notifications read  Source-generated operation; schemas and per-oper
 }
 ```
 
+<a id="post-notifications-posts-scopeId-read"></a>
 ## POST /api/v2/notifications/posts/{scopeId}/read
-Canonical passage: /v2/reference/api#post-notifications-posts-scopeId-read
+Canonical passage: http://localhost:4173/v2/reference/api#post-notifications-posts-scopeId-read
 
 Mark posts notifications read  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37520,8 +37984,9 @@ Mark posts notifications read  Source-generated operation; schemas and per-opera
 }
 ```
 
+<a id="get-muting"></a>
 ## GET /api/v2/muting
-Canonical passage: /v2/reference/api#get-muting
+Canonical passage: http://localhost:4173/v2/reference/api#get-muting
 
 List muted items Get all muted events and posts for the authenticated user. Optionally filter by type. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37569,8 +38034,9 @@ List muted items Get all muted events and posts for the authenticated user. Opti
 }
 ```
 
+<a id="post-muting-events-eventId"></a>
 ## POST /api/v2/muting/events/{eventId}
-Canonical passage: /v2/reference/api#post-muting-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#post-muting-events-eventId
 
 Mute event Mute an event to stop receiving notifications for it. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37634,8 +38100,9 @@ Mute event Mute an event to stop receiving notifications for it. Requires event 
 }
 ```
 
+<a id="delete-muting-events-eventId"></a>
 ## DELETE /api/v2/muting/events/{eventId}
-Canonical passage: /v2/reference/api#delete-muting-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-muting-events-eventId
 
 Unmute event Unmute an event to resume receiving notifications for it Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37682,8 +38149,9 @@ Unmute event Unmute an event to resume receiving notifications for it Source-gen
 }
 ```
 
+<a id="post-muting-posts-postId"></a>
 ## POST /api/v2/muting/posts/{postId}
-Canonical passage: /v2/reference/api#post-muting-posts-postId
+Canonical passage: http://localhost:4173/v2/reference/api#post-muting-posts-postId
 
 Mute post Mute a post to stop receiving notifications for replies. Requires event membership. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37747,8 +38215,9 @@ Mute post Mute a post to stop receiving notifications for replies. Requires even
 }
 ```
 
+<a id="delete-muting-posts-postId"></a>
 ## DELETE /api/v2/muting/posts/{postId}
-Canonical passage: /v2/reference/api#delete-muting-posts-postId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-muting-posts-postId
 
 Unmute post Unmute a post to resume receiving notifications for replies Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37795,8 +38264,9 @@ Unmute post Unmute a post to resume receiving notifications for replies Source-g
 }
 ```
 
+<a id="get-muting-events-targetId"></a>
 ## GET /api/v2/muting/events/{targetId}
-Canonical passage: /v2/reference/api#get-muting-events-targetId
+Canonical passage: http://localhost:4173/v2/reference/api#get-muting-events-targetId
 
 Inspect events mute status  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37862,8 +38332,9 @@ Inspect events mute status  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="get-muting-posts-targetId"></a>
 ## GET /api/v2/muting/posts/{targetId}
-Canonical passage: /v2/reference/api#get-muting-posts-targetId
+Canonical passage: http://localhost:4173/v2/reference/api#get-muting-posts-targetId
 
 Inspect posts mute status  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37929,8 +38400,9 @@ Inspect posts mute status  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="get-profile"></a>
 ## GET /api/v2/profile
-Canonical passage: /v2/reference/api#get-profile
+Canonical passage: http://localhost:4173/v2/reference/api#get-profile
 
 Get current profile Get the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -37971,8 +38443,9 @@ Get current profile Get the authenticated user's profile Source-generated operat
 }
 ```
 
+<a id="put-profile"></a>
 ## PUT /api/v2/profile
-Canonical passage: /v2/reference/api#put-profile
+Canonical passage: http://localhost:4173/v2/reference/api#put-profile
 
 Update profile Update the authenticated user's profile Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38023,8 +38496,9 @@ Update profile Update the authenticated user's profile Source-generated operatio
 }
 ```
 
+<a id="get-profile-username"></a>
 ## GET /api/v2/profile/{username}
-Canonical passage: /v2/reference/api#get-profile-username
+Canonical passage: http://localhost:4173/v2/reference/api#get-profile-username
 
 Get profile by username Get a user's public profile by their username Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38088,8 +38562,9 @@ Get profile by username Get a user's public profile by their username Source-gen
 }
 ```
 
+<a id="get-settings-privacy"></a>
 ## GET /api/v2/settings/privacy
-Canonical passage: /v2/reference/api#get-settings-privacy
+Canonical passage: http://localhost:4173/v2/reference/api#get-settings-privacy
 
 Get privacy settings Get the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38120,8 +38595,9 @@ Get privacy settings Get the authenticated user's privacy settings Source-genera
 }
 ```
 
+<a id="put-settings-privacy"></a>
 ## PUT /api/v2/settings/privacy
-Canonical passage: /v2/reference/api#put-settings-privacy
+Canonical passage: http://localhost:4173/v2/reference/api#put-settings-privacy
 
 Update privacy settings Update the authenticated user's privacy settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38172,8 +38648,9 @@ Update privacy settings Update the authenticated user's privacy settings Source-
 }
 ```
 
+<a id="get-settings-notifications"></a>
 ## GET /api/v2/settings/notifications
-Canonical passage: /v2/reference/api#get-settings-notifications
+Canonical passage: http://localhost:4173/v2/reference/api#get-settings-notifications
 
 Get notification settings Get the authenticated user's notification methods and type-level settings Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38204,8 +38681,9 @@ Get notification settings Get the authenticated user's notification methods and 
 }
 ```
 
+<a id="put-settings-notifications"></a>
 ## PUT /api/v2/settings/notifications
-Canonical passage: /v2/reference/api#put-settings-notifications
+Canonical passage: http://localhost:4173/v2/reference/api#put-settings-notifications
 
 Save notification preferences  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38256,8 +38734,9 @@ Save notification preferences  Source-generated operation; schemas and per-opera
 }
 ```
 
+<a id="get-themes"></a>
 ## GET /api/v2/themes
-Canonical passage: /v2/reference/api#get-themes
+Canonical passage: http://localhost:4173/v2/reference/api#get-themes
 
 List custom themes Get all custom themes created by the authenticated user Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38288,8 +38767,9 @@ List custom themes Get all custom themes created by the authenticated user Sourc
 }
 ```
 
+<a id="post-themes"></a>
 ## POST /api/v2/themes
-Canonical passage: /v2/reference/api#post-themes
+Canonical passage: http://localhost:4173/v2/reference/api#post-themes
 
 Create custom theme Create a new custom theme Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38340,8 +38820,9 @@ Create custom theme Create a new custom theme Source-generated operation; schema
 }
 ```
 
+<a id="get-themes-preferences"></a>
 ## GET /api/v2/themes/preferences
-Canonical passage: /v2/reference/api#get-themes-preferences
+Canonical passage: http://localhost:4173/v2/reference/api#get-themes-preferences
 
 Get theme preferences Get the authenticated user's theme preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38372,8 +38853,9 @@ Get theme preferences Get the authenticated user's theme preferences Source-gene
 }
 ```
 
+<a id="put-themes-preferences"></a>
 ## PUT /api/v2/themes/preferences
-Canonical passage: /v2/reference/api#put-themes-preferences
+Canonical passage: http://localhost:4173/v2/reference/api#put-themes-preferences
 
 Set theme preferences Set the authenticated user's active theme and system preferences Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38424,8 +38906,9 @@ Set theme preferences Set the authenticated user's active theme and system prefe
 }
 ```
 
+<a id="put-themes-themeId"></a>
 ## PUT /api/v2/themes/{themeId}
-Canonical passage: /v2/reference/api#put-themes-themeId
+Canonical passage: http://localhost:4173/v2/reference/api#put-themes-themeId
 
 Update custom theme Update a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38509,8 +38992,9 @@ Update custom theme Update a custom theme (must be the owner) Source-generated o
 }
 ```
 
+<a id="delete-themes-themeId"></a>
 ## DELETE /api/v2/themes/{themeId}
-Canonical passage: /v2/reference/api#delete-themes-themeId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-themes-themeId
 
 Delete custom theme Delete a custom theme (must be the owner) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38567,8 +39051,9 @@ Delete custom theme Delete a custom theme (must be the owner) Source-generated o
 }
 ```
 
+<a id="get-events-eventId-invites"></a>
 ## GET /api/v2/events/{eventId}/invites
-Canonical passage: /v2/reference/api#get-events-eventId-invites
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-invites
 
 List link and email invites  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38712,8 +39197,9 @@ List link and email invites  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="post-events-eventId-invites"></a>
 ## POST /api/v2/events/{eventId}/invites
-Canonical passage: /v2/reference/api#post-events-eventId-invites
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-invites
 
 Create link invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38833,8 +39319,9 @@ Create link invitation  Source-generated operation; schemas and per-operation re
 }
 ```
 
+<a id="post-events-eventId-invites-email"></a>
 ## POST /api/v2/events/{eventId}/invites/email
-Canonical passage: /v2/reference/api#post-events-eventId-invites-email
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-invites-email
 
 Create email invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -38989,8 +39476,9 @@ Create email invitation  Source-generated operation; schemas and per-operation r
 }
 ```
 
+<a id="post-events-eventId-member-invites"></a>
 ## POST /api/v2/events/{eventId}/member-invites
-Canonical passage: /v2/reference/api#post-events-eventId-member-invites
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-member-invites
 
 Create member invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39119,8 +39607,9 @@ Create member invitation  Source-generated operation; schemas and per-operation 
 }
 ```
 
+<a id="get-events-eventId-member-invites"></a>
 ## GET /api/v2/events/{eventId}/member-invites
-Canonical passage: /v2/reference/api#get-events-eventId-member-invites
+Canonical passage: http://localhost:4173/v2/reference/api#get-events-eventId-member-invites
 
 List username invitations  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39312,8 +39801,9 @@ List username invitations  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="post-events-eventId-invites-send-pending"></a>
 ## POST /api/v2/events/{eventId}/invites/send-pending
-Canonical passage: /v2/reference/api#post-events-eventId-invites-send-pending
+Canonical passage: http://localhost:4173/v2/reference/api#post-events-eventId-invites-send-pending
 
 Create pending invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39403,8 +39893,9 @@ Create pending invitation  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="patch-invites-inviteId"></a>
 ## PATCH /api/v2/invites/{inviteId}
-Canonical passage: /v2/reference/api#patch-invites-inviteId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-invites-inviteId
 
 Edit invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39503,8 +39994,9 @@ Edit invitation  Source-generated operation; schemas and per-operation responses
 }
 ```
 
+<a id="delete-invites-inviteId"></a>
 ## DELETE /api/v2/invites/{inviteId}
-Canonical passage: /v2/reference/api#delete-invites-inviteId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-invites-inviteId
 
 Delete invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39568,8 +40060,9 @@ Delete invitation  Source-generated operation; schemas and per-operation respons
 }
 ```
 
+<a id="get-invites-token"></a>
 ## GET /api/v2/invites/{token}
-Canonical passage: /v2/reference/api#get-invites-token
+Canonical passage: http://localhost:4173/v2/reference/api#get-invites-token
 
 Inspect bearer invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39640,8 +40133,9 @@ Inspect bearer invitation  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="post-invites-token-accept"></a>
 ## POST /api/v2/invites/{token}/accept
-Canonical passage: /v2/reference/api#post-invites-token-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-invites-token-accept
 
 Accept bearer invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39724,8 +40218,9 @@ Accept bearer invitation  Source-generated operation; schemas and per-operation 
 }
 ```
 
+<a id="get-member-invites"></a>
 ## GET /api/v2/member-invites
-Canonical passage: /v2/reference/api#get-member-invites
+Canonical passage: http://localhost:4173/v2/reference/api#get-member-invites
 
 List username invitations  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -39906,8 +40401,9 @@ List username invitations  Source-generated operation; schemas and per-operation
 }
 ```
 
+<a id="get-member-invites-inviteId"></a>
 ## GET /api/v2/member-invites/{inviteId}
-Canonical passage: /v2/reference/api#get-member-invites-inviteId
+Canonical passage: http://localhost:4173/v2/reference/api#get-member-invites-inviteId
 
 Inspect username invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40034,8 +40530,9 @@ Inspect username invitation  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="delete-member-invites-inviteId"></a>
 ## DELETE /api/v2/member-invites/{inviteId}
-Canonical passage: /v2/reference/api#delete-member-invites-inviteId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-member-invites-inviteId
 
 cancel username invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40117,8 +40614,9 @@ cancel username invitation  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="post-member-invites-inviteId-accept"></a>
 ## POST /api/v2/member-invites/{inviteId}/accept
-Canonical passage: /v2/reference/api#post-member-invites-inviteId-accept
+Canonical passage: http://localhost:4173/v2/reference/api#post-member-invites-inviteId-accept
 
 accept username invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40201,8 +40699,9 @@ accept username invitation  Source-generated operation; schemas and per-operatio
 }
 ```
 
+<a id="post-member-invites-inviteId-decline"></a>
 ## POST /api/v2/member-invites/{inviteId}/decline
-Canonical passage: /v2/reference/api#post-member-invites-inviteId-decline
+Canonical passage: http://localhost:4173/v2/reference/api#post-member-invites-inviteId-decline
 
 decline username invitation  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40284,8 +40783,9 @@ decline username invitation  Source-generated operation; schemas and per-operati
 }
 ```
 
+<a id="post-invite-lists-inviteListId-invite-to-event"></a>
 ## POST /api/v2/invite-lists/{inviteListId}/invite-to-event
-Canonical passage: /v2/reference/api#post-invite-lists-inviteListId-invite-to-event
+Canonical passage: http://localhost:4173/v2/reference/api#post-invite-lists-inviteListId-invite-to-event
 
 Invite a list’s current people to an event Explicitly expand the caller-owned list and send ordinary pending invitations. Requires invite-lists:write scope and current event invitation authority; grants do not bypass event roles. Attendee is the default; Moderator is organizer-only. At most 100 distinct recipients. Deleted people are anonymized and skipped using UNAVAILABLE. A Needs attention list with no existing people rejects fresh sends until repaired with an existing user. Confidential skips use UNAVAILABLE. No membership or RSVP is created. A protected retry returns its original outcome and recipient snapshot even after list edits/deletion or recipient account deletion; current event authority is still checked. Zero sentCount means no invitations were sent. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40386,8 +40886,9 @@ Invite a list’s current people to an event Explicitly expand the caller-owned 
 }
 ```
 
+<a id="patch-invite-lists-inviteListId"></a>
 ## PATCH /api/v2/invite-lists/{inviteListId}
-Canonical passage: /v2/reference/api#patch-invite-lists-inviteListId
+Canonical passage: http://localhost:4173/v2/reference/api#patch-invite-lists-inviteListId
 
 Edit a private Invite list Replace only supplied fields and validate the final saved selection. At least one current existing user is required on save. Previously saved deleted identities may remain as anonymous unavailable entries alongside existing users; newly submitted missing identities are rejected. Repair a Needs attention list by adding an existing user. Changes are silent. Requires invite-lists:write scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40478,8 +40979,9 @@ Edit a private Invite list Replace only supplied fields and validate the final s
 }
 ```
 
+<a id="delete-invite-lists-inviteListId"></a>
 ## DELETE /api/v2/invite-lists/{inviteListId}
-Canonical passage: /v2/reference/api#delete-invite-lists-inviteListId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-invite-lists-inviteListId
 
 Delete a private Invite list Remove a future picker choice without changing existing invitations or event participation. Requires invite-lists:write scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40550,8 +41052,9 @@ Delete a private Invite list Remove a future picker choice without changing exis
 }
 ```
 
+<a id="get-invite-lists-inviteListId"></a>
 ## GET /api/v2/invite-lists/{inviteListId}
-Canonical passage: /v2/reference/api#get-invite-lists-inviteListId
+Canonical passage: http://localhost:4173/v2/reference/api#get-invite-lists-inviteListId
 
 Inspect a private Invite list Resolve current display data for saved people. Deleted people retain their stable identity with null name, username, and image and available:false. A named list with no existing people is retained with needsAttention:true and cannot be used until repaired. Missing and other-creator lists have the same not-found response. Requires invite-lists:read scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40622,8 +41125,9 @@ Inspect a private Invite list Resolve current display data for saved people. Del
 }
 ```
 
+<a id="get-invite-lists-people-search"></a>
 ## GET /api/v2/invite-lists/people/search
-Canonical passage: /v2/reference/api#get-invite-lists-people-search
+Canonical passage: http://localhost:4173/v2/reference/api#get-invite-lists-people-search
 
 Search existing people by username Use the existing username picker without an event or friendship prerequisite. Excludes self and blocked users. Requires invite-lists:read scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40686,8 +41190,9 @@ Search existing people by username Use the existing username picker without an e
 }
 ```
 
+<a id="get-invite-lists-people-friends"></a>
 ## GET /api/v2/invite-lists/people/friends
-Canonical passage: /v2/reference/api#get-invite-lists-people-friends
+Canonical passage: http://localhost:4173/v2/reference/api#get-invite-lists-people-friends
 
 List accepted friend choices Selectable accepted friends without an event prerequisite. Requires invite-lists:read scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40738,8 +41243,9 @@ List accepted friend choices Selectable accepted friends without an event prereq
 }
 ```
 
+<a id="get-invite-lists"></a>
 ## GET /api/v2/invite-lists
-Canonical passage: /v2/reference/api#get-invite-lists
+Canonical passage: http://localhost:4173/v2/reference/api#get-invite-lists
 
 List private Invite lists Read only the authenticated creator’s lists. Maximum 100 lists per creator. Requires invite-lists:read scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40790,8 +41296,9 @@ List private Invite lists Read only the authenticated creator’s lists. Maximum
 }
 ```
 
+<a id="post-invite-lists"></a>
 ## POST /api/v2/invite-lists
-Canonical passage: /v2/reference/api#post-invite-lists
+Canonical passage: http://localhost:4173/v2/reference/api#post-invite-lists
 
 Create a private Invite list Save existing people without invitations, notifications or event participation changes. Maximum 100 lists per creator and 100 distinct people per list. Requires invite-lists:write scope. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40862,8 +41369,9 @@ Create a private Invite list Save existing people without invitations, notificat
 }
 ```
 
+<a id="post-reports"></a>
 ## POST /api/v2/reports
-Canonical passage: /v2/reference/api#post-reports
+Canonical passage: http://localhost:4173/v2/reference/api#post-reports
 
 Create report Report content for review by administrators Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40914,8 +41422,9 @@ Create report Report content for review by administrators Source-generated opera
 }
 ```
 
+<a id="get-admin-users"></a>
 ## GET /api/v2/admin/users
-Canonical passage: /v2/reference/api#get-admin-users
+Canonical passage: http://localhost:4173/v2/reference/api#get-admin-users
 
 List all users List all users in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -40956,8 +41465,9 @@ List all users List all users in the system (admin only) Source-generated operat
 }
 ```
 
+<a id="delete-admin-users-userId"></a>
 ## DELETE /api/v2/admin/users/{userId}
-Canonical passage: /v2/reference/api#delete-admin-users-userId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-admin-users-userId
 
 Delete user Delete a user and their associated data (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41024,8 +41534,9 @@ Delete user Delete a user and their associated data (admin only) Source-generate
 }
 ```
 
+<a id="put-admin-users-userId-role"></a>
 ## PUT /api/v2/admin/users/{userId}/role
-Canonical passage: /v2/reference/api#put-admin-users-userId-role
+Canonical passage: http://localhost:4173/v2/reference/api#put-admin-users-userId-role
 
 Set user role Update a user's role (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41099,8 +41610,9 @@ Set user role Update a user's role (admin only) Source-generated operation; sche
 }
 ```
 
+<a id="get-admin-events"></a>
 ## GET /api/v2/admin/events
-Canonical passage: /v2/reference/api#get-admin-events
+Canonical passage: http://localhost:4173/v2/reference/api#get-admin-events
 
 List all events List all events in the system (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41141,8 +41653,9 @@ List all events List all events in the system (admin only) Source-generated oper
 }
 ```
 
+<a id="delete-admin-events-eventId"></a>
 ## DELETE /api/v2/admin/events/{eventId}
-Canonical passage: /v2/reference/api#delete-admin-events-eventId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-admin-events-eventId
 
 Delete event (admin) Delete an event as admin (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41199,8 +41712,9 @@ Delete event (admin) Delete an event as admin (admin only) Source-generated oper
 }
 ```
 
+<a id="get-admin-reports"></a>
 ## GET /api/v2/admin/reports
-Canonical passage: /v2/reference/api#get-admin-reports
+Canonical passage: http://localhost:4173/v2/reference/api#get-admin-reports
 
 List all reports List all content reports (admin only) Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41241,8 +41755,9 @@ List all reports List all content reports (admin only) Source-generated operatio
 }
 ```
 
+<a id="post-uploads"></a>
 ## POST /api/v2/uploads
-Canonical passage: /v2/reference/api#post-uploads
+Canonical passage: http://localhost:4173/v2/reference/api#post-uploads
 
 Upload a file Upload 1 byte to 10 MiB. Bounded credentials require eventId and files.upload; only attachment purpose is supported. Raw upload bodies preserve their Content-Type. Returned storageId is bound to that principal and event. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41327,8 +41842,9 @@ Upload a file Upload 1 byte to 10 MiB. Bounded credentials require eventId and f
 }
 ```
 
+<a id="get-uploads-storageId"></a>
 ## GET /api/v2/uploads/{storageId}
-Canonical passage: /v2/reference/api#get-uploads-storageId
+Canonical passage: http://localhost:4173/v2/reference/api#get-uploads-storageId
 
 Read an accessible file descriptor Requires access to the attachment parent event or ownership of an unclaimed upload. Bounded credentials additionally require files.read for that event. Already acquired storage URLs cannot be retroactively revoked. Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 
@@ -41385,8 +41901,9 @@ Read an accessible file descriptor Requires access to the attachment parent even
 }
 ```
 
+<a id="delete-uploads-storageId"></a>
 ## DELETE /api/v2/uploads/{storageId}
-Canonical passage: /v2/reference/api#delete-uploads-storageId
+Canonical passage: http://localhost:4173/v2/reference/api#delete-uploads-storageId
 
 Discard your unclaimed upload  Source-generated operation; schemas and per-operation responses are below. Deployment compatibility must be verified against the intended instance.
 

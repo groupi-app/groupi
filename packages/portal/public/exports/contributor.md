@@ -1,33 +1,25 @@
-# Run, test and submit a contribution
+# Introduction
 
-v2 · Current · Source: package.json
+v2 · Current · Source: packages/portal/src/learning-content.ts
+Canonical document: http://localhost:4173/v2/introduction.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
-## Start with general programming prerequisites
-Canonical passage: /v2/contributor#setup
+<a id="build"></a>
+## Build with Groupi
+Canonical passage: http://localhost:4173/v2/introduction#build
 
-Use Git, Node.js 22 or 24 and pnpm 10.12.1 (the root packageManager). React/TypeScript familiarity helps for UI work; Convex knowledge is introduced progressively. Clone the current repository and install its locked dependencies. A focused shared-package test does not require a live account or credentials.
+Create an Event in your own account, preview a private Event widget, or connect another user through explicit delegated consent. Start with a credential-free simulation, then deliberately run local examples. REST v2 source support is not proof that your instance has deployed it.
 
-```sh
-git clone https://github.com/groupi-app/groupi.git
-cd groupi
-corepack enable
-pnpm install --frozen-lockfile
-```
+- [Create your first Event](http://localhost:4173/v2/integrator)
+- [Build a private Event widget](http://localhost:4173/v2/event-widget)
+- [Build with an agent — Markdown](http://localhost:4173/agents.md)
 
-## Run one focused check
-Canonical passage: /v2/contributor#tests
+<a id="contributing"></a>
+## Contributing
+Canonical passage: http://localhost:4173/v2/introduction#contributing
 
-The shared GDL conformance suite is a useful first success with no service credentials. Run the workspace quality checks before submission. If pnpm reports an unsupported runtime, use Node 22 or 24; if the lock is stale, confirm the branch instead of rewriting it blindly. Humans can follow the repository development setup for servers; automated agents must use already-running services and must never run dev, start, build or Convex deployment commands.
+To contribute to Groupi, use CONTRIBUTING.md for repository setup, Node prerequisites, focused tests, pnpm check and pull requests. This Learn path is for integrations.
 
-```sh
-pnpm --filter @groupi/shared exec vitest run src/gdl/conformance.test.ts
-pnpm check
-pnpm lint:tokens
-```
-
-## Submit a reviewed contribution
-Canonical passage: /v2/contributor#submit
-
-Create a focused branch, explain the affected user flow and tests in your pull request, and follow CONTRIBUTING.md. Include a changeset for a user-facing change after agreeing its summary with the maintainer. Review permissions, compatibility and accessibility before requesting review. Never commit environment files or credentials.
+- [Contribution guide](https://github.com/groupi-app/groupi/blob/main/CONTRIBUTING.md)

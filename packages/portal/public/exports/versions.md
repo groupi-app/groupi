@@ -1,15 +1,19 @@
 # Versions and availability
 
 v2 · Current · Source: convex/api/v2/index.ts
+Canonical document: http://localhost:4173/v2/versions.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+<a id="v2"></a>
 ## REST v2
-Canonical passage: /v2/versions#v2
+Canonical passage: http://localhost:4173/v2/versions#v2
 
 REST v2 is recommended for new integrations and is the CLI transport. Resource responses are direct JSON; page and delete envelopes are operation-specific. Source-generated references describe this checkout. They are not proof that a hosted instance has this release. Verify the target instance before executing examples.
 
+<a id="v1"></a>
 ## REST v1
-Canonical passage: /v2/versions#v1
+Canonical passage: http://localhost:4173/v2/versions#v1
 
 REST v1 remains separately documented. Most resource successes wrap success/data. Do not assume path similarity means wire or authorization equivalence with v2. No retirement date or maintenance duration is currently promised. Select v1 explicitly for its generated reference.

@@ -1,11 +1,22 @@
 Choose an add-on author path
 
 v2 · Current · Source: docs/addon-framework.md
+Canonical document: http://localhost:4173/v2/addons.md
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c · verified 2026-10-30
 
 Source availability does not establish hosted deployment or registry publication.
 
+Table of Contents
+
+- [Develop a source handler and component](#source-handlers)
+- [Verify the scoped handler through a real fixture workflow](#source-verification)
+- [Author a reusable add-on template](#templates)
+- [Import, inspect and deliberately publish](#template-first-success)
+- [Check authorization and event isolation](#authorization)
+
+<a id="source-handlers"></a>
 Develop a source handler and component
-Canonical passage: /v2/addons#source-handlers
+Canonical passage: http://localhost:4173/v2/addons#source-handlers
 
 Source contributors use defineAddonHandler, register the branded handler in the backend registry and register an explicit frontend AddonDefinition. Standard AddonContext scopes data to the current event and add-on. Lifecycle hooks cover enable/configuration, participant data and event changes; trusted rawCtx is privileged source code, not a sandbox for arbitrary downloaded code. Follow the existing bring-list handler as a bounded starting point, validate all configuration and add a component to the explicit catalog.
 
@@ -69,15 +80,17 @@ export const bringListHandler = defineAddonHandler({
 });
 
 
+<a id="source-verification"></a>
 Verify the scoped handler through a real fixture workflow
-Canonical passage: /v2/addons#source-verification
+Canonical passage: http://localhost:4173/v2/addons#source-verification
 
 The source above is the current bring-list handler in convex/addons/handlers/bringList.ts. Its existing registry entry is in convex/addons/registry.ts and its frontend definition is in packages/web/features/addons/runtime/catalog.ts. Run the authenticated REST/CLI participation fixture to observe scoped configuration, participant validation and disabled-state cleanup without a live account. This fixture does not establish hosted notification or integration delivery.
 
 pnpm --filter @groupi/convex exec vitest run tests/addon-participation-rest.test.ts
 
+<a id="templates"></a>
 Author a reusable add-on template
-Canonical passage: /v2/addons#templates
+Canonical passage: http://localhost:4173/v2/addons#templates
 
 An add-on template is a reusable definition; an event add-on uses its saved snapshot. Editing or deleting a template does not rewrite existing event configurations. For the CLI author path, first confirm addonAuthoring.version: 1 from the intended instance. Save this bounded portable definition as meal.json, then import it as a new private draft. Source/local availability is established; registry installation is not claimed.
 
@@ -90,8 +103,9 @@ An add-on template is a reusable definition; an event add-on uses its saved snap
   ]}
 }
 
+<a id="template-first-success"></a>
 Import, inspect and deliberately publish
-Canonical passage: /v2/addons#template-first-success
+Canonical passage: http://localhost:4173/v2/addons#template-first-success
 
 Capture TEMPLATE_ID and saved version from the import response. Inspect the saved definition before publishing and enabling it on an event you may manage. Concurrent versions fail without applying the write. If a response is uncertain, get the definition before trying again. These commands use the current generated CLI reference.
 
@@ -100,7 +114,8 @@ groupi addons definitions get TEMPLATE_ID --format json
 groupi addons definitions publish TEMPLATE_ID --expected-version 1 --yes --format json
 groupi addons enable EVENT_ID custom:TEMPLATE_ID --template-id TEMPLATE_ID --yes
 
+<a id="authorization"></a>
 Check authorization and event isolation
-Canonical passage: /v2/addons#authorization
+Canonical passage: http://localhost:4173/v2/addons#authorization
 
 Template ownership is independent of event organizer/moderator authority. Participant submissions use the authenticated identity, with no impersonation. Verify one event cannot read another event’s add-on data, and denied writes cause no side effects. A template is declarative data, not a dynamically installable arbitrary-code marketplace. send_webhook is unsupported for new authoring; configured actions can have side effects and must be inspected. See the existing authenticated REST participation and authoring fixtures for verification.

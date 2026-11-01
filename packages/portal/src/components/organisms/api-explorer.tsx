@@ -1,26 +1,21 @@
 'use client';
 import { useState } from 'react';
-const prerequisites: Record<string, string> = {
-  expired:
-    '401 Unauthorized: the simulated credential has expired. Obtain a fresh credential through the intended instance; do not retry an expired key.',
-  'wrong-instance':
-    'Wrong instance: this simulated credential belongs to instance A, while the target is instance B. Stop and verify the instance and account; never forward a credential to an untrusted origin.',
-  'unsupported-version':
-    'Unsupported API version: this simulated instance does not advertise the documented v2 operation. Check its versioned reference and release prerequisites before proceeding.',
-  unavailable:
-    'Upcoming capability: this simulated operation is not released on the target instance. Source examples and proposed SDKs do not establish runtime availability.',
-};
+import {
+  simulateCreate,
+  simulationPrerequisites as prerequisites,
+  type SimulationState,
+} from '../../learning-simulation';
 export function ApiExplorer() {
   const [identity, setIdentity] = useState('organizer');
   const [scenario, setScenario] = useState('ready');
   const [title, setTitle] = useState('Developer dinner');
   const [lost, setLost] = useState(false);
-  const [response, setResponse] = useState('Choose a simulated operation.');
-  const [event, setEvent] = useState<{ eventId: string; title: string }>();
-  const [retained, setRetained] = useState<{
-    title: string;
-    identity: string;
-  }>();
+  const [state, setState] = useState<SimulationState>({
+    response: 'Choose a simulated operation.',
+  });
+  const { event, retained, response } = state;
+  const setResponse = (response: string) =>
+    setState(current => ({ ...current, response }));
   function prerequisiteFailed() {
     const failure = prerequisites[scenario];
     if (failure) {
@@ -30,37 +25,15 @@ export function ApiExplorer() {
     return false;
   }
   function create(replay: boolean) {
-    if (prerequisiteFailed()) return;
-    if (identity !== 'organizer') {
-      setResponse(
-        '403 Forbidden: this demo identity lacks event-create permission. Real access intersects the credential grant with current account authority.'
-      );
-      return;
-    }
-    if (!title.trim()) {
-      setResponse('400 Bad Request: title is required.');
-      return;
-    }
-    if (
-      retained &&
-      (retained.title !== title || retained.identity !== identity)
-    ) {
-      setResponse(
-        '409 Conflict: retained request identity or body changed. Inspect current state; do not blindly create with a new identifier.'
-      );
-      return;
-    }
-    if (replay && !retained) {
-      setResponse('No retained create to replay.');
-      return;
-    }
-    const created = event ?? { eventId: 'demo-event-1', title };
-    setEvent(created);
-    setRetained({ title, identity });
-    setResponse(
-      lost && !replay
-        ? 'Outcome uncertain: demo request committed but its response was lost. Replay the retained create with identical identity, identifier and body.'
-        : `201 Created${replay ? ' (same retained demo request)' : ''}\n${JSON.stringify(created, null, 2)}`
+    setState(current =>
+      simulateCreate(current, {
+        title,
+        identity,
+        scenario,
+        lost,
+        replay,
+        eventId: 'demo-event-1',
+      })
     );
   }
   return (
@@ -144,15 +117,14 @@ export function ApiExplorer() {
           <button
             type='button'
             onClick={() => {
-              setEvent(undefined);
-              setRetained(undefined);
+              setState({
+                response:
+                  'Demo reset. No real credential needs revocation and no real event was created.',
+              });
               setTitle('Developer dinner');
               setIdentity('organizer');
               setScenario('ready');
               setLost(false);
-              setResponse(
-                'Demo reset. No real credential needs revocation and no real event was created.'
-              );
             }}
           >
             Reset demo

@@ -35,5 +35,16 @@ registry release. Exports and search use the same public corpus.
 The intended output is a static React/Vite site, independent of the Groupi app.
 Configure the host to serve `index.html` for reader paths while retaining actual
 export files. No server rendering, app backend, credentials or external search
-provider is required. Builds, dev servers and deployment are not executed as part
-of this implementation task.
+provider is required. Local builds and previews are permitted for verification;
+production deployment and credential configuration require separate authorization.
+
+Set `PORTAL_DOCS_ORIGIN` to the verified HTTPS docs origin for both
+`content:generate` and `content:check` before a release build. The default
+`http://localhost:4173` is deliberately a local preview URL, not a production
+hostname. The Vercel production build rejects a missing public origin.
+
+`/agents.md` and `/v2/agents.md` serve identical generated integration guidance.
+Versioned task Markdown and `/llms.txt` share the human reader's allowlisted
+content. Existing `/exports/*` downloads remain available. See
+`public-headers.txt` and `vercel.json` for raw-document MIME types and fallback
+exclusions; a missing Markdown path must return 404 rather than the app shell.

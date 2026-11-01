@@ -1,19 +1,21 @@
-# Groupi developer documentation
+# Build with Groupi
 
-Public source-verified documentation. Availability and version labels are part of each page; package release and deployment are separate evidence.
+Public integration documentation. Start with the agent guide, then retrieve only the task and reference pages you need. Documentation does not grant account access.
 
-- [Read and create your first event](/exports/integrator.md): v2, Current
-- [Run, test and submit a contribution](/exports/contributor.md): v2, Current
-- [Choose an add-on author path](/exports/addons.md): v2, Current
-- [CLI and automation first success](/exports/cli.md): cli-0.1.0, Current
-- [Understand the contribution boundaries](/exports/architecture.md): v2, Current
-- [Groupi concepts](/exports/concepts.md): v2, Current
-- [Versions and availability](/exports/versions.md): v2, Current
-- [Self-hosting status](/exports/self-hosting.md): v2, Proposed
-- [TypeScript and Python SDK availability](/exports/sdks.md): v2, Upcoming
-- [Realtime and API/SDK evolution](/exports/api-sdk-evolution.md): v2, Proposed
-- [Bounded access and delegated sign-in](/exports/auth.md): v2, Upcoming
-- [Canonical docs for your own agent](/exports/exports.md): v2, Current
-- [CLI 0.1.0 command reference](/exports/cli-reference.md): cli-0.1.0, Current
-- [REST v1 API reference](/exports/api-v1.md): v1, Current
-- [REST v2 API reference](/exports/api-v2.md): v2, Current
+Public contract baseline: ec33a44dce0ba9be828c3d8916d768ae81060a8c. Source support, hosted deployment and registry publication are separate evidence.
+
+- [Build with Groupi — agent guide](http://localhost:4173/v2/agents.md): v2, Current
+- [Introduction](http://localhost:4173/v2/introduction.md): v2, Current
+- [Read and create your first event](http://localhost:4173/v2/integrator.md): v2, Current
+- [Build a private Event widget](http://localhost:4173/v2/event-widget.md): v2, Current
+- [Read Group Events](http://localhost:4173/v2/group-events.md): v2, Current
+- [Update an Event safely](http://localhost:4173/v2/event-updates.md): v2, Current
+- [Connect another user](http://localhost:4173/v2/connect-users.md): v2, Upcoming
+- [Groupi concepts](http://localhost:4173/v2/concepts.md): v2, Current
+- [Bounded access and delegated sign-in](http://localhost:4173/v2/auth.md): v2, Upcoming
+- [TypeScript and Python SDK availability](http://localhost:4173/v2/sdks.md): v2, Upcoming
+- [Versions and availability](http://localhost:4173/v2/versions.md): v2, Current
+- [CLI and automation first success](http://localhost:4173/cli/0.1.0/guide.md): cli-0.1.0, Current
+- [CLI 0.1.0 command reference](http://localhost:4173/cli/0.1.0/reference.md): cli-0.1.0, Current
+- [REST v2 API reference](http://localhost:4173/v2/reference/api.md): v2, Current
+- [REST v1 API reference](http://localhost:4173/v1/reference/api.md): v1, Current

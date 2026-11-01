@@ -2,32 +2,47 @@
 export function PortalHome() {
   return (
     <section className='landing'>
-      <p className='eyebrow'>Make something that brings people together</p>
-      <h1 tabIndex={-1}>
-        Build with Groupi.
-        <br />
-        Help shape what comes next.
-      </h1>
+      <p className='eyebrow'>Groupi developers</p>
+      <h1 tabIndex={-1}>Build with Groupi.</h1>
       <p>
-        Integrate your tools, automate event planning, or contribute to the
-        open-source app.
+        Create Events, build private widgets and connect your tools. Start with
+        a simulated example, then run it locally with your own account.
       </p>
       <div className='journeys'>
-        <a href='/v2/integrator' aria-label='Build with Groupi'>
-          Build with Groupi{' '}
+        <a href='/v2/integrator' aria-label='Create your first Event'>
+          Create your first Event
           <small>
-            Read your first events, create safely and explore the API.
+            Try an editable simulation, then create one Event locally.
           </small>
         </a>
-        <a href='/v2/contributor' aria-label='Contribute to Groupi'>
-          Contribute to Groupi{' '}
-          <small>
-            Set up a focused test, understand the architecture and submit a
-            change.
-          </small>
+        <a href='/v2/reference/api' aria-label='Explore the API reference'>
+          Explore the API reference
+          <small>Find exact operations, request schemas and responses.</small>
         </a>
       </div>
       <div className='route-cards'>
+        <a href='/v2/introduction'>
+          Introduction<span>Choose a task and an account boundary</span>
+        </a>
+        <a href='/v2/event-widget' aria-label='Build a private Event widget'>
+          Build a private Event widget
+          <span>
+            Read and display an Event with useful loading and error states
+          </span>
+        </a>
+        <a href='/v2/agents' aria-label='Build with an agent'>
+          Build with an agent
+          <span>Direct Markdown guides for your integration</span>
+        </a>
+        <a href='/v2/group-events'>
+          Group Events<span>Read Events your account may access</span>
+        </a>
+        <a href='/v2/event-updates'>
+          Update an Event<span>Check authority before a deliberate change</span>
+        </a>
+        <a href='/v2/connect-users'>
+          Connect another user<span>Delegated access and consent</span>
+        </a>
         <a href='/cli/0.1.0/guide'>
           Automate with the CLI
           <span>Profiles, structured output and replay recovery</span>
@@ -42,14 +57,6 @@ export function PortalHome() {
         <a href='/v2/concepts'>
           Learn the concepts
           <span>Roles, Groups, invite lists and event audiences</span>
-        </a>
-        <a href='/v2/architecture'>
-          Understand the architecture
-          <span>Domain operations and shared/platform ownership</span>
-        </a>
-        <a href='/v2/exports'>
-          Retrieve docs for your agent
-          <span>Markdown, text and public JSON exports</span>
         </a>
         <a href='/v2/sdks'>
           SDK availability

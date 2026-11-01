@@ -102,3 +102,6 @@ packages/shared/dist/
 convex/convex/
 packages/web/convex/
 *.tgz
+
+# Portal local build output
+packages/portal/dist/
