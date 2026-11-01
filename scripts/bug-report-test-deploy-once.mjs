@@ -1554,6 +1554,49 @@ export function verifySources() {
   }
 }
 
+// Keep failure diagnostics bounded and redact credentials before emitting them.
+export function safeDiagnostics(output, secretValues = []) {
+  let text = String(output ?? '').replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '');
+  for (const value of secretValues.filter(
+    value => typeof value === 'string' && value.length >= 6
+  )) {
+    for (const encoded of [
+      value,
+      encodeURIComponent(value),
+      Buffer.from(value).toString('base64'),
+    ]) {
+      text = text.split(encoded).join('[REDACTED]');
+    }
+  }
+  text = text
+    .replace(/"[^"\n]*"|'[^'\n]*'|`[^`\n]*`/g, '[QUOTED]')
+    .replace(/(?:https?|wss?):\/\/[^\s<>"']+/gi, '[URL]')
+    .replace(/\b(?:dev|prod|preview):[^\s|]+\|[^\s]+/gi, '[DEPLOY_KEY]')
+    .replace(/\bBearer\s+\S+/gi, 'Bearer [TOKEN]')
+    .replace(
+      /\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g,
+      '[JWT]'
+    )
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[EMAIL]')
+    .replace(
+      /((?:key|token|secret|password|authorization|cookie|dsn)\s*[:=]\s*)[^\s,;]+/gi,
+      '$1[REDACTED]'
+    )
+    .replace(/[A-Za-z0-9_+\/=-]{24,}/g, '[OPAQUE]')
+    .replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '');
+  const lines = text
+    .slice(-100000)
+    .split(/\r?\n/)
+    .filter(line =>
+      /error|fail|cannot|could not|typecheck|bundl|deploy|TS\d{4}/i.test(line)
+    )
+    .slice(-12)
+    .map(line => line.trim().slice(0, 240));
+  return (
+    lines.join('\n').slice(0, 2500) || 'No safe diagnostic lines available.'
+  );
+}
+
 export function run() {
   const key = checkedKey(process.env);
   for (const entry of readdirSync(root)) {
@@ -1593,15 +1636,28 @@ export function run() {
         '--yes',
         '--typecheck',
         'enable',
-        '--typecheck-components',
         '--codegen',
         'enable',
         '--skip-workos-check',
       ],
       { cwd: root, env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }
     );
-    // Never echo child output: SDK errors may include request details or credentials.
+    // Emit bounded redacted diagnostics only; never raw SDK output.
     if (result.error || result.status !== 0) {
+      const secrets = [
+        key,
+        ...Object.entries(process.env)
+          .filter(([name]) =>
+            /key|token|secret|password|authorization|cookie|dsn/i.test(name)
+          )
+          .map(([, value]) => value),
+      ];
+      console.error(
+        safeDiagnostics(
+          `${result.stdout ?? ''}\n${result.stderr ?? ''}`,
+          secrets
+        )
+      );
       throw new Error(
         `TEST backend deployment failed (exit ${result.status ?? 'none'}, signal ${result.signal ?? 'none'}); no status artifact published.`
       );
