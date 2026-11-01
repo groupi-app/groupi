@@ -1,6 +1,6 @@
 # Groupi Testing Guide
 
-This document provides comprehensive guidance on writing tests for the Groupi application following established patterns and best practices.
+Test setup, fixtures, and validation commands for Groupi.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ This document provides comprehensive guidance on writing tests for the Groupi ap
 
 ## Testing Framework Overview
 
-All packages use **Vitest** as the primary testing framework with the following supporting libraries:
+The web, mobile, shared, portal, and Convex packages use **Vitest**. The SDK also uses Node's test runner and Python unittest; CLI package smoke checks run through a Node script. Inspect each package manifest for its commands. Supporting libraries include:
 
 - `@testing-library/react` - React component testing
 - `@testing-library/jest-dom` - DOM assertions
@@ -45,7 +45,7 @@ All packages use **Vitest** as the primary testing framework with the following 
 
 ```bash
 pnpm test:web           # Run web tests
-pnpm --filter @groupi/web test -- --watch  # Watch mode
+pnpm --filter @groupi/web test:watch  # Watch mode
 ```
 
 ### Convex Package (`convex/`)
@@ -93,29 +93,32 @@ For pure functions in `lib/` directories:
 ```typescript
 // lib/event-permissions.test.ts
 import { describe, it, expect } from 'vitest';
-import { canDeletePost, isModerator } from './event-permissions';
+import { canDeletePost } from './event-permissions';
 
 describe('canDeletePost', () => {
   it('should allow organizers to delete any post', () => {
     const result = canDeletePost({
+      userId: 'organizer',
       userRole: 'ORGANIZER',
-      isAuthor: false,
+      postAuthorId: 'author',
     });
     expect(result).toBe(true);
   });
 
   it('should allow authors to delete their own posts', () => {
     const result = canDeletePost({
+      userId: 'author',
       userRole: 'ATTENDEE',
-      isAuthor: true,
+      postAuthorId: 'author',
     });
     expect(result).toBe(true);
   });
 
   it('should prevent attendees from deleting others posts', () => {
     const result = canDeletePost({
+      userId: 'attendee',
       userRole: 'ATTENDEE',
-      isAuthor: false,
+      postAuthorId: 'author',
     });
     expect(result).toBe(false);
   });
@@ -171,66 +174,36 @@ describe('MyComponent', () => {
 
 ### 3. Convex Backend Tests
 
-For Convex queries and mutations:
+For Convex queries and mutations, use an existing authenticated scenario:
 
 ```typescript
 // convex/tests/my-feature.test.ts
-import { convexTest } from 'convex-test';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { api } from '../_generated/api';
-import schema from '../schema';
+import { createTestInstance, TestScenarios } from './test_helpers';
 
-// Import all modules for testing
-const modules = import.meta.glob('../**/*.ts', { eager: true });
-
-describe('My Feature', () => {
-  let t: ReturnType<typeof convexTest>;
-
-  beforeEach(() => {
-    t = convexTest(schema, modules);
+describe('Posts', () => {
+  it('creates and reads a post as an event member', async () => {
+    const t = createTestInstance();
+    const { auth, eventId } = await TestScenarios.singleEvent(t);
+    const { postId } = await auth.mutation(api.posts.mutations.createPost, {
+      eventId,
+      title: 'Test post',
+      content: 'Test content',
+    });
+    const post = await auth.query(api.posts.queries.getPost, { postId });
+    expect(post.content).toBe('Test content');
   });
 
-  it('should create a record', async () => {
-    // Create test user with authentication
-    const userId = 'test-user-id';
-    const asUser = t.withIdentity({ subject: userId });
-
-    // Create prerequisite data
-    const personId = await asUser.mutation(api.persons.mutations.create, {
-      userId,
-    });
-
-    // Test the feature
-    const result = await asUser.mutation(api.myFeature.mutations.create, {
-      personId,
-      data: 'test data',
-    });
-
-    expect(result).toBeDefined();
-    expect(result.data).toBe('test data');
-  });
-
-  it('should query records', async () => {
-    const userId = 'test-user-id';
-    const asUser = t.withIdentity({ subject: userId });
-
-    // Setup test data
-    const personId = await asUser.mutation(api.persons.mutations.create, {
-      userId,
-    });
-
-    // Query and verify
-    const results = await asUser.query(api.myFeature.queries.list, {
-      personId,
-    });
-
-    expect(results).toEqual([]);
-  });
-
-  it('should enforce authentication', async () => {
-    // Test without authentication
+  it('rejects an unauthenticated write', async () => {
+    const t = createTestInstance();
+    const { eventId } = await TestScenarios.singleEvent(t);
     await expect(
-      t.query(api.myFeature.queries.getPrivateData, {})
+      t.mutation(api.posts.mutations.createPost, {
+        eventId,
+        title: 'Unauthorized',
+        content: 'Test content',
+      })
     ).rejects.toThrow();
   });
 });
@@ -342,34 +315,12 @@ vi.mock('@/stores/my-store', () => ({
 
 ## Test Data Factories
 
-Use the shared test helpers for consistent test data:
-
-```typescript
-import {
-  TestDataFactory,
-  MockConvexApi,
-  PlatformTestHelpers,
-} from '@groupi/shared/test-helpers';
-
-// Create mock user
-const mockUser = TestDataFactory.createUser({
-  name: 'Test User',
-  email: 'test@example.com',
-});
-
-// Create mock event
-const mockEvent = TestDataFactory.createEvent({
-  title: 'Test Event',
-  creatorId: mockUser.personId,
-});
-
-// Create mock post
-const mockPost = TestDataFactory.createPost({
-  title: 'Test Post',
-  eventId: mockEvent._id,
-  authorId: mockUser.personId,
-});
-```
+[`packages/shared/src/test-helpers.ts`](../packages/shared/src/test-helpers.ts)
+contains legacy UI mock factories and platform test utilities. It is not an
+exported `@groupi/shared/test-helpers` package entry point. Its mock shapes are
+not database documents: use the Convex helpers below for backend fixtures, and
+match a component's actual props when making UI mocks. Avoid importing these
+legacy factories as proof of the current application schema.
 
 ## Convex Test Helpers
 
@@ -380,6 +331,7 @@ import {
   createTestInstance,
   createTestUser,
   createTestEventWithUser,
+  createAuthenticatedUser,
   TestScenarios,
 } from './test_helpers';
 
@@ -388,13 +340,10 @@ describe('My Convex Feature', () => {
     const t = createTestInstance();
 
     // Create a complete test scenario
-    const { auth, event, membership, person } =
-      await TestScenarios.singleEvent(t);
+    const { auth } = await TestScenarios.singleEvent(t);
 
     // Test with authenticated user
-    const result = await auth.query(api.myFeature.queries.get, {
-      eventId: event._id,
-    });
+    const result = await auth.query(api.events.queries.getUserEvents, {});
 
     expect(result).toBeDefined();
   });
@@ -446,63 +395,32 @@ const setup = await createTestEventWithUser(t, {
 
 ### Data Setup Chain Pattern
 
-When manually setting up test data in `t.run()`:
+Use the helpers to create an application person, event, and membership:
 
 ```typescript
-const { userId, personId, eventId, membershipId } = await t.run(async ctx => {
-  // 1. Create user (authentication identity)
-  const userId = await ctx.db.insert('users', {
-    email: 'test@example.com',
-    emailVerified: false,
-    banned: false,
-    twoFactorEnabled: false,
-    username: 'testuser',
-    name: 'Test User',
-  });
-
-  // 2. Create person (app profile linked to user)
-  const personId = await ctx.db.insert('persons', {
-    userId: userId, // Required reference
-    bio: 'Test user bio',
-  });
-
-  // 3. Create event (user creates events)
-  const eventId = await ctx.db.insert('events', {
-    title: 'Test Event',
-    description: 'A test event',
-    creatorId: personId, // Required reference
-    location: 'Test Location',
-    potentialDateTimes: [],
-    chosenDateTime: undefined,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    timezone: 'UTC',
-  });
-
-  // 4. Create membership (user joins event)
-  const membershipId = await ctx.db.insert('memberships', {
-    personId: personId,
-    eventId: eventId,
-    role: 'ATTENDEE',
+const { userId, personId, eventId, membershipId } =
+  await createTestEventWithUser(t, {
+    userEmail: 'test@example.com',
+    eventTitle: 'Test Event',
+    userRole: 'ATTENDEE',
     rsvpStatus: 'YES',
   });
-
-  return { userId, personId, eventId, membershipId };
-});
+const asUser = createAuthenticatedUser(t, userId);
 ```
+
+`userId` is a mock Better Auth identity string. These helpers create `persons`
+records, not a root `users` table. For custom application fixtures, perform
+`ctx.db` operations inside `t.run()` and follow the current
+[`convex/schema.ts`](../convex/schema.ts). Component-backed authentication tests
+need their own registered component setup; see
+[`convex/tests/auth.helpers.ts`](../convex/tests/auth.helpers.ts).
 
 ### Testing Authentication
 
-```typescript
-// Valid authentication (use subject as userId)
-const asUser = t.withIdentity({ subject: userId });
-const result = await asUser.mutation(api.some.mutation, { ... });
-
-// Test unauthenticated access (should fail)
-await expect(
-  t.mutation(api.posts.mutations.createPost, { ... })
-).rejects.toThrow("Authentication required");
-```
+`createAuthenticatedUser(t, userId)` uses `t.withIdentity({ subject: userId })`.
+Compare an authenticated operation with a call through the unauthenticated test
+instance, as in the post example above. Also test a signed-in outsider and
+insufficient roles; a sign-in check alone does not verify resource authorization.
 
 ### Verifying Database State
 
@@ -541,7 +459,7 @@ test('should enforce event membership', async () => {
       title: 'Unauthorized',
       content: 'Should fail',
     })
-  ).rejects.toThrow('Access denied');
+  ).rejects.toThrow('You do not have permission for this event content.');
 });
 
 test('should allow organizer to moderate posts', async () => {
@@ -558,7 +476,7 @@ test('should allow organizer to moderate posts', async () => {
 
   // Organizer can moderate it
   const result = await organizerAuth.mutation(api.posts.mutations.updatePost, {
-    postId: resource.id,
+    postId: resource.postId,
     content: 'Moderated content',
   });
 
@@ -580,14 +498,14 @@ test('should cascade delete related data', async () => {
     content: 'Content',
   });
 
-  await auth.mutation(api.replies.mutations.create, {
-    postId: post.id,
+  await auth.mutation(api.replies.mutations.createReply, {
+    postId: post.postId,
     text: 'Reply 1',
   });
 
   // Delete post should cascade to replies
   await auth.mutation(api.posts.mutations.deletePost, {
-    postId: post.id,
+    postId: post.postId,
   });
 
   // Verify cascade worked
@@ -628,43 +546,42 @@ test('should create notifications', async () => {
 ### Common Convex Test Mistakes
 
 ```typescript
-// ❌ Wrong: Direct database access outside t.run()
-const userId = await t.db.insert("users", { ... });
+// Incorrect: Direct database access outside t.run()
+const person = await t.db.get(personId);
 
-// ✅ Correct: Database access inside t.run()
-const { userId } = await t.run(async (ctx) => {
-  const userId = await ctx.db.insert("users", { ... });
-  return { userId };
-});
+// Correct: Database access inside t.run()
+const person = await t.run(ctx => ctx.db.get(personId));
 
-// ❌ Wrong: Missing modules parameter
+// Incorrect: Missing modules parameter
 const t = convexTest(schema, {});
 
-// ✅ Correct: Include modules glob
-const modules = import.meta.glob("./**/*.ts");
+// Correct: Include modules glob
+const modules = import.meta.glob('../**/*.{ts,js}', { eager: false });
 const t = convexTest(schema, modules);
 
-// ❌ Wrong: Using non-existent schema fields
-await ctx.db.insert("memberships", {
+// Incorrect: Using non-existent schema fields
+await ctx.db.insert('memberships', {
   personId,
   eventId,
-  role: "ATTENDEE",
-  rsvpStatus: "YES",
+  role: 'ATTENDEE',
+  rsvpStatus: 'YES',
   joinedAt: Date.now(), // Field doesn't exist!
 });
 
-// ✅ Correct: Only use fields that exist in schema
-await ctx.db.insert("memberships", {
+// Correct: Only use fields that exist in schema
+await ctx.db.insert('memberships', {
   personId,
   eventId,
-  role: "ATTENDEE",
-  rsvpStatus: "YES",
+  role: 'ATTENDEE',
+  rsvpStatus: 'YES',
 });
 ```
 
 ## Type-Safe Test IDs
 
-When creating mock IDs that need to match Convex ID types:
+For UI-only mock props, a branded string can stand in for an ID. These strings
+are not valid stored Convex IDs; use IDs returned by fixture inserts for backend
+queries and mutations:
 
 ```typescript
 // Define a branded type for test IDs
@@ -678,10 +595,11 @@ const eventId = 'test-event-id' as TestId<'events'>;
 
 ## Testing Better Auth Integration
 
-The test setup mocks Better Auth. For tests that need auth context:
+The web test setup mocks Better Auth. For tests that need auth context, expose
+`useSession` as a mock function so individual tests can change its result:
 
 ```typescript
-// Already mocked in test-setup.ts:
+// In the test file, before importing the component:
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     signIn: vi.fn(),
@@ -689,7 +607,7 @@ vi.mock('@/lib/auth-client', () => ({
     signUp: vi.fn(),
     getSession: vi.fn(),
   },
-  useSession: () => ({
+  useSession: vi.fn(() => ({
     data: {
       user: {
         id: 'test-user-id',
@@ -697,7 +615,7 @@ vi.mock('@/lib/auth-client', () => ({
         email: 'test@example.com',
       },
     },
-  }),
+  })),
 }));
 
 // To customize authentication state:
@@ -915,8 +833,10 @@ its tests; this is not whole-package coverage.
 Do not shrink either denominator to pass a gate. Expanding the shared denominator
 requires an explicit baseline review. Raise floors as coverage improves toward
 the targets; reductions require a documented review of the coverage change.
-Mobile's documented target remains 70%; its enforcement was not changed in this
-repair. Convex has no coverage threshold.
+Mobile's improvement target remains 70%. Its current `vitest.config.ts` enforces
+7% branches, 6% functions, 7% lines, and 7% statements over its configured source
+scope. These floors are not a claim that the target is met. Convex has no coverage
+threshold.
 
 Run the enforced reports:
 
@@ -955,17 +875,10 @@ vi.mock('@/convex/_generated/api', () => ({
 
 ### Issue: require() Not Mocked Properly
 
-**Problem**: `require()` calls bypass vitest mocking
-
-**Solution**: Use relative paths in both the source file and mock:
-
-```typescript
-// Source file
-const { api } = require('../../../convex/_generated/api');
-
-// Test file - use same relative path
-vi.mock('../../../convex/_generated/api', () => ({ ... }));
-```
+Vitest module mocking does not intercept CommonJS `require()` in the same way
+as ESM imports. Changing only a mock's relative path does not fix that boundary.
+Check how the module loads its dependencies and use an existing test seam or an
+integration test. Avoid claiming a mock verifies code it never intercepts.
 
 ### Issue: AuthUserId Type Errors
 
@@ -993,8 +906,8 @@ import { AuthUserId } from '../auth';
 ## Running Tests
 
 ```bash
-# Run all tests
-pnpm test
+# Run all tests once
+pnpm test:run
 
 # Run specific package
 pnpm test:web
@@ -1009,5 +922,5 @@ pnpm test:watch
 pnpm test:coverage
 
 # Run specific test file
-pnpm --filter @groupi/web test -- lib/event-permissions.test.ts
+pnpm --filter @groupi/web exec vitest run lib/event-permissions.test.ts
 ```

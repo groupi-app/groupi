@@ -1,135 +1,53 @@
-# Documentation Style Guide
+# Documentation style
 
-This style guide ensures consistency across all Groupi documentation.
-
-## File Naming
-
-- Use `kebab-case.md` for all documentation files (lowercase with hyphens)
-- Be descriptive but concise
-- Examples: `architecture.md`, `auth-architecture.md`, `state-management.md`
-
-## Document Structure
-
-Every documentation file should follow this structure:
-
-```markdown
-# Document Title
-
-Brief description of what this document covers (1-2 sentences).
+Write concise repository documentation that helps readers understand behavior,
+configure the project, or make a technical decision.
 
 ## Table of Contents
 
-- [Section One](#section-one)
-- [Section Two](#section-two)
-- [Section Three](#section-three)
+- [Content and accuracy](#content-and-accuracy)
+- [Structure and formatting](#structure-and-formatting)
+- [Validation](#validation)
 
-## Section One
+## Content and accuracy
 
-Content...
+- Lead with the document's purpose. Use direct factual prose and concrete headings.
+- Remove decorative emojis, promotional claims, generic filler, and repeated
+  summaries. Keep useful functionality descriptions, prerequisites, limitations,
+  warnings, security/privacy caveats, and architecture rationale.
+- Preserve functional emoji examples and status meanings. Use words for prose
+  status labels so the meaning remains clear without symbols.
+- Check commands and runtime requirements against manifests, configuration, and
+  current source. Link to a source inventory when copying a changing count or
+  version would add maintenance without helping the reader.
+- Distinguish current source, proposed work, published packages, and verified
+  deployments. A passing unit test or merged PR does not prove deployed behavior.
+- Preserve dated verification records and historical changelogs as history.
+  Record newer evidence separately; keep unresolved gates visible.
+- Keep each subject in its maintained source and link to it from entry points.
+  Update generated documents through their generator rather than editing copies.
 
-## Section Two
+## Structure and formatting
 
-Content...
-```
+- Retain the existing Markdown or MDX format and repository destination.
+- Use descriptive `kebab-case.md` names for new guides.
+- Use one H1, H2 for main sections, and H3/H4 only where the hierarchy helps.
+- Include a brief description after the title and a table of contents for guides
+  with three or more main sections. Keep headings and TOC anchors in sync.
+- Use lists for parallel items or steps, tables for comparisons, and prose for
+  explanations. Avoid duplicating the same information across these forms.
+- Use `-` for unordered lists and numbered lists for sequences.
+- Specify code fence languages. Keep examples focused, runnable where intended,
+  and consistent with current types, permissions, and error behavior.
+- Use inline code for commands, paths, functions, and variables. Use emphasis
+  sparingly and descriptive link text, such as `[Architecture](../../docs/architecture.md)`.
+- Avoid em dashes, canned contrasts, marketing superlatives, and enthusiasm that
+  adds no information.
 
-### Required Elements
+## Validation
 
-1. **Title** (`#`): Single H1 heading at the top
-2. **Description**: Brief overview immediately after title
-3. **Table of Contents**: Required for documents with 3+ main sections
-4. **Main Content**: Organized with H2 (`##`) sections
-
-## Header Hierarchy
-
-- `#` - Document title only (one per document)
-- `##` - Main sections
-- `###` - Subsections
-- `####` - Sub-subsections (use sparingly)
-
-## Code Blocks
-
-- Always specify the language for syntax highlighting
-- Use descriptive comments in code examples
-- Keep examples focused and minimal
-
-```typescript
-// Good: Specify language and add helpful comments
-function example() {
-  return 'hello';
-}
-```
-
-## Formatting Guidelines
-
-### Lists
-
-- Use `-` for unordered lists
-- Use `1.` for ordered/sequential lists
-- Indent nested items with 2 spaces
-
-### Tables
-
-Use tables for structured data comparison:
-
-| Column A | Column B | Column C |
-| -------- | -------- | -------- |
-| Value 1  | Value 2  | Value 3  |
-
-### Emphasis
-
-- Use `**bold**` for important terms on first use
-- Use `*italic*` for emphasis
-- Use `` `code` `` for file names, function names, and technical terms
-
-### Links
-
-- Use descriptive link text: `[Architecture Guide](./architecture.md)`
-- Avoid generic text like "click here" or "this link"
-
-## Content Guidelines
-
-### Be Concise
-
-- Lead with the most important information
-- Use bullet points for lists of items
-- Break long paragraphs into shorter ones
-
-### Be Consistent
-
-- Use the same terminology throughout
-- Follow established patterns in the codebase
-- Reference other docs instead of duplicating content
-
-### Code Examples
-
-- Show practical, real-world usage
-- Include both correct and incorrect patterns when helpful
-- Keep examples self-contained when possible
-
-## Quick Reference Section
-
-For longer documents, include a "Quick Reference" section at the end with:
-
-- Common commands
-- Key patterns
-- Important links
-
-## File Organization
-
-### `/docs/` Directory
-
-Human-readable documentation for developers:
-
-- `architecture.md` - System architecture overview
-- `auth-architecture.md` - Authentication system details
-- `state-management.md` - State management patterns
-- `database-schema.md` - Database schema reference
-- `testing.md` - Testing guide and patterns
-
-### `/.agents/rules/` Directory
-
-AI agent instructions (more directive, rule-focused):
-
-- `architecture.md` - Architecture rules for code generation
-- `testing.md` - Testing rules and patterns
-- `documentation.md` - This style guide
+Format changed files with `pnpm exec prettier --write <changed-files>`. Check
+relative links and incoming anchors after heading changes. Run applicable
+reference/content freshness checks and review the full diff for changed
+technical meaning. Follow [script policy](scripts.md) for builds and runtimes;
+record unavailable render or behavior checks as unverified.

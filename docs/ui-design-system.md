@@ -1,6 +1,6 @@
 # Groupi UI Design System
 
-Comprehensive guide to the Groupi design system, including design tokens, component architecture, and best practices for building consistent, maintainable UI.
+Design tokens, component ownership, and interaction rules for Groupi UI.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ Comprehensive guide to the Groupi design system, including design tokens, compon
 
 ## Overview
 
-The Groupi UI is built on three foundational pillars:
+Groupi UI uses:
 
 1. **Design Tokens**: A three-layer token system (Primitives → Semantic → Component) that ensures visual consistency
 2. **Atomic Architecture**: Components organized by complexity (Atoms → Molecules → Organisms → Templates)
@@ -63,7 +63,7 @@ See the [selected component rationale](design-language-material-review.md), [ref
 
 ### Three-Layer Token System
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ LAYER 3: Component Tokens                                    │
 │ Component-specific values (button.radius, card.padding)      │
@@ -73,7 +73,7 @@ See the [selected component rationale](design-language-material-review.md), [ref
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 1: Primitives                                          │
 │ Raw values (purple.700, spacing.4, fontSize.base)            │
-│ ⚠️ Never use directly in components                          │
+│ Never use directly in components                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -92,7 +92,7 @@ See the [selected component rationale](design-language-material-review.md), [ref
 After modifying theme files, regenerate the CSS tokens:
 
 ```bash
-pnpm generate:tokens
+pnpm --filter @groupi/web generate:tokens
 ```
 
 This updates `_generated-tokens.css` with all CSS custom properties.
@@ -243,7 +243,7 @@ className = 'text-text-disabled'; // Disabled state
 
 ### Border Radius
 
-**Semantic radius tokens** (Duolingo-inspired, dramatically rounded):
+**Semantic radius tokens**:
 
 ```tsx
 className = 'rounded-button'; // 16px - very rounded buttons
@@ -412,10 +412,10 @@ export * from './user-status';
 Always use semantic tokens, never hardcoded values:
 
 ```tsx
-// ❌ Bad - hardcoded colors
+// Incorrect - hardcoded colors
 className = 'bg-green-500 text-gray-700 rounded-xl shadow-lg';
 
-// ✅ Good - semantic tokens
+// Correct - semantic tokens
 className = 'bg-success text-foreground rounded-card shadow-raised';
 ```
 
@@ -560,14 +560,14 @@ Some classes are globally allowed:
 1. **Use semantic tokens** - Choose tokens by purpose, not by color
 
    ```tsx
-   // ✅ "This indicates success"
+   // "This indicates success"
    className = 'bg-success text-success';
    ```
 
 2. **Compose from atoms up** - Build complex components from simpler ones
 
    ```tsx
-   // ✅ Molecule uses atoms
+   // Molecule uses atoms
    <StatusDot status='online' />
    ```
 
@@ -582,7 +582,7 @@ Some classes are globally allowed:
 1. **Don't use hardcoded colors**
 
    ```tsx
-   // ❌ Bad
+   // Incorrect
    className = 'bg-purple-700 text-gray-500';
    ```
 
@@ -593,17 +593,17 @@ Some classes are globally allowed:
 4. **Don't use arbitrary values**
 
    ```tsx
-   // ❌ Bad
+   // Incorrect
    className = 'bg-[#ff00ff] rounded-[13px]';
    ```
 
 5. **Don't use numeric z-index directly**
 
    ```tsx
-   // ❌ Bad
+   // Incorrect
    className = 'z-50';
 
-   // ✅ Good
+   // Correct
    className = 'z-popover';
    ```
 
@@ -646,7 +646,7 @@ import { Button, Card, Dialog, Input } from '@/components/ui/...';
 ### Commands
 
 ```bash
-pnpm generate:tokens  # Regenerate CSS tokens from theme files
+pnpm --filter @groupi/web generate:tokens  # Regenerate CSS tokens from theme files
 pnpm lint:tokens      # Check for token violations
 pnpm check            # Full validation (lint + types + format)
 ```

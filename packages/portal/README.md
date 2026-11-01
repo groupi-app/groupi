@@ -35,5 +35,5 @@ registry release. Exports and search use the same public corpus.
 The intended output is a static React/Vite site, independent of the Groupi app.
 Configure the host to serve `index.html` for reader paths while retaining actual
 export files. No server rendering, app backend, credentials or external search
-provider is required. Builds, dev servers and deployment are not executed as part
-of this implementation task.
+provider is required. Hosting configuration describes the source requirements; it does not establish
+a deployed portal or a completed browser acceptance gate.

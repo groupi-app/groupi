@@ -1,6 +1,8 @@
 # Presence System Documentation
 
-Real-time user presence tracking for showing who's online, who's viewing content, and typing indicators.
+Web presence hooks show online status, room viewers, and typing indicators. The
+backend derives write identity from the authenticated session and checks access
+to event and post rooms; client-supplied person IDs do not authorize another identity.
 
 ## Table of Contents
 
@@ -23,14 +25,14 @@ The presence system provides three core capabilities:
 ### Key Technologies
 
 - **@convex-dev/presence**: Convex presence component for heartbeat-based tracking
-- **VisibilityProvider**: Pauses presence when tab is hidden or user is idle
+- **VisibilityProvider**: Pauses heartbeats after the hidden-tab grace period or idle timeout
 - **GlobalUserProvider**: Provides current user context to presence hooks
 
 ## Architecture
 
 ### Component Hierarchy
 
-```
+```text
 ThemeProvider
 └── ConvexClientProvider
     └── VisibilityProvider          ← Tracks tab visibility and idle state
@@ -42,18 +44,19 @@ ThemeProvider
 
 ### Data Flow
 
-```
-User Activity → VisibilityProvider (isActive) → Presence Hooks → Convex Backend
+```text
+User Activity → VisibilityProvider (pause signals) → Presence Hooks → Convex Backend
                                                         ↓
                                                  Other Clients ← Real-time Subscriptions
 ```
 
 ### Room ID Conventions
 
-| Context     | Room ID Format    | Example         |
-| ----------- | ----------------- | --------------- |
-| App-wide    | `"app"`           | `"app"`         |
-| Post/Thread | `"post:{postId}"` | `"post:abc123"` |
+| Context     | Room ID Format      | Example          |
+| ----------- | ------------------- | ---------------- |
+| App-wide    | `"app"`             | `"app"`          |
+| Post/Thread | `"post:{postId}"`   | `"post:abc123"`  |
+| Event       | `"event:{eventId}"` | `"event:abc123"` |
 
 ## Quick Start
 
@@ -113,13 +116,14 @@ function ReplyForm({ postId }: { postId: Id<'posts'> }) {
 Tracks user's global online status in the app.
 
 ```tsx
-function useAppPresence(personId: Id<'persons'> | undefined): PresenceState;
+function useAppPresence(personId: Id<'persons'> | undefined): void;
 ```
 
 - **Used by**: `GlobalPresenceTracker` (automatically)
 - **Heartbeat interval**: 30 seconds
 - **Offline threshold**: 60 seconds (2x interval)
-- **Pauses when**: Tab hidden OR user idle for 5 minutes
+- **Pauses when**: Tab hidden for 30 seconds or user idle for 5 minutes; the
+  provider also tracks extended inactivity at 15 minutes
 
 ### Post-Level Presence
 
@@ -136,7 +140,9 @@ function useCurrentUserPostPresence(postId: Id<'posts'> | undefined): {
 
 #### `usePostPresenceWithToken(postId, personId)`
 
-Lower-level hook when you need to specify a custom personId.
+Lower-level hook receiving the current person ID for client-side tracking. The
+server derives the acting person from the session and does not trust this argument
+as an alternate identity.
 
 ```tsx
 function usePostPresenceWithToken(
@@ -184,13 +190,15 @@ function useCurrentUserTypingState(postId: Id<'posts'> | undefined): {
 
 **Features:**
 
-- Debounces "start typing" by 300ms (reduces mutations by ~90%)
+- Debounces "start typing" by 300ms
 - Immediately clears "stop typing" for responsive UX
 - Auto-clears after 5 seconds of no updates
 
 #### `useTypingState(postId, personId)`
 
-Lower-level hook when you need to specify a custom personId.
+Lower-level hook receiving the current person ID for client-side tracking. The
+server derives the acting person from the session and does not trust this argument
+as an alternate identity.
 
 #### `useTypingIndicators(roomToken)`
 
@@ -270,11 +278,15 @@ Full visibility context with all state.
 
 ```tsx
 interface VisibilityContextValue {
-  isVisible: boolean; // Tab visibility
-  isFocused: boolean; // Window focus
-  isAway: boolean; // User idle for 5+ minutes
-  isActive: boolean; // isVisible && !isAway
+  isVisible: boolean;
+  isFocused: boolean;
+  isAway: boolean; // Idle for 5 minutes
+  isOffline: boolean; // Inactive for 15 minutes
+  isActive: boolean; // Visible and not away
+  shouldPauseQueries: boolean; // Away or hidden past grace period
+  shouldPauseHeartbeats: boolean;
   resetIdleTimer: () => void;
+  lastActivityTime: number;
 }
 ```
 
@@ -282,13 +294,15 @@ interface VisibilityContextValue {
 
 ### 1. Heartbeat Interval Tuning
 
-Current configuration reduces function calls by 3x:
+The web hooks use these timing defaults:
 
-| Setting            | Value | Reason                   |
-| ------------------ | ----- | ------------------------ |
-| Heartbeat interval | 30s   | Reduced from 10s default |
-| Offline threshold  | 60s   | 2x heartbeat interval    |
-| Idle timeout       | 5 min | User considered "away"   |
+| Setting             | Value  | Reason                                        |
+| ------------------- | ------ | --------------------------------------------- |
+| Heartbeat interval  | 30s    | Reduced from 10s default                      |
+| Offline threshold   | 60s    | 2x heartbeat interval                         |
+| Idle timeout        | 5 min  | User considered "away"                        |
+| Hidden-tab grace    | 30s    | Heartbeats continue during short tab switches |
+| Extended inactivity | 15 min | Provider marks the user offline               |
 
 ### 2. Debounced Typing Indicators
 
@@ -300,15 +314,17 @@ The typing system debounces mutations to reduce database writes:
 | Stop typing  | Immediate | 0ms       |
 | Auto-clear   | Automatic | 5 seconds |
 
-**Result**: ~90% reduction in typing-related mutations during active typing.
-
 ### 3. Visibility-Based Pausing
 
-All presence hooks pause when `isActive` is `false`:
+Presence heartbeats use `shouldPauseHeartbeats`: a hidden tab has a 30-second
+grace period before pausing; five minutes of inactivity also pauses heartbeats.
+`useAppPresence` additionally checks the provider's 15-minute offline state.
+Typing updates have their own debounce and timeout. For a custom heartbeat client,
+use the same pause signal:
 
 ```tsx
-const isActive = useIsActive();
-const isEnabled = !!postId && !!personId && isActive;
+const shouldPauseHeartbeats = useShouldPauseHeartbeats();
+const isEnabled = !!postId && !!personId && !shouldPauseHeartbeats;
 
 // No heartbeats when isEnabled is false
 usePresence(api, roomId, userId, isEnabled ? interval : 0);
@@ -319,10 +335,7 @@ usePresence(api, roomId, userId, isEnabled ? interval : 0);
 Instead of re-fetching to check if users went offline, compute locally:
 
 ```tsx
-// DON'T: Re-fetch presence data every 10 seconds
-const users = useQuery(api.presence.getUsers); // Network request
-
-// DO: Compute status locally from cached data
+// Compute status locally from a permitted presence query result.
 const usersWithStatus = useLocalOnlineStatus(cachedUsers); // No network
 ```
 
@@ -336,7 +349,7 @@ Complete example for a post thread:
 // RepliesSection.tsx
 export function RepliesSection({ postId }: { postId: Id<'posts'> }) {
   const { person } = useGlobalUser();
-  const personId = person?.id as Id<'persons'> | undefined;
+  const personId = person?._id as Id<'persons'> | undefined;
 
   // Track presence and get roomToken
   const { roomToken } = useCurrentUserPostPresence(postId);
@@ -383,10 +396,11 @@ export function ReplyForm({ postId }: { postId: Id<'posts'> }) {
 Showing online status without constant re-fetching:
 
 ```tsx
-function OnlineUserList() {
-  // Fetch users once (or subscribe to changes)
-  const users = useQuery(api.users.list);
-
+function OnlineUserList({
+  users,
+}: {
+  users: { id: string; name: string; lastHeartbeat?: number }[];
+}) {
   // Compute online status locally, refreshes every 10s
   const usersWithStatus = useLocalOnlineStatus(users);
 
@@ -394,7 +408,11 @@ function OnlineUserList() {
     <ul>
       {usersWithStatus.map(user => (
         <li key={user.id}>
-          <span className={user.isOnline ? 'text-green-500' : 'text-gray-400'}>
+          <span
+            className={
+              user.isOnline ? 'text-text-success' : 'text-muted-foreground'
+            }
+          >
             {user.isOnline ? '●' : '○'}
           </span>
           {user.name}
@@ -407,17 +425,18 @@ function OnlineUserList() {
 
 ### Pattern 3: Custom Room Presence
 
-For non-post contexts (e.g., event pages):
+For event pages, use an `event:{eventId}` room. The server accepts only known room
+formats and checks current event membership for event and post room writes:
 
 ```tsx
 function EventPresence({ eventId }: { eventId: Id<'events'> }) {
   const { person } = useGlobalUser();
-  const personId = person?.id;
-  const isActive = useIsActive();
+  const personId = person?._id;
+  const shouldPauseHeartbeats = useShouldPauseHeartbeats();
 
-  // Create custom room ID
+  // Event-scoped rooms require current event membership on the server.
   const roomId = `event:${eventId}`;
-  const isEnabled = !!personId && isActive;
+  const isEnabled = !!personId && !shouldPauseHeartbeats;
 
   // Use the underlying presence hook directly
   const presenceState = usePresence(
@@ -441,7 +460,7 @@ function EventPresence({ eventId }: { eventId: Id<'events'> }) {
 
 ### Presence Not Updating
 
-1. **Check isActive**: Tab might be hidden or user idle
+1. **Check pause signals**: The tab may be hidden past the grace period or the user may be idle
 2. **Check personId**: Must be a valid `Id<'persons'>`
 3. **Check GlobalUserProvider**: Must be mounted above presence hooks
 
@@ -471,11 +490,13 @@ function EventPresence({ eventId }: { eventId: Id<'events'> }) {
 
 ### Timing Constants
 
-| Constant             | Value | Location                     |
-| -------------------- | ----- | ---------------------------- |
-| Heartbeat interval   | 30s   | `use-presence.ts`            |
-| Offline threshold    | 60s   | 2x heartbeat                 |
-| Typing debounce      | 300ms | `use-presence.ts`            |
-| Typing auto-clear    | 5s    | `use-presence.ts`            |
-| Idle timeout         | 5 min | `visibility-provider.tsx`    |
-| Local status refresh | 10s   | `use-local-online-status.ts` |
+| Constant             | Value  | Location                     |
+| -------------------- | ------ | ---------------------------- |
+| Heartbeat interval   | 30s    | `use-presence.ts`            |
+| Offline threshold    | 60s    | 2x heartbeat                 |
+| Typing debounce      | 300ms  | `use-presence.ts`            |
+| Typing auto-clear    | 5s     | `use-presence.ts`            |
+| Idle timeout         | 5 min  | `visibility-provider.tsx`    |
+| Hidden-tab grace     | 30s    | `visibility-provider.tsx`    |
+| Extended inactivity  | 15 min | `visibility-provider.tsx`    |
+| Local status refresh | 10s    | `use-local-online-status.ts` |

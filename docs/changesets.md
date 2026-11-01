@@ -1,6 +1,6 @@
 # Changesets Guide
 
-Comprehensive guide for using Changesets in the Groupi monorepo for both developers and AI agents.
+Versioning, release notes, and changeset checks for the Groupi monorepo.
 
 ## Table of Contents
 
@@ -66,7 +66,7 @@ This prompts you to:
 
 ### Example Session
 
-```
+```text
 $ pnpm changeset
 
 Which packages would you like to include?
@@ -210,7 +210,7 @@ AI agents must NOT create changeset files automatically. The summary should refl
 
 **Correct behavior:**
 
-```
+```text
 After completing a user-facing change, remind the user:
 
 "This is a user-facing change. Run `pnpm changeset` to create a changeset

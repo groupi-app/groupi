@@ -1,12 +1,11 @@
 # Contributing to Groupi
 
-Thank you for your interest in contributing to Groupi! This guide will help you get started.
+Use this guide for development setup, commits, changesets, and pull requests.
 
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
 - [Making Changes](#making-changes)
 - [Commit Guidelines](#commit-guidelines)
 - [Changesets](#changesets)
@@ -20,49 +19,11 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- pnpm 10+
-- Convex CLI (`pnpm add -g convex`)
-- Git
-
-### Development Setup
-
-1. **Fork the repository** on GitHub
-
-2. **Clone your fork:**
-
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/groupi.git
-   cd groupi
-   ```
-
-3. **Install dependencies:**
-
-   ```bash
-   pnpm install
-   ```
-
-4. **Copy environment template:**
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-5. **Set up Convex** (follow prompts to create a new project):
-
-   ```bash
-   npx convex dev
-   ```
-
-6. **Start development** (in a new terminal):
-
-   ```bash
-   pnpm dev
-   ```
-
-7. **Open your browser** at http://localhost:3000
+Follow [Getting started](docs/getting-started.md) for Node.js 22/24, the pinned
+pnpm version, environment configuration, and native mobile prerequisites.
+For outside contributions, fork the repository and clone your fork before
+following that setup. Confirm the intended PR target with the maintainers;
+`test` may contain work ahead of `main`.
 
 ## Making Changes
 
@@ -81,9 +42,9 @@ Use descriptive branch names with a prefix:
 We use automated tools to maintain code quality:
 
 ```bash
-pnpm check      # Run all checks (lint, type-check, format)
+pnpm check      # Lint, types, contracts, and formatting
 pnpm lint:fix   # Auto-fix linting issues
-pnpm format     # Format code with Prettier
+pnpm exec prettier --write <changed-files> # Format edited files
 pnpm test:run   # Run all tests
 ```
 
@@ -102,7 +63,7 @@ See `AGENTS.md` and `docs/` for detailed architecture documentation.
 
 We use [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 type(scope): description
 
 [optional body]
@@ -133,11 +94,11 @@ type(scope): description
 
 ### Examples
 
-```
+```text
 feat(web): add dark mode toggle
 fix(convex): correct event query pagination
 docs: update contributing guide
-chore(deps): update convex to v1.32
+chore(deps): update convex
 ```
 
 ### Interactive Commits
@@ -150,15 +111,15 @@ We use [Changesets](https://github.com/changesets/changesets) to manage versions
 
 ### When to Create a Changeset
 
-| Change Type                  | Needs Changeset? |
-| ---------------------------- | ---------------- |
-| New feature                  | ✅ Yes           |
-| Bug fix                      | ✅ Yes           |
-| Breaking change              | ✅ Yes           |
-| Refactoring (no user impact) | ❌ No            |
-| Documentation only           | ❌ No            |
-| CI/tooling changes           | ❌ No            |
-| Dependency updates           | ⚠️ Maybe         |
+| Change Type                  | Needs Changeset?       |
+| ---------------------------- | ---------------------- |
+| New feature                  | Yes                    |
+| Bug fix                      | Yes                    |
+| Breaking change              | Yes                    |
+| Refactoring (no user impact) | No                     |
+| Documentation only           | No                     |
+| CI/tooling changes           | No                     |
+| Dependency updates           | Depends on user impact |
 
 ### Creating a Changeset
 
@@ -244,14 +205,8 @@ Please include:
 - Alternatives you've considered
 - Which platform(s) this applies to
 
-## Questions?
+## Questions
 
-- Check existing [Discussions](../../discussions) for answers
+- Check existing [Discussions](https://github.com/groupi-app/groupi/discussions) for answers
 - Open a new discussion for general questions
 - Read the documentation in `docs/` and `AGENTS.md`
-
-## Recognition
-
-Contributors are recognized in release notes and the project README.
-
-Thank you for contributing to Groupi!

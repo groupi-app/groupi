@@ -16,7 +16,7 @@ The add-on framework is a generic, extensible system for attaching optional feat
   - [Queries and Mutations](#queries-and-mutations)
   - [Add-on Data Storage](#add-on-data-storage)
 - [Frontend](#frontend)
-  - [Registry Interface](#registry-interface)
+  - [Feature ownership and catalog](#feature-ownership-and-catalog)
   - [Hooks](#hooks)
   - [UI Surfaces](#ui-surfaces)
   - [Addon Page Route](#addon-page-route)
@@ -35,15 +35,15 @@ The add-on framework is a generic, extensible system for attaching optional feat
 
 Three principles guide the framework:
 
-1. **First-party add-ons use the same framework as custom add-ons.** The reminders add-on is built entirely through the framework. If a first-party add-on needs something the framework doesn't support, the framework is expanded — the add-on doesn't bypass it.
+1. **First-party add-ons use the same framework as custom add-ons.** The reminders add-on is built entirely through the framework. If a first-party add-on needs something the framework doesn't support, the framework is expanded: the add-on doesn't bypass it.
 
 2. **Scoped context by default, raw access when needed.** Standard handlers receive an `AddonContext` with scoped data access (addon data, event info, members, notifications). Trusted handlers additionally receive `rawCtx` for direct database and scheduler access. This prevents accidental cross-addon data access.
 
-3. **Config-driven where possible.** UI surfaces, metadata, opt-out behavior, and author info are all declarative. The framework renders them — add-ons don't need to know how. Custom addons take this further with template-defined field types and automation rules.
+3. **Config-driven where possible.** UI surfaces, metadata, opt-out behavior, and author info are all declarative. The framework renders them: add-ons don't need to know how. Custom addons take this further with template-defined field types and automation rules.
 
 ## Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Convex Backend                           │
 │                                                                 │
@@ -63,8 +63,8 @@ Three principles guide the framework:
 │  ┌──────────────────────▼───────────────────────────────────┐  │
 │  │             Lifecycle Dispatcher                          │  │
 │  │  buildContext() → AddonContext or TrustedAddonContext     │  │
-│  │  dispatchAddonLifecycle() — all enabled addons            │  │
-│  │  dispatchSingleAddonLifecycle() — one specific addon      │  │
+│  │  dispatchAddonLifecycle() : all enabled addons            │  │
+│  │  dispatchSingleAddonLifecycle() : one specific addon      │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -103,30 +103,33 @@ Three principles guide the framework:
 
 ### Schema
 
-Four tables power the framework:
+The framework uses the tables below. Field validators are defined in
+[`convex/addons/contracts.ts`](../convex/addons/contracts.ts) and applied by the
+application schema; handler validation adds add-on-specific constraints. The
+`Doc` field types in these sketches refer to the generated application data model.
 
-**`eventAddonConfigs`** — Stores which add-ons are enabled for each event and their configuration.
+**`eventAddonConfigs`**: Stores which add-ons are enabled for each event and their configuration.
 
 ```typescript
 {
   eventId: Id<'events'>,
   addonType: string,     // e.g. 'reminders', 'custom:templateId'
   enabled: boolean,
-  config: any,           // addon-specific JSON (validated by handler)
+  config: Doc<'eventAddonConfigs'>['config'], // known configuration union
   createdAt: number,
   updatedAt: number,
 }
 // Indexes: by_event, by_event_addon
 ```
 
-**`addonData`** — Generic key-value storage for add-on data. Any member can create entries; only creators or moderators can modify/delete.
+**`addonData`**: Generic key-value storage for add-on data. Any member can create entries; only creators or moderators can modify/delete.
 
 ```typescript
 {
   eventId: Id<'events'>,
   addonType: string,
   key: string,           // addon-defined key (e.g. 'response:personId')
-  data: any,             // addon-defined payload (max 64KB)
+  data: Doc<'addonData'>['data'], // string or typed participant-data record
   createdBy?: Id<'persons'>,
   createdAt: number,
   updatedAt: number,
@@ -134,7 +137,7 @@ Four tables power the framework:
 // Indexes: by_event_addon, by_event_addon_key, by_event_addon_creator
 ```
 
-**`addonOptOuts`** — Tracks users who opted out of a specific add-on for an event.
+**`addonOptOuts`**: Tracks users who opted out of a specific add-on for an event.
 
 ```typescript
 {
@@ -147,7 +150,7 @@ Four tables power the framework:
 // Indexes: by_person, by_event, by_person_event_addon
 ```
 
-**`addonTemplates`** — User-created custom addon templates with versioning.
+**`addonTemplates`**: User-created custom addon templates with versioning.
 
 ```typescript
 {
@@ -155,7 +158,7 @@ Four tables power the framework:
   name: string,
   description: string,
   iconName: string,
-  template: any,         // full CustomAddonTemplate (validated before save)
+  template: Doc<'addonTemplates'>['template'], // known template structure
   version: number,
   isPublished: boolean,  // draft vs ready to use
   createdAt: number,
@@ -172,7 +175,7 @@ All handlers are created via `defineAddonHandler()` from `convex/addons/define.t
 import { defineAddonHandler } from '../define';
 import { ADDON_TYPES } from '../types';
 
-// Standard addon — receives scoped AddonContext
+// Standard addon: receives scoped AddonContext
 export const myHandler = defineAddonHandler({
   type: ADDON_TYPES.MY_ADDON,
   validateConfig: isValidMyConfig,
@@ -181,7 +184,7 @@ export const myHandler = defineAddonHandler({
   },
 });
 
-// Trusted addon — receives TrustedAddonContext with rawCtx
+// Trusted addon: receives TrustedAddonContext with rawCtx
 export const myTrustedHandler = defineAddonHandler({
   type: ADDON_TYPES.MY_ADDON,
   trusted: true,
@@ -195,7 +198,7 @@ export const myTrustedHandler = defineAddonHandler({
 The builder provides:
 
 - **Runtime validation** at definition time (missing type, non-function validateConfig, invalid lifecycle hooks)
-- **Brand checking** via a private symbol — only handlers created by `defineAddonHandler()` can be registered
+- **Brand checking** via a private symbol: only handlers created by `defineAddonHandler()` can be registered
 - **Automatic try/catch** wrapping for `validateConfig` (throwing validators return `false`)
 - **Object.freeze()** to prevent mutation after creation
 
@@ -239,7 +242,7 @@ Key behaviors:
 
 - Rejects handlers not created via `defineAddonHandler()` (brand check)
 - Rejects duplicate registrations for the same type
-- Custom addons use `custom:{templateId}` convention — any type starting with `custom:` falls back to the `__custom__` handler
+- Custom addons use `custom:{templateId}` convention: any type starting with `custom:` falls back to the `__custom__` handler
 
 Registered first-party handlers: `reminders`, `questionnaire`, `bring-list`, `discord`, `__custom__`.
 
@@ -249,9 +252,9 @@ The lifecycle dispatcher (`convex/addons/lifecycle.ts`) is called by event mutat
 
 Two dispatch functions:
 
-- **`dispatchAddonLifecycle(ctx, eventId, event, args?)`** — Dispatches to ALL enabled add-ons for an event. Used by `chooseEventDate`, `resetEventDate`, `updateEvent`, `deleteEvent`, member join/leave operations.
+- **`dispatchAddonLifecycle(ctx, eventId, event, args?)`**: Dispatches to ALL enabled add-ons for an event. Used by `chooseEventDate`, `resetEventDate`, `updateEvent`, `deleteEvent`, member join/leave operations.
 
-- **`dispatchSingleAddonLifecycle(ctx, eventId, addonType, event, config, oldConfig?, args?)`** — Dispatches to ONE specific add-on. Used by `enableAddon`, `disableAddon`, `updateAddonConfig`, `setAddonData`.
+- **`dispatchSingleAddonLifecycle(ctx, eventId, addonType, event, config, oldConfig?, args?)`**: Dispatches to ONE specific add-on. Used by `enableAddon`, `disableAddon`, `updateAddonConfig`, `setAddonData`.
 
 ### Lifecycle Hooks Reference
 
@@ -320,15 +323,15 @@ The `addonData` table gives add-ons a structured key-value store scoped to `(eve
 - **Standard addons** use `addonData` exclusively via context methods
 - **Trusted addons** can use their own dedicated tables (like `eventReminders`) via `rawCtx`
 - Payloads are limited to 64KB
-- The gating system detects completion by checking for a `response:{personId}` key
+- Completion requires a `response:{personId}` entry created by that person.
 
 ```typescript
-// Example: storing user responses
-await ctx.setAddonData({
+// In an authenticated Convex client, store a questionnaire response.
+await client.mutation(api.addons.mutations.setAddonData, {
   eventId,
   addonType: 'questionnaire',
   key: `response:${personId}`,
-  data: { answers: [...] },
+  data: { dietary: 'Vegetarian' },
 });
 ```
 
@@ -393,7 +396,7 @@ Each add-on can render in up to four places:
 | Manage page   | `ManageConfigComponent`    | `/event/[id]/manage-addons`     |
 | Addon page    | `PageComponent` (optional) | `/event/[id]/addon/[addonId]`   |
 
-The framework handles rendering — it queries `eventAddonConfigs`, filters to enabled add-ons with registered definitions, and renders the appropriate component for each.
+The framework handles rendering: it queries `eventAddonConfigs`, filters to enabled add-ons with registered definitions, and renders the appropriate component for each.
 
 ### Addon Page Route
 
@@ -403,8 +406,8 @@ Add-ons can optionally define a `PageComponent` and `pageTitle` for a full dedic
 
 Add-ons can require completion before a member can access event content.
 
-- **`requiresCompletion`** — if `true`, the member must complete this addon
-- **`completionRoute`** — path (relative to `/event/[eventId]`) to redirect to when incomplete
+- **`requiresCompletion`**: if `true`, the member must complete this addon
+- **`completionRoute`**: path (relative to `/event/[eventId]`) to redirect to when incomplete
 
 ### How it works
 
@@ -414,18 +417,26 @@ Add-ons can require completion before a member can access event content.
 4. Availability, add-on detail, management, and settings routes are matched by event-relative path segments to avoid redirect loops.
 5. Disabled, missing, or unsupported direct add-on URLs show an unavailable state and a return-to-event link, never an unusable form.
 
-This is a web navigation workflow, not an additional backend authorization rule.
-Mobile completion alignment is separate follow-up work.
+This web gate is a navigation workflow, not an additional backend authorization
+rule. Mobile also consumes completion status in its event layout: it gates
+availability first, then the built-in questionnaire, while exempting its preview,
+application, availability, and questionnaire routes. It does not use the web
+registry's generic custom-add-on completion metadata.
 
 ### Gating order
 
-1. **Organizers are exempt** — always return `null`
-2. **Availability** — if there are potential dates with no chosen date and the user hasn't voted, redirect to `/event/{id}/availability`
-3. **Addons** — first incomplete addon with `requiresCompletion: true` triggers redirect to its `completionRoute`
+1. **Organizers are exempt**: always return `null`
+2. **Availability**: if there are potential dates with no chosen date and the user hasn't voted, redirect to `/event/{id}/availability`
+3. **Addons**: first incomplete addon with `requiresCompletion: true` triggers redirect to its `completionRoute`
 
 ### Completion detection
 
-The query checks for an `addonData` entry with key `response:{personId}`. When a user submits their response via `setAddonData`, they become "complete".
+The query checks for an `addonData` entry with key `response:{personId}` and
+`createdBy` equal to the current person. A response key created by another person
+does not satisfy completion. The public `setAddonData` mutation accepts a participant record with scalar values
+or string arrays, not arbitrary nested objects. The stored schema also permits
+strings for service metadata and legacy data; that does not widen the public
+participant-write contract.
 
 ## Custom Addon Builder
 
@@ -467,7 +478,7 @@ Custom addons support 13 field types organized into input fields and display fie
 | `number`      | Numeric input            | `min`, `max`                                |
 | `select`      | Single-select dropdown   | `options`                                   |
 | `multiselect` | Multi-select             | `options`, `minSelections`, `maxSelections` |
-| `yesno`       | Boolean toggle           | —                                           |
+| `yesno`       | Boolean toggle           | :                                           |
 | `list_item`   | Claimable item list      | `items` (id, name, quantity)                |
 | `vote`        | Voting with options      | `options`, `allowMultiple`, `showResults`   |
 | `toggle`      | On/off switch            | `defaultEnabled`                            |
@@ -499,9 +510,9 @@ Sections can also be `configurable: true` with `allowedFieldTypes` to let organi
 
 ### Automations Engine
 
-Custom addons include an IFTTT-style automation engine (`convex/addons/automations/`). Automations are declarative JSON — no user code is executed.
+Custom addons include an IFTTT-style automation engine (`convex/addons/automations/`). Automations are declarative JSON: no user code is executed.
 
-**Triggers** — what starts an automation:
+**Triggers**: what starts an automation:
 
 | Trigger             | When it fires                          |
 | ------------------- | -------------------------------------- |
@@ -517,13 +528,13 @@ Custom addons include an IFTTT-style automation engine (`convex/addons/automatio
 | `date_chosen`       | Event date is finalized                |
 | `addon_enabled`     | Addon is enabled for the event         |
 
-**Conditions** — optional filters on when to execute:
+**Conditions**: optional filters on when to execute:
 
 Operators: `equals`, `not_equals`, `contains`, `not_contains`, `greater_than`, `less_than`, `greater_or_equal`, `less_or_equal`, `is_empty`, `is_not_empty`, `in_list`, `not_in_list`.
 
 Variables: `fields.{fieldId}`, `member.name`, `member.role`, `event.title`, `event.location`, `event.date`, `vote.top_option`, `addon.name`.
 
-**Actions** — what happens when triggered:
+**Actions**: what happens when triggered:
 
 | Action                     | Description                     | Key Properties                                    |
 | -------------------------- | ------------------------------- | ------------------------------------------------- |
@@ -557,11 +568,11 @@ Actions support `recipientToggleField` to filter notification recipients based o
 
 **Engine architecture:**
 
-- `types.ts` — Type definitions and validation functions
-- `engine.ts` — Automation evaluator, matches triggers and evaluates conditions
-- `conditions.ts` — Built-in condition evaluation logic
-- `dispatch.ts` — Action dispatch orchestration
-- `resolve.ts` — Variable resolution and `{{template}}` interpolation
+- `types.ts`: Type definitions and validation functions
+- `engine.ts`: Automation evaluator, matches triggers and evaluates conditions
+- `conditions.ts`: Built-in condition evaluation logic
+- `dispatch.ts`: Action dispatch orchestration
+- `resolve.ts`: Variable resolution and `{{template}}` interpolation
 
 ## REST API
 
@@ -596,7 +607,7 @@ Schemas are defined with Zod + OpenAPI in `convex/api/v1/schemas/addons.ts`. Rou
 
 Notify attendees before the event starts. Config: `{ reminderOffset: ReminderOffset }`.
 
-- **Handler:** `convex/addons/handlers/reminders.ts` (trusted — needs scheduler)
+- **Handler:** `convex/addons/handlers/reminders.ts` (trusted: needs scheduler)
 - **Frontend:** `packages/web/features/addons/runtime/organisms/reminder-addon.tsx`
 - Schedules via Convex scheduler, cancels on disable/date reset/event delete
 - Supports opt-out per user
@@ -611,7 +622,7 @@ Question types: `SHORT_ANSWER`, `LONG_ANSWER`, `MULTIPLE_CHOICE`, `CHECKBOXES`, 
 - **Frontend:** `packages/web/features/addons/runtime/organisms/questionnaire-addon.tsx`
 - Responses stored as `addonData` with key `response:{personId}`
 - Config updates clear all responses and notify members (`ADDON_CONFIG_RESET` notification)
-- Has `requiresCompletion: true` — members are gated until they fill out the questionnaire
+- Has `requiresCompletion: true`: members are gated until they fill out the questionnaire
 - Organizers can view all responses in a table and export as CSV/JSON
 
 ### Bring List
@@ -631,7 +642,7 @@ Each item has `id`, `name`, and `quantity` (>= 1).
 
 Sync events with Discord scheduled events. Config: `{ guildId: string, guildName: string }`.
 
-- **Handler:** `convex/addons/handlers/discord.ts` (trusted — needs scheduler for Discord API calls)
+- **Handler:** `convex/addons/handlers/discord.ts` (trusted: needs scheduler for Discord API calls)
 - **Frontend:** `packages/web/features/addons/runtime/organisms/discord-addon.tsx`
 - Creates Discord scheduled event when date is chosen
 - Updates Discord event on date/detail changes
@@ -643,7 +654,7 @@ Sync events with Discord scheduled events. Config: `{ guildId: string, guildName
 
 Template-based addons created by users. Config: `{ templateId: string, template: CustomAddonTemplate }`.
 
-- **Handler:** `convex/addons/handlers/custom.ts` (trusted — automations need scheduler/DB)
+- **Handler:** `convex/addons/handlers/custom.ts` (trusted: automations need scheduler/DB)
 - **Frontend:** Various components in `packages/web/features/addons/runtime/organisms/`
 - Template stored in `addonTemplates` table, embedded in addon config when enabled
 - Supports all 13 field types, section layouts, and automations
@@ -734,5 +745,5 @@ creation serialization, and the real completion workflow. Run `pnpm check`,
 | **Addon type validation** | Mutations reject unregistered addon types via `getAddonHandler()` check.                                                               |
 | **Data isolation**        | Data is scoped by `(eventId, addonType, key)`. Members can read any addon's data within their event.                                   |
 | **Cleanup**               | `deleteEvent` dispatches `onEventDeleted` to all handlers, then deletes all `eventAddonConfigs`, `addonData`, and `addonOptOuts` rows. |
-| **Automations**           | Declarative JSON only — no user code execution. Actions are validated at definition time and dispatched by trusted backend code.       |
+| **Automations**           | Declarative JSON only: no user code execution. Actions are validated at definition time and dispatched by trusted backend code.        |
 | **Opt-out enforcement**   | `sendReminder` checks `addonOptOuts` at send-time, not schedule-time, so late opt-outs are respected.                                  |

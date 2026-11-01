@@ -1,6 +1,6 @@
 # Discord Group setup
 
-Source behavior for manager setup and explicit member Role access in [issue #405](https://github.com/groupi-app/groupi/issues/405). The connection is independent of the Event scheduled-event add-on.
+Source behavior for manager setup, member consent, synchronization, and handback, beginning with [issue #405](https://github.com/groupi-app/groupi/issues/405). The connection is independent of the Event scheduled-event add-on. The milestone sections describe source capabilities, not verified hosted or Discord acceptance.
 
 ## Table of Contents
 
@@ -9,7 +9,11 @@ Source behavior for manager setup and explicit member Role access in [issue #405
 - [Explicit member Connect](#explicit-member-connect)
 - [Role eligibility and moderation lifecycle](#role-eligibility-and-moderation-lifecycle)
 - [Server membership lifecycle](#server-membership-lifecycle)
+- [Delegated member connection](#delegated-member-connection)
+- [Discord identity retirement](#discord-identity-retirement)
+- [Warned handback and deletion](#warned-handback-and-deletion)
 - [Blocked synchronization and recovery](#blocked-synchronization-and-recovery)
+- [Source-side integration acceptance](#source-side-integration-acceptance)
 
 ## Setup contract
 
@@ -21,11 +25,11 @@ The authenticated manager query subscribes to `pending`, `active` or `blocked` c
 
 ## Lifecycle and verification gates
 
-`groupDiscordCleanup` has independent lifetime: its Group reference is a historical string, and each obligation carries server, mode, identity, role, generation, desired outcome, observed state and retry status. Group/configuration deletion must never cascade-delete owed removals. The table establishes persistence ownership; enrollment and Role revocation/cleanup are implemented below, while handback and setup recovery remain subsequent lifecycle slices. No membership effects are performed synchronously by setup.
+`groupDiscordCleanup` has independent lifetime: its Group reference is a historical string, and each obligation carries server, mode, identity, role, generation, desired outcome, observed state and retry status. Group/configuration deletion must never cascade-delete owed removals. The table establishes persistence ownership. Enrollment, revocation, handback, and recovery are described in the lifecycle sections below. No membership effects are performed synchronously by setup.
 
 Generation starts at one. Later reconfiguration must invalidate old grant authority and create a fresh generation before enrollment can resume. A process interruption after reservation remains visibly pending; a known setup failure remains blocked. Do not automatically repeat uncertain role creation. Discord provides no role-creation idempotency key, so a lost creation response requires staff resolution rather than pretending the external write failed.
 
-This slice remains unreleased until enrollment, identity retirement, teardown, durable retry and moderation observation are complete. Deterministic authenticated tests cover setup authority, provider capability, safe role adoption/creation, concurrent binding and role-creation/adoption races. UI tests cover manager visibility, selection, consequences and status announcements. Real Discord and signed-in browser/device acceptance remain open gates; source tests do not establish them.
+At the initial setup milestone, enrollment, identity retirement, teardown, durable retry, and moderation observation were subsequent release gates. Later sections describe their source implementation. Deterministic authenticated tests cover setup authority, provider capability, safe role adoption/creation, concurrent binding and role-creation/adoption races. UI tests cover manager visibility, selection, consequences and status announcements. Real Discord and signed-in browser/device acceptance remain open gates; source tests do not establish them.
 
 ## Explicit member Connect
 
@@ -37,7 +41,7 @@ Connect checks current membership, required onboarding and Discord ban state. Jo
 
 Initial grant intents persist with enrollment and connection generations, desired access, attempt lease, retry due time and observed status. Bot-only scheduled work retries transient failures, honors provider retry delay, stops repeated permission failures and checks current eligibility/linked identity before and after provider writes. Duplicate jobs converge through targeted role PUT and observed membership. A stale or ambiguous successful grant records its immutable cleanup target before compensation. Cleanup obligations outlive the enrollment. A successful compensation records completion; uncertain or denied compensation remains pending for the later lifecycle workers.
 
-This is not a production rollout. Ongoing moderation observation, audit ingestion, revocation/identity-retirement/handback, shared global rate-limit recovery and cleanup dispatch remain release gates in the subsequent lifecycle tickets. The initial-grant worker does not establish an atomic ordering with Discord staff actions or complete moderation history. Deterministic API/provider and hosted-auth tests establish the source contract; live Discord, signed-in browser/device and assistive-technology acceptance remain unverified.
+At the initial enrollment milestone, moderation observation, audit ingestion, revocation, identity retirement, handback, shared rate-limit recovery, and cleanup dispatch remained subsequent lifecycle gates. Their source implementation is described below; this does not establish a production rollout. The initial-grant worker does not establish an atomic ordering with Discord staff actions or complete moderation history. Deterministic API/provider and hosted-auth tests establish the source contract; live Discord, signed-in browser/device and assistive-technology acceptance remain unverified.
 
 ## Role eligibility and moderation lifecycle
 

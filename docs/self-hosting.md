@@ -1,13 +1,13 @@
-# Self-Hosting Groupi
+# Self-hosting proposal
 
-> **Status: Planned** — This document describes a future feature that has not been implemented yet. It serves as the design spec and implementation plan for self-hosting support. Nothing described here is available today.
+> **Status: Planned.** The Docker setup, configuration wizard, and service alternatives below are proposed. They are not an available installation path.
 
-A comprehensive guide to running your own Groupi instance. The goal is a quick, platform-agnostic setup where users can be up and running with a single `docker compose up`, and optionally enable extra features by providing their own API keys.
+This design proposes a Docker Compose installation with optional external services. Commands and configuration examples describe the intended implementation, not verified current behavior.
 
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
-- [Quick Start (5 Minutes)](#quick-start-5-minutes)
+- [Proposed setup](#proposed-setup)
 - [Networking & Access](#networking--access)
 - [Service Dependency Map](#service-dependency-map)
 - [Setup Script & Configuration Wizard](#setup-script--configuration-wizard)
@@ -24,9 +24,9 @@ A comprehensive guide to running your own Groupi instance. The goal is a quick, 
 
 ## Architecture Overview
 
-Groupi is composed of three runtime services, all containerized:
+The proposed installation separates the web app, Convex backend, and database:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                      User's Browser                     │
 └───────────────────────────┬─────────────────────────────┘
@@ -75,7 +75,7 @@ The self-hosted version runs the **exact same codebase** as the cloud version. C
 
 ---
 
-## Quick Start (5 Minutes)
+## Proposed setup
 
 ### Prerequisites
 
@@ -151,7 +151,7 @@ Your instance is accessible at `groupi.yourdomain.com` (or whatever subdomain yo
 
 ### Option 2: Public Server with Caddy
 
-**Best for:** VPS (DigitalOcean, Hetzner, Linode), cloud VMs, dedicated servers — anything with a public IP.
+**Best for:** VPS (DigitalOcean, Hetzner, Linode), cloud VMs, dedicated servers: anything with a public IP.
 
 Caddy acts as a reverse proxy and automatically provisions TLS certificates via Let's Encrypt.
 
@@ -178,7 +178,7 @@ Your instance is accessible at `https://yourdomain.com`. HTTPS is automatic via 
 
 **Best for:** Personal use, sharing with a small group who are also on Tailscale, or quick testing without a domain.
 
-Tailscale Funnel exposes a local service to the internet through Tailscale's network. No domain purchase required — you get a `*.ts.net` URL.
+Tailscale Funnel exposes a local service to the internet through Tailscale's network. No domain purchase required: you get a `*.ts.net` URL.
 
 **What you need:** A free Tailscale account. Funnel must be enabled in your Tailscale admin console.
 
@@ -195,7 +195,7 @@ Your instance is accessible at `https://your-machine.tail1234.ts.net`. HTTPS is 
 
 No proxy, no tunnel, no domain. Docker binds to `0.0.0.0` and anyone on the local network can connect using the host machine's LAN IP.
 
-**What you need:** Nothing — this is the zero-config default.
+**What you need:** Nothing: this is the zero-config default.
 
 Your instance is accessible at `http://<your-lan-ip>:3000` (e.g., `http://192.168.1.50:3000`).
 
@@ -214,7 +214,7 @@ The compose stack exposes the raw service ports. You can put whatever you want i
 | Convex Actions   | 3211 | HTTP             |
 | Convex Dashboard | 6791 | HTTP             |
 
-Use this with: Nginx, Traefik, HAProxy, AWS ALB, Cloudflare Access, ngrok, bore, or anything else. The only hard requirement is **WebSocket support** for the Convex backend port — without it, real-time features won't work.
+Use this with: Nginx, Traefik, HAProxy, AWS ALB, Cloudflare Access, ngrok, bore, or anything else. The only hard requirement is **WebSocket support** for the Convex backend port: without it, real-time features won't work.
 
 ### Networking Comparison
 
@@ -243,7 +243,7 @@ These are fully self-contained and run inside your Docker Compose stack:
 | Next.js Frontend | Web application                       | Docker container (built)       |
 | SQLite           | Default storage for Convex            | Embedded in Convex container   |
 
-### Optional — Provide Your Own Key
+### Optional: Provide Your Own Key
 
 These features require an external API key. The app works without them; those features simply become unavailable or fall back to a simpler mode:
 
@@ -257,7 +257,7 @@ These features require an external API key. The app works without them; those fe
 | **Google Maps API**  | Location autocomplete                  | Plain text input for locations                 | `NEXT_PUBLIC_GOOGLE_API_KEY`                 |
 | **Sentry**           | Error tracking                         | No error tracking (logs only)                  | `NEXT_PUBLIC_SENTRY_DSN`                     |
 
-### Optional — Self-Hostable Alternatives
+### Optional: Self-Hostable Alternatives
 
 For some services, you can swap in a self-hosted alternative instead of using a cloud API:
 
@@ -274,7 +274,7 @@ For some services, you can swap in a self-hosted alternative instead of using a 
 
 The setup script (`scripts/self-host-setup.sh`) provides an interactive wizard:
 
-```
+```text
 ╔══════════════════════════════════════════╗
 ║        Groupi Self-Host Setup            ║
 ╚══════════════════════════════════════════╝
@@ -343,8 +343,8 @@ Your instance will be available at: https://groupi.example.com
 
 ### What the script generates
 
-1. **`.env.self-host`** — All environment variables with sensible defaults
-2. **`docker-compose.self-host.yml`** — Compose file tailored to selected options
+1. **`.env.self-host`**: All environment variables with sensible defaults
+2. **`docker-compose.self-host.yml`**: Compose file tailored to selected options
 3. Auto-generated secrets (`BETTER_AUTH_SECRET`, admin keys)
 4. Feature flags for disabled services (so the frontend hides unavailable UI)
 
@@ -596,7 +596,7 @@ These `NEXT_PUBLIC_FEATURE_*` flags control UI visibility. The setup script sets
 
 ## Feature Tiers
 
-### Tier 1 — Zero Config (works out of the box)
+### Tier 1: Zero Config (works out of the box)
 
 These features work with no external services at all:
 
@@ -615,7 +615,7 @@ These features work with no external services at all:
 - Friend system and event invites
 - Muting and Do Not Disturb
 
-### Tier 2 — Bring Your Own Key
+### Tier 2: Bring Your Own Key
 
 These features activate when you provide the relevant API key:
 
@@ -630,7 +630,7 @@ These features activate when you provide the relevant API key:
 | AI date parsing       | Groq or OpenAI key  | 1 minute     |
 | Error tracking        | Sentry DSN          | 2 minutes    |
 
-### Tier 3 — Advanced Self-Host
+### Tier 3: Advanced Self-Host
 
 For users who want to replace cloud services entirely:
 
@@ -673,7 +673,7 @@ export function getEmailProvider(): EmailProvider | null {
 
 The AI date parsing in `convex/ai/actions.ts` uses the OpenAI-compatible API format. Any OpenAI-compatible endpoint works:
 
-```
+```text
 # Use Groq (cloud)
 GROQ_API_KEY=gsk_...
 
@@ -686,11 +686,11 @@ AI_MODEL=llama3.3
 AI_API_KEY=ollama  # Ollama doesn't need a real key
 ```
 
-The AI integration already uses the OpenAI SDK format, so pointing it at any compatible endpoint (Ollama, vLLM, LiteLLM, etc.) works with zero code changes — only the base URL and model name change.
+The AI integration already uses the OpenAI SDK format, so pointing it at any compatible endpoint (Ollama, vLLM, LiteLLM, etc.) works with zero code changes: only the base URL and model name change.
 
 ### Location: Text Input Instead of Google Maps
 
-When `NEXT_PUBLIC_GOOGLE_API_KEY` is not set, the location input falls back to a plain text field. No code changes needed — the Google Maps components already check for the API key and conditionally render.
+When `NEXT_PUBLIC_GOOGLE_API_KEY` is not set, the location input falls back to a plain text field. No code changes needed: the Google Maps components already check for the API key and conditionally render.
 
 ---
 
@@ -698,7 +698,7 @@ When `NEXT_PUBLIC_GOOGLE_API_KEY` is not set, the location input falls back to a
 
 ### Recommended Production Stack
 
-```
+```text
 ┌──────────────────────────┐
 │   Caddy (auto-HTTPS)     │
 │   groupi.example.com     │
@@ -751,7 +751,7 @@ npx convex deploy
 
 ## Platform-Specific Guides
 
-The setup wizard works the same everywhere — the only difference is which networking option makes sense for your platform.
+The setup wizard works the same everywhere: the only difference is which networking option makes sense for your platform.
 
 ### Home Server / Raspberry Pi / NAS
 
@@ -869,7 +869,7 @@ A Helm chart may be provided in a future release. For now, the compose file serv
 
 ### Phase 2: Feature Flag System
 
-**Goal:** UI adapts to available services — disabled features are hidden, not broken.
+**Goal:** UI adapts to available services: disabled features are hidden, not broken.
 
 5. **Add feature flag constants**
    - Create `packages/web/lib/feature-flags.ts`
@@ -1001,8 +1001,8 @@ It depends on your networking choice:
 
 - **Cloudflare Tunnel**: Yes, but any domain on a free Cloudflare plan works
 - **Caddy**: Yes, needed for Let's Encrypt TLS certificates
-- **Tailscale Funnel**: No — you get a `*.ts.net` URL automatically
-- **LAN only**: No — access via IP address
+- **Tailscale Funnel**: No. You get a `*.ts.net` URL automatically
+- **LAN only**: No. Access uses an IP address.
 
 ### Does the mobile app work with self-hosted?
 

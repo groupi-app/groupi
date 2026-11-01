@@ -1,45 +1,36 @@
-# Groupi Design System
+# Groupi design system
 
-Welcome to the Groupi Design System - a fun-first, dramatically rounded design language inspired by Duolingo and Discord.
+Groupi uses semantic design tokens and reusable components across its web UI.
+The current Soft lift treatment uses sticker edges, backing depth, and distinct
+focus and pressed states.
 
-## Design Principles
+## Table of Contents
 
-### 1. Dramatically Rounded
+- [Tokens](#tokens)
+- [Motion and interaction](#motion-and-interaction)
+- [Review](#review)
 
-Everything is soft and approachable with generous border radii:
+## Tokens
 
-- **Buttons**: 16px radius
-- **Cards**: 20px radius
-- **Modals**: 24px radius
-- **Badges**: Pill-shaped (9999px)
+The token system has three layers:
 
-### 2. Bouncy Animations
+1. Primitives define raw colors, spacing, and dimensions.
+2. Semantic tokens describe purpose, such as surfaces and feedback.
+3. Component tokens define individual control and layout treatments.
 
-Playful spring/bounce easing on all interactions using `cubic-bezier(0.34, 1.56, 0.64, 1)`.
+Use semantic and component tokens so bundled and custom themes remain consistent.
+Avoid copying a theme's raw color or radius into application components.
 
-### 3. Vibrant Colors
+## Motion and interaction
 
-A rich purple primary with bright accent colors:
+Filled actions depress on hover and press. Passive cards remain still. Reduced
+motion keeps position fixed while colors and depth communicate state. Components
+must preserve keyboard focus, accessible names, disabled behavior, and readable
+loading and error states.
 
-- **Primary**: Purple `hsl(285, 100%, 34%)`
-- **Success**: Bright Green
-- **Warning**: Warm Orange
-- **Error**: Bright Red
-- **Celebration**: Golden Yellow
+## Review
 
-### 4. Semantic Tokens
-
-Three-layer token architecture:
-
-1. **Primitives**: Raw values (colors, sizes)
-2. **Semantic**: Purpose-based (bg-surface, text-heading)
-3. **Component**: Component-specific (button-radius, card-padding)
-
-## Getting Started
-
-Browse the component stories to see the design system in action. Each component demonstrates:
-
-- All available variants
-- Interactive states (hover, focus, active)
-- Light and dark mode support
-- Accessibility features
+Start with the Soft lift overview and application-default stories. Review light,
+dark, and sparse custom themes, portaled content, narrow layouts, and enlarged
+text. Follow the interaction checks in the colocated `README.md` and the root
+`docs/ui-design-system.md` guide.
