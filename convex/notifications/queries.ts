@@ -1,3 +1,4 @@
+import { canReadGroupDiscussion } from '../lib/notifications';
 import { groupNotificationReferences } from '../groupInvites/notificationProjection';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
@@ -44,9 +45,13 @@ export const fetchNotificationsForPerson = query({
           }
         }
 
+        const canReadPost =
+          !notification.groupId ||
+          !notification.postId ||
+          (await canReadGroupDiscussion(ctx, notification));
         // Get post if exists
         let post = null;
-        if (notification.postId) {
+        if (notification.postId && canReadPost) {
           const postDoc = await ctx.db.get(notification.postId);
           if (postDoc) {
             post = { id: postDoc._id, title: postDoc.title };
@@ -55,7 +60,7 @@ export const fetchNotificationsForPerson = query({
 
         // Get author if exists using Better Auth component
         let author = null;
-        if (notification.authorId) {
+        if (notification.authorId && canReadPost) {
           const authorPerson = await ctx.db.get(notification.authorId);
           if (authorPerson) {
             // Use Better Auth component to look up user data
@@ -86,6 +91,7 @@ export const fetchNotificationsForPerson = query({
         return {
           ...notification,
           ...(await groupNotificationReferences(ctx, notification)),
+          ...(!canReadPost ? { group: null } : {}),
           id: notification._id,
           createdAt: notification._creationTime,
           event,

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { api, components, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
+import { seedGroupAnnouncement } from './announcement-history.helpers';
 import { createTestInstance } from './test_helpers';
 
 async function actor(
@@ -90,37 +91,39 @@ describe('Explicit announcements REST boundary', () => {
       await owner.request(endpoint, 'POST', { title: '', message: 'No' }),
       400
     );
-    const first = await body(
+    const snapshot = () =>
+      t.run(async ctx => ({
+        receipts: await ctx.db.query('groupAnnouncements').collect(),
+        notices: await ctx.db.query('notifications').collect(),
+        jobs: await ctx.db.system.query('_scheduled_functions').collect(),
+      }));
+    const before = await snapshot();
+    const retired = await body(
       await owner.request(endpoint, 'POST', {
         title: 'Reading',
         message: 'Bring a book',
       }),
-      202
+      409
     );
-    expect(first).toMatchObject({
-      state: 'PROCESSING',
-      notified: 0,
-      skipped: 0,
-    });
-    expect(Object.keys(first).sort()).toEqual([
-      'announcementId',
-      'notified',
-      'skipped',
-      'state',
-    ]);
-    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
-    const recovered = await body(
+    expect(JSON.stringify(retired)).toContain(
+      'Announcements have been retired'
+    );
+    expect(await snapshot()).toEqual(before);
+    const requestId = `${Date.now()}.12345678-1234-4123-8123-123456789abc`;
+    const history = await seedGroupAnnouncement(
+      t,
+      owner.personId,
+      { groupId, requestId, title: 'Reading', message: 'Bring a book' },
+      false
+    );
+    const historicalSnapshot = await snapshot();
+    await body(
       await owner.request(endpoint, 'POST', {
         title: 'Reading',
         message: 'Bring a book',
       }),
-      202
+      409
     );
-    expect(recovered).toMatchObject({
-      announcementId: first.announcementId,
-      state: 'COMPLETED',
-      notified: 1,
-    });
     await body(
       await owner.request(endpoint, 'POST', {
         title: 'Reading',
@@ -128,6 +131,17 @@ describe('Explicit announcements REST boundary', () => {
       }),
       409
     );
+    expect(await snapshot()).toEqual(historicalSnapshot);
+    const status = await body(
+      await owner.request(
+        `${endpoint}/status?requestId=${encodeURIComponent(requestId)}`
+      )
+    );
+    expect(status).toMatchObject({
+      announcementId: history.announcementId,
+      state: 'PROCESSING',
+      notified: 0,
+    });
     vi.useRealTimers();
   });
 });
@@ -160,13 +174,12 @@ it.each(['self', 'admin-session', 'admin-rest'] as const)(
         joinedAt: Date.now(),
       });
     });
-    const sent = await body(
-      await sender.request(`/groups/${groupId}/announcements`, 'POST', {
-        title: 'Hello',
-        message: 'Remove on deletion',
-      }),
-      202
-    );
+    const sent = await seedGroupAnnouncement(t, sender.personId, {
+      groupId,
+      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      title: 'Hello',
+      message: 'Remove on deletion',
+    });
     await t.finishAllScheduledFunctions(() => vi.runAllTimers());
     expect(
       (
@@ -235,14 +248,12 @@ it('required onboarding gates prior announcement content, fanout, dispatch and a
       projectId: 'ann-required-project',
       appId: 'gg.groupi.mobile',
     });
-    const endpoint = `/groups/${groupId}/announcements`;
-    const first = await body(
-      await owner.request(endpoint, 'POST', {
-        title: 'Prior private content',
-        message: 'Private Group detail',
-      }),
-      202
-    );
+    const first = await seedGroupAnnouncement(t, owner.personId, {
+      groupId,
+      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      title: 'Prior private content',
+      message: 'Private Group detail',
+    });
     await t.mutation(internal.groupAnnouncements.mutations.processPage, {
       announcementId: first.announcementId,
     });
@@ -268,13 +279,12 @@ it('required onboarding gates prior announcement content, fanout, dispatch and a
       deliveryIds: pushes.map(p => p._id),
     });
     vi.setSystemTime(Date.now() + 1);
-    const second = await body(
-      await owner.request(endpoint, 'POST', {
-        title: 'Queued private content',
-        message: 'Do not leak after gate',
-      }),
-      202
-    );
+    const second = await seedGroupAnnouncement(t, owner.personId, {
+      groupId,
+      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      title: 'Queued private content',
+      message: 'Do not leak after gate',
+    });
     await t.mutation(internal.groupAnnouncements.mutations.processPage, {
       announcementId: second.announcementId,
     });
@@ -333,13 +343,12 @@ it('required onboarding gates prior announcement content, fanout, dispatch and a
       { deviceId: 'ann-required-device' }
     );
     vi.setSystemTime(Date.now() + 1);
-    const skipped = await body(
-      await mod.request(endpoint, 'POST', {
-        title: 'Still incomplete',
-        message: 'Must not deliver',
-      }),
-      202
-    );
+    const skipped = await seedGroupAnnouncement(t, mod.personId, {
+      groupId,
+      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      title: 'Still incomplete',
+      message: 'Must not deliver',
+    });
     await t.mutation(internal.groupAnnouncements.mutations.processPage, {
       announcementId: skipped.announcementId,
     });
@@ -362,13 +371,12 @@ it('required onboarding gates prior announcement content, fanout, dispatch and a
         ?.groupAnnouncement
     ).toMatchObject({ message: 'Private Group detail' });
     vi.setSystemTime(Date.now() + 1);
-    const restored = await body(
-      await mod.request(endpoint, 'POST', {
-        title: 'Restored',
-        message: 'Only completed recipients',
-      }),
-      202
-    );
+    const restored = await seedGroupAnnouncement(t, mod.personId, {
+      groupId,
+      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      title: 'Restored',
+      message: 'Only completed recipients',
+    });
     await t.mutation(internal.groupAnnouncements.mutations.processPage, {
       announcementId: restored.announcementId,
     });

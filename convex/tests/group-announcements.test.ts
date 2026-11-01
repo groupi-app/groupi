@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { api, internal, components } from '../_generated/api';
+import { seedGroupAnnouncement } from './announcement-history.helpers';
 import { createTestInstance } from './test_helpers';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 
-describe('Explicit Group announcements through authenticated sessions', () => {
-  it('requires current manager authority and recovers the same explicit send without duplicate notifications', async () => {
-    vi.useFakeTimers();
+describe('Retired Group announcements through authenticated sessions', () => {
+  it('requires manager authority, rejects new and replay sends, and preserves historical status without new work', async () => {
     const t = createTestInstance();
     registerBetterAuth(t);
     const owner = await createAuthAccount(t, 'announce-owner');
@@ -14,15 +14,14 @@ describe('Explicit Group announcements through authenticated sessions', () => {
       api.groups.mutations.createGroup,
       { name: 'Readers' }
     );
-    await t.run(async ctx => {
-      await ctx.db.insert('groupMemberships', {
+    await t.run(ctx =>
+      ctx.db.insert('groupMemberships', {
         groupId,
         personId: member.personId,
         role: 'MEMBER',
         joinedAt: Date.now(),
-      });
-      await ctx.db.patch(groupId, { memberCount: 2 });
-    });
+      })
+    );
     const input = {
       groupId,
       requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
@@ -35,40 +34,61 @@ describe('Explicit Group announcements through authenticated sessions', () => {
         input
       )
     ).rejects.toThrow('manager');
-    const first = await owner.auth.mutation(
-      api.groupAnnouncements.mutations.sendAnnouncement,
-      input
+    const snapshot = () =>
+      t.run(async ctx => ({
+        receipts: await ctx.db.query('groupAnnouncements').collect(),
+        notices: await ctx.db.query('notifications').collect(),
+        jobs: await ctx.db.system.query('_scheduled_functions').collect(),
+      }));
+    const before = await snapshot();
+    await expect(
+      owner.auth.mutation(
+        api.groupAnnouncements.mutations.sendAnnouncement,
+        input
+      )
+    ).rejects.toThrow('Announcements have been retired');
+    expect(await snapshot()).toEqual(before);
+    const history = await seedGroupAnnouncement(
+      t,
+      owner.personId,
+      input,
+      false
     );
-    expect(first).toMatchObject({ state: 'PROCESSING', notified: 0 });
-    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
-    const recovered = await owner.auth.mutation(
-      api.groupAnnouncements.mutations.sendAnnouncement,
-      input
-    );
-    expect(recovered).toMatchObject({
-      announcementId: first.announcementId,
-      state: 'COMPLETED',
-      notified: 1,
-    });
-    vi.useRealTimers();
-    const notifications = await member.auth.query(
-      api.notifications.queries.fetchNotificationsForPerson,
-      {}
-    );
-    expect(
-      notifications.notifications.filter(n => n.type === 'GROUP_ANNOUNCEMENT')
-    ).toHaveLength(1);
+    const historicalSnapshot = await snapshot();
+    await expect(
+      owner.auth.mutation(
+        api.groupAnnouncements.mutations.sendAnnouncement,
+        input
+      )
+    ).rejects.toThrow('Announcements have been retired');
     await expect(
       owner.auth.mutation(api.groupAnnouncements.mutations.sendAnnouncement, {
         ...input,
         message: 'Different',
       })
-    ).rejects.toThrow('different');
+    ).rejects.toThrow('Announcements have been retired');
+    expect(await snapshot()).toEqual(historicalSnapshot);
+    expect(
+      await owner.auth.query(api.groupAnnouncements.queries.getAnnouncement, {
+        groupId,
+        requestId: input.requestId,
+      })
+    ).toMatchObject({
+      announcementId: history.announcementId,
+      state: 'PROCESSING',
+      notified: 0,
+    });
+    await expect(
+      member.auth.query(api.groupAnnouncements.queries.getAnnouncement, {
+        groupId,
+        requestId: input.requestId,
+      })
+    ).rejects.toThrow('manager');
   });
 });
 
 describe('Announcement audience and concurrency', () => {
-  it('checks current privacy and DND, concurrent same-key sends create one notification, and deletion cancels pending data', async () => {
+  it('checks current privacy and DND for queued historical work, replay creates one notification, and deletion removes data', async () => {
     vi.useFakeTimers();
     const t = createTestInstance();
     registerBetterAuth(t);
@@ -100,14 +120,8 @@ describe('Announcement audience and concurrency', () => {
       message: 'Only permitted members',
     };
     const [a, b] = await Promise.all([
-      owner.auth.mutation(
-        api.groupAnnouncements.mutations.sendAnnouncement,
-        input
-      ),
-      owner.auth.mutation(
-        api.groupAnnouncements.mutations.sendAnnouncement,
-        input
-      ),
+      seedGroupAnnouncement(t, owner.personId, input),
+      seedGroupAnnouncement(t, owner.personId, input),
     ]);
     expect(a.announcementId).toBe(b.announcementId);
     await t.finishAllScheduledFunctions(() => vi.runAllTimers());
@@ -196,10 +210,7 @@ it('replayed scheduler page/dispatch creates one set of channel work and honors 
     title: 'Reading',
     message: 'Private destination stays private',
   };
-  const first = await owner.auth.mutation(
-    api.groupAnnouncements.mutations.sendAnnouncement,
-    input
-  );
+  const first = await seedGroupAnnouncement(t, owner.personId, input);
   await t.mutation(internal.groupAnnouncements.mutations.processPage, {
     announcementId: first.announcementId,
   });
@@ -256,10 +267,12 @@ it('cancels processing after stale sender authority and never dispatches after r
       });
   });
   const requestId = `${Date.now()}.12345678-1234-4123-8123-123456789abc`;
-  const first = await moderator.auth.mutation(
-    api.groupAnnouncements.mutations.sendAnnouncement,
-    { groupId, requestId, title: 'Reading', message: 'Manager only' }
-  );
+  const first = await seedGroupAnnouncement(t, moderator.personId, {
+    groupId,
+    requestId,
+    title: 'Reading',
+    message: 'Manager only',
+  });
   await owner.auth.mutation(api.groupModeration.mutations.setGroupMemberRole, {
     groupId,
     personId: moderator.personId,
@@ -281,15 +294,12 @@ it('cancels processing after stale sender authority and never dispatches after r
     state: 'CANCELLED',
     notified: 0,
   });
-  const next = await owner.auth.mutation(
-    api.groupAnnouncements.mutations.sendAnnouncement,
-    {
-      groupId,
-      requestId: `${Date.now()}.22345678-1234-4123-8123-123456789abc`,
-      title: 'Reading',
-      message: 'Current only',
-    }
-  );
+  const next = await seedGroupAnnouncement(t, owner.personId, {
+    groupId,
+    requestId: `${Date.now()}.22345678-1234-4123-8123-123456789abc`,
+    title: 'Reading',
+    message: 'Current only',
+  });
   await recipient.auth.mutation(api.users.mutations.deleteUserAccount, {
     confirmation: 'stale-ann-recipient',
   });
@@ -366,15 +376,12 @@ it('claims existing enabled email/webhook/push work once without persisting cont
       ],
     }
   );
-  const first = await owner.auth.mutation(
-    api.groupAnnouncements.mutations.sendAnnouncement,
-    {
-      groupId,
-      requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
-      title: 'Reading',
-      message: 'Bring <a book>',
-    }
-  );
+  const first = await seedGroupAnnouncement(t, owner.personId, {
+    groupId,
+    requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+    title: 'Reading',
+    message: 'Bring <a book>',
+  });
   await t.mutation(internal.groupAnnouncements.mutations.processPage, {
     announcementId: first.announcementId,
   });
@@ -411,7 +418,7 @@ it('claims existing enabled email/webhook/push work once without persisting cont
     body: 'Reading: Bring <a book>',
   });
   const scheduled = await t.run(ctx =>
-    ctx.db.system.query('_scheduledFunctions').collect()
+    ctx.db.system.query('_scheduled_functions').collect()
   );
   expect(JSON.stringify(scheduled.map(job => job.args))).not.toContain(
     'private@example.test'
@@ -464,10 +471,7 @@ it('bounds fanout across pages and excludes later joins, active bans and unavail
     title: 'Reading',
     message: 'Current permitted people',
   };
-  const first = await owner.auth.mutation(
-    api.groupAnnouncements.mutations.sendAnnouncement,
-    input
-  );
+  const first = await seedGroupAnnouncement(t, owner.personId, input);
   const late = await createAuthAccount(t, 'pages-ann-late');
   await t.run(ctx =>
     ctx.db.insert('groupMemberships', {

@@ -1,4 +1,6 @@
 import {
+  GroupAdmissionsSettings,
+  GroupMembershipSettings,
   GroupInvitationsSettings,
   GroupOwnershipSettings,
 } from '@/features/groups';
@@ -7,12 +9,6 @@ vi.mock('./community-expulsion-progress', () => ({
 }));
 vi.mock('./community-expulsion-action', () => ({
   CommunityExpulsionAction: () => null,
-}));
-vi.mock('@/features/group-announcements/event-mail', () => ({
-  EventMail: () => null,
-}));
-vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
 }));
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -124,6 +120,21 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTools/queries:getFormPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getListPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getPollPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
     'groupDiscord/enrollment:getStatus': null,
     'groupDiscord/queries:getConnection': null,
     'groups/expulsions:progress': null,
@@ -230,7 +241,7 @@ it('requires explicit confirmation before removing a member through the producti
   const { client, mutation } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -439,7 +450,7 @@ it('updates the live roster after the owner appoints and demotes a moderator', a
   const { client, mutation, setData } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -519,7 +530,7 @@ it('shows a confidential error after a rejected ban and allows an explicit retry
     .mockResolvedValueOnce({ banned: true });
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupAdmissionsSettings groupId={groupId} />
     </AppProvider>
   );
   const user = userEvent.setup();
@@ -548,7 +559,7 @@ it('uses the app provider despite a distinct shared SDK and explains the owner c
   const { client } = fixtureClient();
   const mounted = render(
     <AppProvider client={client}>
-      <GroupDetail groupId={groupId} />
+      <GroupMembershipSettings groupId={groupId} />
     </AppProvider>
   );
   expect(
@@ -725,6 +736,32 @@ it('withholds pending invitation ban controls when the server protects the targe
   expect(
     screen.queryByRole('button', { name: 'Ban invited user Alex' })
   ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('keeps the owner overview roster read-only while management remains in settings', async () => {
+  const { client, mutation } = fixtureClient();
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  expect(await screen.findByText('@alex')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Remove Alex' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Ban Alex' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Make Alex a moderator' })
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Group settings' })).toHaveAttribute(
+    'href',
+    '/groups/group-one/settings'
+  );
+  expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });

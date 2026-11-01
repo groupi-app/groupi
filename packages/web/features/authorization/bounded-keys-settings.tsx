@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { SettingsActions } from './settings-actions';
 import { authorizationActionLabel } from '@groupi/shared/hooks';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,11 @@ export function BoundedKeysSettings() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [detailsId, setDetailsId] = useState<Id<'authorizationGrants'> | null>(
+    null
+  );
+  const actionTrigger = useRef<HTMLButtonElement | null>(null);
+  const detail = grants?.find(grant => grant.grantId === detailsId);
   const [notice, setNotice] = useState<string | null>(null);
 
   function close() {
@@ -145,114 +151,192 @@ export function BoundedKeysSettings() {
           ) : grants.length === 0 ? (
             <p className='text-muted-foreground'>No bounded keys yet.</p>
           ) : null}
-          {grants?.map(grant => (
-            <div
-              key={grant.grantId}
-              className='space-y-2 rounded-card border border-border p-4'
-            >
-              <p className='font-medium'>
-                {grant.name} ·{' '}
-                {grant.principalKind === 'integration'
-                  ? 'Integration'
-                  : 'Your account'}
-              </p>
-              <p className='text-sm text-muted-foreground'>
-                {grant.actions.map(authorizationActionLabel).join(', ')}
-              </p>
-              <p className='text-sm'>
-                {grant.selector.kind === 'all-current-and-future'
-                  ? 'All current and future events within your authority'
-                  : grant.selector.kind === 'selected-group'
-                    ? `Selected Group (${grant.selector.groupId}) — own context only`
-                    : grant.selector.eventIds
-                        .map(
-                          id =>
-                            events?.find(event => event._id === id)?.title ??
-                            'Unavailable event'
-                        )
-                        .join(', ')}
-              </p>
-              <p className='text-sm'>
-                {grant.revokedAt
-                  ? 'Revoked'
-                  : grant.expiresAt && grant.expiresAt <= now
-                    ? 'Expired'
-                    : 'Active'}
-                {grant.expiresAt
-                  ? ` · Expires ${new Date(grant.expiresAt).toLocaleDateString()}`
-                  : ' · No expiration'}
-              </p>
-              <div className='flex flex-wrap gap-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => setAuditGrantId(grant.grantId)}
-                >
-                  View activity for {grant.name}
-                </Button>
-                {!grant.revokedAt ? (
-                  <>
-                    <Button
-                      variant='outline'
-                      onClick={() => {
-                        setEditingId(grant.grantId);
-                        setName(grant.name);
-                        setPrincipalKind(grant.principalKind);
-                        setActions(
-                          grant.actions.filter(
-                            action => !action.startsWith('groups.')
-                          )
-                        );
-                        setAllEvents(
-                          grant.selector.kind === 'all-current-and-future'
-                        );
-                        setEventIds(
-                          grant.selector.kind === 'selected'
-                            ? grant.selector.eventIds
-                            : []
-                        );
-                        setError(null);
-                        setOpen(true);
-                      }}
-                    >
-                      Edit access for {grant.name}
-                    </Button>
-                    <Button
-                      variant='destructive'
-                      onClick={() => setRevokeGrantId(grant.grantId)}
-                    >
-                      Revoke {grant.name}
-                    </Button>
-                  </>
-                ) : null}
+          <div className='divide-y divide-border'>
+            {grants?.map(grant => (
+              <div
+                key={grant.grantId}
+                className='flex min-w-0 items-start justify-between gap-3 py-3'
+              >
+                <div className='min-w-0 space-y-1'>
+                  <p className='break-words text-sm font-semibold'>
+                    {grant.name}
+                  </p>
+                  <p className='text-xs text-muted-foreground'>
+                    {grant.revokedAt
+                      ? 'Revoked'
+                      : grant.expiresAt && grant.expiresAt <= now
+                        ? 'Expired'
+                        : 'Active'}{' '}
+                    ·{' '}
+                    {grant.principalKind === 'integration'
+                      ? 'Integration'
+                      : 'Your account'}
+                    {grant.expiresAt
+                      ? ` · ${new Date(grant.expiresAt).toLocaleDateString()}`
+                      : ''}
+                  </p>
+                </div>
+                <SettingsActions
+                  label={`Actions for ${grant.name}`}
+                  actions={[
+                    {
+                      label: 'Details',
+                      onSelect: trigger => {
+                        actionTrigger.current = trigger;
+                        setDetailsId(grant.grantId);
+                      },
+                    },
+                    {
+                      label: 'Activity',
+                      onSelect: trigger => {
+                        actionTrigger.current = trigger;
+                        setAuditGrantId(grant.grantId);
+                      },
+                    },
+                    ...(!grant.revokedAt
+                      ? [
+                          {
+                            label: 'Edit access',
+                            disabled: pending,
+                            onSelect: (trigger: HTMLButtonElement | null) => {
+                              actionTrigger.current = trigger;
+                              setEditingId(grant.grantId);
+                              setName(grant.name);
+                              setPrincipalKind(grant.principalKind);
+                              setActions(
+                                grant.actions.filter(
+                                  action => !action.startsWith('groups.')
+                                )
+                              );
+                              setAllEvents(
+                                grant.selector.kind === 'all-current-and-future'
+                              );
+                              setEventIds(
+                                grant.selector.kind === 'selected'
+                                  ? grant.selector.eventIds
+                                  : []
+                              );
+                              setError(null);
+                              setOpen(true);
+                            },
+                          },
+                          {
+                            label: 'Revoke',
+                            destructive: true,
+                            disabled: pending,
+                            onSelect: (trigger: HTMLButtonElement | null) => {
+                              actionTrigger.current = trigger;
+                              setError(null);
+                              setRevokeGrantId(grant.grantId);
+                            },
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </div>
-            </div>
-          ))}
-          <Button
-            onClick={() => {
-              close();
-              setOpen(true);
-            }}
-          >
-            Create bounded key
-          </Button>
-          <Button
-            variant='outline'
-            onClick={() => {
-              setError(null);
-              setRecoveryOpen(true);
-            }}
-          >
-            Revoke my user credentials
-          </Button>
+            ))}
+          </div>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              onClick={() => {
+                close();
+                actionTrigger.current = null;
+                setOpen(true);
+              }}
+            >
+              Create bounded key
+            </Button>
+            <SettingsActions
+              label='Key settings'
+              actions={[
+                {
+                  label: 'Revoke my user credentials',
+                  destructive: true,
+                  disabled: pending,
+                  onSelect: trigger => {
+                    actionTrigger.current = trigger;
+                    setError(null);
+                    setRecoveryOpen(true);
+                  },
+                },
+              ]}
+            />
+          </div>
         </CardContent>
       </Card>
+      <Dialog
+        open={detailsId !== null}
+        onOpenChange={value => {
+          if (!value) setDetailsId(null);
+        }}
+      >
+        <DialogContent
+          className='max-h-[90dvh] overflow-y-auto'
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>{detail?.name ?? 'Key details'}</DialogTitle>
+            <DialogDescription>
+              Allowed actions and selected events.
+            </DialogDescription>
+          </DialogHeader>
+          {detail && (
+            <dl className='space-y-3 text-sm'>
+              <div>
+                <dt className='font-medium'>Actions</dt>
+                <dd className='break-words text-muted-foreground'>
+                  {detail.actions.map(authorizationActionLabel).join(', ')}
+                </dd>
+              </div>
+              <div>
+                <dt className='font-medium'>Events</dt>
+                <dd className='break-words text-muted-foreground'>
+                  {detail.selector.kind === 'all-current-and-future'
+                    ? 'All current and future events within your authority'
+                    : detail.selector.kind === 'selected-group'
+                      ? `Selected Group (${detail.selector.groupId}) — own context only`
+                      : detail.selector.eventIds
+                          .map(
+                            id =>
+                              events?.find(event => event._id === id)?.title ??
+                              'Unavailable event'
+                          )
+                          .join(', ') || 'None'}
+                </dd>
+              </div>
+              <div>
+                <dt className='font-medium'>Expiration</dt>
+                <dd>
+                  {detail.expiresAt
+                    ? new Date(detail.expiresAt).toLocaleString()
+                    : 'No expiration'}
+                </dd>
+              </div>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={recoveryOpen}
         onOpenChange={value => {
           if (!pending) setRecoveryOpen(value);
         }}
       >
-        <DialogContent>
+        <DialogContent
+          preventClose={pending}
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Recover your user credentials</DialogTitle>
             <DialogDescription>
@@ -310,7 +394,15 @@ export function BoundedKeysSettings() {
           if (!value && !pending) setRevokeGrantId(null);
         }}
       >
-        <DialogContent>
+        <DialogContent
+          preventClose={pending}
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Revoke this key?</DialogTitle>
             <DialogDescription>
@@ -365,7 +457,15 @@ export function BoundedKeysSettings() {
           if (!value) setAuditGrantId(undefined);
         }}
       >
-        <DialogContent className='max-h-[90dvh] overflow-y-auto'>
+        <DialogContent
+          className='max-h-[90dvh] overflow-y-auto'
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Key activity</DialogTitle>
             <DialogDescription>
@@ -403,7 +503,15 @@ export function BoundedKeysSettings() {
           if (!value) close();
         }}
       >
-        <DialogContent className='max-h-[90dvh] overflow-y-auto'>
+        <DialogContent
+          className='max-h-[90dvh] overflow-y-auto'
+          onCloseAutoFocus={event => {
+            if (actionTrigger.current?.isConnected) {
+              event.preventDefault();
+              actionTrigger.current.focus();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>
               {secret

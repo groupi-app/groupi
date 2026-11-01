@@ -1,3 +1,4 @@
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import { useMemo } from 'react';
 import { View, FlatList, Pressable } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -38,6 +39,15 @@ const SORT_LABELS: Record<SortBy, string> = {
 export default function HomeScreen() {
   const { user } = useGlobalUser();
   const eventsData = useUserEvents();
+  const lifecycleEvents: {
+    event: { chosenEndDateTime?: number; potentialDateTimes?: number[] };
+  }[] = eventsData?.events ?? [];
+  const now = useLifecycleClock(
+    lifecycleEvents.flatMap(({ event }) => [
+      event.chosenEndDateTime,
+      ...(event.potentialDateTimes ?? []),
+    ])
+  );
   const inviteCount = usePendingInviteCount();
   const unreadNotifications = useUnreadNotificationCount();
   const mutedEventsData = useMutedEvents();
@@ -62,8 +72,8 @@ export default function HomeScreen() {
   }, [mutedEventsData]);
 
   const eventCounts = useMemo(() => {
-    return countHomeEvents(eventsData?.events ?? []);
-  }, [eventsData]);
+    return countHomeEvents(eventsData?.events ?? [], now);
+  }, [eventsData, now]);
 
   const eventTabs = EVENT_TABS.map(tab => ({
     ...tab,
@@ -76,9 +86,10 @@ export default function HomeScreen() {
     return filterHomeEvents<(typeof allEvents)[number]>(
       allEvents,
       activeTab,
-      eventScope
+      eventScope,
+      now
     );
-  }, [eventsData, activeTab, eventScope]);
+  }, [eventsData, activeTab, eventScope, now]);
 
   // Sort events
   const sortedEvents = useMemo(() => {

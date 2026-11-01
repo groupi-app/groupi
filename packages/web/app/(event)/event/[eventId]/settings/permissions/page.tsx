@@ -1,9 +1,7 @@
 'use client';
 
-import { use, useCallback } from 'react';
-import { useMutation } from 'convex/react';
-import { Id } from '@/convex/_generated/dataModel';
-import { toast } from 'sonner';
+import { use } from 'react';
+import { useEventSettingsDraft } from '@/features/event-settings';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useEventData } from '../../context';
 import {
@@ -51,33 +49,14 @@ export default function EventSettingsPermissionsPage(props: {
 }) {
   const { eventId } = use(props.params);
   const { headerData, isLoading } = useEventData();
-  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-  const { api } = require('@/convex/_generated/api') as { api: any };
-  const updatePermissions = useMutation(
-    api.events.mutations.updateEventPermissions
-  );
-
-  const permissions = headerData?.permissions;
+  const { values, setSection, busy } = useEventSettingsDraft();
+  const permissions = values.permissions;
   const userRole = headerData?.userMembership?.role;
   const isOrganizerUser = userRole === 'ORGANIZER';
-
-  const handlePermissionChange = useCallback(
-    async (key: EventPermissionKey, value: PermissionLevel) => {
-      try {
-        const args = {
-          eventId: eventId as Id<'events'>,
-          createPosts: key === 'createPosts' ? value : undefined,
-          inviteMembers: key === 'inviteMembers' ? value : undefined,
-          viewAttendeeList: key === 'viewAttendeeList' ? value : undefined,
-        };
-        await updatePermissions(args);
-        toast.success('Permission updated');
-      } catch {
-        toast.error('Failed to update permission');
-      }
-    },
-    [updatePermissions, eventId]
-  );
+  const handlePermissionChange = (
+    key: EventPermissionKey,
+    value: PermissionLevel
+  ) => setSection('permissions', { ...permissions, [key]: value });
 
   return (
     <SettingsPageTemplate
@@ -94,7 +73,7 @@ export default function EventSettingsPermissionsPage(props: {
           {PERMISSION_KEYS.map(key => (
             <div
               key={key}
-              className='flex items-center justify-between gap-4 py-3'
+              className='flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
             >
               <label className='text-sm font-medium'>
                 {PERMISSION_LABELS[key]}
@@ -104,9 +83,9 @@ export default function EventSettingsPermissionsPage(props: {
                 onValueChange={val =>
                   handlePermissionChange(key, val as PermissionLevel)
                 }
-                disabled={!isOrganizerUser}
+                disabled={!isOrganizerUser || busy}
               >
-                <SelectTrigger className='w-[220px]'>
+                <SelectTrigger className='w-full sm:w-56'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -313,6 +313,73 @@ describe('bounded credential management', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ postId: post.postId });
   });
+
+  it('does not inherit Event file access when a native user attaches the upload to a Group post', async () => {
+    const t = createTestInstance();
+    registerBetterAuth(t);
+    const scenario = await TestScenarios.singleEvent(t);
+    const account = await createAuthAccount(
+      t,
+      'group-file-boundary',
+      scenario.personId
+    );
+    const created = await account.auth.mutation(issue, {
+      name: 'Event-only files',
+      principalKind: 'user',
+      actions: ['files.upload', 'files.read', 'discussion.read'],
+      selector: { kind: 'selected', eventIds: [scenario.eventId] },
+    });
+    const uploaded = await t.fetch(
+      `/api/v2/uploads?eventId=${scenario.eventId}`,
+      {
+        method: 'POST',
+        headers: {
+          'x-api-key': created.key,
+          'content-type': 'text/plain',
+          'X-Filename': 'group-notes.txt',
+        },
+        body: 'Private Group notes',
+      }
+    );
+    expect(uploaded.status).toBe(201);
+    const file = await uploaded.json();
+    const readFile = () =>
+      t.fetch(`/api/v2/uploads/${file.storageId}`, {
+        headers: { 'x-api-key': created.key },
+      });
+    expect((await readFile()).status).toBe(200);
+    const groupId = await account.auth.mutation(
+      makeFunctionReference<'mutation'>('groups/mutations:createGroup'),
+      {
+        name: 'Separate private Group',
+      }
+    );
+    const postId = await account.auth.mutation(
+      makeFunctionReference<'mutation'>('groupPosts/mutations:createPost'),
+      {
+        groupId,
+        title: 'Group discussion',
+        content: '<p>Private Group attachment</p>',
+        attachments: [file],
+      }
+    );
+    const nativeAttachments = await account.auth.query(
+      makeFunctionReference<'query'>('attachments/queries:getPostAttachments'),
+      { postId }
+    );
+    expect(nativeAttachments).toEqual([
+      expect.objectContaining({ storageId: file.storageId }),
+    ]);
+    expect((await readFile()).status).toBe(403);
+    const boundedPost = await t.fetch(`/api/v2/posts/${postId}`, {
+      headers: { 'x-api-key': created.key },
+    });
+    expect(boundedPost.status).toBe(403);
+    // A dangling attached-file reference also cannot recover its former Event grant.
+    await t.run(ctx => ctx.db.delete(postId));
+    expect((await readFile()).status).toBe(403);
+  });
+
   it('projects email independently from display identity', async () => {
     const t = createTestInstance();
     registerBetterAuth(t);

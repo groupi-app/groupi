@@ -15,6 +15,11 @@ export * from './attachment-submission';
 export * from './date-parser';
 export * from './date-voting';
 export * from './event-permissions';
+export * from './event-lifecycle';
+import {
+  classifyEventLifecycle,
+  type EventLifecycleInput,
+} from './event-lifecycle';
 export * from './invite-list-draft';
 
 // Date and time utilities
@@ -212,35 +217,23 @@ export function formatDateTimeRangeShort(
   }
 }
 
-/**
- * Check if an event is in the past
- * Past = end time is in the past OR (no end time AND start date is yesterday or before)
- */
+/** Past includes expired open date polls, without treating them as completed. */
 export function isEventPast(
   startDateTime: number | null | undefined,
-  endDateTime?: number | null | undefined
+  endDateTime?: number | null,
+  options: Omit<EventLifecycleInput, 'chosenDateTime' | 'chosenEndDateTime'> & {
+    now?: number;
+  } = {}
 ): boolean {
-  // If no start date, event is TBD - not past
-  if (startDateTime === null || startDateTime === undefined) {
-    return false;
-  }
-
-  const now = Date.now();
-
-  // If there's an end time, use that for comparison
-  if (endDateTime !== null && endDateTime !== undefined) {
-    return endDateTime < now;
-  }
-
-  // No end time: check if start date is before today (yesterday or earlier)
-  const startDate = new Date(startDateTime);
-  const today = new Date();
-
-  // Set to start of today
-  today.setHours(0, 0, 0, 0);
-
-  // Event is past if start date is before today
-  return startDate.getTime() < today.getTime();
+  const state = classifyEventLifecycle(
+    {
+      ...options,
+      chosenDateTime: startDateTime,
+      chosenEndDateTime: endDateTime,
+    },
+    options.now ?? Date.now()
+  );
+  return state === 'COMPLETED' || state === 'NEEDS_NEW_DATES';
 }
 
 export function isValidDate(date: unknown): date is Date {

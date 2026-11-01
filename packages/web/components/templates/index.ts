@@ -12,3 +12,5 @@ export * from './detail-page-template';
 export * from './form-page-template';
 export * from './settings-page-template';
 export * from './error-page-template';
+
+export * from './event-header-layout';

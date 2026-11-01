@@ -2298,6 +2298,10 @@ export class Groupi {
         content: string;
         editedAt: number | null;
         replyCount: number;
+        repliesDisabled?: boolean;
+        repliesRevision?: number;
+        pinnedAt?: number;
+        pinRevision?: number;
       }>
     | {
         items: Array<{
@@ -2327,6 +2331,10 @@ export class Groupi {
           content: string;
           editedAt: number | null;
           replyCount: number;
+          repliesDisabled?: boolean;
+          repliesRevision?: number;
+          pinnedAt?: number;
+          pinRevision?: number;
         }>;
         nextCursor: string | null;
       }
@@ -2364,6 +2372,10 @@ export class Groupi {
     content: string;
     editedAt: number | null;
     replyCount: number;
+    repliesDisabled?: boolean;
+    repliesRevision?: number;
+    pinnedAt?: number;
+    pinRevision?: number;
   }>;
   /**  */
   getPost(
@@ -2396,6 +2408,10 @@ export class Groupi {
     content: string;
     editedAt: number | null;
     replyCount: number;
+    repliesDisabled?: boolean;
+    repliesRevision?: number;
+    pinnedAt?: number;
+    pinRevision?: number;
     replies: Array<{
       id: string;
       createdAt: number;
@@ -2430,6 +2446,8 @@ export class Groupi {
       body: {
         title?: string;
         content?: string;
+        repliesDisabled?: boolean;
+        expectedRepliesRevision?: number;
         text?: string;
         attachments?: Array<{
           storageId: string;
@@ -2483,6 +2501,10 @@ export class Groupi {
         content: string;
         editedAt: number | null;
         replyCount: number;
+        repliesDisabled?: boolean;
+        repliesRevision?: number;
+        pinnedAt?: number;
+        pinRevision?: number;
         replies: Array<{
           id: string;
           createdAt: number;
@@ -2524,6 +2546,8 @@ export class Groupi {
       body: {
         title?: string;
         content?: string;
+        repliesDisabled?: boolean;
+        expectedRepliesRevision?: number;
         text?: string;
         attachments?: Array<{
           storageId: string;
@@ -2683,6 +2707,8 @@ export class Groupi {
       body: {
         title?: string;
         content?: string;
+        repliesDisabled?: boolean;
+        expectedRepliesRevision?: number;
         text?: string;
         attachments?: Array<{
           storageId: string;
@@ -2749,6 +2775,8 @@ export class Groupi {
       body: {
         title?: string;
         content?: string;
+        repliesDisabled?: boolean;
+        expectedRepliesRevision?: number;
         text?: string;
         attachments?: Array<{
           storageId: string;
@@ -3050,7 +3078,7 @@ export class Groupi {
     input: { path: { friendshipId: string } },
     options?: RequestOptions
   ): Promise<null>;
-  /** Explicitly announce to permitted Group members */
+  /** Retired: use a post to share an update */
   explicitlyAnnounceToPermittedGroupMembers(
     input: {
       path: { groupId: string };

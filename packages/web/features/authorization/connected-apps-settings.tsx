@@ -92,13 +92,14 @@ export function ConnectedAppsSettings() {
                   </p>
                 ) : null}
                 <Button
-                  variant='destructive'
+                  variant='outline'
+                  aria-label={`Disconnect ${connection.appName}`}
                   onClick={() => {
                     setSelected(connection.grantId);
                     setError(null);
                   }}
                 >
-                  Disconnect {connection.appName}
+                  Disconnect
                 </Button>
               </div>
             ))

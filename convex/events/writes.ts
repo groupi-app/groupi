@@ -115,6 +115,7 @@ function validateImageFocalPoint(
 }
 
 export const createEventArgs = v.object({
+  timezone: v.optional(v.string()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
@@ -157,6 +158,7 @@ export async function createEventForPerson(
   personId: Id<'persons'>,
   {
     title,
+    timezone,
     description,
     location,
     imageStorageId,
@@ -173,6 +175,14 @@ export async function createEventForPerson(
 ) {
   if (!(await ctx.db.get(personId)))
     throw eventValidationError('Account not found');
+
+  if (timezone !== undefined) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(0);
+    } catch {
+      throw eventValidationError('Provide a valid IANA Event timezone.');
+    }
+  }
 
   // Validate input
   if (!title.trim()) {
@@ -288,7 +298,7 @@ export async function createEventForPerson(
     createdById: personId,
     createdAt: now,
     updatedAt: now,
-    timezone: 'UTC', // Default timezone, can be updated later
+    timezone: timezone ?? 'UTC', // Stable legacy default; never infer the viewer's zone.
     potentialDateTimes: dateTimeOptions.map(opt => opt.start), // Legacy array field
     chosenDateTime: chosenTimestamp,
     chosenEndDateTime: chosenEndTimestamp,

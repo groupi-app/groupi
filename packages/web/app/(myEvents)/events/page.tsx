@@ -1,5 +1,6 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import { Suspense } from 'react';
 
 import { EventGrid, EventMembershipData } from './components/event-grid';
@@ -18,7 +19,7 @@ import { MutedEventsProvider } from '@/hooks/convex/use-muting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGlobalUser } from '@/context/global-user-context';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { UnreadIndicator } from '@/components/atoms/unread-indicator';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { EventInvite } from '@/hooks/convex/use-event-invites';
 
@@ -99,7 +100,7 @@ function MyEventsContent() {
           onValueChange={handleTabChange}
           className='w-full'
         >
-          <TabsList className='mb-6 w-full max-w-lg'>
+          <TabsList className='w-full'>
             <TabsTrigger
               value='upcoming'
               className='flex-1 min-w-0 text-xs sm:text-sm'
@@ -231,6 +232,12 @@ function EventsPageContent({
     [userEventsAndInvites?.events]
   );
 
+  const now = useLifecycleClock(
+    memberships.flatMap(({ event }) => [
+      event.chosenEndDateTime,
+      ...(event.potentialDateTimes ?? []),
+    ])
+  );
   const pendingInvites = userEventsAndInvites?.pendingInvites || [];
   const pendingInviteCount = userEventsAndInvites?.pendingInviteCount || 0;
 
@@ -243,7 +250,8 @@ function EventsPageContent({
     memberships.forEach((m: EventMembershipData) => {
       const isPast = isEventPast(
         m.event.chosenDateTime,
-        m.event.chosenEndDateTime
+        m.event.chosenEndDateTime,
+        { ...m.event, now }
       );
 
       if (isPast) {
@@ -257,7 +265,7 @@ function EventsPageContent({
     });
 
     return { upcoming, past, hostingUpcoming };
-  }, [memberships]);
+  }, [memberships, now]);
 
   // Filter and sort events based on active tab
   const filteredEvents = useMemo(() => {
@@ -267,7 +275,8 @@ function EventsPageContent({
     const filtered = memberships.filter((m: EventMembershipData) => {
       const isPast = isEventPast(
         m.event.chosenDateTime,
-        m.event.chosenEndDateTime
+        m.event.chosenEndDateTime,
+        { ...m.event, now }
       );
 
       // Time filter based on tab
@@ -297,7 +306,7 @@ function EventsPageContent({
           return (b.event.updatedAt ?? 0) - (a.event.updatedAt ?? 0);
       }
     });
-  }, [memberships, activeTab, onlyMine, sortBy]);
+  }, [memberships, activeTab, onlyMine, sortBy, now]);
 
   // Get filter-specific empty state messages
   const getEmptyStateProps = () => {
@@ -342,7 +351,7 @@ function EventsPageContent({
 
       {/* Unified Tabs: Upcoming / Attended / Invited */}
       <Tabs value={activeTab} onValueChange={onTabChange} className='w-full'>
-        <TabsList className='mb-6 w-full max-w-lg'>
+        <TabsList className='w-full'>
           <TabsTrigger
             value='upcoming'
             className='flex-1 min-w-0 text-xs sm:text-sm'
@@ -369,14 +378,9 @@ function EventsPageContent({
             value='invited'
             className='flex-1 min-w-0 text-xs sm:text-sm flex items-center gap-2'
           >
-            Invited
+            Invited{' '}
             {pendingInviteCount > 0 && (
-              <Badge
-                variant='destructive'
-                className='ml-1 size-5 flex items-center justify-center p-0 text-xs'
-              >
-                {pendingInviteCount > 99 ? '99+' : pendingInviteCount}
-              </Badge>
+              <UnreadIndicator count={pendingInviteCount} className='ml-1' />
             )}
           </TabsTrigger>
           <TabsTrigger

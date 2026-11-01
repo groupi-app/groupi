@@ -1,3 +1,6 @@
+vi.mock('../content/new-content-button', () => ({
+  GroupNewContentButton: 'GroupNewContentButton',
+}));
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 import { createElement, act, type ReactNode } from 'react';

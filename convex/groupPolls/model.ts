@@ -3,13 +3,17 @@ import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { requirePerson } from '../groups/model';
-import { requireManager, membershipFor } from '../groups/policy';
+import { requireManager } from '../groups/policy';
 import { requireGroupMemberContent } from '../groups/contentAccess';
+import { getPolicy } from '../groupTools/policy';
 import {
-  requireToolCreation,
-  requireToolInteraction,
-  getPolicy,
-} from '../groupTools/policy';
+  contentContext,
+  contentCapabilities,
+  requireContentCreation,
+  requireContentInteraction,
+  requireContentManager,
+  contentEnabled,
+} from '../groupTools/context';
 type ReadCtx = MutationCtx | QueryCtx;
 type Definition = {
   title: string;
@@ -97,15 +101,16 @@ export async function create(
   ctx: MutationCtx,
   personId: Id<'persons'>,
   input: Definition & {
-    groupId: Id<'groups'>;
+    groupId?: Id<'groups'>;
+    eventId?: Id<'events'>;
     resultsVisibility: 'MANAGERS' | 'MEMBERS';
   }
 ) {
-  await requireToolCreation(ctx, personId, input.groupId, 'POLL');
+  await requireContentCreation(ctx, personId, input, 'POLL');
   const data = clean(input),
     now = Date.now();
   const toolId = await ctx.db.insert('groupTools', {
-    groupId: input.groupId,
+    ...contentContext(input),
     kind: 'POLL',
     title: data.title,
     description: data.description,
@@ -116,7 +121,7 @@ export async function create(
   });
   await ctx.db.insert('groupPolls', {
     toolId,
-    groupId: input.groupId,
+    ...contentContext(input),
     version: 1,
     semanticVersion: 1,
     mode: data.mode,
@@ -132,8 +137,7 @@ export async function configure(
 ) {
   const { tool, config } = await instance(ctx, input.toolId);
   positive(input.version);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   if (config.version !== input.version)
     fail('CONFLICT', 'Poll configuration changed. Reload before saving.');
   const data = clean(input),
@@ -159,8 +163,7 @@ export async function management(
   toolId: Id<'groupTools'>
 ) {
   const { tool, config } = await instance(ctx, toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   return {
     ...tool,
     version: config.version,
@@ -176,8 +179,8 @@ export async function get(
   toolId: Id<'groupTools'>
 ) {
   const { tool, config } = await instance(ctx, toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'POLL');
-  const member = await membershipFor(ctx, tool.groupId, personId),
+  await requireContentInteraction(ctx, personId, tool, 'POLL');
+  const { canManage } = await contentCapabilities(ctx, personId, tool),
     record = await own(ctx, toolId, personId);
   return {
     ...tool,
@@ -194,10 +197,9 @@ export async function get(
     savedOptions: record?.options ?? [],
     savedVersion: record?.version ?? null,
     voteRevision: record?.revision ?? 0,
-    canManage: member?.role !== 'MEMBER',
-    canReview:
-      tool.resultsVisibility === 'MEMBERS' || member?.role !== 'MEMBER',
-    enabled: (await getPolicy(ctx, tool.groupId, 'POLL')).enabled,
+    canManage: canManage,
+    canReview: tool.resultsVisibility === 'MEMBERS' || canManage,
+    enabled: await contentEnabled(ctx, tool, 'POLL'),
   };
 }
 export async function submit(
@@ -213,7 +215,7 @@ export async function submit(
   const { tool, config } = await instance(ctx, input.toolId);
   positive(input.version);
   revision(input.expectedRevision);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'POLL');
+  await requireContentInteraction(ctx, personId, tool, 'POLL');
   if (config.version !== input.version)
     fail(
       'CONFLICT',
@@ -244,7 +246,7 @@ export async function submit(
   const now = Date.now(),
     fields = {
       toolId: tool._id,
-      groupId: tool.groupId,
+      ...contentContext(tool),
       personId,
       revision: (record?.revision ?? 0) + 1,
       version: config.version,
@@ -291,9 +293,9 @@ export async function results(
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
   const { tool, config } = await instance(ctx, toolId);
-  await requireToolInteraction(ctx, personId, tool.groupId, 'POLL');
+  await requireContentInteraction(ctx, personId, tool, 'POLL');
   if (tool.resultsVisibility === 'MANAGERS')
-    await requireManager(ctx, tool.groupId, personId);
+    await requireContentManager(ctx, personId, tool);
   try {
     const result = await ctx.db
       .query('groupPollVotes')
@@ -377,8 +379,8 @@ export async function moderate(
   const record = await ctx.db.get(voteId);
   revision(expectedRevision);
   if (!record) return null;
-  await requireGroupMemberContent(ctx, record.groupId, personId);
-  await requireManager(ctx, record.groupId, personId);
+  const { tool } = await instance(ctx, record.toolId);
+  await requireContentManager(ctx, personId, tool);
   if (record.removed && record.revision === expectedRevision + 1) return null;
   if (record.revision !== expectedRevision)
     fail('CONFLICT', 'Vote changed. Reload before moderating.');
@@ -404,8 +406,7 @@ export async function remove(
   toolId: Id<'groupTools'>
 ) {
   const { tool } = await instance(ctx, toolId);
-  await requireGroupMemberContent(ctx, tool.groupId, personId);
-  await requireManager(ctx, tool.groupId, personId);
+  await requireContentManager(ctx, personId, tool);
   await purgePoll(ctx, toolId);
   return null;
 }

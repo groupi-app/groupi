@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { UnreadIndicator } from '@/components/atoms/unread-indicator';
 import { useUnreadNotificationCount } from '@/hooks/convex/use-notifications';
 
 /**
@@ -16,12 +16,5 @@ export function NotificationCount() {
     return null;
   }
 
-  return (
-    <Badge
-      variant='destructive'
-      className='absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs'
-    >
-      {count > 99 ? '99+' : count}
-    </Badge>
-  );
+  return <UnreadIndicator count={count} className='absolute -top-1 -right-1' />;
 }

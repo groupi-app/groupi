@@ -3,9 +3,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Type casts needed for data transformations between Convex query result and PostCard props
 
+import { GroupPollFeed } from '@/components/organisms/group-polls';
+import { EventToolScope } from '@/features/content';
 import { PostCard } from '@/components/post-card';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useEventPostFeed } from '@/hooks/convex';
+import { usePinnedEventPosts } from '@/hooks/convex/use-post-controls';
 import { MutedPostsProvider } from '@/hooks/convex/use-muting';
 
 const container = {
@@ -39,7 +42,14 @@ interface PostFeedProps {
 export function PostFeed({ data }: PostFeedProps) {
   // Data is guaranteed by parent - no loading checks needed
   const { event, userMembership } = data;
-  const posts = event?.posts || [];
+  const pinned = usePinnedEventPosts({ eventId: event._id });
+  const pinnedPosts = [
+    ...new Map((pinned ?? []).map(post => [post._id, post])).values(),
+  ].sort((a, b) => (b.pinnedAt ?? 0) - (a.pinnedAt ?? 0));
+  const pinnedIds = new Set(pinnedPosts.map(post => post._id));
+  const posts: any[] = (event?.posts || []).filter(
+    (post: any) => post.pinnedAt === undefined && !pinnedIds.has(post._id)
+  );
   // Use personId directly from membership (more reliable than person._id from spread)
   const userId = userMembership.personId;
   const userRole = userMembership.role;
@@ -47,95 +57,102 @@ export function PostFeed({ data }: PostFeedProps) {
     ? new Date(event.chosenDateTime)
     : null;
 
+  const renderPosts = (rows: typeof posts) => (
+    <motion.div
+      variants={container}
+      initial='hidden'
+      animate='show'
+      className='w-full flex flex-col items-center gap-3 py-2'
+    >
+      <LayoutGroup>
+        {rows.map(post => (
+          <motion.div layout variants={item} key={post._id} className='w-full'>
+            <PostCard
+              postData={
+                {
+                  ...post,
+                  author: post.author?.person
+                    ? {
+                        ...post.author.person,
+                        kind: post.author.kind,
+                        user: post.author.user,
+                      }
+                    : {
+                        _id: post.authorId,
+                        kind: post.author?.kind,
+                        _creationTime: 0,
+                        userId: '' as any, // Fallback for missing person
+                        user: post.author?.user || {
+                          _id: '' as any,
+                          _creationTime: 0,
+                          name: null,
+                          email: '',
+                          image: null,
+                          twoFactorEnabled: false,
+                        },
+                      },
+                  replies: (post.recentReplyAuthors || []).map(
+                    (author: {
+                      id: string;
+                      _creationTime: number;
+                      user: {
+                        name: string | null;
+                        email: string;
+                        image: string | null;
+                      } | null;
+                    }) => ({
+                      _creationTime: author._creationTime,
+                      author: {
+                        id: author.id,
+                        user: author.user,
+                      },
+                    })
+                  ),
+                  event: {
+                    ...event,
+                    memberships: event.memberships
+                      .map((m: (typeof event.memberships)[0]) => ({
+                        ...m,
+                        person: m.person
+                          ? {
+                              ...m.person,
+                              user: m.user,
+                            }
+                          : (null as any),
+                      }))
+                      .filter((m: { person: unknown }) => m.person),
+                  },
+                } as any
+              }
+              eventDateTime={eventDateTime}
+              userId={userId}
+              userRole={userRole}
+            />
+          </motion.div>
+        ))}
+      </LayoutGroup>
+    </motion.div>
+  );
   return (
     <MutedPostsProvider>
       <div>
         <h2 className='text-xl font-heading font-medium'>Posts</h2>
-        {posts.length > 0 ? (
-          <motion.div
-            variants={container}
-            initial='hidden'
-            animate='show'
-            className='w-full flex flex-col items-center gap-3 py-2'
-          >
-            <LayoutGroup>
-              {[...posts]
-                .sort((a, b) => b.editedAt - a.editedAt)
-                .map(post => (
-                  <motion.div
-                    layout
-                    variants={item}
-                    key={post._id}
-                    className='w-full'
-                  >
-                    <PostCard
-                      postData={
-                        {
-                          ...post,
-                          author: post.author?.person
-                            ? {
-                                ...post.author.person,
-                                kind: post.author.kind,
-                                user: post.author.user,
-                              }
-                            : {
-                                _id: post.authorId,
-                                kind: post.author?.kind,
-                                _creationTime: 0,
-                                userId: '' as any, // Fallback for missing person
-                                user: post.author?.user || {
-                                  _id: '' as any,
-                                  _creationTime: 0,
-                                  name: null,
-                                  email: '',
-                                  image: null,
-                                  twoFactorEnabled: false,
-                                },
-                              },
-                          replies: (post.recentReplyAuthors || []).map(
-                            (author: {
-                              id: string;
-                              _creationTime: number;
-                              user: {
-                                name: string | null;
-                                email: string;
-                                image: string | null;
-                              } | null;
-                            }) => ({
-                              _creationTime: author._creationTime,
-                              author: {
-                                id: author.id,
-                                user: author.user,
-                              },
-                            })
-                          ),
-                          event: {
-                            ...event,
-                            memberships: event.memberships
-                              .map((m: (typeof event.memberships)[0]) => ({
-                                ...m,
-                                person: m.person
-                                  ? {
-                                      ...m.person,
-                                      user: m.user,
-                                    }
-                                  : (null as any),
-                              }))
-                              .filter((m: { person: unknown }) => m.person),
-                          },
-                        } as any
-                      }
-                      eventDateTime={eventDateTime}
-                      userId={userId}
-                      userRole={userRole}
-                    />
-                  </motion.div>
-                ))}
-            </LayoutGroup>
-          </motion.div>
+        {pinned === undefined ? (
+          <p role='status' className='py-2 text-sm text-muted-foreground'>
+            Loading pinned posts…
+          </p>
         ) : (
-          <h1 className='font-heading text-lg mt-4'>No posts yet!</h1>
+          pinnedPosts.length > 0 && renderPosts(pinnedPosts)
         )}
+        <EventToolScope eventId={event._id}>
+          <GroupPollFeed groupId={event._id} />
+        </EventToolScope>
+        {posts.length > 0 && renderPosts(posts)}
+        {pinned !== undefined &&
+          posts.length === 0 &&
+          pinnedPosts.length === 0 && (
+            <p className='mt-4 text-sm text-muted-foreground'>No posts yet.</p>
+          )}
       </div>
     </MutedPostsProvider>
   );

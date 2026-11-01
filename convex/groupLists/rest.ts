@@ -1,11 +1,13 @@
+import { groupDocument, groupPage } from '../groupTools/groupContracts';
+import { tool as sharedTool } from '../groupTools/contracts';
 import { internalMutation, internalQuery } from '../_generated/server';
-import { v, ConvexError } from 'convex/values';
+import { v, ConvexError, type Infer } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import {
-  settings as listSettings,
-  entryPage,
-  toolPage,
+  settings as sharedListSettings,
+  entryPage as sharedEntryPage,
+  toolPage as sharedToolPage,
   createInput,
   config,
   addResult,
@@ -13,6 +15,80 @@ import {
 import { creation } from '../groupTools/contracts';
 import { readPolicy, setPolicy } from '../groupTools/policy';
 import * as model from './model';
+
+// These versioned Group contracts retain their mandatory Group ownership field.
+const listSettings = v.object({
+  ...sharedTool.fields,
+  groupId: v.id('groups'),
+  version: v.number(),
+  canManage: v.boolean(),
+});
+const legacyEntry = v.object({
+  _id: v.id('groupListEntries'),
+  _creationTime: v.number(),
+  toolId: v.id('groupTools'),
+  groupId: v.id('groups'),
+  personId: v.optional(v.id('persons')),
+  actorId: v.optional(v.id('persons')),
+  listTitle: v.string(),
+  text: v.string(),
+  completed: v.boolean(),
+  revision: v.number(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  canEdit: v.boolean(),
+  canRemove: v.boolean(),
+});
+const entryPage = v.object({
+  ...sharedEntryPage.fields,
+  page: v.array(legacyEntry),
+});
+// Preserve the published v2 wire shapes; native List capabilities are additive.
+function legacySettings(value: Infer<typeof sharedListSettings>) {
+  return groupDocument({
+    _id: value._id,
+    _creationTime: value._creationTime,
+    groupId: value.groupId,
+    eventId: value.eventId,
+    kind: value.kind,
+    title: value.title,
+    description: value.description,
+    resultsVisibility: value.resultsVisibility,
+    creatorId: value.creatorId,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+    version: value.version,
+    canManage: value.canManage,
+  });
+}
+function legacyEntries(value: Infer<typeof sharedEntryPage>) {
+  return groupPage({
+    ...value,
+    page: value.page.map(row => ({
+      _id: row._id,
+      _creationTime: row._creationTime,
+      toolId: row.toolId,
+      groupId: row.groupId,
+      eventId: row.eventId,
+      personId: row.personId,
+      actorId: row.actorId,
+      listTitle: row.listTitle,
+      text: row.text,
+      completed: row.completed,
+      revision: row.revision,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      canEdit: row.canEdit,
+      canRemove: row.canRemove,
+    })),
+  });
+}
+const tool = v.object({ ...sharedTool.fields, groupId: v.id('groups') });
+const toolPage = v.object({
+  ...sharedToolPage.fields,
+  page: v.array(v.object({ ...tool.fields, groupId: v.id('groups') })),
+});
+
 type ReadCtx = QueryCtx | MutationCtx;
 function group(ctx: ReadCtx, value: string) {
   const id = ctx.db.normalizeId('groups', value);
@@ -115,58 +191,68 @@ export const remove = internalMutation({
 export const list = internalQuery({
   args: { ...actor, paginationOpts: paginationOptsValidator },
   returns: toolPage,
-  handler: (ctx, args) =>
-    model.list(
-      ctx,
-      args.personId,
-      group(ctx, args.groupId),
-      args.paginationOpts
+  handler: async (ctx, args) =>
+    groupPage(
+      await model.list(
+        ctx,
+        args.personId,
+        group(ctx, args.groupId),
+        args.paginationOpts
+      )
     ),
 });
 export const get = internalQuery({
   args: target,
   returns: listSettings,
   handler: async (ctx, args) =>
-    model.get(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      false
+    legacySettings(
+      await model.get(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        false
+      )
     ),
 });
 export const settings = internalQuery({
   args: target,
   returns: listSettings,
   handler: async (ctx, args) =>
-    model.get(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      true
+    legacySettings(
+      await model.get(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        true
+      )
     ),
 });
 export const entries = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: entryPage,
   handler: async (ctx, args) =>
-    model.entries(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts,
-      false
+    legacyEntries(
+      await model.entries(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts,
+        false
+      )
     ),
 });
 export const own = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: entryPage,
   handler: async (ctx, args) =>
-    model.entries(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts,
-      true
+    legacyEntries(
+      await model.entries(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts,
+        true
+      )
     ),
 });
 export const policy = internalQuery({

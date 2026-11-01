@@ -5,6 +5,7 @@ import {
   useQuery,
 } from 'convex/react';
 import { ReactNode } from 'react';
+import { EventPageSkeleton } from '@/components/skeletons/event-page-skeleton';
 import { isAdminRole } from '@/lib/constants';
 
 // Dynamic require to avoid deep type instantiation
@@ -129,13 +130,7 @@ function EventMemberContent({
   });
 
   if (eventData === undefined) {
-    // Loading state
-    return (
-      <div className='flex items-center justify-center p-4'>
-        <div className='animate-spin h-4 w-4 border-2 border-border border-t-foreground rounded-full'></div>
-        <span className='ml-2'>Loading event...</span>
-      </div>
-    );
+    return <EventPageSkeleton />;
   }
 
   const userRole = eventData?.userMembership?.role;

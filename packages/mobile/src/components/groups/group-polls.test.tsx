@@ -248,7 +248,7 @@ it('submits single stable choice through native production radio and actual prov
   expect(control(m, 'Vote Books').props.role).toBe('radio');
   await press(m, 'Vote Books');
   await press(m, 'Vote Films');
-  await press(m, 'Save Group poll votes');
+  await press(m, 'Save poll votes');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupPolls/mutations:submitVote',
     {
@@ -265,7 +265,7 @@ it('supports native checkbox multi selection', async () => {
   const m = await mount(PollScreen);
   await press(m, 'Vote Books');
   await press(m, 'Vote Films');
-  await press(m, 'Save Group poll votes');
+  await press(m, 'Save poll votes');
   expect(control(m, 'Vote Books').props.accessibilityRole).toBe('checkbox');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupPolls/mutations:submitVote',
@@ -276,7 +276,7 @@ it('supports native checkbox multi selection', async () => {
 it('surfaces stale vote failure and recovers current revision through subscription', async () => {
   network.mutation.mockRejectedValueOnce(new Error('Vote changed'));
   const m = await mount(PollScreen);
-  await press(m, 'Save Group poll votes');
+  await press(m, 'Save poll votes');
   expect(
     m.root.findAll(n => n.type === 'Text').map(n => n.props.children)
   ).toContain('Vote changed');
@@ -285,7 +285,7 @@ it('surfaces stale vote failure and recovers current revision through subscripti
     network.selections = ['film'];
     network.subscribers.forEach(f => f());
   });
-  await press(m, 'Save Group poll votes');
+  await press(m, 'Save poll votes');
   expect(network.mutation).toHaveBeenLastCalledWith(
     'groupPolls/mutations:submitVote',
     expect.objectContaining({ expectedRevision: 4, selections: ['film'] })
@@ -305,7 +305,7 @@ it('disabled hub keeps manager settings separate and hides new poll', async () =
   network.enabled = false;
   const m = await mount(HubScreen);
   expect(control(m, 'Manage poll Topic choice')).toBeDefined();
-  expect(control(m, 'Create Group poll')).toBeUndefined();
+  expect(control(m, 'Create poll')).toBeUndefined();
   await act(async () => m.unmount());
 });
 it('disabled management still configures stable options without visibility changes', async () => {
@@ -313,7 +313,7 @@ it('disabled management still configures stable options without visibility chang
   const m = await mount(ManageScreen);
   expect(control(m, 'Option 1 stable ID', 'TextInput')).toBeDefined();
   expect(control(m, 'Poll results MEMBERS')).toBeUndefined();
-  await press(m, 'Save Group poll');
+  await press(m, 'Save poll');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupPolls/mutations:configurePoll',
     expect.objectContaining({ toolId: 'tool-123', version: 3, mode: 'SINGLE' })
@@ -323,7 +323,7 @@ it('disabled management still configures stable options without visibility chang
 it('creates shared reusable poll template through ordinary native controls', async () => {
   const m = await mount(CreateScreen);
   await press(m, 'Use poll template Topics');
-  await press(m, 'Save Group poll');
+  await press(m, 'Save poll');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupPolls/mutations:createPoll',
     expect.objectContaining({
@@ -433,7 +433,7 @@ it.each(['MANAGERS', 'MEMBERS'] as const)(
       .filter(value => typeof value === 'string')
       .join(' ');
     expect(text).toContain(
-      'Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots.'
+      'Leaving or being removed from this context retains your saved vote with your author identity and private snapshots.'
     );
     expect(text).toContain(
       'Explicitly removing your vote clears its selections and private history.'

@@ -1,6 +1,7 @@
+import { EventToolScope } from '@/features/content';
 import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -8,7 +9,7 @@ import {
   useMutation,
 } from 'convex/react';
 import { getFunctionName } from 'convex/server';
-import { afterAll, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, afterEach, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
@@ -19,6 +20,19 @@ import {
 } from './group-forms';
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
+const originalTouchDescriptor = Object.getOwnPropertyDescriptor(
+  window,
+  'ontouchstart'
+);
+beforeEach(() => {
+  vi.stubGlobal('innerWidth', 1200);
+  Reflect.deleteProperty(window, 'ontouchstart');
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  if (originalTouchDescriptor)
+    Object.defineProperty(window, 'ontouchstart', originalTouchDescriptor);
+});
 const push = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
@@ -110,10 +124,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
     onChange?.(true)
   );
   vi.spyOn(client, 'clearAuth').mockImplementation(() => {});
+  const listeners = new Set<() => void>();
   const watch = vi
     .spyOn(client, 'watchQuery')
     .mockImplementation((...[query]) => ({
-      onUpdate: () => () => {},
+      onUpdate: listener => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
       localQueryResult: () => {
         const name = getFunctionName(query);
         if (!(name in data)) throw new Error(`Unexpected query ${name}`);
@@ -131,9 +149,16 @@ function fixture(overrides: Record<string, unknown> = {}) {
       </ConvexProviderWithAuth>
     );
   }
-  return { client, mutation, watch, Provider };
+  return {
+    client,
+    mutation,
+    watch,
+    Provider,
+    data,
+    refresh: () => listeners.forEach(listener => listener()),
+  };
 }
-it('creates a reusable template via real shared/app hooks and accessible editor controls', async () => {
+it('creates directly with authored questions via real shared/app hooks and accessible editor controls', async () => {
   const sharedSdk = createRequire(import.meta.url)(
     '../../../shared/node_modules/convex/react'
   );
@@ -146,14 +171,29 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
     </Provider>
   );
   const user = userEvent.setup();
-  await user.click(
-    screen.getByRole('button', { name: 'Use feedback template' })
+  expect(
+    screen.queryByRole('button', { name: /template/i })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Add question' }));
+  await user.type(
+    screen.getByLabelText('Question text'),
+    'What did you think?'
   );
+  await user.selectOptions(
+    screen.getByLabelText('Question type'),
+    'LONG_ANSWER'
+  );
+  await user.click(screen.getByLabelText('Answer required'));
   expect(
     screen.getByRole('group', { name: 'Form questions' })
   ).toBeInTheDocument();
   await user.clear(screen.getByLabelText('Form title'));
   await user.type(screen.getByLabelText('Form title'), 'Reading feedback');
+  await user.type(
+    screen.getByLabelText('Description'),
+    'Share feedback with everyone.'
+  );
+  await user.click(screen.getByText('Visibility · Personal'));
   await user.selectOptions(
     screen.getByLabelText('Response visibility (fixed for this form)'),
     'MEMBERS'
@@ -166,8 +206,16 @@ it('creates a reusable template via real shared/app hooks and accessible editor 
   expect(mutation.mock.calls[0][1]).toMatchObject({
     groupId,
     title: 'Reading feedback',
+    description: 'Share feedback with everyone.',
     resultsVisibility: 'MEMBERS',
-    questions: [{ id: 'feedback', type: 'LONG_ANSWER', required: true }],
+    questions: [
+      {
+        id: expect.any(String),
+        label: 'What did you think?',
+        type: 'LONG_ANSWER',
+        required: true,
+      },
+    ],
   });
   expect(push).toHaveBeenCalledWith('/groups/group-one/forms/tool-one');
   mounted.unmount();
@@ -189,13 +237,21 @@ it('explains personal visibility before submitting and confirms own removal', as
     </Provider>
   );
   const user = userEvent.setup();
-  expect(screen.getByText(/Personal answers: only you/)).toHaveTextContent(
-    'Account deletion purges'
-  );
+  expect(
+    screen.getByText('Only you and managers can see your response')
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: /history/i })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Save response' })
+  ).not.toBeInTheDocument();
   expect(screen.getByLabelText('Favorite book')).toHaveValue('Dune');
   await user.clear(screen.getByLabelText('Favorite book'));
   await user.type(screen.getByLabelText('Favorite book'), 'Kindred');
-  await user.click(screen.getByRole('button', { name: 'Save response' }));
+  await user.click(
+    screen.getByRole('button', { name: /^(Submit|Update) response$/ })
+  );
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
     'groupForms/mutations:submitResponse'
@@ -206,12 +262,16 @@ it('explains personal visibility before submitting and confirms own removal', as
     expectedRevision: 2,
     answers: { book: 'Kindred' },
   });
-  await user.click(screen.getByRole('button', { name: 'Remove my response' }));
+  await user.click(screen.getByRole('button', { name: 'Form actions' }));
+  await user.click(
+    screen.getByRole('menuitem', { name: 'Remove my response' })
+  );
+  const confirmation = await screen.findByRole('dialog', {
+    name: 'Remove your response?',
+  });
   expect(mutation).toHaveBeenCalledTimes(1);
   await user.click(
-    screen.getByRole('button', {
-      name: 'Confirm removing my response and its history',
-    })
+    within(confirmation).getByRole('button', { name: 'Remove response' })
   );
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
   expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
@@ -239,7 +299,7 @@ it('manages current form configuration without a mutable visibility control', as
   ).not.toBeInTheDocument();
   await user.clear(screen.getByLabelText('Question text'));
   await user.type(screen.getByLabelText('Question text'), 'New wording');
-  await user.click(screen.getByRole('button', { name: 'Save form settings' }));
+  await user.click(screen.getByRole('button', { name: 'Save changes' }));
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
     'groupForms/mutations:configureForm'
@@ -269,6 +329,7 @@ it('keeps owner policy recovery accessible without mounting ordinary content und
   expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
     'groupForms/queries:listForms'
   );
+  await userEvent.click(screen.getByText('Settings'));
   await userEvent.click(screen.getByRole('button', { name: 'Disable forms' }));
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
@@ -357,7 +418,9 @@ it('uses all seven accessible form answer primitives with typed values', async (
   await user.type(screen.getByLabelText('Years'), '3');
   await user.selectOptions(screen.getByLabelText('Area'), 'North');
   await user.selectOptions(screen.getByLabelText('Available'), 'false');
-  await user.click(screen.getByRole('button', { name: 'Save response' }));
+  await user.click(
+    screen.getByRole('button', { name: /^(Submit|Update) response$/ })
+  );
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(mutation.mock.calls[0][1]).toMatchObject({
     answers: {
@@ -373,8 +436,8 @@ it('uses all seven accessible form answer primitives with typed values', async (
   mounted.unmount();
   await client.close();
 });
-it('explains shared retention and moderates an anonymous response by persistent result identity', async () => {
-  const { client, mutation, Provider } = fixture({
+it('opens manager responses lazily from the action menu and moderates by persistent result identity', async () => {
+  const { client, mutation, watch, Provider } = fixture({
     'groupForms/queries:getForm': {
       ...form,
       resultsVisibility: 'MEMBERS',
@@ -398,9 +461,24 @@ it('explains shared retention and moderates an anonymous response by persistent 
       <GroupFormInteraction groupId={groupId} toolId={toolId} />
     </Provider>
   );
-  expect(
-    screen.getByText(/shared contribution survives anonymously/)
-  ).toBeInTheDocument();
+  expect(screen.getByText('Shared responses')).toBeInTheDocument();
+  expect(screen.queryByText(/Anonymous contribution/)).not.toBeInTheDocument();
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groupForms/queries:listResults'
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Form actions' }));
+  expect(screen.getByRole('menuitem', { name: 'Edit form' })).toHaveAttribute(
+    'href',
+    `/groups/${groupId}/forms/${toolId}/settings`
+  );
+  await userEvent.click(
+    screen.getByRole('menuitem', { name: 'View responses' })
+  );
+  const responses = await screen.findByRole('dialog', { name: 'Responses' });
+  expect(within(responses).getByText('Shared Dune')).toBeInTheDocument();
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).toContain(
+    'groupForms/queries:listResults'
+  );
   expect(screen.getByText(/Anonymous contribution/)).toBeInTheDocument();
   await userEvent.click(
     screen.getByRole('button', { name: 'Remove response' })
@@ -414,6 +492,15 @@ it('explains shared retention and moderates an anonymous response by persistent 
     'groupForms/mutations:removeResult'
   );
   expect(mutation.mock.calls[0][1]).toEqual({ responseId: 'response-one' });
+  await userEvent.click(
+    within(responses).getByRole('button', { name: 'Close' })
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('dialog', { name: 'Responses' })
+    ).not.toBeInTheDocument()
+  );
+  expect(screen.queryByText('Shared Dune')).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();
 });
@@ -428,7 +515,9 @@ it('keeps a stale response draft visible and reports revision conflicts without 
     </Provider>
   );
   await userEvent.type(screen.getByLabelText('Favorite book'), 'My draft');
-  await userEvent.click(screen.getByRole('button', { name: 'Save response' }));
+  await userEvent.click(
+    screen.getByRole('button', { name: /^(Submit|Update) response$/ })
+  );
   expect(await screen.findByRole('status')).toHaveTextContent(
     'Your response changed'
   );
@@ -474,11 +563,12 @@ it('disabled forms expose moderator settings and confirmed deletion through the 
   const user = userEvent.setup();
   await user.clear(screen.getByLabelText('Form title'));
   await user.type(screen.getByLabelText('Form title'), 'Preserved settings');
-  await user.click(screen.getByRole('button', { name: 'Save form settings' }));
+  await user.click(screen.getByRole('button', { name: 'Save changes' }));
   await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
     'groupForms/mutations:configureForm'
   );
+  await user.click(screen.getByText('Actions'));
   await user.click(screen.getByRole('button', { name: 'Delete form' }));
   expect(mutation).toHaveBeenCalledTimes(1);
   await user.click(
@@ -529,7 +619,7 @@ it.each([
       'Current eligible managers'
     );
     expect(
-      screen.queryByRole('button', { name: 'Save form settings' })
+      screen.queryByRole('button', { name: 'Save changes' })
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Delete form' })
@@ -541,3 +631,296 @@ it.each([
     await client.close();
   }
 );
+
+it('creates an Event form through the shared editor without writing Group policy', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, mutation, watch, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: true,
+      canManage: false,
+    },
+  });
+  mutation.mockResolvedValue(toolId);
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  const user = userEvent.setup();
+  expect(
+    screen.queryByRole('button', { name: /template/i })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Add question' }));
+  await user.type(
+    screen.getByLabelText('Question text'),
+    'What did you think?'
+  );
+  await user.selectOptions(
+    screen.getByLabelText('Question type'),
+    'LONG_ANSWER'
+  );
+  await user.click(screen.getByLabelText('Answer required'));
+  await user.click(screen.getByRole('button', { name: 'Create form' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'eventContent/mutations:createForm'
+  );
+  expect(mutation.mock.calls[0][1]).toMatchObject({ eventId });
+  expect(mutation.mock.calls[0][1]).not.toHaveProperty('groupId');
+  expect(push).toHaveBeenCalledWith('/event/event-one/forms/tool-one');
+  expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groups/queries:getGroup'
+  );
+  mounted.unmount();
+  await client.close();
+});
+it('keeps Event form discovery available when creation is restricted', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: false,
+    },
+    'eventContent/queries:listForms': {
+      ...emptyPage,
+      page: [{ ...form, groupId: undefined, eventId }],
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupForms groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('link', { name: 'Book feedback' })).toHaveAttribute(
+    'href',
+    '/event/event-one/forms/tool-one'
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Disable forms' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+it('rejects a Group-owned form reached under an Event URL', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture();
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormInteraction groupId={eventId} toolId={toolId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form unavailable in this context.'
+  );
+  expect(
+    screen.queryByRole('button', { name: /^(Submit|Update) response$/ })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('denies Event moderator creation when only organizers may create content', async () => {
+  const eventId = 'event-one' as Id<'events'>;
+  const { client, Provider } = fixture({
+    'eventContent/queries:getContext': {
+      title: 'Picnic',
+      canCreate: false,
+      canManage: true,
+    },
+  });
+  const mounted = render(
+    <Provider>
+      <EventToolScope eventId={eventId}>
+        <GroupFormEditor groupId={eventId} />
+      </EventToolScope>
+    </Provider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Form creation is unavailable'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('retains saved feedback through a reactive response revision while reseeding answers and isolating tools', async () => {
+  const f = fixture();
+  const m = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Favorite book'), 'Kindred');
+  await user.click(
+    screen.getByRole('button', { name: /^(Submit|Update) response$/ })
+  );
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Response saved.'
+  );
+  await act(async () => {
+    f.data['groupForms/queries:getForm'] = {
+      ...form,
+      responseRevision: 1,
+      savedVersion: 1,
+      answers: { book: 'Kindred' },
+    };
+    f.refresh();
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Response saved.');
+  expect(screen.getByLabelText('Favorite book')).toHaveValue('Kindred');
+  await user.clear(screen.getByLabelText('Favorite book'));
+  await user.type(
+    screen.getByLabelText('Favorite book'),
+    'Unsaved local draft'
+  );
+  const otherId = 'tool-two' as Id<'groupTools'>;
+  f.data['groupForms/queries:getForm'] = {
+    ...form,
+    _id: otherId,
+    title: 'Another form',
+    responseRevision: 1,
+    answers: { book: 'Other saved answer' },
+  };
+  m.rerender(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={otherId} />
+    </f.Provider>
+  );
+  expect(screen.getByLabelText('Favorite book')).toHaveValue(
+    'Other saved answer'
+  );
+  expect(screen.queryByText('Response saved.')).not.toBeInTheDocument();
+  m.unmount();
+  await f.client.close();
+});
+
+it('requires an explicit complete submission and prevents duplicate pending submissions', async () => {
+  const f = fixture();
+  let resolveSubmit: (value: { revision: number }) => void = () => {};
+  f.mutation.mockImplementation(
+    () =>
+      new Promise(resolve => {
+        resolveSubmit = resolve;
+      })
+  );
+  const m = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  expect(
+    screen.queryByRole('link', { name: /history/i })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Submit response' }));
+  expect(f.mutation).not.toHaveBeenCalled();
+  await user.type(screen.getByLabelText('Favorite book'), 'Kindred');
+  expect(f.mutation).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Submit response' }));
+  expect(f.mutation).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('button', { name: 'Submitting…' })).toBeDisabled();
+  expect(screen.getByLabelText('Favorite book')).toBeDisabled();
+  await act(async () => resolveSubmit({ revision: 1 }));
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Response saved.'
+  );
+  m.unmount();
+  await f.client.close();
+});
+
+it('keeps other shared responses out of ordinary participant actions even when the API permits review', async () => {
+  const f = fixture({
+    'groupForms/queries:getForm': {
+      ...form,
+      resultsVisibility: 'MEMBERS',
+      canReview: true,
+      canManage: false,
+      savedVersion: 1,
+    },
+  });
+  const mounted = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  expect(
+    screen.queryByRole('heading', { name: 'Responses' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Responses' })
+  ).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Form actions' }));
+  expect(
+    await screen.findByRole('menuitem', { name: 'Remove my response' })
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: 'View responses' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('menuitem', { name: 'Edit form' })
+  ).not.toBeInTheDocument();
+  expect(f.watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+    'groupForms/queries:listResults'
+  );
+  await userEvent.keyboard('{Escape}');
+  await waitFor(() =>
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  );
+  expect(screen.getByRole('button', { name: 'Form actions' })).toHaveFocus();
+  mounted.unmount();
+  await f.client.close();
+});
+
+it('cancels response removal without mutation and restores focus to the shared action trigger', async () => {
+  const f = fixture({
+    'groupForms/queries:getForm': {
+      ...form,
+      savedVersion: 1,
+      responseRevision: 2,
+      answers: { book: 'Kindred' },
+    },
+  });
+  const mounted = render(
+    <f.Provider>
+      <GroupFormInteraction groupId={groupId} toolId={toolId} />
+    </f.Provider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Form actions' }));
+  await user.click(
+    await screen.findByRole('menuitem', { name: 'Remove my response' })
+  );
+  const confirmation = await screen.findByRole('dialog', {
+    name: 'Remove your response?',
+  });
+  expect(f.mutation).not.toHaveBeenCalled();
+  await user.click(
+    within(confirmation).getByRole('button', { name: 'Cancel' })
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('dialog', { name: 'Remove your response?' })
+    ).not.toBeInTheDocument()
+  );
+  expect(f.mutation).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Favorite book')).toHaveValue('Kindred');
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Form actions' })).toHaveFocus()
+  );
+  mounted.unmount();
+  await f.client.close();
+});

@@ -6,6 +6,7 @@ import {
   requireEventAccess,
   requirePostAccess,
   hasEventAccess,
+  hasPostAccess,
 } from './model';
 import {
   isEventMutedByPerson,
@@ -91,11 +92,7 @@ export const listMuted = internalQuery({
             mutedAt: mute.mutedAt,
             post:
               post &&
-              (await hasEventAccess(
-                ctx,
-                personId as Id<'persons'>,
-                post.eventId
-              ))
+              (await hasPostAccess(ctx, personId as Id<'persons'>, post._id))
                 ? { id: post._id, title: post.title }
                 : null,
           };
@@ -192,7 +189,9 @@ export const postMuteStatus = internalQuery({
   handler: async (ctx, { personId, postId }) => {
     const post = await requirePostAccess(ctx, personId, postId);
     const isMuted = await isPostMutedByPerson(ctx, personId, postId);
-    const eventMuted = await isEventMutedByPerson(ctx, personId, post.eventId);
+    const eventMuted = post.eventId
+      ? await isEventMutedByPerson(ctx, personId, post.eventId)
+      : false;
     return { isMuted, eventMuted, effectiveMuted: isMuted || eventMuted };
   },
 });

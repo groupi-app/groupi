@@ -105,6 +105,23 @@ describe('NotificationSlate', () => {
     vi.clearAllMocks();
   });
 
+  test('routes canonical Group post notifications to the Group thread', () => {
+    render(
+      <NotificationSlate
+        notification={{
+          ...mockNotification,
+          event: undefined,
+          groupId: 'group-123' as TestId<'groups'>,
+          group: { id: 'group-123', title: 'Neighbors' },
+        }}
+      />
+    );
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/groups/group-123/posts/post-123'
+    );
+    expect(screen.getByText('Neighbors')).toBeInTheDocument();
+  });
   test('keeps deleted Group Discord alerts on the stable cleanup view', () => {
     render(
       <NotificationSlate

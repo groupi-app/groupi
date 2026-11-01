@@ -9,6 +9,7 @@ export function createGroupListHooks<
         listLists: FunctionReference<'query'>;
         listEntries: FunctionReference<'query'>;
         getOwnEntries: FunctionReference<'query'>;
+        listBringClaims: FunctionReference<'query'>;
       };
       mutations: {
         createList: FunctionReference<'mutation'>;
@@ -17,6 +18,8 @@ export function createGroupListHooks<
         editEntry: FunctionReference<'mutation'>;
         removeEntry: FunctionReference<'mutation'>;
         deleteList: FunctionReference<'mutation'>;
+        setEntryCompleted: FunctionReference<'mutation'>;
+        setBringClaim: FunctionReference<'mutation'>;
       };
     };
     groupTools: {
@@ -100,6 +103,24 @@ export function createGroupListHooks<
       api.groupLists.mutations.deleteList
     );
   }
+  function useBringListClaims(
+    args: FunctionArgs<Api['groupLists']['queries']['listBringClaims']> | 'skip'
+  ) {
+    return hooks.useQuery<Api['groupLists']['queries']['listBringClaims']>(
+      api.groupLists.queries.listBringClaims,
+      args
+    );
+  }
+  function useSetBringListClaim() {
+    return hooks.useMutation<Api['groupLists']['mutations']['setBringClaim']>(
+      api.groupLists.mutations.setBringClaim
+    );
+  }
+  function useSetListEntryCompleted() {
+    return hooks.useMutation<
+      Api['groupLists']['mutations']['setEntryCompleted']
+    >(api.groupLists.mutations.setEntryCompleted);
+  }
   function useListPolicy(
     args: FunctionArgs<Api['groupTools']['queries']['getListPolicy']> | 'skip'
   ) {
@@ -125,6 +146,9 @@ export function createGroupListHooks<
     useEditListEntry,
     useRemoveListEntry,
     useDeleteList,
+    useBringListClaims,
+    useSetBringListClaim,
+    useSetListEntryCompleted,
     useListPolicy,
     useConfigureListPolicy,
   };

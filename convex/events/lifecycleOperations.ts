@@ -137,8 +137,7 @@ export async function setLifecycleForPerson(
     await guardEventReactivation(ctx, event._id, true);
     if (
       args.action === 'reopen' &&
-      event.chosenEndDateTime !== undefined &&
-      event.chosenEndDateTime <= now
+      isEventComplete({ ...event, completedAt: undefined }, now)
     )
       operationError(
         'VALIDATION_ERROR',

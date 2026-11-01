@@ -1,3 +1,4 @@
+import { requireDiscussionParent } from '../lib/discussionAccess';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 export async function muteEventForPerson(
@@ -127,17 +128,7 @@ export async function mutePostForPerson(
     throw new Error('Post not found');
   }
 
-  // Check if user is a member of the event
-  const membership = await ctx.db
-    .query('memberships')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', personId).eq('eventId', post.eventId)
-    )
-    .first();
-
-  if (!membership) {
-    throw new Error('You are not a member of this event');
-  }
+  await requireDiscussionParent(ctx, post, personId);
 
   // Check if already muted
   const existingMute = await ctx.db
@@ -196,17 +187,7 @@ export async function togglePostMuteForPerson(
     throw new Error('Post not found');
   }
 
-  // Check if user is a member of the event
-  const membership = await ctx.db
-    .query('memberships')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', personId).eq('eventId', post.eventId)
-    )
-    .first();
-
-  if (!membership) {
-    throw new Error('You are not a member of this event');
-  }
+  await requireDiscussionParent(ctx, post, personId);
 
   // Check current mute status
   const existingMute = await ctx.db
@@ -263,6 +244,19 @@ export async function requirePostAccess(
 ) {
   const post = await ctx.db.get(postId);
   if (!post) throw Error('Post not found');
-  await requireEventAccess(ctx, personId, post.eventId);
+  await requireDiscussionParent(ctx, post, personId);
   return post;
+}
+
+export async function hasPostAccess(
+  ctx: QueryCtx,
+  personId: Id<'persons'>,
+  postId: Id<'posts'>
+) {
+  try {
+    await requirePostAccess(ctx, personId, postId);
+    return true;
+  } catch {
+    return false;
+  }
 }

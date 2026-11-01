@@ -304,8 +304,8 @@ export function MultiDateTimeSelector({
         </div>
 
         {/* Options list with inline editing */}
-        <div>
-          <ScrollArea className='h-96 w-full max-w-sm rounded-md border border-border'>
+        <div className='w-full min-w-0 max-w-md md:ml-4 md:flex-1'>
+          <ScrollArea className='h-96 w-full rounded-md border border-border'>
             <div className='p-4'>
               <div className='flex items-center justify-between mb-3'>
                 <h2 className='font-heading leading-none'>

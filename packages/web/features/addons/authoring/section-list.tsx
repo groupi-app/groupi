@@ -17,6 +17,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChevronDown } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,6 +64,8 @@ function SortableSection({ section }: { section: TemplateSection }) {
     addField,
     moveFields,
     validation,
+    activeSectionId,
+    setActiveSectionId,
   } = useBuilder();
   const sectionErrors = useMemo(
     () => getSectionErrors(validation, section.id),
@@ -113,224 +121,283 @@ function SortableSection({ section }: { section: TemplateSection }) {
     <div
       ref={setNodeRef}
       style={style}
-      className='rounded-card border bg-card shadow-raised'
+      className='min-w-0 rounded-card border border-border bg-card'
     >
-      <CardHeader className='flex flex-row items-center gap-2 pb-2'>
-        <button
-          className='cursor-grab touch-none text-muted-foreground hover:text-foreground'
-          {...attributes}
-          {...listeners}
-        >
-          <Icons.menu className='size-5' />
-        </button>
-        <Input
-          value={section.title}
-          onChange={e => updateSection(section.id, { title: e.target.value })}
-          placeholder='Section title'
-          className='flex-1 rounded-input font-semibold'
-        />
-        <Button
-          variant='ghost'
-          size='icon'
-          className='size-8 shrink-0'
-          onClick={() => removeSection(section.id)}
-        >
-          <Icons.trash className='size-4 text-muted-foreground' />
-        </Button>
-      </CardHeader>
-      <CardContent className='space-y-2'>
-        <Input
-          value={section.description ?? ''}
-          onChange={e =>
-            updateSection(section.id, {
-              description: e.target.value || undefined,
-            })
-          }
-          placeholder='Section description (optional)'
-          className='rounded-input text-sm'
-        />
-
-        <div className='flex items-center gap-2'>
-          <Label
-            htmlFor={`section-layout-${section.id}`}
-            className='text-xs text-muted-foreground'
+      <Collapsible
+        open={activeSectionId === section.id}
+        onOpenChange={open => setActiveSectionId(open ? section.id : null)}
+      >
+        <CardHeader className='flex flex-row items-start gap-1 space-y-0 p-3'>
+          <CollapsibleTrigger
+            aria-label={`${section.title || 'Untitled section'}, ${section.fields.length} ${section.fields.length === 1 ? 'field' : 'fields'}`}
+            className='flex min-h-10 min-w-0 flex-1 items-start gap-3 rounded-input py-2 text-left focus-visible:outline-2 focus-visible:outline-ring'
           >
-            Layout
-          </Label>
-          <Select
-            value={section.layout ?? 'form'}
-            onValueChange={(value: string) => {
-              const layout = value as SectionLayout;
-              const allowedTypes =
-                layout === 'interactive'
-                  ? INTERACTIVE_FIELD_TYPES
-                  : FORM_FIELD_TYPES;
-              const removedCount = section.fields.filter(
-                f => !allowedTypes.includes(f.type)
-              ).length;
-              if (
-                removedCount > 0 &&
-                !window.confirm(
-                  `Switching layout will remove ${removedCount} incompatible field(s). Continue?`
-                )
-              )
-                return;
-              updateSection(section.id, {
-                layout,
-                fields: section.fields.filter(f =>
-                  allowedTypes.includes(f.type)
-                ),
-              });
-              // Auto-disable requiresCompletion if this was the last form section
-              if (
-                layout === 'interactive' &&
-                template.settings?.requiresCompletion
-              ) {
-                const otherFormSections = template.sections.filter(
-                  s => s.id !== section.id && (s.layout ?? 'form') === 'form'
-                );
-                if (otherFormSections.length === 0) {
-                  updateTemplate({
-                    settings: {
-                      ...template.settings,
-                      requiresCompletion: false,
-                    },
-                  });
-                }
-              }
-            }}
-          >
-            <SelectTrigger
-              id={`section-layout-${section.id}`}
-              className='h-7 w-32 rounded-input text-xs'
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='rounded-dropdown'>
-              <SelectItem value='form'>Form</SelectItem>
-              <SelectItem value='interactive'>Interactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <SectionVisibilityEditor section={section} />
-
-        {sectionErrors.length > 0 &&
-          sectionErrors.map((err, i) => (
-            <p key={i} className='text-xs text-error'>
-              {err}
-            </p>
-          ))}
-
-        <div className='flex items-center gap-2'>
-          <Switch
-            id={`section-configurable-${section.id}`}
-            checked={section.configurable ?? false}
-            onCheckedChange={checked => {
-              if (checked && section.fields.length > 0) {
-                if (
-                  !window.confirm(
-                    `This will clear all ${section.fields.length} field(s) in this section. Continue?`
-                  )
-                )
-                  return;
-              }
-              updateSection(section.id, {
-                configurable: checked,
-                ...(checked ? { fields: [] } : {}),
-              });
-            }}
-            className='scale-75'
-          />
-          <Label
-            htmlFor={`section-configurable-${section.id}`}
-            className='text-xs text-muted-foreground'
-          >
-            Organizer configures
-          </Label>
-          {section.configurable && (
-            <span className='text-xs italic text-muted-foreground'>
-              — organizer adds fields when enabling
-            </span>
-          )}
-        </div>
-
-        {section.configurable && (
-          <div className='space-y-1.5'>
-            <Label className='text-xs text-muted-foreground'>
-              Allowed field types
-            </Label>
-            <div className='flex flex-wrap gap-x-4 gap-y-1'>
-              {INPUT_FIELD_TYPES.map(type => {
-                const allowed = section.allowedFieldTypes ?? [];
-                const isChecked =
-                  allowed.length === 0 || allowed.includes(type);
-                return (
-                  <label
-                    key={type}
-                    className='flex items-center gap-1.5 text-xs'
-                  >
-                    <Checkbox
-                      checked={isChecked}
-                      onCheckedChange={checked => {
-                        let next: FieldType[];
-                        if (allowed.length === 0) {
-                          // First uncheck — start from full list minus this one
-                          next = INPUT_FIELD_TYPES.filter(t => t !== type);
-                        } else if (checked) {
-                          next = [...allowed, type];
-                        } else {
-                          next = allowed.filter(t => t !== type);
-                        }
-                        // If all are checked, clear the array (means "all allowed")
-                        if (next.length === INPUT_FIELD_TYPES.length) {
-                          next = [];
-                        }
-                        updateSection(section.id, {
-                          allowedFieldTypes: next,
-                        });
-                      }}
-                    />
-                    {FIELD_TYPE_LABELS[type]}
-                  </label>
-                );
-              })}
+            <div className='min-w-0 flex-1'>
+              <span className='block break-words font-heading text-sm font-semibold'>
+                {section.title || 'Untitled section'}
+              </span>
+              <span className='mt-1 block text-xs text-muted-foreground'>
+                {section.fields.length}{' '}
+                {section.fields.length === 1 ? 'field' : 'fields'}
+                {section.configurable ? ' · Organizer configures' : ''}
+                {sectionErrors.length > 0 ? ' · Needs attention' : ''}
+              </span>
             </div>
-          </div>
-        )}
-
-        {!section.configurable && (
-          <>
-            <DndContext
-              sensors={fieldSensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleFieldDragEnd}
-            >
-              <SortableContext
-                items={section.fields.map(f => f.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {section.fields.map(field => (
-                  <FieldCard
-                    key={field.id}
-                    sectionId={section.id}
-                    field={field}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-
-            <FieldTypePicker
-              onSelect={handleAddField}
-              allowedTypes={
-                section.layout === 'interactive'
-                  ? INTERACTIVE_FIELD_TYPES
-                  : FORM_FIELD_TYPES
-              }
+            <ChevronDown
+              className={`mt-1 size-4 shrink-0 transition-transform motion-reduce:transition-none ${activeSectionId === section.id ? 'rotate-180' : ''}`}
+              aria-hidden='true'
             />
-          </>
-        )}
-      </CardContent>
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent
+          hidden={activeSectionId !== section.id}
+          forceMount
+          className='data-[state=closed]:hidden'
+        >
+          <CardContent
+            className='min-w-0 space-y-4 px-4 pb-4 pt-1'
+            onFocusCapture={() => setActiveSectionId(section.id)}
+          >
+            <div className='flex min-w-0 items-center justify-between gap-2'>
+              <Label htmlFor={`section-title-${section.id}`}>
+                Section title
+              </Label>
+              <div className='flex shrink-0 items-center gap-1'>
+                <button
+                  type='button'
+                  aria-label={`Reorder ${section.title || 'untitled section'}`}
+                  className='flex size-10 shrink-0 cursor-grab touch-none items-center justify-center rounded-input text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring'
+                  {...attributes}
+                  {...listeners}
+                >
+                  <Icons.menu className='size-4' aria-hidden='true' />
+                </button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  className='size-10 shrink-0'
+                  aria-label={`Remove ${section.title || 'untitled section'}`}
+                  onClick={() => removeSection(section.id)}
+                >
+                  <Icons.trash
+                    className='size-4 text-muted-foreground'
+                    aria-hidden='true'
+                  />
+                </Button>
+              </div>
+            </div>
+            <Input
+              id={`section-title-${section.id}`}
+              value={section.title}
+              onChange={e =>
+                updateSection(section.id, { title: e.target.value })
+              }
+              placeholder='Section title'
+              className='min-w-0 font-semibold'
+            />
+            <Label
+              className='sr-only'
+              htmlFor={`section-description-${section.id}`}
+            >
+              Section description
+            </Label>
+            <Input
+              id={`section-description-${section.id}`}
+              value={section.description ?? ''}
+              onChange={e =>
+                updateSection(section.id, {
+                  description: e.target.value || undefined,
+                })
+              }
+              placeholder='Section description (optional)'
+              className='rounded-input text-sm'
+            />
+
+            <div className='flex min-w-0 flex-wrap items-center gap-2'>
+              <Label
+                htmlFor={`section-layout-${section.id}`}
+                className='text-xs text-muted-foreground'
+              >
+                Layout
+              </Label>
+              <Select
+                value={section.layout ?? 'form'}
+                onValueChange={(value: string) => {
+                  const layout = value as SectionLayout;
+                  const allowedTypes =
+                    layout === 'interactive'
+                      ? INTERACTIVE_FIELD_TYPES
+                      : FORM_FIELD_TYPES;
+                  const removedCount = section.fields.filter(
+                    f => !allowedTypes.includes(f.type)
+                  ).length;
+                  if (
+                    removedCount > 0 &&
+                    !window.confirm(
+                      `Switching layout will remove ${removedCount} incompatible field(s). Continue?`
+                    )
+                  )
+                    return;
+                  updateSection(section.id, {
+                    layout,
+                    fields: section.fields.filter(f =>
+                      allowedTypes.includes(f.type)
+                    ),
+                  });
+                  // Auto-disable requiresCompletion if this was the last form section
+                  if (
+                    layout === 'interactive' &&
+                    template.settings?.requiresCompletion
+                  ) {
+                    const otherFormSections = template.sections.filter(
+                      s =>
+                        s.id !== section.id && (s.layout ?? 'form') === 'form'
+                    );
+                    if (otherFormSections.length === 0) {
+                      updateTemplate({
+                        settings: {
+                          ...template.settings,
+                          requiresCompletion: false,
+                        },
+                      });
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger
+                  id={`section-layout-${section.id}`}
+                  className='h-10 w-full rounded-input text-sm sm:w-40'
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className='rounded-dropdown'>
+                  <SelectItem value='form'>Form</SelectItem>
+                  <SelectItem value='interactive'>Interactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <SectionVisibilityEditor section={section} />
+
+            {sectionErrors.length > 0 &&
+              sectionErrors.map((err, i) => (
+                <p key={i} className='text-xs text-error'>
+                  {err}
+                </p>
+              ))}
+
+            <div className='flex min-w-0 flex-wrap items-center gap-2'>
+              <Switch
+                id={`section-configurable-${section.id}`}
+                checked={section.configurable ?? false}
+                onCheckedChange={checked => {
+                  if (checked && section.fields.length > 0) {
+                    if (
+                      !window.confirm(
+                        `This will clear all ${section.fields.length} field(s) in this section. Continue?`
+                      )
+                    )
+                      return;
+                  }
+                  updateSection(section.id, {
+                    configurable: checked,
+                    ...(checked ? { fields: [] } : {}),
+                  });
+                }}
+                className='shrink-0'
+              />
+              <Label
+                htmlFor={`section-configurable-${section.id}`}
+                className='text-xs text-muted-foreground'
+              >
+                Organizer configures
+              </Label>
+              {section.configurable && (
+                <span className='text-xs italic text-muted-foreground'>
+                  — organizer adds fields when enabling
+                </span>
+              )}
+            </div>
+
+            {section.configurable && (
+              <div className='space-y-1.5'>
+                <Label className='text-xs text-muted-foreground'>
+                  Allowed field types
+                </Label>
+                <div className='flex flex-wrap gap-x-4 gap-y-1'>
+                  {INPUT_FIELD_TYPES.map(type => {
+                    const allowed = section.allowedFieldTypes ?? [];
+                    const isChecked =
+                      allowed.length === 0 || allowed.includes(type);
+                    return (
+                      <label
+                        key={type}
+                        className='flex items-center gap-1.5 text-xs'
+                      >
+                        <Checkbox
+                          checked={isChecked}
+                          onCheckedChange={checked => {
+                            let next: FieldType[];
+                            if (allowed.length === 0) {
+                              // First uncheck — start from full list minus this one
+                              next = INPUT_FIELD_TYPES.filter(t => t !== type);
+                            } else if (checked) {
+                              next = [...allowed, type];
+                            } else {
+                              next = allowed.filter(t => t !== type);
+                            }
+                            // If all are checked, clear the array (means "all allowed")
+                            if (next.length === INPUT_FIELD_TYPES.length) {
+                              next = [];
+                            }
+                            updateSection(section.id, {
+                              allowedFieldTypes: next,
+                            });
+                          }}
+                        />
+                        {FIELD_TYPE_LABELS[type]}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!section.configurable && (
+              <>
+                <DndContext
+                  sensors={fieldSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleFieldDragEnd}
+                >
+                  <SortableContext
+                    items={section.fields.map(f => f.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {section.fields.map(field => (
+                      <FieldCard
+                        key={field.id}
+                        sectionId={section.id}
+                        field={field}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+
+                <FieldTypePicker
+                  onSelect={handleAddField}
+                  allowedTypes={
+                    section.layout === 'interactive'
+                      ? INTERACTIVE_FIELD_TYPES
+                      : FORM_FIELD_TYPES
+                  }
+                />
+              </>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

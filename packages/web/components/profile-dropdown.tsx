@@ -16,7 +16,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Badge } from '@/components/ui/badge';
+import { UnreadIndicator } from '@/components/atoms/unread-indicator';
 import { cn, getInitialsFromName } from '@/lib/utils';
 import { signOut } from '@/lib/auth-client';
 import Link from 'next/link';
@@ -61,12 +61,10 @@ export function ProfileDropdown({
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           {pendingCount > 0 && (
-            <Badge
-              variant='destructive'
-              className='absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs'
-            >
-              {pendingCount > 99 ? '99+' : pendingCount}
-            </Badge>
+            <UnreadIndicator
+              count={pendingCount}
+              className='absolute -top-1 -right-1'
+            />
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
@@ -119,12 +117,7 @@ export function ProfileDropdown({
               <Icons.people className='size-4' />
               <span>Friends &amp; Groups</span>
               {pendingCount > 0 && (
-                <Badge
-                  variant='destructive'
-                  className='ml-auto size-5 p-0 flex items-center justify-center text-xs'
-                >
-                  {pendingCount}
-                </Badge>
+                <UnreadIndicator count={pendingCount} className='ml-auto' />
               )}
             </div>
           </DropdownMenuItem>

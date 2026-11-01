@@ -1,5 +1,7 @@
 'use client';
 
+import { classifyEventLifecycle } from '@groupi/shared/utils';
+import { useLifecycleClock } from '@groupi/shared/hooks';
 import Link from 'next/link';
 import { Card, CardAction, CardActions } from '@/components/ui/card';
 import { useState } from 'react';
@@ -67,6 +69,12 @@ export function VisualEventCard({
   organizer,
   className,
 }: VisualEventCardProps) {
+  const now = useLifecycleClock([
+    event.chosenEndDateTime,
+    ...(event.potentialDateTimes ?? []),
+  ]);
+  const needsNewDates =
+    classifyEventLifecycle(event, now) === 'NEEDS_NEW_DATES';
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -439,7 +447,9 @@ export function VisualEventCard({
                         event.chosenDateTime,
                         event.chosenEndDateTime
                       )
-                    : 'Date TBD'}
+                    : needsNewDates
+                      ? 'Needs new dates'
+                      : 'Date TBD'}
                 </span>
               </div>
 

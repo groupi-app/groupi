@@ -20,6 +20,24 @@ function createNotification(
 }
 
 describe('notification presentation', () => {
+  test('describes and routes a canonical Group post without an Event', () => {
+    const notification = createNotification({
+      type: 'NEW_POST',
+      groupId: 'group-1' as Id<'groups'>,
+      postId: 'post-1' as Id<'posts'>,
+      group: { id: 'group-1' as Id<'groups'>, title: 'Neighbors' },
+      post: { id: 'post-1' as Id<'posts'>, title: 'Plans' },
+    });
+    expect(getNotificationMessage(notification)).toBe(
+      'Someone posted “Plans” in Neighbors'
+    );
+    expect(getNotificationDestination(notification)).toBe(
+      '/groups/group-1/posts/post-1'
+    );
+    expect(
+      getNotificationDestination({ ...notification, post: null })
+    ).toBeNull();
+  });
   test('describes the author, post, and event for a new post', () => {
     const notification = createNotification({
       type: 'NEW_POST',

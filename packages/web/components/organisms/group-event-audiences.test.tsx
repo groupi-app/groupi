@@ -4,9 +4,50 @@ import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
 import { expect, it, vi } from 'vitest';
 import type { Id } from '@/convex/_generated/dataModel';
-import { EventAudienceSettings } from './event-audience-settings';
+import { EventAudienceSettings as AudienceFields } from './event-audience-settings';
+import { EventSettingsDraftProvider } from '@/features/event-settings';
+vi.mock('@/hooks/convex/use-file-upload', () => ({
+  useFileUpload: () => ({ uploadFile: vi.fn() }),
+}));
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
+let actor = 0;
+function snapshot(grants = audiences) {
+  return {
+    revision: 'r1',
+    role: 'ORGANIZER' as const,
+    details: {
+      title: 'Picnic',
+      description: '',
+      location: '',
+      visibility: 'PRIVATE' as const,
+    },
+    permissions: {
+      createPosts: 'EVERYONE' as const,
+      inviteMembers: 'EVERYONE' as const,
+      viewAttendeeList: 'EVERYONE' as const,
+    },
+    admissionPolicy: 'INVITATION_ONLY' as const,
+    applications: {
+      questions: [],
+      reviewerPolicy: 'ORGANIZERS_AND_MODERATORS' as const,
+    },
+    audiences: grants,
+    date: { options: [] },
+    addons: [],
+  };
+}
+function EventAudienceSettings(props: Parameters<typeof AudienceFields>[0]) {
+  return (
+    <EventSettingsDraftProvider
+      eventId={props.eventId}
+      actorId={`audience-${actor}`}
+      enabled
+    >
+      <AudienceFields {...props} />
+    </EventSettingsDraftProvider>
+  );
+}
 const eventId = 'event-one' as Id<'events'>;
 const groupId = 'group-one' as Id<'groups'>;
 const audiences = {
@@ -16,6 +57,7 @@ const audiences = {
   groups: [],
 };
 function fixture(data: Record<string, unknown>) {
+  actor++;
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
@@ -24,22 +66,41 @@ function fixture(data: Record<string, unknown>) {
     journal: () => undefined,
     localQueryResult: () => {
       const name = getFunctionName(args[0]);
+      if (name === 'events/queries:getSettings')
+        return snapshot(
+          (data[
+            'groupEventAudiences/queries:getEventAudiences'
+          ] as typeof audiences) ?? audiences
+        );
+      if (name === 'events/queries:getSettingsAudienceOptions') {
+        const page = data['groups/queries:listGroups'] as {
+          page: { _id: string; name: string; canShareEvents: boolean }[];
+          isDone: boolean;
+          continueCursor: string;
+        };
+        return {
+          ...page,
+          page:
+            page?.page
+              .filter(group => group.canShareEvents)
+              .map(group => ({ groupId: group._id, name: group.name })) ?? [],
+        };
+      }
       if (!(name in data)) throw new Error(`Unexpected query ${name}`);
       return data[name];
     },
   }));
   const mutation = vi
     .spyOn(client, 'mutation')
-    .mockResolvedValue({ eventId, groupId, shared: true });
+    .mockResolvedValue({ ...snapshot(), revision: 'r2' });
   return { client, mutation };
 }
-it('shares only with a currently permitted whole Group and optional Friends without participation writes', async () => {
+it('stages permitted Group and Friends audiences in the global save without participation writes', async () => {
   const { client, mutation } = fixture({
-    'groupEventAudiences/queries:getEventAudiences': audiences,
     'groups/queries:listGroups': {
       page: [
         { _id: groupId, name: 'Neighbors', canShareEvents: true },
-        { _id: 'blocked-group', name: 'Restricted', canShareEvents: false },
+        { _id: 'blocked', name: 'Restricted', canShareEvents: false },
       ],
       isDone: true,
       continueCursor: '',
@@ -51,25 +112,24 @@ it('shares only with a currently permitted whole Group and optional Friends with
     </ConvexProvider>
   );
   const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Shared with' }));
   expect(
-    screen.queryByRole('option', { name: 'Restricted' })
+    screen.queryByRole('checkbox', { name: 'Restricted' })
   ).not.toBeInTheDocument();
-  await user.selectOptions(
-    screen.getByRole('combobox', { name: 'Whole Group' }),
-    groupId
-  );
-  await user.click(screen.getByRole('button', { name: 'Share with Group' }));
-  await waitFor(() => expect(mutation).toHaveBeenCalled());
+  await user.click(screen.getByRole('checkbox', { name: 'Friends' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Neighbors' }));
+  await user.keyboard('{Escape}');
+  expect(mutation).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Save changes' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledOnce());
   expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
-    'groupEventAudiences/mutations:shareEventWithGroup'
+    'events/mutations:saveSettings'
   );
-  expect(mutation.mock.calls[0][1]).toEqual({ eventId, groupId });
-  await user.click(screen.getByRole('button', { name: 'Share with Friends' }));
-  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
-  expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
-    'groupEventAudiences/mutations:setEventFriendsAudience'
-  );
-  expect(mutation.mock.calls[1][1]).toEqual({ eventId, enabled: true });
+  expect(mutation.mock.calls[0][1]).toEqual({
+    eventId,
+    expectedRevision: 'r1',
+    patch: { audiences: { friendsShared: true, groupIds: [groupId] } },
+  });
   mounted.unmount();
   await client.close();
 });
@@ -145,40 +205,38 @@ it('offers a logistics preview and only permitted Group withdrawal with no Event
   mounted.unmount();
   await client.close();
 });
-it('restricts a Group manager to visible grant withdrawal without Friends or other Group selection', async () => {
+it('withholds withdrawal when current Group access does not permit it', async () => {
   const { client, mutation } = fixture({
-    'groupEventAudiences/queries:getEventAudiences': {
-      ...audiences,
-      canManageEvent: false,
-      friendsShared: null,
-      groups: [{ groupId, name: 'Neighbors', canWithdraw: true }],
+    'groupEventAudiences/queries:listGroupSharedEvents': {
+      page: [
+        {
+          event: {
+            _id: eventId,
+            title: 'Neighbors picnic',
+            description: '',
+            location: '',
+            timezone: 'UTC',
+            chosenDateTime: null,
+          },
+          canWithdraw: false,
+        },
+      ],
+      isDone: true,
+      continueCursor: '',
     },
   });
   const mounted = render(
     <ConvexProvider client={client}>
-      <EventAudienceSettings eventId={eventId} visibility='PRIVATE' />
+      <GroupSharedEvents groupId={groupId} />
     </ConvexProvider>
   );
-  expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   expect(
-    screen.queryByRole('button', { name: 'Share with Friends' })
+    screen.queryByRole('button', { name: /Withdraw/ })
   ).not.toBeInTheDocument();
-  await userEvent
-    .setup()
-    .click(screen.getByRole('button', { name: 'Withdraw Neighbors audience' }));
-  await waitFor(() => expect(mutation).toHaveBeenCalled());
-  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
-    'groupEventAudiences/mutations:withdrawGroupEventAudience'
-  );
   expect(
-    vi
-      .mocked(client.watchQuery)
-      .mock.calls.every(
-        ([ref]) =>
-          getFunctionName(ref) ===
-          'groupEventAudiences/queries:getEventAudiences'
-      )
-  ).toBe(true);
+    screen.queryByRole('button', { name: 'Shared with' })
+  ).not.toBeInTheDocument();
+  expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });
@@ -233,9 +291,8 @@ it('pages shared logistics without participant queries or unsupported admission 
   mounted.unmount();
   await client.close();
 });
-it('reports action-time policy conflicts without pretending to share', async () => {
+it('retains a staged audience when authority changes and global save is denied', async () => {
   const { client, mutation } = fixture({
-    'groupEventAudiences/queries:getEventAudiences': audiences,
     'groups/queries:listGroups': {
       page: [{ _id: groupId, name: 'Neighbors', canShareEvents: true }],
       isDone: true,
@@ -251,20 +308,17 @@ it('reports action-time policy conflicts without pretending to share', async () 
     </ConvexProvider>
   );
   const user = userEvent.setup();
-  await user.selectOptions(
-    screen.getByRole('combobox', { name: 'Whole Group' }),
-    groupId
-  );
-  await user.click(screen.getByRole('button', { name: 'Share with Group' }));
+  await user.click(screen.getByRole('button', { name: 'Shared with' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Neighbors' }));
+  await user.keyboard('{Escape}');
+  await user.click(screen.getByRole('button', { name: 'Save changes' }));
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Current Group sharing permission'
   );
   expect(
-    screen.queryByText('Event logistics shared with Group.')
-  ).not.toBeInTheDocument();
-  expect(
-    screen.getByText('Public basic Event details remain public.')
+    screen.getByRole('button', { name: 'Remove Neighbors audience' })
   ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Save changes' })).toBeEnabled();
   mounted.unmount();
   await client.close();
 });
@@ -303,6 +357,7 @@ it('recovers a revoked query through the accessible retry action', async () => {
 import { useState } from 'react';
 import EventPreviewPage from '@/app/(eventPreview)/event/[eventId]/preview/page';
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/event/event-one/settings/details',
   useParams: () => ({ eventId: 'event-one' }),
   useRouter: () => ({ push: vi.fn() }),
 }));
@@ -405,7 +460,7 @@ it('shows loading without implying a missing Event list', async () => {
   await client.close();
 });
 
-it('pages permitted Groups and removes a stale selection when current sharing access changes', async () => {
+it('pages server-filtered Groups and removes revoked options without dropping the staged draft', async () => {
   const { client, mutation } = fixture({});
   const listeners = new Set<() => void>();
   let permitted = true;
@@ -418,14 +473,11 @@ it('pages permitted Groups and removes a stale selection when current sharing ac
     },
     journal: () => undefined,
     localQueryResult: () =>
-      getFunctionName(args[0]) ===
-      'groupEventAudiences/queries:getEventAudiences'
-        ? audiences
+      getFunctionName(args[0]) === 'events/queries:getSettings'
+        ? snapshot()
         : args[1]?.paginationOpts.cursor === 'next'
           ? {
-              page: [
-                { _id: groupId, name: 'Neighbors', canShareEvents: permitted },
-              ],
+              page: permitted ? [{ groupId, name: 'Neighbors' }] : [],
               isDone: true,
               continueCursor: '',
             }
@@ -437,25 +489,21 @@ it('pages permitted Groups and removes a stale selection when current sharing ac
     </ConvexProvider>
   );
   const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'Next sharing Groups' }));
-  await user.selectOptions(
-    screen.getByRole('combobox', { name: 'Whole Group' }),
-    groupId
-  );
-  expect(
-    screen.getByRole('button', { name: 'Share with Group' })
-  ).toBeEnabled();
+  await user.click(screen.getByRole('button', { name: 'Shared with' }));
+  await user.click(screen.getByRole('button', { name: 'More matches' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Neighbors' }));
   const { act } = await import('@testing-library/react');
   await act(async () => {
     permitted = false;
     listeners.forEach(listener => listener());
   });
   expect(
-    screen.getByRole('button', { name: 'Share with Group' })
-  ).toBeDisabled();
-  expect(
-    screen.queryByRole('option', { name: 'Neighbors' })
+    screen.queryByRole('checkbox', { name: 'Neighbors' })
   ).not.toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  expect(
+    screen.getByRole('button', { name: 'Remove Neighbors audience' })
+  ).toBeInTheDocument();
   expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();

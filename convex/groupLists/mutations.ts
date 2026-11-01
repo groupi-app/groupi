@@ -21,6 +21,7 @@ export const addEntry = mutation({
     version: v.number(),
     requestId: v.string(),
     text: v.string(),
+    quantity: v.optional(v.number()),
   },
   returns: addResult,
   handler: async (ctx, args) =>
@@ -33,6 +34,7 @@ export const editEntry = mutation({
     expectedRevision: v.number(),
     text: v.string(),
     completed: v.boolean(),
+    quantity: v.optional(v.number()),
   },
   returns: v.object({ revision: v.number() }),
   handler: async (ctx, args) =>
@@ -54,4 +56,29 @@ export const deleteList = mutation({
   returns: v.null(),
   handler: async (ctx, args) =>
     model.remove(ctx, (await requireAuth(ctx)).person._id, args.toolId),
+});
+
+import * as bring from './bring';
+export const setEntryCompleted = mutation({
+  args: {
+    entryId: v.id('groupListEntries'),
+    version: v.number(),
+    expectedRevision: v.number(),
+    completed: v.boolean(),
+  },
+  returns: v.object({ revision: v.number() }),
+  handler: async (ctx, args) =>
+    model.setCompletion(ctx, (await requireAuth(ctx)).person._id, args),
+});
+export const setBringClaim = mutation({
+  args: {
+    toolId: v.id('groupTools'),
+    entryId: v.id('groupListEntries'),
+    version: v.number(),
+    expectedClaimRevision: v.number(),
+    quantity: v.number(),
+  },
+  returns: bring.bringClaimResult,
+  handler: async (ctx, args) =>
+    bring.setClaim(ctx, (await requireAuth(ctx)).person._id, args),
 });

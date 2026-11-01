@@ -20,7 +20,10 @@ import type { Id } from '@/convex/_generated/dataModel';
 
 interface TemplatePickerProps {
   eventId: Id<'events'>;
-  onSelect: (addonType: string, config: AddonConfiguration) => Promise<void>;
+  onSelect: (
+    addonType: string,
+    config: AddonConfiguration
+  ) => Promise<void | boolean>;
 }
 
 export function TemplatePicker({ onSelect }: TemplatePickerProps) {
@@ -41,7 +44,7 @@ export function TemplatePicker({ onSelect }: TemplatePickerProps) {
 
     setIsAdding(true);
     try {
-      await onSelect(addonType, config);
+      if ((await onSelect(addonType, config)) === false) return;
       setOpen(false);
     } finally {
       setIsAdding(false);

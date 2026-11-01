@@ -43,7 +43,8 @@ vi.mock('@/components/organisms/event-ownership-transfer', () => ({
   EventOwnershipTransfer: () => null,
 }));
 vi.mock('@/features/addons/runtime', () => ({
-  EventAddons: () => <div>Add-ons</div>,
+  EventPlanningFeatures: () => <div>Reminder preference</div>,
+  EventContentFeatures: () => <div>Your details</div>,
 }));
 vi.mock('@/components/new-post-button', () => ({ NewPostButton: () => null }));
 vi.mock('@/components/skeletons', () => ({
@@ -89,7 +90,7 @@ beforeEach(() => {
   });
 });
 afterEach(cleanup);
-it('renders the joined event and add-ons without querying a restricted roster or loading forever', () => {
+it('renders joined event participant features without querying a restricted roster or loading forever', () => {
   render(
     <EventDataProvider eventId='event-1'>
       <EventPage />
@@ -98,7 +99,9 @@ it('renders the joined event and add-ons without querying a restricted roster or
   );
   expect(screen.getByText('Event content')).toBeInTheDocument();
   expect(screen.getByText('Discussion')).toBeInTheDocument();
-  expect(screen.getByText('Add-ons')).toBeInTheDocument();
+  expect(screen.getByText('Reminder preference')).toBeInTheDocument();
+  expect(screen.getByText('Your details')).toBeInTheDocument();
+  expect(screen.queryByText('Add-ons')).not.toBeInTheDocument();
   expect(screen.getByText('Restricted roster')).toBeInTheDocument();
   expect(screen.queryByText('Roster')).not.toBeInTheDocument();
   expect(screen.queryByText('Loading event')).not.toBeInTheDocument();

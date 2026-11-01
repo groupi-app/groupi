@@ -34,6 +34,10 @@ export const PostSummarySchema = z
     content: z.string(),
     createdAt: TimestampSchema,
     editedAt: TimestampSchema.nullable(),
+    repliesDisabled: z.boolean().optional(),
+    repliesRevision: z.number().optional(),
+    pinnedAt: z.number().optional(),
+    pinRevision: z.number().optional(),
     author: AuthorSchema,
     replyCount: z.number().int(),
   })
@@ -47,6 +51,10 @@ export const PostDetailSchema = z
     content: z.string(),
     createdAt: TimestampSchema,
     editedAt: TimestampSchema.nullable(),
+    repliesDisabled: z.boolean().optional(),
+    repliesRevision: z.number().optional(),
+    pinnedAt: z.number().optional(),
+    pinRevision: z.number().optional(),
     eventId: z.string(),
     author: AuthorSchema,
     replies: z.array(ReplySummarySchema),
@@ -56,6 +64,7 @@ export const PostDetailSchema = z
 // Create post request body
 export const CreatePostRequestSchema = z
   .object({
+    repliesDisabled: z.boolean().optional(),
     title: z.string().min(1).max(65536).openapi({
       example: 'Meeting Notes',
       description: 'Post title',
@@ -70,6 +79,8 @@ export const CreatePostRequestSchema = z
 // Update post request body
 export const UpdatePostRequestSchema = z
   .object({
+    repliesDisabled: z.boolean().optional(),
+    expectedRepliesRevision: z.number().int().nonnegative().optional(),
     title: z.string().min(1).max(65536).optional(),
     content: z.string().min(1).max(65536).optional(),
   })

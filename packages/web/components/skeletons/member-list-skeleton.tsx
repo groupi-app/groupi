@@ -3,13 +3,12 @@ import { Skeleton } from '../ui/skeleton';
 export function MemberListSkeleton() {
   return (
     <div>
-      {/* Header with title, count badge, and invite button */}
+      {/* Count and people are unknown; do not invent an Invite permission. */}
       <div className='flex items-center gap-2'>
         <h2 className='text-xl font-heading font-medium'>Attendees</h2>
         <div className='rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center'>
           <Skeleton className='h-3 w-6' />
         </div>
-        <Skeleton className='h-8 w-20 rounded-md' />
       </div>
 
       {/* Member icons */}
@@ -22,9 +21,7 @@ export function MemberListSkeleton() {
       </div>
 
       {/* View All link */}
-      <span className='rounded-full z-top text-primary hover:underline mt-1'>
-        View All
-      </span>
+      <Skeleton className='mt-1 h-5 w-16' />
     </div>
   );
 }

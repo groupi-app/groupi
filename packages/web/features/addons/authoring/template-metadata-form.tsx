@@ -63,7 +63,7 @@ export function TemplateMetadataForm() {
         <Label>Settings</Label>
 
         {/* Card-only mode */}
-        <div className='flex items-center justify-between rounded-input border p-3'>
+        <div className='flex min-w-0 items-start justify-between gap-4 rounded-input border border-border p-3'>
           <div>
             <p className='text-sm font-medium'>Card only</p>
             <p className='text-xs text-muted-foreground'>
@@ -71,6 +71,8 @@ export function TemplateMetadataForm() {
             </p>
           </div>
           <Switch
+            className='shrink-0'
+            aria-label='Card only'
             checked={isCardOnly}
             onCheckedChange={checked =>
               updateTemplate({
@@ -86,7 +88,7 @@ export function TemplateMetadataForm() {
         </div>
 
         {/* Require completion — disabled when card-only */}
-        <div className='flex items-center justify-between rounded-input border p-3'>
+        <div className='flex min-w-0 items-start justify-between gap-4 rounded-input border border-border p-3'>
           <div>
             <p className='text-sm font-medium'>Require completion</p>
             <p className='text-xs text-muted-foreground'>
@@ -98,11 +100,13 @@ export function TemplateMetadataForm() {
             </p>
           </div>
           <Switch
+            className='shrink-0'
             checked={
               !isCardOnly &&
               hasFormSections &&
               (template.settings?.requiresCompletion ?? false)
             }
+            aria-label='Require completion'
             disabled={isCardOnly || !hasFormSections}
             onCheckedChange={checked =>
               updateTemplate({
@@ -117,8 +121,9 @@ export function TemplateMetadataForm() {
 
         {/* Card subtitle */}
         <div className='space-y-1 rounded-input border p-3'>
-          <p className='text-sm font-medium'>Card subtitle</p>
+          <Label htmlFor='template-card-subtitle'>Card subtitle</Label>
           <Input
+            id='template-card-subtitle'
             value={template.settings?.cardSubtitle ?? ''}
             onChange={e =>
               updateTemplate({
@@ -140,8 +145,9 @@ export function TemplateMetadataForm() {
         {/* Card link label — hidden when card-only */}
         {!isCardOnly && (
           <div className='space-y-1 rounded-input border p-3'>
-            <p className='text-sm font-medium'>Card link label</p>
+            <Label htmlFor='template-card-link'>Card link label</Label>
             <Input
+              id='template-card-link'
               value={template.settings?.cardLinkLabel ?? ''}
               onChange={e =>
                 updateTemplate({
@@ -160,8 +166,9 @@ export function TemplateMetadataForm() {
         {/* Submit button label — only for non-card-only with form sections */}
         {!isCardOnly && hasFormSections && (
           <div className='space-y-1 rounded-input border p-3'>
-            <p className='text-sm font-medium'>Submit button label</p>
+            <Label htmlFor='template-submit-label'>Submit button label</Label>
             <Input
+              id='template-submit-label'
               value={template.submitButtonLabel ?? ''}
               onChange={e =>
                 updateTemplate({

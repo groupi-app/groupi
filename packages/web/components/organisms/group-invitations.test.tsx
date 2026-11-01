@@ -5,12 +5,6 @@ vi.mock('./community-expulsion-progress', () => ({
 vi.mock('./community-expulsion-action', () => ({
   CommunityExpulsionAction: () => null,
 }));
-vi.mock('@/features/group-announcements/event-mail', () => ({
-  EventMail: () => null,
-}));
-vi.mock('./group-announcement-composer', () => ({
-  GroupAnnouncementComposer: () => null,
-}));
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -125,6 +119,21 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTools/queries:getFormPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getListPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupTools/queries:getPollPolicy': {
+      enabled: true,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
     'groupDiscord/enrollment:getStatus': null,
     'groupDiscord/queries:getConnection': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,

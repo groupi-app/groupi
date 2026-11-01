@@ -366,7 +366,7 @@ it('disabled ordinary content stays unmounted while eligible managers can config
   ).toBe(false);
   mounted = await mount(ManageScreen);
   await type(mounted, 'List title', 'Renamed');
-  await press(mounted, 'Save Group list');
+  await press(mounted, 'Save list');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupLists/mutations:configureList',
     { toolId: 'tool-123', version: 3, title: 'Renamed', description: 'Books' }
@@ -375,7 +375,7 @@ it('disabled ordinary content stays unmounted while eligible managers can config
 it('required onboarding blocks manager content and configuration without blocking narrow owner policy', async () => {
   network.requiredOnboarding = true;
   const mounted = await mount(ManageScreen);
-  expect(control(mounted, 'Save Group list')).toBeUndefined();
+  expect(control(mounted, 'Save list')).toBeUndefined();
   expect(
     network.watches.mock.calls.some(
       ([name]) => name === 'groupLists/queries:getListForManagement'
@@ -393,7 +393,7 @@ it('creates a templated list with disclosed immutable visibility', async () => {
   const mounted = await mount(CreateScreen);
   await press(mounted, 'Use list template Reading suggestions');
   await press(mounted, 'List visible to managers');
-  await press(mounted, 'Save Group list');
+  await press(mounted, 'Save list');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupLists/mutations:createList',
     expect.objectContaining({
@@ -439,7 +439,7 @@ it('ordinary members cannot create when managers-only creation is current', asyn
   network.manager = false;
   network.formEditable = false;
   const mounted = await mount(CreateScreen);
-  expect(control(mounted, 'Save Group list')).toBeUndefined();
+  expect(control(mounted, 'Save list')).toBeUndefined();
   expect(network.mutation).not.toHaveBeenCalled();
 });
 it('reactive eligibility loss unmounts ordinary list content while preserving the recovery link', async () => {
@@ -484,7 +484,7 @@ it('keeps configuration visibility immutable and reports a stale-version conflic
   expect(control(mounted, 'List visible to members')).toBeUndefined();
   expect(control(mounted, 'List visible to managers')).toBeUndefined();
   await type(mounted, 'List title', 'Renamed');
-  await press(mounted, 'Save Group list');
+  await press(mounted, 'Save list');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupLists/mutations:configureList',
     { toolId: 'tool-123', version: 3, title: 'Renamed', description: 'Books' }

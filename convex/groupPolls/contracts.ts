@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { contextFields } from '../groupTools/contracts';
 import { tool, visibility } from '../groupTools/contracts';
 export const mode = v.union(v.literal('SINGLE'), v.literal('MULTIPLE'));
 export const option = v.object({ id: v.string(), label: v.string() });
@@ -15,7 +16,7 @@ export const createInput = {
 };
 export const voteFields = {
   toolId: v.id('groupTools'),
-  groupId: v.id('groups'),
+  ...contextFields,
   personId: v.optional(v.id('persons')),
   revision: v.number(),
   version: v.number(),

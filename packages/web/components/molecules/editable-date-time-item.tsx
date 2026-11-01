@@ -165,14 +165,15 @@ export function EditableDateTimeItem({
         {/* Date/time content */}
         <div className='flex-1 min-w-0'>
           {/* Start row */}
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
             <Popover open={isEditingStart} onOpenChange={setIsEditingStart}>
               <PopoverTrigger asChild>
                 <Button
                   type='button'
                   variant='outline'
+                  data-nowrap
                   size='sm'
-                  className='h-8 px-2 text-sm font-medium justify-start whitespace-nowrap'
+                  className='h-8 px-2 text-sm font-medium justify-start whitespace-nowrap shrink-0'
                   disabled={disabled}
                 >
                   <Icons.calendar className='size-3.5 mr-1.5 text-muted-foreground shrink-0' />
@@ -194,11 +195,12 @@ export function EditableDateTimeItem({
             </Popover>
             <Input
               type='time'
+              aria-label='Start time'
               value={startTime}
               onFocus={handleStartTimeFocus}
               onChange={e => setLocalStartTime(e.target.value)}
               onBlur={handleStartTimeBlur}
-              className='w-[130px] h-8 text-sm shrink-0'
+              className='w-32 h-8 text-sm shrink-0'
               disabled={disabled}
             />
             {!option.end && (
@@ -215,7 +217,7 @@ export function EditableDateTimeItem({
 
           {/* End row - always on separate row when there's an end time */}
           {option.end && (
-            <div className='flex items-center gap-2 mt-1.5'>
+            <div className='flex flex-wrap items-center gap-2 mt-1.5'>
               <span className='text-muted-foreground text-xs mr-0.5'>to</span>
               {!sameDay && (
                 <Popover open={isEditingEnd} onOpenChange={setIsEditingEnd}>
@@ -223,8 +225,9 @@ export function EditableDateTimeItem({
                     <Button
                       type='button'
                       variant='outline'
+                      data-nowrap
                       size='sm'
-                      className='h-8 px-2 text-sm justify-start whitespace-nowrap'
+                      className='h-8 px-2 text-sm justify-start whitespace-nowrap shrink-0'
                       disabled={disabled}
                     >
                       <Icons.calendar className='size-3.5 mr-1.5 text-muted-foreground shrink-0' />
@@ -250,11 +253,12 @@ export function EditableDateTimeItem({
               )}
               <Input
                 type='time'
+                aria-label='End time'
                 value={endTime}
                 onFocus={handleEndTimeFocus}
                 onChange={e => setLocalEndTime(e.target.value)}
                 onBlur={handleEndTimeBlur}
-                className='w-[130px] h-8 text-sm shrink-0'
+                className='w-32 h-8 text-sm shrink-0'
                 disabled={disabled}
               />
               <Button

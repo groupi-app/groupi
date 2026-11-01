@@ -249,7 +249,8 @@ function ReminderManageConfig({
   const handleOffsetChange = async (value: ReminderOffset) => {
     setOffset(value);
     if (enabled) {
-      await onSave({ reminderOffset: value });
+      if ((await onSave({ reminderOffset: value })) === false)
+        setOffset(currentOffset);
     }
   };
 

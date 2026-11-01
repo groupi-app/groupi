@@ -35,7 +35,7 @@ export function CustomAddonFallback({
         getPublicEventAddonUrl(eventId, addonType)
       );
     } catch {
-      toast.error('Unable to open this add-on');
+      toast.error('Unable to open this Event feature');
     }
   }
 
@@ -51,7 +51,7 @@ export function CustomAddonFallback({
         </View>
         <View className='flex-1'>
           <Text className='text-base font-semibold text-foreground'>
-            {summary?.name ?? 'Custom Add-on'}
+            {summary?.name ?? 'Event feature'}
           </Text>
           <Text className='text-sm text-muted-foreground'>
             {summary?.description ?? 'A custom tool for this event'}
@@ -60,13 +60,17 @@ export function CustomAddonFallback({
       </View>
 
       <Text className='text-sm text-muted-foreground'>
-        This custom add-on uses its full web experience. It will open securely
-        in your browser and return you to the app when you are done.
+        Open the full experience in your browser. Your saved information stays
+        with this Event.
       </Text>
 
-      <Button onPress={() => void openWebAddon()}>
+      <Button
+        accessibilityLabel={`Open ${summary?.name ?? 'Event feature'} in browser`}
+        accessibilityHint='Opens the full Event feature in your browser'
+        onPress={() => void openWebAddon()}
+      >
         <Ionicons name='open-outline' size={17} color={onPrimaryColor} />
-        <Text>Open add-on</Text>
+        <Text>Open {summary?.name ?? 'Event feature'}</Text>
       </Button>
     </Card>
   );

@@ -52,6 +52,17 @@ process.exit(94);
 `,
     { mode: 0o755 }
   );
+  for (const command of ['pnpm', 'node']) {
+    writeFileSync(
+      join(directory, command),
+      `#!${process.execPath}
+const fs = require('node:fs');
+fs.appendFileSync(process.env.CALLS_PATH, JSON.stringify([${JSON.stringify(command)}, ...process.argv.slice(2), process.env.NEXT_PUBLIC_CONVEX_URL, process.env.NEXT_PUBLIC_CONVEX_SITE_URL]) + '\\n');
+process.exit(process.env.FAIL_BUILD === 'true' ? 6 : 0);
+`,
+      { mode: 0o755 }
+    );
+  }
   return {
     run: () =>
       spawnSync('bash', [resolve('scripts/vercel-build.sh')], {
@@ -181,5 +192,61 @@ test('production keeps its single existing deploy command without preview config
       'pnpm --filter @groupi/web build && node scripts/write-e2e-config.mjs',
     ],
   ]);
+  assert.deepEqual(preview.state(), existing);
+});
+
+test('shared test builds only the frontend without backend or credential writes', t => {
+  const preview = harness(t, existing, {
+    VERCEL_GIT_COMMIT_REF: 'test',
+    NEXT_PUBLIC_CONVEX_URL: '',
+    CONVEX_URL: '',
+  });
+  assert.equal(preview.run().status, 0);
+  assert.deepEqual(preview.state(), existing);
+  assert.deepEqual(preview.calls(), [
+    [
+      'pnpm',
+      '--filter',
+      '@groupi/web',
+      'build',
+      'https://zany-rooster-824.convex.cloud',
+      'https://zany-rooster-824.convex.site',
+    ],
+    [
+      'node',
+      'scripts/write-e2e-config.mjs',
+      'https://zany-rooster-824.convex.cloud',
+      'https://zany-rooster-824.convex.site',
+    ],
+  ]);
+});
+
+for (const overrides of [
+  { VERCEL_ENV: 'production' },
+  { NEXT_PUBLIC_CONVEX_URL: 'https://wrong.convex.cloud' },
+  { CONVEX_URL: 'https://wrong.convex.cloud' },
+]) {
+  test(`shared test fails closed for unsafe build selection ${JSON.stringify(overrides)}`, t => {
+    const preview = harness(t, existing, {
+      VERCEL_GIT_COMMIT_REF: 'test',
+      NEXT_PUBLIC_CONVEX_URL: '',
+      CONVEX_URL: '',
+      ...overrides,
+    });
+    assert.notEqual(preview.run().status, 0);
+    assert.deepEqual(preview.calls(), []);
+    assert.deepEqual(preview.state(), existing);
+  });
+}
+
+test('shared test build failure does not write readiness metadata or backend state', t => {
+  const preview = harness(t, existing, {
+    VERCEL_GIT_COMMIT_REF: 'test',
+    NEXT_PUBLIC_CONVEX_URL: '',
+    CONVEX_URL: '',
+    FAIL_BUILD: 'true',
+  });
+  assert.notEqual(preview.run().status, 0);
+  assert.equal(preview.calls().length, 1);
   assert.deepEqual(preview.state(), existing);
 });

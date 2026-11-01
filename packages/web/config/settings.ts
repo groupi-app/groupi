@@ -16,6 +16,11 @@ export const settingsConfig = {
       icon: 'account' as const,
     },
     {
+      title: 'Developer',
+      href: '/settings/developer',
+      icon: 'code' as const,
+    },
+    {
       title: 'Privacy',
       href: '/settings/privacy',
       icon: 'shield' as const,

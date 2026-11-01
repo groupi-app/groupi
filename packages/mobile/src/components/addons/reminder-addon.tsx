@@ -72,6 +72,13 @@ export function ReminderAddon({ eventId, config }: ReminderAddonProps) {
           </Text>
         </View>
         <Switch
+          accessibilityLabel='Remind me before this Event'
+          accessibilityHint='Use the reminder timing configured for this Event'
+          accessibilityState={{
+            checked: !isOptedOut,
+            disabled: optOutData === undefined || isSaving,
+            busy: isSaving,
+          }}
           value={!isOptedOut}
           disabled={optOutData === undefined || isSaving}
           onValueChange={handleToggle}

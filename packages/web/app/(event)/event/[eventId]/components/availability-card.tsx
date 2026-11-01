@@ -1,5 +1,7 @@
 'use client';
 
+import { useLifecycleClock } from '@groupi/shared/hooks';
+import { isDateOptionPassed } from '@groupi/shared/utils';
 import { getInitialsFromName } from '@/lib/utils';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -30,6 +32,8 @@ export function AvailabilityCard({
   setFormAnswer,
   setFormNote,
   index,
+  savedStatus,
+  savedNote,
 }: {
   pdt: PotentialDateTime;
   formAnswers: Array<{
@@ -47,16 +51,25 @@ export function AvailabilityCard({
   ) => void;
   setFormNote: (index: number, note: string) => void;
   index: number;
+  savedStatus?: 'YES' | 'MAYBE' | 'NO' | 'PENDING';
+  savedNote?: string;
 }) {
   const [listOpen, setListOpen] = useState(false);
-  const answer = formAnswers[index]?.answer;
-  const note = formAnswers[index]?.note ?? '';
+  const now = useLifecycleClock(pdt.dateTime);
+  const passed = isDateOptionPassed(pdt, now);
+  const answer = passed
+    ? savedStatus === 'PENDING'
+      ? undefined
+      : savedStatus?.toLowerCase()
+    : formAnswers[index]?.answer;
+  const note = passed ? (savedNote ?? '') : (formAnswers[index]?.note ?? '');
 
   return (
     <div className='w-full sm:max-w-md border border-border rounded-card py-4 px-4 h-max'>
       <div className='flex flex-col sm:flex-row justify-between gap-4 flex-wrap'>
         <div className='flex flex-col justify-between'>
           <div>
+            {passed && <p className='text-xs text-muted-foreground'>Passed</p>}
             <h1 className='font-heading'>
               {new Date(pdt.dateTime).toLocaleDateString([], {
                 weekday: 'long',
@@ -80,6 +93,7 @@ export function AvailabilityCard({
         <div className='flex items-center gap-2 py-3'>
           <Button
             type='button'
+            disabled={passed}
             size='icon'
             variant={answer === 'yes' ? 'success' : 'outline'}
             aria-pressed={answer === 'yes'}
@@ -95,6 +109,7 @@ export function AvailabilityCard({
           </Button>
           <Button
             type='button'
+            disabled={passed}
             size='icon'
             variant={answer === 'maybe' ? 'warning' : 'outline'}
             aria-pressed={answer === 'maybe'}
@@ -110,6 +125,7 @@ export function AvailabilityCard({
           </Button>
           <Button
             type='button'
+            disabled={passed}
             size='icon'
             variant={answer === 'no' ? 'destructive' : 'outline'}
             aria-pressed={answer === 'no'}
@@ -127,6 +143,8 @@ export function AvailabilityCard({
       </div>
       <div className='relative mt-2'>
         <Textarea
+          disabled={passed}
+          aria-label='Availability note'
           value={note}
           onChange={e => setFormNote(index, e.target.value)}
           placeholder='Add a note (optional)'

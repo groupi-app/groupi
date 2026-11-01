@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   back: vi.fn(),
+  confirm: vi.fn(),
+  role: 'ORGANIZER',
+  allowNavigation: vi.fn(),
 }));
 
 vi.mock('react', async importOriginal => {
@@ -28,6 +31,7 @@ vi.mock('react', async importOriginal => {
 
 vi.mock('expo-router', () => ({
   router: { back: mocks.back },
+  Redirect: 'Redirect',
   useLocalSearchParams: () => ({ eventId: 'event-123' }),
 }));
 
@@ -64,9 +68,27 @@ vi.mock('@groupi/shared/platform', () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
-import ManageAddonsScreen from '../../app/event/[eventId]/addons/manage';
+vi.mock('../../src/hooks/use-events', () => ({
+  useEventHeader: () => ({ userMembership: { role: mocks.role } }),
+}));
+vi.mock('../../src/hooks/use-unsaved-changes', () => ({
+  useUnsavedChanges: () => mocks.allowNavigation,
+}));
+vi.mock('../../src/components/ui/confirm-dialog', () => ({
+  showConfirmDialog: mocks.confirm,
+}));
+import ManageAddonsScreen from '../../app/event/[eventId]/settings/addons';
+import LegacyManageAddons from '../../app/event/[eventId]/addons/manage';
 
 function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
+  if (
+    node === null ||
+    node === undefined ||
+    typeof node === 'string' ||
+    typeof node === 'number' ||
+    typeof node === 'boolean'
+  )
+    return [];
   if (!isValidElement<Record<string, unknown>>(node)) {
     return Children.toArray(node).flatMap(elements);
   }
@@ -90,6 +112,7 @@ function createManageForm() {
 describe('manage add-ons transaction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.role = 'ORGANIZER';
     mocks.replaceBuiltInAddonConfigs.mockResolvedValue(undefined);
     mocks.queryResult = [
       {
@@ -123,6 +146,8 @@ describe('manage add-ons transaction', () => {
     const form = createManageForm();
 
     await (form.props.onNext as () => Promise<void>)();
+    expect(mocks.replaceBuiltInAddonConfigs).not.toHaveBeenCalled();
+    await mocks.confirm.mock.calls[0][0].onConfirm();
 
     expect(mocks.replaceBuiltInAddonConfigs).toHaveBeenCalledOnce();
     expect(mocks.replaceBuiltInAddonConfigs).toHaveBeenCalledWith({
@@ -142,7 +167,7 @@ describe('manage add-ons transaction', () => {
         },
       ],
     });
-    expect(mocks.toastSuccess).toHaveBeenCalledWith('Add-ons updated');
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('Event features updated');
     expect(mocks.back).toHaveBeenCalledOnce();
   });
 
@@ -153,10 +178,64 @@ describe('manage add-ons transaction', () => {
     const form = createManageForm();
 
     await (form.props.onNext as () => Promise<void>)();
+    expect(mocks.replaceBuiltInAddonConfigs).not.toHaveBeenCalled();
+    await mocks.confirm.mock.calls[0][0].onConfirm();
 
     expect(mocks.toastError).toHaveBeenCalledWith('Update failed');
     expect(mocks.toastSuccess).not.toHaveBeenCalled();
     expect(mocks.back).not.toHaveBeenCalled();
     expect(mocks.replaceBuiltInAddonConfigs).toHaveBeenCalledOnce();
+  });
+
+  it('cancelling a destructive reset keeps the draft and never writes', async () => {
+    const form = createManageForm();
+    const draft = mocks.formState;
+    await (form.props.onNext as () => Promise<void>)();
+    expect(mocks.confirm.mock.calls[0][0].message).toContain(
+      'Bring List claims'
+    );
+    mocks.confirm.mock.calls[0][0].onCancel();
+    expect(mocks.replaceBuiltInAddonConfigs).not.toHaveBeenCalled();
+    expect(mocks.formState).toBe(draft);
+    expect(mocks.back).not.toHaveBeenCalled();
+  });
+  it('requires current manager authority and retains the legacy settings link', () => {
+    mocks.role = 'ATTENDEE';
+    const tree = elements(ManageAddonsScreen());
+    expect(tree.some(item => item.type === 'CreateEventProvider')).toBe(false);
+    expect(LegacyManageAddons().props.href).toBe(
+      '/event/event-123/settings/addons'
+    );
+  });
+  it('saves a reminder-only change without a destructive reset prompt', async () => {
+    mocks.formState = {
+      addonConfigs: Object.fromEntries(
+        mocks.queryResult
+          .filter(addon => addon.enabled)
+          .map(addon => [addon.addonType, addon.config])
+      ),
+    };
+    mocks.formState.addonConfigs.reminders = { reminderOffset: '1_WEEK' };
+    const form = createManageForm();
+    await (form.props.onNext as () => Promise<void>)();
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.replaceBuiltInAddonConfigs).toHaveBeenCalledOnce();
+  });
+  it('preserves malformed saved configurations and does not render their raw values', () => {
+    mocks.queryResult = [
+      {
+        addonType: 'bring-list',
+        enabled: true,
+        config: { items: 'DO_NOT_RENDER' },
+      },
+    ];
+    const tree = elements(ManageAddonsScreen());
+    expect(tree.some(item => item.type === 'CreateEventProvider')).toBe(false);
+    const text = tree
+      .filter(item => typeof item.props.children === 'string')
+      .map(item => item.props.children)
+      .join(' ');
+    expect(text).toContain('configuration and participant data are preserved');
+    expect(text).not.toContain('DO_NOT_RENDER');
   });
 });

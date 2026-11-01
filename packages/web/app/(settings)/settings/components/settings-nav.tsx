@@ -24,12 +24,16 @@ export function SettingsNav() {
           }, 300);
         }}
         size='icon'
+        aria-label='Open settings navigation'
+        aria-expanded={open}
+        aria-controls='settings-navigation'
         variant='outline'
         className='z-lifted md:hidden mb-2 ml-0'
       >
         <Icons.sidebar />
       </Button>
       <div
+        id='settings-navigation'
         className={cn(
           'fixed w-full md:sticky top-[5rem] border-r border-border duration-300 h-[calc(100vh-6rem-5rem)] z-top bg-background md:bg-transparent',
           open ? 'left-0' : 'left-[calc(-100vw)] md:left-0',
@@ -48,15 +52,21 @@ export function SettingsNav() {
             }}
             variant='ghost'
             size='icon'
+            aria-label='Close settings navigation'
           >
             <Icons.close />
           </Button>
         </div>
-        <div className='flex flex-col p-2 gap-2 z-sticky'>
+        <div
+          role='navigation'
+          aria-label='Settings'
+          className='flex flex-col p-2 gap-2 z-sticky'
+        >
           {settingsConfig.settingsNav.map(item => (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={currentPath === item.href ? 'page' : undefined}
               onClick={() => setOpen(false)}
               className={cn(
                 'w-full rounded-md hover:bg-accent/80 transition-all p-2',

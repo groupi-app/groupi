@@ -59,6 +59,8 @@ export const request = v.object({
         )
       ),
       content: v.optional(v.string()),
+      repliesDisabled: v.optional(v.boolean()),
+      expectedRepliesRevision: v.optional(v.number()),
       text: v.optional(v.string()),
       attachments: v.optional(v.array(attachmentInputValidator)),
       attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
@@ -84,7 +86,7 @@ async function discussionSummary(
   const author = await getDiscussionActorWithUser(ctx, row.authorId);
   const attachments = includeFiles
     ? await (
-        'eventId' in row
+        'title' in row
           ? ctx.db
               .query('attachments')
               .withIndex('by_post', q => q.eq('postId', row._id))
@@ -96,12 +98,16 @@ async function discussionSummary(
   return {
     id: row._id,
     createdAt: row._creationTime,
-    ...('eventId' in row
+    ...('title' in row
       ? {
           eventId: row.eventId,
           title: row.title,
           content: row.content,
           editedAt: row.editedAt ?? null,
+          repliesDisabled: row.repliesDisabled ?? false,
+          repliesRevision: row.repliesRevision ?? 0,
+          pinnedAt: row.pinnedAt,
+          pinRevision: row.pinRevision ?? 0,
         }
       : {
           postId: row.postId,
@@ -183,6 +189,7 @@ export const execute = internalMutation({
     const reply = input.replyId ? await ctx.db.get(input.replyId) : null;
     if (reply) post = await ctx.db.get(reply.postId);
     if (post) {
+      if (!post.eventId || post.groupId) throw denied();
       if (eventId !== undefined && eventId !== post.eventId) throw denied();
       eventId = post.eventId;
     }
@@ -415,7 +422,7 @@ export const execute = internalMutation({
         if (!row) throw denied();
         const result = await discussionSummary(ctx, row, includeFiles);
         data =
-          'eventId' in row
+          'title' in row
             ? {
                 ...result,
                 replies: await Promise.all(
@@ -457,7 +464,16 @@ export const execute = internalMutation({
         operation === 'delete'
           ? []
           : [
-              ...(input.kind === 'posts' ? ['title', 'content'] : ['text']),
+              ...(input.kind === 'posts'
+                ? [
+                    'title',
+                    'content',
+                    'repliesDisabled',
+                    ...(operation === 'edit'
+                      ? ['expectedRepliesRevision']
+                      : []),
+                  ]
+                : ['text']),
               ...(operation === 'create'
                 ? ['attachments']
                 : ['attachmentsToAdd', 'attachmentIdsToDelete']),
@@ -529,6 +545,8 @@ export const execute = internalMutation({
           replyId: reply?._id,
           title: body.title,
           content: body.content,
+          repliesDisabled: body.repliesDisabled,
+          expectedRepliesRevision: body.expectedRepliesRevision,
           text: body.text,
           hasAttachments: remainingFileCount > 0,
         });
@@ -574,6 +592,8 @@ export const execute = internalMutation({
           body: {
             title: body.title,
             content: body.content,
+            repliesDisabled: body.repliesDisabled,
+            expectedRepliesRevision: body.expectedRepliesRevision,
             text: body.text,
             attachments: body.attachments,
             attachmentsToAdd: body.attachmentsToAdd,

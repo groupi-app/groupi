@@ -6,6 +6,11 @@ export function getEventSettingsNav(eventId: string) {
       icon: 'edit' as const,
     },
     {
+      title: 'Ownership',
+      href: `/event/${eventId}/settings/ownership`,
+      icon: 'people' as const,
+    },
+    {
       title: 'Date & Time',
       href: `/event/${eventId}/settings/date`,
       icon: 'date' as const,

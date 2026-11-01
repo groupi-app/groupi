@@ -86,12 +86,15 @@ function SegmentedText({ segments }: { segments: TextSegment[] }) {
   return (
     <>
       {segments.map((seg, i) => {
-        if (seg.mentionId) {
+        const mentionId = seg.mentionId;
+        if (mentionId) {
           return (
             <Text
               key={i}
               className='font-semibold text-primary'
-              onPress={() => router.push(`/profile/${seg.mentionId}`)}
+              onPress={() =>
+                router.push(`/profile/${encodeURIComponent(mentionId)}`)
+              }
             >
               {seg.text}
             </Text>

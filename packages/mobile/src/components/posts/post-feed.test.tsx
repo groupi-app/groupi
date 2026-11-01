@@ -1,6 +1,5 @@
-import { Button } from '@/components/ui/button';
+import { NewContentButton } from '../content/new-content-button';
 import { Children, isValidElement, type ReactElement } from 'react';
-import { router } from 'expo-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -15,6 +14,10 @@ vi.mock('react', async importOriginal => {
     useMemo: <T,>(factory: () => T) => factory(),
   };
 });
+
+vi.mock('../content/new-content-button', () => ({
+  NewContentButton: 'NewContentButton',
+}));
 
 vi.mock('uniwind', () => ({ useCSSVariable: () => '#123456' }));
 vi.mock('./post-card', () => ({ PostCard: 'PostCard' }));
@@ -45,8 +48,7 @@ interface FlatListTestProps {
 }
 
 interface NewPostButtonTestProps {
-  accessibilityLabel: string;
-  onPress: () => void;
+  base: string;
 }
 
 function createFeed(
@@ -82,7 +84,9 @@ function getList(feed: ReturnType<typeof createFeed>) {
 }
 
 function getNewPostButton(feed: ReturnType<typeof createFeed>) {
-  const button = feedChildren(feed).find(child => child.type === Button);
+  const button = feedChildren(feed).find(
+    child => child.type === NewContentButton
+  );
   if (!button) throw new Error('New post button was not rendered');
   return button as unknown as ReactElement<NewPostButtonTestProps>;
 }
@@ -119,20 +123,16 @@ describe('PostFeed infinite scrolling', () => {
     expect(loadingMore.props.onEndReachedThreshold).toBe(0.5);
   });
 
-  it('floats the new-post action above a padded feed', () => {
+  it('floats the shared creation action above a padded feed', () => {
     const feed = createFeed('Exhausted');
     const list = getList(feed);
     const button = getNewPostButton(feed);
 
     expect(list.props.contentContainerClassName).toContain('pb-32');
-    expect(button.props.accessibilityLabel).toBe('Create new post');
-
-    button.props.onPress();
-
-    expect(router.push).toHaveBeenCalledWith('/event/event-123/new-post');
+    expect(button.props.base).toBe('/event/event-123');
   });
 
-  it('hides the new-post action when the event permission denies it', () => {
+  it('hides creation when the event permission denies it when the event permission denies it', () => {
     const feed = PostFeed({
       eventId: 'event-123',
       currentPersonId: 'person-current',
@@ -148,6 +148,8 @@ describe('PostFeed infinite scrolling', () => {
       loadMore: mocks.loadMore,
     });
 
-    expect(feedChildren(feed).some(child => child.type === Button)).toBe(false);
+    expect(
+      feedChildren(feed).some(child => child.type === NewContentButton)
+    ).toBe(false);
   });
 });

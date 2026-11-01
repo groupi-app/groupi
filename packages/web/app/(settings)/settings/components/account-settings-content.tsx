@@ -1,17 +1,13 @@
 'use client';
 import { AccountFormWithGuard } from './account-form-with-guard';
 
-import { Trash2 as ActionTrash2 } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Trash2 as ActionTrash2 } from 'lucide-react';
 import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
 import { LinkedAccountsList } from './linked-accounts-list';
 import { PasskeySettings } from './passkey-settings';
-import {
-  BoundedKeysSettings,
-  DeveloperAppsSettings,
-  ConnectedAppsSettings,
-} from '@/features/authorization';
-import { ApiKeysSettings } from './api-keys-settings';
+import { ConnectedAppsSettings } from '@/features/authorization';
 import { DeleteAccountModal } from './delete-account-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +37,7 @@ export function AccountSettingsContent({
       <AccountFormWithGuard>
         <Card>
           <CardHeader>
-            <CardTitle>Account Information</CardTitle>
+            <CardTitle>Username</CardTitle>
           </CardHeader>
           <CardContent className='space-y-4'>
             <UsernameField />
@@ -61,11 +57,13 @@ export function AccountSettingsContent({
 
       <ConnectedAppsSettings />
 
-      <DeveloperAppsSettings />
-
-      <BoundedKeysSettings />
-
-      <ApiKeysSettings />
+      <Link
+        href='/settings/developer'
+        className='flex min-h-11 items-center justify-between gap-3 rounded-input border border-border p-3 text-sm font-medium hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring'
+      >
+        Developer settings
+        <ArrowRight aria-hidden='true' className='size-4 shrink-0' />
+      </Link>
 
       <Card>
         <CardHeader>

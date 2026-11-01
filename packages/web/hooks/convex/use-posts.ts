@@ -57,7 +57,7 @@ export function useEventPostFeed(eventId: Id<'events'>) {
 
   const result = useQuery(
     postQueries.getEventPostFeed,
-    isActive ? { eventId } : 'skip'
+    isActive ? { eventId, excludePinned: true } : 'skip'
   );
 
   // Cache the result when we get fresh data
@@ -87,7 +87,7 @@ export function useEventPostFeedWithSkip(eventId: Id<'events'> | null) {
   const shouldSkip = !eventId || !isActive;
   const result = useQuery(
     postQueries.getEventPostFeed,
-    shouldSkip ? 'skip' : { eventId }
+    shouldSkip ? 'skip' : { eventId, excludePinned: true }
   );
 
   // Cache the result when we get fresh data
@@ -198,7 +198,7 @@ export function usePaginatedEventPosts(eventId: Id<'events'>) {
 
   const result = useQuery(
     postQueries.getEventPostFeed,
-    isActive ? { eventId } : 'skip'
+    isActive ? { eventId, excludePinned: true } : 'skip'
   );
 
   // Cache the result when we get fresh data
@@ -232,28 +232,41 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
     }
 
     return baseMutation.withOptimisticUpdate((localStore, args) => {
-      const currentData = localStore.getQuery(postQueries.getEventPostFeed, {
-        eventId: args.eventId,
-      });
+      for (const feedArgs of [
+        { eventId: args.eventId },
+        { eventId: args.eventId, excludePinned: true },
+      ]) {
+        const currentData = localStore.getQuery(
+          postQueries.getEventPostFeed,
+          feedArgs
+        );
 
-      if (currentData === undefined || !currentData.event) {
-        return;
-      }
+        if (currentData === undefined || !currentData.event) {
+          continue;
+        }
 
-      // Create optimistic post
-      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback, not during render
-      const now = Date.now();
-      const optimisticPost = {
-        _id: `optimistic_${now}` as unknown as Id<'posts'>,
-        _creationTime: now,
-        eventId: args.eventId,
-        title: args.title,
-        content: args.content,
-        authorId: currentUser.personId,
-        editedAt: undefined,
-        author: {
-          person: {
-            _id: currentUser.personId,
+        // Create optimistic post
+        // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback, not during render
+        const now = Date.now();
+        const optimisticPost = {
+          _id: `optimistic_${now}` as unknown as Id<'posts'>,
+          _creationTime: now,
+          eventId: args.eventId,
+          title: args.title,
+          content: args.content,
+          authorId: currentUser.personId,
+          editedAt: undefined,
+          author: {
+            person: {
+              _id: currentUser.personId,
+              user: {
+                _id: `optimistic_user`,
+                name: currentUser.name,
+                email: currentUser.email || '',
+                image: currentUser.image,
+                username: currentUser.username,
+              },
+            },
             user: {
               _id: `optimistic_user`,
               name: currentUser.name,
@@ -262,29 +275,19 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
               username: currentUser.username,
             },
           },
-          user: {
-            _id: `optimistic_user`,
-            name: currentUser.name,
-            email: currentUser.email || '',
-            image: currentUser.image,
-            username: currentUser.username,
-          },
-        },
-        replyCount: 0,
-      };
+          replyCount: 0,
+          repliesDisabled: args.repliesDisabled ?? false,
+        };
 
-      // Add optimistic post to the beginning of the feed
-      localStore.setQuery(
-        postQueries.getEventPostFeed,
-        { eventId: args.eventId },
-        {
+        // Add optimistic post to the beginning of the feed
+        localStore.setQuery(postQueries.getEventPostFeed, feedArgs, {
           ...currentData,
           event: {
             ...currentData.event,
             posts: [optimisticPost, ...(currentData.event.posts || [])],
           },
-        }
-      );
+        });
+      }
     });
   }, [baseMutation, currentUser]);
 
@@ -294,6 +297,7 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
       title: string;
       content: string;
       attachments?: PostAttachmentInput[];
+      repliesDisabled?: boolean;
     }) => {
       try {
         const result = await createPost({
@@ -301,6 +305,9 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
           title: data.title,
           content: data.content,
           attachments: data.attachments,
+          ...(data.repliesDisabled !== undefined
+            ? { repliesDisabled: data.repliesDisabled }
+            : {}),
         });
 
         // No success toast - instant appearance is feedback enough
@@ -336,31 +343,34 @@ export function useUpdatePost(eventId?: Id<'events'>) {
       const editedAt = Date.now();
 
       // Update in the post feed
-      const feedData = localStore.getQuery(postQueries.getEventPostFeed, {
-        eventId,
-      });
-
-      if (feedData?.event?.posts) {
-        const updatedPosts = feedData.event.posts.map(
-          (post: { _id: Id<'posts'>; title: string; content: string }) =>
-            post._id === args.postId
-              ? { ...post, title: args.title, content: args.content, editedAt }
-              : post
+      for (const feedArgs of [{ eventId }, { eventId, excludePinned: true }]) {
+        const feedData = localStore.getQuery(
+          postQueries.getEventPostFeed,
+          feedArgs
         );
 
-        localStore.setQuery(
-          postQueries.getEventPostFeed,
-          { eventId },
-          {
+        if (feedData?.event?.posts) {
+          const updatedPosts = feedData.event.posts.map(
+            (post: { _id: Id<'posts'>; title: string; content: string }) =>
+              post._id === args.postId
+                ? {
+                    ...post,
+                    title: args.title,
+                    content: args.content,
+                    editedAt,
+                  }
+                : post
+          );
+
+          localStore.setQuery(postQueries.getEventPostFeed, feedArgs, {
             ...feedData,
             event: {
               ...feedData.event,
               posts: updatedPosts,
             },
-          }
-        );
+          });
+        }
       }
-
       // Update in the post detail view
       const detailData = localStore.getQuery(postQueries.getPostDetail, {
         postId: args.postId,
@@ -430,26 +440,25 @@ export function useDeletePost(eventId?: Id<'events'>) {
     }
 
     return baseMutation.withOptimisticUpdate((localStore, args) => {
-      const feedData = localStore.getQuery(postQueries.getEventPostFeed, {
-        eventId,
-      });
-
-      if (feedData?.event?.posts) {
-        const filteredPosts = feedData.event.posts.filter(
-          (post: { _id: Id<'posts'> }) => post._id !== args.postId
+      for (const feedArgs of [{ eventId }, { eventId, excludePinned: true }]) {
+        const feedData = localStore.getQuery(
+          postQueries.getEventPostFeed,
+          feedArgs
         );
 
-        localStore.setQuery(
-          postQueries.getEventPostFeed,
-          { eventId },
-          {
+        if (feedData?.event?.posts) {
+          const filteredPosts = feedData.event.posts.filter(
+            (post: { _id: Id<'posts'> }) => post._id !== args.postId
+          );
+
+          localStore.setQuery(postQueries.getEventPostFeed, feedArgs, {
             ...feedData,
             event: {
               ...feedData.event,
               posts: filteredPosts,
             },
-          }
-        );
+          });
+        }
       }
     });
   }, [baseMutation, eventId]);

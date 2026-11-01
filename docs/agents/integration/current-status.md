@@ -4,6 +4,7 @@ Current feature evidence and historical integration checkpoints. Source verifica
 
 ## Table of Contents
 
+- [UI regression candidate — 2026-10-25](#ui-regression-candidate--2026-10-25)
 - [Design-language merge integration — 2026-10-25](#design-language-merge-integration--2026-10-25)
 - [Design-language implementation — 2026-10-24](#design-language-implementation--2026-10-24)
 - [Hosted Discord and Group pages — 2026-10-24](#hosted-discord-and-group-pages--2026-10-24)
@@ -19,6 +20,72 @@ Current feature evidence and historical integration checkpoints. Source verifica
 - [Verification and open gates](#verification-and-open-gates)
 - [Evidence and maintenance](#evidence-and-maintenance)
 - [Architecture integration candidate — 2026-10-11](#architecture-integration-candidate--2026-10-11)
+
+## UI regression candidate — 2026-10-25
+
+Implementation source `7a03ca23556b588187f5d9cdf0a8cc2026bbb6c6` on
+`codex/ui-regressions-navigation` starts from current `test`
+`8fdbc93288fb5050cd3a133959850d97602cd2e3` (remote rechecked unchanged).
+This is a local candidate, not a live deployment. The original checkout and
+concurrent dependency/documentation work remain untouched.
+
+All thirteen requested fixes are implemented:
+
+1. Home tabs share the content width and attach directly to the panel.
+2. Dialog surfaces have no forced white edge; their grid respects narrow widths.
+3. RSVP choices keep Maybe intact and expose the selected response accessibly.
+4. Navigation attention counts use solid red indicators with capped visual counts.
+5. Date options reserve date-button space, wrap complete controls, and align deletion
+   with the first date row; native time inputs retain room for their contents.
+6. Event forms/dialogs own feedback once; duplicate mutation-hook announcements are removed.
+7. Event ownership is in settings, with recipient access retained. Organizer-only
+   deletion is a bottom settings card and retains destructive confirmation.
+8. Post cards opt out of sticker edges while retaining independent interaction.
+9. Compact presence dots retain a visible color core; browser checks confirmed all
+   existing presence/status background tokens resolve.
+10. Mobile sheets have no forced white edge.
+11. The mobile action reads Friends & Groups and has a sheet description.
+12. Friends & Groups tabs stay on one scrollable row with visible keyboard focus.
+13. Group overview retains content/read-only members; related actions use menus,
+    moderation lives in Admissions, personal controls live in membership settings,
+    and ownership/deletion safety remains intact. Onboarding retains a confirmed leave escape.
+
+The user also requested a page-matched Event loading skeleton before merging.
+Loading and loaded content now share the existing `DetailPageTemplate` and a
+shared Event header/title layout; auth, route, membership, query and add-on
+pending states use one inert skeleton. Public logistics has its own narrower
+shared shell and loading placeholders. Unknown covers, add-ons and permitted
+actions are not invented; missing/denied/error behavior remains intact.
+
+Local validation: all 1,478 web tests passed, including 24 new loading/transition
+cases. The earlier 1,294 Convex tests passed on unchanged backend source through
+the CI-supported `test:no-codegen` command; the root wrapper still requires an
+absent `CONVEX_DEPLOYMENT`. `pnpm check` passed, including 811 source/generated
+contracts; ten contract-guard tests and token lint passed. Independent navigation
+and UI reviewers reported no remaining actionable findings.
+
+An explicitly authorized localhost Storybook session served this source to the
+existing in-app browser. Shared surfaces/controls were inspected at desktop,
+390px and 320px; actual Group overview/menus/membership controls were inspected
+at desktop and 390px against local read-only query snapshots. Screenshots are
+internal QA evidence. These fixtures do not establish authenticated application
+acceptance. Matching frontend/backend/session, real-device and observed VoiceOver
+checks remain open. No login, credentials, backend deployment or real data writes
+were performed. The shared Post/Form/List/Poll feature is outside this candidate.
+
+The user approved the exact `@groupi/web` patch summary on 2026-10-25;
+`.changeset/quiet-stickers-connected-navigation.md` records it. The earlier push
+was denied before execution while approval was pending; its remote-state check
+confirmed no branch existed. After approval, the normal push succeeded with all
+hooks enabled. [Draft PR #435](https://github.com/groupi-app/groupi/pull/435)
+targets `test`; the approved changeset commit is
+`cd94e00ba0e7fc975bddf02e4db06206ac5cd91d`. GitHub checks and the automatic Vercel
+preview are being monitored on the PR head. Their outcome is separate from the
+local fixture evidence above. The skeleton follow-up and its additional patch-note
+sentence were approved; the original release-note paragraph is unchanged. Merge
+ownership remains with the parent task after the added fix and exact-head hosted
+checks are verified. This implementation task has not sent a merge, auto-merge,
+or ready-for-review action. No manual deployment is authorized.
 
 ## Design-language merge integration — 2026-10-25
 
@@ -179,3 +246,119 @@ The user authorized merging this candidate into `test` with administrator
 override only after all checks are green. This does not authorize production
 release. Browser/native verification has not run for this candidate; matching
 runtimes and an isolated signed-in session remain unverified.
+
+## Shared content creation — 2026-10-26
+
+[PR #436](https://github.com/groupi-app/groupi/pull/436) integrates test `f28087b6`,
+preserving PR435's navigation and loading shell. [Feature disposition](../../shared-content-creation.md)
+and [schema rollout review](../../shared-content-schema-review.md) describe the
+canonical Post parent model, reused tools and contextual Event participation.
+
+The user authorized test-only rollout and isolated fixture access, conditional on
+verified backup and acceptance. Authenticated metadata confirms the backend is a
+non-default `preview/test`, deployment 6295733 in project 1513112, matching the
+public test frontend. Production is outside scope. The branch-specific Vercel
+suppression remains in place; it does not disable the existing `test` rollout.
+
+A fresh private data-and-file export, reference
+`groupi-test-pre436-1792978139892319883`, passed archive/JSON/identity checks:
+532 data records, 133 catalog records, component data included, zero file payloads.
+The test backend has no separate Group Post tables, so no record rewrite or data
+migration is needed. Configured codegen passed. The candidate backend was deployed
+only to the verified preview; protected Event posts, Events, notifications, add-on
+configuration/data and saved tools match the pre-candidate backup exactly.
+
+The approved fixture key is configured only on this backend and in GitHub's
+existing E2E workflow secret. Acceptance uses new UUID-labelled `example.invalid`
+users, direct fixture-token authentication, no notification methods/push tokens or
+provider connections, and canonical retirement of only its own fixtures. Secrets,
+authentication state, traces and videos are not persisted in reports.
+
+The browser suite checks desktop/narrow creation and reload persistence of all
+four content types in both parents, plus legacy Bring List configuration and claim
+preservation. Real reactive updates exposed Form/Poll acknowledgments resetting
+on revision refresh; stable owner feedback now survives while saved values reseed
+and cross-tool drafts remain isolated. Thirty focused tests cover those flows.
+Optional Replay loads only when a Sentry DSN is configured, avoiding errors in
+unconfigured verification builds without filtering browser errors.
+
+Earlier full source suites passed: backend 1,325, web 1,512, native 655 and shared
+466 tests, with unchanged coverage thresholds. Exact-head CI for `f7c942b5` passed
+all 22 checks. The rollout checkpoint adds the feedback regressions and real
+fixture acceptance; final exact-head checks and authenticated acceptance must
+pass before merge. PR #436 records their results and the eventual rollout SHA.
+Physical native and observed VoiceOver acceptance remain unverified. Native custom
+templates retain browser handoff and native mention autocomplete remains absent
+in both editors. No production operation, destructive rewrite or restore is
+permitted by this rollout authorization.
+
+## Content UI refinement — 2026-10-26, local only
+
+`codex/content-pages-refinement` starts from freshly fetched test
+`5832fe64e0ad96c8322b850befada4b8a2cf27f5` in an isolated worktree. It refines
+Form/List/Poll authoring and actual participation, removes creator presets, and
+embeds self-contained Poll voting/results cards in Event and Group post feeds.
+Deep links and existing backend/data contracts remain intact. See
+[the design and verification boundaries](../../content-ui-refinement.md).
+
+The fully local browser fixture exercises actual components/CSS with synthetic
+router/data boundaries at desktop and 320/375/390px; it sends no external
+notifications or mutations. Authenticated Next route lifecycle and real backend
+persistence remain open gates for a separately authorized isolated runtime.
+No branch has been pushed, merged or deployed. Automatic Vercel deployment is
+suppressed for this exact branch; the exact web patch changeset batch is prepared
+but awaits the confirmation required by repository workflow.
+
+### Compact content revision — local follow-up
+
+The supplied poll reference images were visually inspected before a material
+compact revision. Polls now save on selection; Lists persist completion directly
+and expose text editing only when requested; Forms retain one explicit complete
+response submission. Visible History links, redundant participant Save controls
+and explanatory chrome are removed without deleting history or changing backend
+contracts. Compact inline results reuse option rows and disclose page-scoped
+counts. Source and synthetic responsive checks are recorded in the updated
+[content design record](../../content-ui-refinement.md). Publication, authenticated
+fixture writes and release-note approval remain pending; nothing has been pushed
+or deployed.
+
+### List types and collaborative participation — local source
+
+List settings now select Simple/Checklist/Bring, with active creator configuration
+rights, manager oversight, scoped add/completion policies and subtle actor
+attribution. New owner-scoped Bring ledgers support multiple Events/Groups without
+rewriting legacy Event add-on claims. Simple/Checklist switching preserves state;
+populated Bring conversions offer a separate list. Shared completion defaults to
+participating members as requested; private entry isolation and revoked-membership
+checks remain enforced. Published REST shapes are projected compatibly.
+
+The local schema addition is optional metadata plus a new claim table, with no
+performed data migration. Codegen is blocked by missing CONVEX_DEPLOYMENT; no
+credentials/target were configured and no backend was deployed. Matching runtime
+acceptance and rollout remain separately gated. Local source/browser/test
+evidence is recorded in the [updated design record](../../content-ui-refinement.md)
+and task artifact directory. No publication or shared data operation is implied.
+
+## Local management refinement — 2026-10-26
+
+Local continuation `codex/management-ui-refinement` starts from unpublished `62be9ebe98c7850f601d0048c1acdf80939f9e8e`. It implements the approved walkthrough: atomic Event settings draft Save/Revert, Shared With chips, compact admission/application configuration, automatic lifecycle and preserved expired-poll history, Account/Developer separation, collapsible builder and draft recovery, Discord setup/connection hierarchy, and applicant-first review. See [implementation plan](../../compact-management-ui-plan.md) and ADR0013. No remote branch, PR, backend deployment or shared data has changed.
+
+The proposed creator-timezone default is clearly provisional pending the parent-relayed answer; existing UTC records remain untouched. Reply locking, pinning and announcement-retirement/history policy remain pending and unimplemented. Earlier List rollout/testing/release-note approval is still separate. Checked-in Vercel suppression now names this continuation branch, but project-level enforcement remains unverified; pushing it is not authorized or presumed safe.
+
+Canonical Convex generation was attempted but is blocked by missing CONVEX_DEPLOYMENT; no target or credentials were configured. Local source-derived contract/types, synthetic component browser checks and test backends are distinct from authenticated deployed acceptance. Final results and commit identity are in sibling task artifacts/management-refinement/HANDOFF.md.
+
+## Local post update continuation — 2026-10-26
+
+Unpublished `codex/management-ui-refinement` now includes reply controls and up to three pinned posts per Event/Group, newest pin first, with transaction/revision checks and unchanged notification preferences. Native reads honor pins and locks; web exposes management actions. Announcement sending/navigation is retired locally; old management links return to the Group feed, while stored records/schema, read/status APIs, prior internal queues and legacy preference links are preserved; new-send/retry APIs reject, and CLI sends fail clearly before credentials/network. No history UI or data migration is included. The user personally confirmed no announcement content at 23:22 UTC; this is user-verified, not a tool-certified empty database.
+
+Local combined checks, 1,616 web tests, 1,387 backend tests, 470 shared tests, 664 mobile tests, 402 CLI tests, SDK tests and web build passed. The synthetic actual-component browser matrix passed 34 layouts/49 assertions; authenticated deployed routes and native devices remain unverified. Canonical Convex generation was attempted without configuring a target and failed before generation. No runtime deployment, publication, credentials change or shared-data mutation was performed. Exact local commit, logs and release/runtime proposal are retained in task artifacts; these are not live integration claims.
+
+## Authenticated TEST acceptance — 2026-10-27
+
+This entry supersedes the earlier local-only runtime gates above. Explicit user approval covered backup, backend-only TEST deployment and disposable authenticated acceptance. Canonical generation and all 840 source/generated contracts passed using process-local selection of existing preview `zany-rooster-824` (`https://zany-rooster-824.convex.cloud`). The final reviewed backend source is `a4c41d9feeb43f10d6a8314d3d398d84a76c3530`; no production, hosted frontend, credentials, versions or remote Git publication changed. Hosted TEST remains `5832fe64e0ad96c8322b850befada4b8a2cf27f5`.
+
+Real matching local Next acceptance passed 95 checks with 76 screenshots across desktop and 320/375/390px, including persistent Form/List/Poll participation, settings dirty Save/Revert/navigation, roles, claims and post controls. Authenticated API acceptance passed 67 checks across both parent types, policies/revocation, concurrency, lifecycle and retired sends. Existing hosted-client compatibility passed corrected Event/Group post/reply create/read/reload, six legacy tools, legacy Bring claims and intentional locked/retired rejections. The initial Group post navigation concern was a harness URL matcher accepting `/posts/new`; corrected navigation/API/reload checks passed. Existing old-hosted error-copy and long-title legacy Bring overflow remain frontend limitations, not new backend contract regressions.
+
+Runtime verification found two small repairs: concise structured post-action errors instead of raw transport stacks, and existing fixture cleanup now removes owned presence metadata after parent/account deletion while preserving the shared app room. The latter passed 55 focused tests and independent review before the final backed-up deployment. Final web tests passed 1,619; full quality/contracts/formatting and web build passed. Earlier full backend/shared/mobile/CLI/SDK results remain recorded in the local handoff; they were not unnecessarily repeated after this bounded repair.
+
+Private data/component/storage and source archives were verified before each deployment. Final independent export reconciliation reports all 32 fixture actors cleaned, no fixture references, no pre-existing deletions, and no missing/changed stored files. The only existing record changes are normal Discord observer timestamp fields on four rows; the only added row is the new table catalogue entry. No destructive restore was exercised. Logs, manifests, screenshots, backup hashes and explicit unrun cases are retained in sibling task `artifacts/runtime-acceptance/HANDOFF.md` and `cleanup-verification-final.json`. Local servers/browsers are stopped. Live historical-mail receipt retries, Integration/SDK credential-specific acceptance, arbitrary historical DST transitions, physical devices and screen readers remain outside observed runtime coverage. Push, versions/changesets, hosted frontend rollout and merge still require separate authorization.

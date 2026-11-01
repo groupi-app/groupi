@@ -100,9 +100,7 @@ export default function EventSettingsScreen() {
               ? `/event/${eventId}/edit`
               : item.key === 'applications'
                 ? `/event/${eventId}/applications`
-                : item.key === 'addons'
-                  ? `/event/${eventId}/addons/manage`
-                  : `/event/${eventId}/settings/${item.key}`;
+                : `/event/${eventId}/settings/${item.key}`;
 
           return (
             <Pressable

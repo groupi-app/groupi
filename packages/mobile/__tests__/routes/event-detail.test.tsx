@@ -66,8 +66,9 @@ vi.mock('../../src/components/posts/post-feed', () => ({
 vi.mock('../../src/components/events/event-detail-skeleton', () => ({
   EventDetailSkeleton: 'EventDetailSkeleton',
 }));
-vi.mock('../../src/components/addons/event-addons-section', () => ({
-  EventAddonsSection: 'EventAddonsSection',
+vi.mock('../../src/components/addons/event-features', () => ({
+  EventPlanningFeatures: 'EventPlanningFeatures',
+  EventParticipationFeatures: 'EventParticipationFeatures',
 }));
 vi.mock('../../src/components/ui/back-button', () => ({
   BackButton: 'BackButton',

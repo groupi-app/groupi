@@ -21,9 +21,9 @@ const statusColors: Record<PresenceStatus, string> = {
 };
 
 const sizeClasses = {
-  sm: 'size-2',
-  md: 'size-2.5',
-  lg: 'size-3',
+  sm: 'size-2 border',
+  md: 'size-2.5 border',
+  lg: 'size-3 border-2',
 };
 
 /**
@@ -45,8 +45,8 @@ export function PresenceIndicator({
     <span
       data-slot='presence-indicator'
       className={cn(
-        // Sticker journal aesthetic - presence dot with white border
-        'inline-block rounded-full shrink-0 border-2 border-white',
+        // Keep a visible color core at small sizes while retaining the sticker edge
+        'inline-block rounded-full shrink-0 border-white',
         sizeClasses[size],
         statusColors[status],
         pulse && status === 'online' && 'animate-pulse',

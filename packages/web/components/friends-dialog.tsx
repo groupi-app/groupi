@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { UnreadIndicator } from '@/components/atoms/unread-indicator';
 import { Icons } from '@/components/icons';
 import { FriendListItem } from '@/components/friend-list-item';
 import { FriendSearch } from '@/components/friend-search';
@@ -123,25 +123,26 @@ export function FriendsDialog() {
             className='flex-1 flex flex-col min-h-0'
           >
             <TabsList className='w-full'>
-              <TabsTrigger value='friends' className='flex-1'>
+              <TabsTrigger value='friends' className='flex-1 px-2 sm:px-3'>
                 Friends
               </TabsTrigger>
-              <TabsTrigger value='requests' className='flex-1 gap-1'>
-                <span>Requests</span>
+              <TabsTrigger
+                value='requests'
+                className='flex-1 gap-1 px-2 sm:px-3'
+              >
+                <span>Requests</span>{' '}
                 {pendingCount > 0 && (
-                  <Badge
-                    variant='destructive'
-                    className='size-4 p-0 flex items-center justify-center text-[10px]'
-                  >
-                    {pendingCount}
-                  </Badge>
+                  <UnreadIndicator
+                    count={pendingCount}
+                    className='h-4 min-w-4 px-1 text-[10px]'
+                  />
                 )}
               </TabsTrigger>
-              <TabsTrigger value='add' className='flex-1 gap-1'>
+              <TabsTrigger value='add' className='flex-1 gap-1 px-2 sm:px-3'>
                 <Icons.invite className='size-4' />
                 Add
               </TabsTrigger>
-              <TabsTrigger value='groups' className='flex-1'>
+              <TabsTrigger value='groups' className='flex-1 px-2 sm:px-3'>
                 Groups
               </TabsTrigger>
             </TabsList>

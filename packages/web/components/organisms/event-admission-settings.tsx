@@ -1,14 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { EventApplicationSettings } from './event-application-settings';
-import {
-  useEventLogistics,
-  useUpdateAdmissionPolicy,
-} from '@/hooks/convex/use-event-admission';
+import { useEventSettingsDraft } from '@/features/event-settings';
 
 export function EventAdmissionSettings({
   eventId,
@@ -18,105 +13,41 @@ export function EventAdmissionSettings({
   role?: string;
 }) {
   if (role !== 'ORGANIZER') return null;
-  return <OrganizerAdmissionSettings eventId={eventId} />;
+  return <AdmissionFields eventId={eventId} />;
 }
-
-function OrganizerAdmissionSettings({ eventId }: { eventId: Id<'events'> }) {
-  const logistics = useEventLogistics(eventId);
-  if (!logistics) return <p role='status'>Loading admission settings…</p>;
+function AdmissionFields({ eventId }: { eventId: Id<'events'> }) {
+  const { values, setSection, busy } = useEventSettingsDraft();
+  const policy = values.admissionPolicy;
   return (
-    <>
-      <AdmissionForm
-        key={logistics.event.admissionPolicy}
-        eventId={eventId}
-        initialPolicy={logistics.event.admissionPolicy}
-      />
-      <EventApplicationSettings eventId={eventId} />
-    </>
-  );
-}
-
-function AdmissionForm({
-  eventId,
-  initialPolicy,
-}: {
-  eventId: Id<'events'>;
-  initialPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY';
-}) {
-  const update = useUpdateAdmissionPolicy();
-  const [policy, setPolicy] = useState(initialPolicy);
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  return (
-    <section
-      className='rounded-card border border-border p-4 space-y-3'
-      aria-labelledby='event-admission-heading'
-    >
-      <h2
-        id='event-admission-heading'
-        className='font-heading text-lg font-semibold'
-      >
-        Event admission
-      </h2>
-      <p className='text-sm text-muted-foreground'>
-        Visibility controls who can read event logistics. Admission controls
-        whether eligible viewers can join. Invitations remain available with
-        either policy.
-      </p>
-      <form
-        className='space-y-3'
-        onSubmit={async event => {
-          event.preventDefault();
-          setPending(true);
-          setError('');
-          setMessage('');
-          try {
-            await update({ eventId, admissionPolicy: policy });
-            setMessage('Admission policy saved.');
-          } catch (cause) {
-            setError(
-              cause instanceof Error
-                ? cause.message
-                : 'Unable to save admission policy. Please try again.'
-            );
-          } finally {
-            setPending(false);
-          }
-        }}
-      >
-        <Label htmlFor='event-admission-policy'>Admission policy</Label>
+    <div className='space-y-4'>
+      <div className='space-y-2'>
+        <Label htmlFor='event-admission-policy'>Admission</Label>
         <select
           id='event-admission-policy'
           value={policy}
-          disabled={pending}
-          onChange={event => {
-            setPolicy(event.target.value as typeof policy);
-            setMessage('');
-          }}
-          className='w-full rounded-input border border-input bg-background p-2 text-foreground focus-visible:outline focus-visible:outline-2'
+          disabled={busy}
+          onChange={event =>
+            setSection('admissionPolicy', event.target.value as typeof policy)
+          }
+          className='w-full rounded-input border border-input bg-background p-2 text-foreground'
+          aria-describedby='event-admission-helper'
         >
           <option value='INVITATION_ONLY'>Invitation only</option>
           <option value='DIRECT'>Join directly</option>
           <option value='APPLY'>Apply for approval</option>
         </select>
-        <p className='text-sm text-muted-foreground'>
+        <p
+          id='event-admission-helper'
+          className='text-sm text-muted-foreground'
+        >
           {policy === 'DIRECT'
-            ? 'Eligible viewers can explicitly join with a Pending RSVP.'
+            ? 'People with access can join.'
             : policy === 'APPLY'
-              ? 'Eligible viewers apply before membership. Approval admits them as an Attendee with a Pending RSVP.'
-              : 'Viewers need an invitation to join.'}
+              ? 'People with access apply before joining.'
+              : 'An invitation is required to join.'}
         </p>
-        <Button disabled={pending || policy === initialPolicy}>
-          {pending ? 'Saving…' : 'Save admission policy'}
-        </Button>
-        {message && <p role='status'>{message}</p>}
-        {error && (
-          <p role='alert' className='text-destructive'>
-            {error}
-          </p>
-        )}
-      </form>
-    </section>
+      </div>
+      {policy === 'APPLY' && <EventApplicationSettings eventId={eventId} />}
+    </div>
   );
 }

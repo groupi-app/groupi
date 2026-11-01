@@ -827,7 +827,7 @@ class Object8f2e07428f60(TypedDict):
     storageId: str
     focalPoint: NotRequired[Object8fdfc205d0bb | None]
 
-class Objectaf5c4bdda5d7(TypedDict):
+class Object8463bf3a21f6(TypedDict):
     id: str
     createdAt: float
     author: Objectc7f956fcace9 | None
@@ -837,9 +837,13 @@ class Objectaf5c4bdda5d7(TypedDict):
     content: str
     editedAt: float | None
     replyCount: float
+    repliesDisabled: NotRequired[bool]
+    repliesRevision: NotRequired[float]
+    pinnedAt: NotRequired[float]
+    pinRevision: NotRequired[float]
 
-class Object87783cbc6404(TypedDict):
-    items: list[Objectaf5c4bdda5d7]
+class Object9f4f70f63a25(TypedDict):
+    items: list[Object8463bf3a21f6]
     nextCursor: str | None
 
 class Object7b041e5fec41(TypedDict):
@@ -850,7 +854,7 @@ class Object6cdac6024129(TypedDict):
     limit: NotRequired[int]
     cursor: NotRequired[str]
 
-class Objectbd43ca3d5411(TypedDict):
+class Object75c54bf3aa30(TypedDict):
     id: str
     createdAt: float
     author: Objectc7f956fcace9 | None
@@ -860,6 +864,10 @@ class Objectbd43ca3d5411(TypedDict):
     content: str
     editedAt: float | None
     replyCount: float
+    repliesDisabled: NotRequired[bool]
+    repliesRevision: NotRequired[float]
+    pinnedAt: NotRequired[float]
+    pinRevision: NotRequired[float]
     replies: list[Object009017a89888]
 
 class Object34ab70d01c28(TypedDict):
@@ -868,9 +876,11 @@ class Object34ab70d01c28(TypedDict):
 class Object60ee9f02bc5d(TypedDict):
     postId: str
 
-class Objecte63be612b92f(TypedDict):
+class Object8d956b0bf9c6(TypedDict):
     title: NotRequired[str]
     content: NotRequired[str]
+    repliesDisabled: NotRequired[bool]
+    expectedRepliesRevision: NotRequired[int]
     text: NotRequired[str]
     attachments: NotRequired[list[Object8f4fd078f9a3]]
     attachmentsToAdd: NotRequired[list[Object8f4fd078f9a3]]

@@ -1,3 +1,5 @@
+import { requireEventPost } from '../lib/discussionAccess';
+import { ConvexError } from 'convex/values';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
@@ -16,6 +18,8 @@ export const listPostReplies = internalQuery({
     const post = await ctx.db.get(postId as Id<'posts'>);
     if (
       !post ||
+      !post.eventId ||
+      post.groupId ||
       !(await getEventMembershipForPerson(
         ctx,
         post.eventId,
@@ -46,6 +50,8 @@ export const createReply = internalMutation({
     const post = await ctx.db.get(postId as Id<'posts'>);
     if (
       !post ||
+      !post.eventId ||
+      post.groupId ||
       !(await getEventMembershipForPerson(
         ctx,
         post.eventId,
@@ -64,6 +70,11 @@ export const updateReply = internalMutation({
   args: { replyId: v.string(), personId: v.string(), text: v.string() },
   returns: replyDetail,
   handler: async (ctx, { replyId, personId, text }) => {
+    const existing = await ctx.db.get(replyId as Id<'replies'>);
+    const parent = existing ? await ctx.db.get(existing.postId) : null;
+    if (!parent)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(parent);
     const { reply } = await updateReplyForPerson(
       ctx,
       personId as Id<'persons'>,
@@ -76,8 +87,14 @@ export const updateReply = internalMutation({
 export const deleteReply = internalMutation({
   args: { replyId: v.string(), personId: v.string() },
   returns: v.object({ success: v.boolean() }),
-  handler: async (ctx, { replyId, personId }) =>
-    deleteReplyForPerson(ctx, personId as Id<'persons'>, {
+  handler: async (ctx, { replyId, personId }) => {
+    const existing = await ctx.db.get(replyId as Id<'replies'>);
+    const parent = existing ? await ctx.db.get(existing.postId) : null;
+    if (!parent)
+      throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found.' });
+    requireEventPost(parent);
+    return deleteReplyForPerson(ctx, personId as Id<'persons'>, {
       replyId: replyId as Id<'replies'>,
-    }),
+    });
+  },
 });

@@ -1,20 +1,39 @@
+import { groupDocument, groupPage } from '../groupTools/groupContracts';
+import { response, revision } from './contracts';
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
-import { tool } from '../groupTools/contracts';
+import { tool as sharedTool } from '../groupTools/contracts';
 import {
   createInput,
   configInput,
-  form,
-  managementForm,
-  responsePage,
-  historyPage,
+  form as sharedForm,
+  managementForm as sharedManagementForm,
+  responsePage as sharedResponsePage,
+  historyPage as sharedHistoryPage,
 } from './contracts';
 import { answersValidator } from '../eventApplications/contracts';
 import * as model from './model';
 import { readPolicy, setPolicy } from '../groupTools/policy';
 import { creation } from '../groupTools/contracts';
+
+// These versioned Group contracts retain their mandatory Group ownership field.
+const tool = v.object({ ...sharedTool.fields, groupId: v.id('groups') });
+const form = v.object({ ...sharedForm.fields, groupId: v.id('groups') });
+const managementForm = v.object({
+  ...sharedManagementForm.fields,
+  groupId: v.id('groups'),
+});
+const responsePage = v.object({
+  ...sharedResponsePage.fields,
+  page: v.array(v.object({ ...response.fields, groupId: v.id('groups') })),
+});
+const historyPage = v.object({
+  ...sharedHistoryPage.fields,
+  page: v.array(v.object({ ...revision.fields, groupId: v.id('groups') })),
+});
+
 type ReadCtx = MutationCtx | QueryCtx;
 function group(ctx: ReadCtx, value: string) {
   const id = ctx.db.normalizeId('groups', value);
@@ -60,7 +79,13 @@ export const get = internalQuery({
   args: target,
   returns: form,
   handler: async (ctx, args) =>
-    model.get(ctx, args.personId, await scoped(ctx, args.groupId, args.toolId)),
+    groupDocument(
+      await model.get(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId)
+      )
+    ),
 });
 export const list = internalQuery({
   args: { ...actor, paginationOpts: paginationOptsValidator },
@@ -69,34 +94,40 @@ export const list = internalQuery({
     isDone: v.boolean(),
     continueCursor: v.string(),
   }),
-  handler: (ctx, args) =>
-    model.list(
-      ctx,
-      args.personId,
-      group(ctx, args.groupId),
-      args.paginationOpts
+  handler: async (ctx, args) =>
+    groupPage(
+      await model.list(
+        ctx,
+        args.personId,
+        group(ctx, args.groupId),
+        args.paginationOpts
+      )
     ),
 });
 export const history = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: historyPage,
   handler: async (ctx, args) =>
-    model.history(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts
+    groupPage(
+      await model.history(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts
+      )
     ),
 });
 export const results = internalQuery({
   args: { ...target, paginationOpts: paginationOptsValidator },
   returns: responsePage,
   handler: async (ctx, args) =>
-    model.results(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId),
-      args.paginationOpts
+    groupPage(
+      await model.results(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId),
+        args.paginationOpts
+      )
     ),
 });
 export const submit = internalMutation({
@@ -177,9 +208,11 @@ export const settings = internalQuery({
   args: target,
   returns: managementForm,
   handler: async (ctx, args) =>
-    model.management(
-      ctx,
-      args.personId,
-      await scoped(ctx, args.groupId, args.toolId)
+    groupDocument(
+      await model.management(
+        ctx,
+        args.personId,
+        await scoped(ctx, args.groupId, args.toolId)
+      )
     ),
 });

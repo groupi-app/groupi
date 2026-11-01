@@ -2,16 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   usePaginatedQuery: vi.fn(),
+  useQuery: vi.fn(),
 }));
 
 vi.mock('convex/react', () => ({
   usePaginatedQuery: mocks.usePaginatedQuery,
+  useQuery: mocks.useQuery,
 }));
 
 vi.mock('convex/_generated/api', () => ({
   api: {
     posts: {
-      queries: { getEventPostFeedPage: 'getEventPostFeedPage' },
+      queries: {
+        getEventPostFeedPage: 'getEventPostFeedPage',
+        getPinnedEventPosts: 'getPinnedEventPosts',
+      },
     },
   },
 }));
@@ -24,6 +29,7 @@ import {
 describe('usePaginatedEventPosts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.useQuery.mockReturnValue([]);
     mocks.usePaginatedQuery.mockReturnValue({
       results: [],
       status: 'LoadingFirstPage',
@@ -37,9 +43,27 @@ describe('usePaginatedEventPosts', () => {
 
     expect(mocks.usePaginatedQuery).toHaveBeenCalledWith(
       'getEventPostFeedPage',
-      { eventId: 'event-123' },
+      { eventId: 'event-123', excludePinned: true },
       { initialNumItems: POST_FEED_PAGE_SIZE }
     );
     expect(result.status).toBe('LoadingFirstPage');
   });
+});
+
+it('keeps bounded reactive pins first and deduplicates an older loaded page during pin changes', () => {
+  const loadMore = vi.fn();
+  const pinned = { _id: 'older-post', pinnedAt: 20 };
+  mocks.useQuery.mockReturnValue([pinned]);
+  mocks.usePaginatedQuery.mockReturnValue({
+    results: [{ _id: 'new-post' }, { _id: 'older-post' }],
+    status: 'CanLoadMore',
+    loadMore,
+  });
+  const result = usePaginatedEventPosts('event-123' as never);
+  expect(mocks.useQuery).toHaveBeenCalledWith('getPinnedEventPosts', {
+    eventId: 'event-123',
+  });
+  expect(result.results).toEqual([pinned, { _id: 'new-post' }]);
+  result.loadMore(15);
+  expect(loadMore).toHaveBeenCalledWith(15);
 });

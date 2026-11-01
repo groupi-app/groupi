@@ -89,10 +89,11 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
   return (
     <div ref={setNodeRef} style={style}>
       <Card className='rounded-card border p-3'>
-        <div className='flex items-start justify-between gap-2'>
+        <div className='flex min-w-0 flex-wrap items-start justify-between gap-2'>
           <div className='flex items-center gap-2'>
             <button
-              className='cursor-grab touch-none text-muted-foreground hover:text-foreground'
+              aria-label={`Reorder ${field.label || FIELD_TYPE_LABELS[field.type]} field`}
+              className='flex size-10 items-center justify-center cursor-grab touch-none text-muted-foreground hover:text-foreground'
               {...attributes}
               {...listeners}
             >
@@ -115,14 +116,15 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
                   id={`required-${field.id}`}
                   checked={field.required}
                   onCheckedChange={checked => update({ required: checked })}
-                  className='scale-75'
+                  className='shrink-0'
                 />
               </div>
             )}
             <Button
               variant='ghost'
               size='icon'
-              className='size-7'
+              className='size-10'
+              aria-label={`Remove ${field.label || FIELD_TYPE_LABELS[field.type]} field`}
               onClick={() => removeField(sectionId, field.id)}
             >
               <Icons.trash className='size-3.5 text-muted-foreground' />
@@ -131,12 +133,12 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
         </div>
 
         {supportsConfigurable && (
-          <div className='mt-2 flex items-center gap-2'>
+          <div className='mt-2 flex min-w-0 flex-wrap items-center gap-2'>
             <Switch
               id={`configurable-${field.id}`}
               checked={field.configurable ?? false}
               onCheckedChange={checked => update({ configurable: checked })}
-              className='scale-75'
+              className='shrink-0'
             />
             <Label
               htmlFor={`configurable-${field.id}`}
@@ -159,6 +161,7 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
               value={field.label}
               onChange={e => update({ label: e.target.value })}
               onBlur={resluggifyFields}
+              aria-label='Field label'
               placeholder='Field label'
               className='h-8 rounded-input text-sm'
             />
@@ -166,7 +169,7 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
 
           {/* Text-specific options */}
           {field.type === 'text' && (
-            <div className='flex gap-2'>
+            <div className='flex min-w-0 flex-wrap gap-2'>
               <Select
                 value={field.variant ?? 'short'}
                 onValueChange={v => update({ variant: v as 'short' | 'long' })}
@@ -199,7 +202,7 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
 
           {/* Number-specific options — hidden when organizer configures */}
           {field.type === 'number' && !field.configurable && (
-            <div className='flex gap-2'>
+            <div className='flex min-w-0 flex-wrap gap-2'>
               <Input
                 type='number'
                 value={field.min ?? ''}
@@ -247,14 +250,14 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
                   onChange={options => update({ options })}
                 />
               )}
-              <div className='flex items-center gap-4'>
+              <div className='flex min-w-0 flex-wrap items-center gap-4'>
                 <div className='flex items-center gap-1'>
                   <Switch
                     checked={field.allowMultiple ?? false}
                     onCheckedChange={checked =>
                       update({ allowMultiple: checked })
                     }
-                    className='scale-75'
+                    className='shrink-0'
                   />
                   <Label className='text-xs'>Allow multiple votes</Label>
                 </div>
@@ -264,7 +267,7 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
                     onCheckedChange={checked =>
                       update({ showResults: checked })
                     }
-                    className='scale-75'
+                    className='shrink-0'
                   />
                   <Label className='text-xs'>Show results</Label>
                 </div>
@@ -307,7 +310,7 @@ export function FieldCard({ sectionId, field }: FieldCardProps) {
                   onCheckedChange={checked =>
                     update({ defaultEnabled: checked })
                   }
-                  className='scale-75'
+                  className='shrink-0'
                 />
                 <Label className='text-xs'>Default: enabled</Label>
               </div>

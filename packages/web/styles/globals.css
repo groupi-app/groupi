@@ -1096,14 +1096,17 @@
   transition: none;
   overflow-wrap: anywhere;
 }
-[data-slot='card']:is(
-  [data-treatment='featured'],
-  [data-treatment='interactive']
-) {
+[data-slot='card']:not([data-edge='none']):is(
+    [data-treatment='featured'],
+    [data-treatment='interactive']
+  ) {
   border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
   box-shadow:
     0 var(--soft-action-depth) 0 var(--soft-primary-backing),
     var(--soft-diffuse-shadow);
+}
+[data-slot='card'][data-edge='none'] {
+  border: 0;
 }
 [data-slot='card'][data-treatment='interactive'] {
   transition:
@@ -1268,8 +1271,9 @@
   color: var(--soft-primary-subtle-foreground);
   font-weight: 600;
 }
+/* Modal surfaces remain quiet; sticker edges belong to their controls. */
 [data-slot='dialog-content'][data-presentation='soft'] {
-  border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
+  border: 0;
 }
 [data-slot='dropdown-menu-content'][data-presentation='soft'],
 .soft-toast[data-sonner-toaster] [data-sonner-toast] {
@@ -1289,9 +1293,20 @@
   line-height: 1.3;
 }
 
+/* Compact date and response controls keep their labels together. */
+.soft-action[data-nowrap] {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 /* Selected paper navigation and correction annotations: canonical opt-in styles. */
 [data-slot='tabs-list'][data-presentation='soft'] {
   display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  margin-block-end: 0;
   width: 100%;
   gap: 0.25rem;
   align-items: stretch;
@@ -1301,10 +1316,14 @@
   padding: 0;
   box-shadow: none;
 }
+[data-slot='tabs-list'][data-presentation='soft']::-webkit-scrollbar {
+  display: none;
+}
 [data-slot='tabs-trigger'][data-presentation='soft'] {
   min-width: 0;
   max-width: 100%;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
+  white-space: nowrap;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-input) var(--radius-input) 0 0;
@@ -1320,7 +1339,7 @@
 }
 [data-slot='tabs-trigger'][data-presentation='soft']:focus-visible {
   outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 [data-slot='tabs-content'][data-presentation='soft'] {
   margin: 0;
@@ -1489,7 +1508,7 @@
   [data-slot='drawer-content'],
   [data-slot='alert-dialog-content']
 ) {
-  border: var(--soft-sticker-edge) solid var(--soft-sticker-color);
+  border: 0;
 }
 :is(
   [data-slot='sheet-title'],

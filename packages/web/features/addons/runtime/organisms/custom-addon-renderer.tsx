@@ -547,6 +547,7 @@ export function CustomAddonEventCard({
 
 export function CustomAddonManageConfig({
   config,
+  onDraftChange,
   onSave,
   onDisable,
   isSaving,
@@ -578,14 +579,19 @@ export function CustomAddonManageConfig({
   const handleTemplateChange = (updated: CustomAddonTemplate) => {
     setEditedTemplate(updated);
     setHasChanges(true);
+    if (typeof config?.templateId === 'string')
+      onDraftChange?.({ templateId: config.templateId, template: updated });
   };
 
   const handleSave = async () => {
     if (!editedTemplate || typeof config?.templateId !== 'string') return;
-    await onSave({
-      templateId: config.templateId,
-      template: editedTemplate,
-    });
+    if (
+      (await onSave({
+        templateId: config.templateId,
+        template: editedTemplate,
+      })) === false
+    )
+      return;
     setHasChanges(false);
   };
 

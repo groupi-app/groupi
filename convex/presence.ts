@@ -1,8 +1,10 @@
+import { requireDiscussionParent } from './lib/discussionAccess';
 import {
   mutation,
   query,
   internalQuery,
   type MutationCtx,
+  type QueryCtx,
 } from './_generated/server';
 import { components } from './_generated/api';
 import { v } from 'convex/values';
@@ -34,7 +36,10 @@ export const presence = new Presence(components.presence);
  * Authenticate presence writes and validate event-scoped room access. Presence
  * identity is always derived from the session, never from client input.
  */
-async function requirePresenceRoomAccess(ctx: MutationCtx, roomId: string) {
+async function requirePresenceRoomAccess(
+  ctx: MutationCtx | QueryCtx,
+  roomId: string
+) {
   const { person } = await requireAuth(ctx);
 
   if (roomId === 'app') {
@@ -68,11 +73,22 @@ async function requirePresenceRoomAccess(ctx: MutationCtx, roomId: string) {
     if (!post) {
       throw new Error('Invalid presence room');
     }
-    await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+    await requireDiscussionParent(ctx, post, person._id);
     return person;
   }
 
   throw new Error('Invalid presence room');
+}
+
+/** New tokens are bound to their room so membership loss also revokes reads.
+ * Tokens issued before this source update retain the existing component behavior.
+ */
+async function requireRoomTokenAccess(ctx: QueryCtx, roomToken: string) {
+  const access = await ctx.db
+    .query('presenceRoomAccess')
+    .withIndex('by_roomToken', q => q.eq('roomToken', roomToken))
+    .unique();
+  if (access) await requirePresenceRoomAccess(ctx, access.roomId);
 }
 
 /**
@@ -88,13 +104,23 @@ export const heartbeat = mutation({
   },
   handler: async (ctx, { roomId, sessionId, interval }) => {
     const person = await requirePresenceRoomAccess(ctx, roomId);
-    return await presence.heartbeat(
+    const tokens = await presence.heartbeat(
       ctx,
       roomId,
       person._id,
       sessionId,
       interval
     );
+    const access = await ctx.db
+      .query('presenceRoomAccess')
+      .withIndex('by_roomToken', q => q.eq('roomToken', tokens.roomToken))
+      .unique();
+    if (!access)
+      await ctx.db.insert('presenceRoomAccess', {
+        roomToken: tokens.roomToken,
+        roomId,
+      });
+    return tokens;
   },
 });
 
@@ -126,6 +152,7 @@ export const updatePresenceData = mutation({
 export const list = query({
   args: { roomToken: v.string() },
   handler: async (ctx, { roomToken }) => {
+    await requireRoomTokenAccess(ctx, roomToken);
     return (await presence.list(ctx, roomToken)).map(user => {
       const data = user.data;
       return {
@@ -220,6 +247,7 @@ export const getTypingUsers = query({
     roomToken: v.string(),
   },
   handler: async (ctx, { roomToken }) => {
+    await requireRoomTokenAccess(ctx, roomToken);
     // list() returns presence data including custom data field
     const roomData = await presence.list(ctx, roomToken);
 

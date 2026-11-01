@@ -1,10 +1,10 @@
+import { GroupNewContentButton } from '../content/new-content-button';
 import {
   GroupDiscordSettings,
   GroupDiscordRetiredStatus,
 } from './group-discord-settings';
 import { GroupDiscordConnect } from './group-discord-connect';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
-import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -171,19 +171,20 @@ export function GroupDetailScreen() {
             >
               Group tools
             </Text>
+            <GroupNewContentButton groupId={id} />
+            <Button
+              accessibilityLabel='Group posts'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/posts`)}
+            >
+              Posts
+            </Button>
             <Button
               accessibilityLabel='Group polls'
               variant='outline'
               onPress={() => router.push(`/groups/${id}/polls`)}
             >
               Polls and poll settings
-            </Button>
-            <Button
-              accessibilityLabel='Create Group poll'
-              variant='outline'
-              onPress={() => router.push(`/groups/${id}/polls/create`)}
-            >
-              Create poll
             </Button>
             <Button
               accessibilityLabel='Group forms'
@@ -286,9 +287,6 @@ export function GroupDetailScreen() {
                 questions={group.applicationQuestions}
               />
             ) : null}
-            {group.viewerRole !== 'MEMBER' && (
-              <GroupAnnouncementComposer groupId={id} />
-            )}
             {group.canManageRoles ? (
               <GroupEventSharingPolicy
                 groupId={id}

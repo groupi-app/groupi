@@ -105,7 +105,7 @@ it('keeps authorization failure visible and does not claim enrollment succeeded'
   expect(auth.linkSocial).toHaveBeenCalledWith({
     provider: 'discord',
     scopes: ['identify', 'guilds', 'guilds.join'],
-    callbackURL: '/groups/group-one',
+    callbackURL: '/groups/group-one/settings/membership',
   });
   expect(action).toHaveBeenCalledTimes(1);
   expect(

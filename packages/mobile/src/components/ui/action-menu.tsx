@@ -26,6 +26,7 @@ export interface ActionMenuOption {
   icon?: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   destructive?: boolean;
+  disabled?: boolean;
   showChevron?: boolean;
 }
 
@@ -121,9 +122,11 @@ export function ActionMenuProvider({ children }: { children: ReactNode }) {
             <View key={`${option.label}-${index}`}>
               <Pressable
                 onPress={() => handleSelect(option)}
+                disabled={option.disabled}
+                accessibilityState={{ disabled: !!option.disabled }}
                 accessibilityRole='button'
                 accessibilityLabel={option.label}
-                className='flex-row items-center gap-3 px-5 py-4 active:bg-muted'
+                className={`flex-row items-center gap-3 px-5 py-4 active:bg-muted ${option.disabled ? 'opacity-50' : ''}`}
               >
                 {option.icon ? (
                   <Ionicons

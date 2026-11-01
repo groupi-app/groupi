@@ -2,9 +2,73 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { getFunctionName } from 'convex/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { Id } from '@/convex/_generated/dataModel';
 import { EventApplications } from './event-applications';
+const applicationDraft = vi.hoisted(() => ({
+  values: {
+    admissionPolicy: 'DIRECT',
+    applications: null as null | {
+      questions: unknown[];
+      reviewerPolicy: string;
+    },
+  },
+  stage: vi.fn(),
+}));
+vi.mock('@/features/event-settings', async importOriginal => {
+  const actual =
+    await importOriginal<typeof import('@/features/event-settings')>();
+  const { useState } = await import('react');
+  return {
+    ...actual,
+    useEventSettingsDraft: () => {
+      const [values, setValues] = useState(applicationDraft.values);
+      return {
+        values,
+        busy: false,
+        epoch: 0,
+        setSection: (key: string, value: unknown) => {
+          applicationDraft.stage(key, value);
+          setValues(current => ({ ...current, [key]: value }));
+        },
+      };
+    },
+  };
+});
+vi.mock('@/components/profile-view-dialog', () => ({
+  ProfileViewDialog: ({
+    userId,
+    onOpenChange,
+  }: {
+    userId: string;
+    onOpenChange: (open: boolean) => void;
+  }) => (
+    <div role='dialog' aria-label='Resolved profile'>
+      <p>{userId}</p>
+      <button onClick={() => onOpenChange(false)}>Close profile</button>
+    </div>
+  ),
+}));
+const restoreResolver = await vi.hoisted(async () => {
+  const { default: Module } = await import('node:module');
+  const { resolve } = await import('node:path');
+  const resolver = Module as typeof Module & {
+    _resolveFilename: (request: string, ...args: unknown[]) => string;
+  };
+  const original = resolver._resolveFilename;
+  const path = resolve(process.cwd(), '../../convex/_generated/api.js');
+  resolver._resolveFilename = function (request, ...args) {
+    return original.call(
+      this,
+      request === '@/convex/_generated/api' ? path : request,
+      ...args
+    );
+  };
+  return () => {
+    resolver._resolveFilename = original;
+  };
+});
+afterAll(restoreResolver);
 vi.unmock('convex/react');
 vi.unmock('@/convex/_generated/api');
 const eventId = 'event-one' as Id<'events'>;
@@ -103,7 +167,11 @@ it('allows authorized review with a reason and reports Pending RSVP admission', 
     ],
     true
   );
-  expect(screen.getByText('Applicant: Jordan')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Profile options for Jordan' })
+  ).toHaveTextContent('Jordan');
+  expect(screen.getByText('@jordan')).toBeInTheDocument();
+  expect(screen.queryByText('Applicant: Jordan')).not.toBeInTheDocument();
   const user = userEvent.setup();
   await user.type(
     screen.getByRole('textbox', { name: 'Decision reason (optional)' }),
@@ -126,26 +194,18 @@ it('allows authorized review with a reason and reports Pending RSVP admission', 
 });
 
 import { EventAdmissionSettings } from './event-admission-settings';
-it('configures approval admission separately from retained questionnaire tools', async () => {
+it('stages admission and application configuration in the global draft without independent saves', async () => {
+  applicationDraft.values = {
+    admissionPolicy: 'DIRECT',
+    applications: {
+      questions: [],
+      reviewerPolicy: 'ORGANIZERS_AND_MODERATORS',
+    },
+  };
+  applicationDraft.stage.mockClear();
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
-  vi.spyOn(client, 'watchQuery').mockImplementation((...args) => ({
-    onUpdate: () => () => {},
-    journal: () => undefined,
-    localQueryResult: () =>
-      getFunctionName(args[0]).endsWith(':getForm')
-        ? {
-            settings: {
-              questions: [],
-              reviewerPolicy: 'ORGANIZERS_AND_MODERATORS',
-            },
-            pending: null,
-            canReview: true,
-            canApply: false,
-          }
-        : { event: { admissionPolicy: 'DIRECT' } },
-  }));
   const mutation = vi
     .spyOn(client, 'mutation')
     .mockResolvedValue({ success: true });
@@ -156,14 +216,18 @@ it('configures approval admission separately from retained questionnaire tools',
   );
   const user = userEvent.setup();
   await user.selectOptions(
-    screen.getByRole('combobox', { name: 'Admission policy' }),
+    screen.getByRole('combobox', { name: 'Admission' }),
+    'APPLY'
+  );
+  expect(applicationDraft.stage).toHaveBeenCalledWith(
+    'admissionPolicy',
     'APPLY'
   );
   await user.click(
-    screen.getByRole('button', { name: 'Save admission policy' })
+    screen.getByText(/Application questions/, { selector: 'summary' })
   );
   await user.selectOptions(
-    screen.getByRole('combobox', { name: 'Application reviewers' }),
+    screen.getByRole('combobox', { name: 'Reviewers' }),
     'ORGANIZER_ONLY'
   );
   await user.click(screen.getByRole('button', { name: 'Add question' }));
@@ -171,19 +235,23 @@ it('configures approval admission separately from retained questionnaire tools',
     screen.getByRole('textbox', { name: 'Question text' }),
     'Why join?'
   );
-  await user.click(
-    screen.getByRole('button', { name: 'Save application form' })
+  expect(applicationDraft.stage).toHaveBeenLastCalledWith(
+    'applications',
+    expect.objectContaining({
+      reviewerPolicy: 'ORGANIZER_ONLY',
+      questions: [
+        expect.objectContaining({
+          label: 'Why join?',
+          type: 'SHORT_ANSWER',
+          required: false,
+        }),
+      ],
+    })
   );
-  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
-  expect(mutation.mock.calls[0][1]).toEqual({
-    eventId,
-    admissionPolicy: 'APPLY',
-  });
-  expect(mutation.mock.calls[1][1]).toMatchObject({
-    eventId,
-    reviewerPolicy: 'ORGANIZER_ONLY',
-    questions: [{ label: 'Why join?', type: 'SHORT_ANSWER', required: false }],
-  });
+  expect(
+    screen.queryByRole('button', { name: /^Save/ })
+  ).not.toBeInTheDocument();
+  expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });
@@ -415,31 +483,29 @@ it('opens Group-only Apply from readable logistics before membership and submits
 });
 
 import { EventApplicationSettings } from './event-application-settings';
-it('withholds current admission definitions when Event settings become unavailable', async () => {
+it('withholds application configuration when the global settings snapshot grants none', async () => {
+  applicationDraft.values = { admissionPolicy: 'APPLY', applications: null };
+  applicationDraft.stage.mockClear();
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
-  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
-    onUpdate: () => () => {},
-    journal: () => undefined,
-    localQueryResult: () => ({
-      settings: null,
-      pending: null,
-      canApply: false,
-      canReview: false,
-    }),
-  }));
+  const watch = vi.spyOn(client, 'watchQuery');
+  const mutation = vi.spyOn(client, 'mutation');
   const mounted = render(
     <ConvexProvider client={client}>
       <EventApplicationSettings eventId={eventId} />
     </ConvexProvider>
   );
-  expect(screen.getByRole('alert')).toHaveTextContent(
-    'Application settings are unavailable'
-  );
   expect(
-    screen.queryByRole('combobox', { name: 'Application reviewers' })
+    screen.queryByRole('combobox', { name: 'Reviewers' })
   ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('textbox', { name: 'Question text' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/Application questions/)).not.toBeInTheDocument();
+  expect(watch).not.toHaveBeenCalled();
+  expect(mutation).not.toHaveBeenCalled();
+  expect(applicationDraft.stage).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });
@@ -700,6 +766,201 @@ it('removes reviewer answers and decisions when live Event policy excludes the m
   expect(
     screen.queryByRole('button', { name: 'Approve application' })
   ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+const reviewForm = {
+  settings: { questions: [], reviewerPolicy: 'ORGANIZER_ONLY' },
+  pending: null,
+  canApply: false,
+  canReview: true,
+};
+const reviewRecord = {
+  _id: 'application-profile',
+  eventId,
+  personId: 'person-profile',
+  status: 'PENDING',
+  applicant: {
+    personId: 'person-profile',
+    name: 'Alexandra Long Applicant Name',
+    username: 'alexandra-community-volunteer',
+    image: null,
+  },
+  questions: [question],
+  answers: { why: 'Help the community' },
+  decisions: [],
+};
+
+it('opens the supplied applicant identity by keyboard and restores focus after popover dismissal without profile queries', async () => {
+  const { client, mutation, mounted } = fixture(
+    reviewForm,
+    [reviewRecord],
+    true
+  );
+  const user = userEvent.setup();
+  const trigger = screen.getByRole('button', {
+    name: 'Profile options for Alexandra Long Applicant Name',
+  });
+  trigger.focus();
+  await user.keyboard('{Enter}');
+  expect(screen.getByRole('button', { name: 'View profile' })).toBeVisible();
+  expect(screen.getAllByText('@alexandra-community-volunteer')).toHaveLength(2);
+  expect(
+    vi
+      .mocked(client.watchQuery)
+      .mock.calls.every(([ref]) =>
+        getFunctionName(ref).startsWith('eventApplications/')
+      )
+  ).toBe(true);
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(trigger).toHaveFocus());
+  expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});
+
+it('contains a rejected profile lookup and returns focus without losing review access or the decision reason', async () => {
+  const { client, mutation, mounted } = fixture(
+    reviewForm,
+    [reviewRecord],
+    true
+  );
+  const original = vi.mocked(client.watchQuery).getMockImplementation()!;
+  vi.mocked(client.watchQuery).mockImplementation((...args) =>
+    getFunctionName(args[0]) === 'users/queries:getUserProfile'
+      ? {
+          onUpdate: () => () => {},
+          journal: () => undefined,
+          localQueryResult: () => {
+            throw new Error('Profile permission changed');
+          },
+        }
+      : original(...args)
+  );
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const user = userEvent.setup();
+  await user.type(
+    screen.getByRole('textbox', { name: 'Decision reason (optional)' }),
+    'Retained reason'
+  );
+  const trigger = screen.getByRole('button', {
+    name: 'Profile options for Alexandra Long Applicant Name',
+  });
+  await user.click(trigger);
+  await user.click(screen.getByRole('button', { name: 'View profile' }));
+  expect(await screen.findByText('Profile unavailable.')).toBeVisible();
+  expect(screen.getByText('Help the community')).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(trigger).toHaveFocus());
+  expect(
+    screen.getByRole('textbox', { name: 'Decision reason (optional)' })
+  ).toHaveValue('Retained reason');
+  expect(
+    screen.getByRole('button', { name: 'Approve application' })
+  ).toBeEnabled();
+  expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+  errors.mockRestore();
+});
+
+it('locks both decision actions while pending, retains the reason on failure, and prevents duplicate decisions after success', async () => {
+  const { client, mutation, mounted } = fixture(
+    reviewForm,
+    [reviewRecord],
+    true
+  );
+  let rejectPending: (error: Error) => void = () => {};
+  mutation.mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        rejectPending = reject;
+      })
+  );
+  const user = userEvent.setup();
+  await user.type(
+    screen.getByRole('textbox', { name: 'Decision reason (optional)' }),
+    'Capacity reached'
+  );
+  await user.click(screen.getByRole('button', { name: 'Decline application' }));
+  expect(
+    screen.getByRole('button', { name: 'Approve application' })
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Decline application' })
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('textbox', { name: 'Decision reason (optional)' })
+  ).toBeDisabled();
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  const { act } = await import('@testing-library/react');
+  await act(async () =>
+    rejectPending(new Error('Current review permission changed'))
+  );
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Current review permission changed'
+  );
+  expect(
+    screen.getByRole('textbox', { name: 'Decision reason (optional)' })
+  ).toHaveValue('Capacity reached');
+  await user.click(screen.getByRole('button', { name: 'Decline application' }));
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Application declined.'
+  );
+  expect(mutation).toHaveBeenCalledTimes(2);
+  expect(mutation.mock.calls[1][1]).toEqual({
+    applicationId: 'application-profile',
+    decision: 'DECLINED',
+    reason: 'Capacity reached',
+  });
+  expect(
+    screen.getByRole('button', { name: 'Approve application' })
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Decline application' })
+  ).toBeDisabled();
+  mounted.unmount();
+  await client.close();
+});
+
+it('resolves a requested profile through the existing person query and opens the standard profile component', async () => {
+  const { client, mutation, mounted } = fixture(
+    reviewForm,
+    [reviewRecord],
+    true
+  );
+  const original = vi.mocked(client.watchQuery).getMockImplementation()!;
+  vi.mocked(client.watchQuery).mockImplementation((...args) =>
+    getFunctionName(args[0]) === 'users/queries:getUserProfile'
+      ? {
+          onUpdate: () => () => {},
+          journal: () => undefined,
+          localQueryResult: () => ({ user: { id: 'auth-user-one' } }),
+        }
+      : original(...args)
+  );
+  const user = userEvent.setup();
+  const trigger = screen.getByRole('button', {
+    name: 'Profile options for Alexandra Long Applicant Name',
+  });
+  await user.click(trigger);
+  await user.click(screen.getByRole('button', { name: 'View profile' }));
+  expect(
+    await screen.findByRole('dialog', { name: 'Resolved profile' })
+  ).toHaveTextContent('auth-user-one');
+  expect(
+    vi
+      .mocked(client.watchQuery)
+      .mock.calls.some(
+        ([ref, args]) =>
+          getFunctionName(ref) === 'users/queries:getUserProfile' &&
+          args?.personId === 'person-profile'
+      )
+  ).toBe(true);
+  await user.click(screen.getByRole('button', { name: 'Close profile' }));
+  await waitFor(() => expect(trigger).toHaveFocus());
+  expect(mutation).not.toHaveBeenCalled();
   mounted.unmount();
   await client.close();
 });

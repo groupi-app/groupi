@@ -31,6 +31,7 @@ type DeliveryJob = {
     | 'friends'
     | 'event'
     | 'post'
+    | 'groupPost'
     | 'group'
     | 'groupApplication'
     | 'groupApplications'

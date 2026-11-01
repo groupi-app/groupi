@@ -19,6 +19,8 @@ interface AuthenticatedLayoutProps {
    * even if onboarding is incomplete (e.g., the onboarding page itself).
    */
   skipOnboardingCheck?: boolean;
+  /** Route-specific, data-free loading UI while authentication is unresolved. */
+  loadingFallback?: React.ReactNode;
 }
 
 /**
@@ -40,6 +42,7 @@ export function AuthenticatedLayout({
   children,
   redirectTo = '/sign-in',
   skipOnboardingCheck = false,
+  loadingFallback = <AuthLoadingSpinner />,
 }: AuthenticatedLayoutProps) {
   const { data: session, isPending } = useSession();
   const { isLoading: isConvexAuthLoading } = useConvexAuth();
@@ -61,19 +64,19 @@ export function AuthenticatedLayout({
 
   // Show loading spinner while checking auth status
   if (isPending) {
-    return <AuthLoadingSpinner />;
+    return <>{loadingFallback}</>;
   }
 
   // Show loading spinner while redirecting to sign-in
   if (!isAuthenticated) {
-    return <AuthLoadingSpinner />;
+    return <>{loadingFallback}</>;
   }
 
   // Show loading spinner while Convex is re-authenticating
   // (e.g., during account switch). This prevents child queries from
   // firing with a stale auth token and hitting the error boundary.
   if (isConvexAuthLoading) {
-    return <AuthLoadingSpinner />;
+    return <>{loadingFallback}</>;
   }
 
   // Show loading spinner while checking onboarding status
@@ -82,13 +85,13 @@ export function AuthenticatedLayout({
     !skipOnboardingCheck &&
     (needsOnboarding === undefined || needsOnboarding === null)
   ) {
-    return <AuthLoadingSpinner />;
+    return <>{loadingFallback}</>;
   }
 
   // Show loading spinner while redirecting to onboarding
   // (OnboardingRedirectWrapper handles the actual redirect)
   if (!skipOnboardingCheck && needsOnboarding === true) {
-    return <AuthLoadingSpinner />;
+    return <>{loadingFallback}</>;
   }
 
   return <>{children}</>;

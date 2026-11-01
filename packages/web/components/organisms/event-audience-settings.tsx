@@ -1,243 +1,206 @@
 'use client';
 import { useState } from 'react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useGroups } from '@/hooks/convex/use-groups';
+import { Input } from '@/components/ui/input';
 import {
-  useEventAudiences,
-  useShareEventWithGroup,
-  useWithdrawGroupEventAudience,
-  useSetEventFriendsAudience,
-} from '@/hooks/convex/use-group-event-audiences';
-import { GroupPagination } from './group-pagination';
-import { AudienceBoundary } from './audience-boundary';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useEventSettingsAudienceOptions } from '@/hooks/convex/use-event-settings';
+import { useEventSettingsDraft } from '@/features/event-settings';
+
 export function EventAudienceSettings({
   eventId,
-  visibility,
 }: {
   eventId: Id<'events'>;
   visibility: Doc<'events'>['visibility'];
 }) {
+  const { values, setSection, busy, audienceNames, rememberAudience } =
+    useEventSettingsDraft();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [cursor, setCursor] = useState<string | null>(null);
+  const groups = useEventSettingsAudienceOptions({
+    eventId,
+    search,
+    paginationOpts: { cursor, numItems: 50 },
+  });
+  const selected = values.audiences;
+  const selectedIds =
+    selected.groupIds ?? selected.groups.map(group => group.groupId);
+  const candidates = groups?.page ?? [];
+  const namesById = {
+    ...Object.fromEntries(
+      selected.groups.map(group => [group.groupId, group.name])
+    ),
+    ...Object.fromEntries(candidates.map(group => [group.groupId, group.name])),
+    ...audienceNames,
+  };
+  const update = (friendsShared: boolean, groupIds: Id<'groups'>[]) =>
+    setSection('audiences', { friendsShared, groupIds });
+  const toggle = (groupId: Id<'groups'>, name: string) => {
+    rememberAudience(groupId, name);
+    update(
+      Boolean(selected.friendsShared),
+      selectedIds.includes(groupId)
+        ? selectedIds.filter(id => id !== groupId)
+        : [...selectedIds, groupId]
+    );
+  };
+  const removable = (groupId: Id<'groups'>) =>
+    selected.groups.find(group => group.groupId === groupId)?.canWithdraw !==
+    false;
+  const filtered = candidates;
   return (
-    <AudienceBoundary key={eventId}>
-      <AudienceControls eventId={eventId} visibility={visibility} />
-    </AudienceBoundary>
-  );
-}
-function AudienceControls({
-  eventId,
-  visibility,
-}: {
-  eventId: Id<'events'>;
-  visibility: Doc<'events'>['visibility'];
-}) {
-  const audiences = useEventAudiences({ eventId });
-  const withdraw = useWithdrawGroupEventAudience();
-  const friends = useSetEventFriendsAudience();
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState(''),
-    [message, setMessage] = useState('');
-  async function run(action: () => Promise<unknown>, success: string) {
-    setBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      await action();
-      setMessage(success);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Unable to change Event sharing. Refresh your current access and try again.'
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (audiences === undefined)
-    return <p role='status'>Loading Event audiences…</p>;
-  return (
-    <section
-      className='rounded-card border border-border p-4 space-y-4'
-      aria-labelledby='event-audiences-heading'
-    >
-      <h2
-        id='event-audiences-heading'
-        className='font-heading text-xl font-semibold'
-      >
-        Event logistics audiences
-      </h2>
-      <p>
-        Whole Groups and Friends provide independent access to Event logistics.
-        Sharing does not invite or join anyone, change RSVP, or expose member
-        tools.
-      </p>
-      <p>
-        {visibility === 'PUBLIC'
-          ? 'Public basic Event details remain public.'
-          : visibility === 'FRIENDS'
-            ? 'Legacy visibility is Friends. The Friends audience control below determines current Friends access.'
-            : 'Legacy visibility is Private. Selected audiences can still read Event logistics.'}
-      </p>
-      {audiences.canManageEvent && (
-        <>
-          <p>
-            Friends audience:{' '}
-            {audiences.friendsShared ? 'shared' : 'not shared'}
-          </p>
+    <div className='min-w-0 space-y-2'>
+      <Label id='event-shared-with-label'>Shared with</Label>
+      <div className='flex min-w-0 flex-wrap gap-2'>
+        {selected.friendsShared && (
+          <AudienceChip
+            name='Friends'
+            disabled={busy}
+            onRemove={() => update(false, selectedIds)}
+          />
+        )}
+        {selectedIds.map(id => (
+          <AudienceChip
+            key={id}
+            name={namesById[id] ?? 'Selected group'}
+            disabled={busy || !removable(id)}
+            onRemove={() =>
+              update(
+                Boolean(selected.friendsShared),
+                selectedIds.filter(groupId => groupId !== id)
+              )
+            }
+          />
+        ))}
+      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
           <Button
             variant='outline'
             disabled={busy}
-            onClick={() =>
-              void run(
-                () => friends({ eventId, enabled: !audiences.friendsShared }),
-                audiences.friendsShared
-                  ? 'Friends audience removed. Other independent access remains.'
-                  : 'Event logistics shared with Friends.'
-              )
-            }
+            className='w-full justify-between'
+            aria-labelledby='event-shared-with-label'
+            aria-label='Choose audiences'
           >
-            {audiences.friendsShared
-              ? 'Remove Friends audience'
-              : 'Share with Friends'}
+            <span>Choose audiences</span>
+            <ChevronDown className='size-4 shrink-0' aria-hidden />
           </Button>
-          <GroupSelector
-            eventId={eventId}
-            sharedGroupIds={audiences.groups.map(group => group.groupId)}
-            disabled={busy}
+        </PopoverTrigger>
+        <PopoverContent align='start' className='w-72 max-w-full p-2'>
+          <Input
+            aria-label='Search audiences'
+            placeholder='Search groups…'
+            value={search}
+            onChange={event => {
+              setSearch(event.target.value);
+              setCursor(null);
+            }}
           />
-        </>
-      )}
-      {!audiences.canManageEvent && (
-        <p>
-          Only the current Event Organizer can add audiences. You can withdraw a
-          permitted Group grant below.
-        </p>
-      )}
-      <ul className='space-y-3'>
-        {audiences.groups.map(group => (
-          <li
-            key={group.groupId}
-            className='flex flex-wrap items-center justify-between gap-3'
-          >
-            <span>{group.name}</span>
-            {group.canWithdraw && (
-              <Button
-                variant='outline'
-                disabled={busy}
-                onClick={() =>
-                  void run(
-                    () => withdraw({ eventId, groupId: group.groupId }),
-                    'Group audience withdrawn. Other independent access remains.'
-                  )
-                }
-              >
-                Withdraw {group.name} audience
-              </Button>
+          <fieldset className='mt-2 max-h-72 overflow-y-auto' disabled={busy}>
+            <legend className='sr-only'>Event audiences</legend>
+            {(!search || 'friends'.includes(search.toLocaleLowerCase())) && (
+              <label className='flex min-h-10 cursor-pointer items-center gap-2 rounded-input px-2 py-2 hover:bg-accent'>
+                <input
+                  type='checkbox'
+                  className='size-4 shrink-0 accent-primary'
+                  checked={Boolean(selected.friendsShared)}
+                  onChange={() => update(!selected.friendsShared, selectedIds)}
+                />
+                <span>Friends</span>
+              </label>
             )}
-          </li>
-        ))}
-      </ul>
-      {audiences.groups.length === 0 && <p>No visible Group audiences.</p>}
-      {message && <p role='status'>{message}</p>}
-      {error && (
-        <p role='alert' className='text-error'>
-          {error}
-        </p>
-      )}
-    </section>
+            {filtered.map(group => (
+              <label
+                key={group.groupId}
+                className='flex min-h-10 cursor-pointer items-start gap-2 rounded-input px-2 py-2 hover:bg-accent'
+              >
+                <input
+                  type='checkbox'
+                  className='mt-1 size-4 shrink-0 accent-primary'
+                  checked={selectedIds.includes(group.groupId)}
+                  disabled={
+                    selectedIds.includes(group.groupId) &&
+                    !removable(group.groupId)
+                  }
+                  onChange={() => toggle(group.groupId, group.name)}
+                />
+                <span className='min-w-0 break-words'>{group.name}</span>
+              </label>
+            ))}
+            {groups === undefined ? (
+              <p role='status' className='p-2 text-sm text-muted-foreground'>
+                Loading groups…
+              </p>
+            ) : (
+              filtered.length === 0 && (
+                <p className='p-2 text-sm text-muted-foreground'>
+                  {groups.isDone
+                    ? 'No matching groups.'
+                    : 'More groups are available to search.'}
+                </p>
+              )
+            )}
+          </fieldset>
+          {groups && !groups.isDone && (
+            <Button
+              variant='ghost'
+              size='sm'
+              className='w-full'
+              onClick={() => setCursor(groups.continueCursor)}
+            >
+              More matches
+            </Button>
+          )}
+          {cursor && (
+            <Button
+              variant='ghost'
+              size='sm'
+              className='w-full'
+              onClick={() => setCursor(null)}
+            >
+              Start over
+            </Button>
+          )}
+        </PopoverContent>
+      </Popover>
+      <p className='text-sm text-muted-foreground'>
+        Sharing gives access to event details, not membership.
+      </p>
+    </div>
   );
 }
-function GroupSelector({
-  eventId,
-  sharedGroupIds,
+function AudienceChip({
+  name,
   disabled,
+  onRemove,
 }: {
-  eventId: Id<'events'>;
-  sharedGroupIds: Id<'groups'>[];
+  name: string;
   disabled: boolean;
+  onRemove: () => void;
 }) {
-  const [cursor, setCursor] = useState<string | null>(null),
-    [groupId, setGroupId] = useState<Id<'groups'> | ''>(''),
-    [busy, setBusy] = useState(false),
-    [message, setMessage] = useState(''),
-    [error, setError] = useState('');
-  const groups = useGroups({ cursor, numItems: 20 });
-  const share = useShareEventWithGroup();
-  if (groups === undefined)
-    return <p role='status'>Loading eligible Groups…</p>;
-  const eligible = groups.page.filter(
-    group => group.canShareEvents && !sharedGroupIds.includes(group._id)
-  );
-  const selected = eligible.some(group => group._id === groupId) ? groupId : '';
   return (
-    <form
-      className='space-y-3'
-      onSubmit={async event => {
-        event.preventDefault();
-        if (!selected) return;
-        setBusy(true);
-        setError('');
-        setMessage('');
-        try {
-          await share({ eventId, groupId: selected });
-          setGroupId('');
-          setMessage('Event logistics shared with Group.');
-        } catch (cause) {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'Unable to share. Current Group sharing permission is required.'
-          );
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      <Label htmlFor='event-audience-group'>Whole Group</Label>
-      <select
-        id='event-audience-group'
-        className='w-full rounded-input border border-input bg-background p-2 text-foreground'
-        value={selected}
-        disabled={busy || disabled}
-        onChange={event => {
-          setGroupId(event.target.value as Id<'groups'> | '');
-          setMessage('');
-        }}
-      >
-        <option value=''>Choose a permitted Group</option>
-        {eligible.map(group => (
-          <option key={group._id} value={group._id}>
-            {group.name}
-          </option>
-        ))}
-      </select>
-      {eligible.length === 0 && (
-        <p>
-          No additional Groups on this page currently permit you to share
-          Events. Complete required Group onboarding or ask the Group owner
-          about sharing policy.
-        </p>
+    <span className='inline-flex max-w-full items-center gap-1 rounded-badge bg-muted py-1 pl-3 pr-1 text-sm'>
+      <span className='min-w-0 break-words'>{name}</span>
+      {disabled ? (
+        <Check className='m-1 size-4 shrink-0' aria-hidden />
+      ) : (
+        <Button
+          variant='ghost'
+          size='icon'
+          className='size-7 min-h-7 shrink-0 rounded-full'
+          aria-label={`Remove ${name} audience`}
+          onClick={onRemove}
+        >
+          <X className='size-3' aria-hidden />
+        </Button>
       )}
-      <Button disabled={busy || disabled || !selected}>
-        {busy ? 'Sharing…' : 'Share with Group'}
-      </Button>
-      <GroupPagination
-        cursor={cursor}
-        onCursor={value => {
-          setCursor(value);
-          setGroupId('');
-        }}
-        page={groups}
-        label='sharing Groups'
-      />
-      {message && <p role='status'>{message}</p>}
-      {error && (
-        <p role='alert' className='text-error'>
-          {error}
-        </p>
-      )}
-    </form>
+    </span>
   );
 }

@@ -1,5 +1,29 @@
 'use client';
-import { Component, useState, type ReactNode } from 'react';
+import {
+  Component,
+  lazy,
+  Suspense,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Check, UserRound, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { UserInfoCard } from '@/components/molecules/user-info-card';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import Link from 'next/link';
 import type { Id, Doc } from '@/convex/_generated/dataModel';
 import type { ApplicationAnswers } from '@groupi/shared/hooks';
@@ -15,6 +39,155 @@ import {
   useDecideApplication,
 } from '@/hooks/convex/use-event-applications';
 import { ApplicationQuestionFields } from './application-question-fields';
+
+const ProfileView = lazy(() =>
+  import('@/components/profile-view-dialog').then(module => ({
+    default: module.ProfileViewDialog,
+  }))
+);
+
+class ApplicantProfileBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
+
+function ApplicantProfileLookup({
+  personId,
+  onClose,
+}: {
+  personId: Id<'persons'>;
+  onClose: () => void;
+}) {
+  const profile = useQuery(api.users.queries.getUserProfile, { personId });
+  return profile ? (
+    <Suspense
+      fallback={
+        <ApplicantProfileNotice onClose={onClose}>
+          Loading profile…
+        </ApplicantProfileNotice>
+      }
+    >
+      <ProfileView
+        userId={profile.user.id}
+        open
+        onOpenChange={open => {
+          if (!open) onClose();
+        }}
+      />
+    </Suspense>
+  ) : (
+    <ApplicantProfileNotice onClose={onClose}>
+      Loading profile…
+    </ApplicantProfileNotice>
+  );
+}
+
+function ApplicantProfileNotice({
+  children,
+  onClose,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog
+      open
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Profile</DialogTitle>
+        </DialogHeader>
+        <DialogDescription role='status'>{children}</DialogDescription>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ApplicantIdentity({
+  applicant,
+  personId,
+}: {
+  applicant?: {
+    name: string | null;
+    username: string | null;
+    image?: string | null;
+  };
+  personId: Id<'persons'>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const name = applicant?.name || applicant?.username || 'Applicant';
+  const info = (
+    <UserInfoCard
+      name={name}
+      subtitle={applicant?.username ? `@${applicant.username}` : undefined}
+      avatar={{
+        src: applicant?.image,
+        fallback: name.slice(0, 2).toUpperCase(),
+      }}
+      className='min-w-0 [&_.truncate]:whitespace-normal [&_.truncate]:break-words [&_.truncate]:overflow-visible'
+    />
+  );
+  const closeProfile = () => {
+    setProfileOpen(false);
+    requestAnimationFrame(() => trigger.current?.focus());
+  };
+  return (
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type='button'
+            ref={trigger}
+            aria-label={`Profile options for ${name}`}
+            className='w-full min-w-0 flex-1 rounded-input text-left focus-visible:outline-2 focus-visible:outline-ring'
+          >
+            {info}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align='start' className='space-y-3'>
+          {info}
+          <Button
+            type='button'
+            variant='ghost'
+            className='w-full justify-start'
+            icon={<UserRound className='size-4' aria-hidden='true' />}
+            onClick={() => {
+              setOpen(false);
+              setProfileOpen(true);
+            }}
+          >
+            View profile
+          </Button>
+        </PopoverContent>
+      </Popover>
+      {profileOpen && (
+        <ApplicantProfileBoundary
+          fallback={
+            <ApplicantProfileNotice onClose={closeProfile}>
+              Profile unavailable.
+            </ApplicantProfileNotice>
+          }
+        >
+          <ApplicantProfileLookup personId={personId} onClose={closeProfile} />
+        </ApplicantProfileBoundary>
+      )}
+    </>
+  );
+}
+
 class ApplicationBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
@@ -216,16 +389,10 @@ function ApplicationRecords({
         review ? 'Application review queue' : 'Your application history'
       }
     >
-      <h2 className='font-heading text-xl font-semibold'>
-        {review ? 'Review applications' : 'Your application history'}
-      </h2>
-      {review && (
-        <p>
-          Only current Event reviewers decide these applications. Approval
-          rechecks current audience eligibility, including Group onboarding. A
-          manager invitation is a separate independent grant; member
-          questionnaires follow admission.
-        </p>
+      {!review && (
+        <h2 className='font-heading text-xl font-semibold'>
+          Your application history
+        </h2>
       )}
       {records === undefined ? (
         <p role='status'>Loading application records…</p>
@@ -239,7 +406,7 @@ function ApplicationRecords({
               review={review}
             />
           ))}
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-2'>
             {cursor !== null && (
               <Button variant='outline' onClick={() => setCursor(null)}>
                 First page
@@ -264,7 +431,11 @@ function ApplicationRecord({
   review,
 }: {
   application: Doc<'eventApplications'> & {
-    applicant?: { name: string | null; username: string | null };
+    applicant?: {
+      name: string | null;
+      username: string | null;
+      image?: string | null;
+    };
   };
   review: boolean;
 }) {
@@ -274,6 +445,7 @@ function ApplicationRecord({
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   async function decision(status: 'APPROVED' | 'DECLINED') {
+    if (busy || message) return;
     setBusy(true);
     setError('');
     try {
@@ -297,27 +469,48 @@ function ApplicationRecord({
   }
   return (
     <article
-      className='rounded-card border border-border p-4 space-y-3'
+      className='min-w-0 rounded-card border border-border bg-card p-4 space-y-4'
       aria-label={
         review
           ? `Application from ${application.applicant?.name || application.applicant?.username || 'Applicant'}`
           : 'Your application'
       }
     >
-      <h3 className='font-heading font-semibold'>{application.status}</h3>
-      {review && (
-        <p>
-          Applicant:{' '}
-          {application.applicant?.name ||
-            application.applicant?.username ||
-            'Applicant'}
-        </p>
+      {review ? (
+        <header className='flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:gap-3'>
+          <ApplicantIdentity
+            applicant={application.applicant}
+            personId={application.personId}
+          />
+          <Badge
+            variant={
+              application.status === 'APPROVED'
+                ? 'success'
+                : application.status === 'PENDING'
+                  ? 'warning'
+                  : application.status === 'DECLINED'
+                    ? 'destructive'
+                    : 'outline'
+            }
+            className='shrink-0'
+          >
+            {application.status.charAt(0) +
+              application.status.slice(1).toLowerCase()}
+          </Badge>
+        </header>
+      ) : (
+        <h3 className='font-heading font-semibold'>{application.status}</h3>
       )}
-      <dl className='space-y-2'>
+      <dl className={review ? 'divide-y divide-border' : 'space-y-2'}>
         {application.questions.map(q => (
-          <div key={q.id}>
-            <dt className='font-medium'>{q.label}</dt>
-            <dd>
+          <div
+            key={q.id}
+            className={review ? 'min-w-0 py-3 first:pt-0 last:pb-0' : undefined}
+          >
+            <dt className='break-words text-sm font-medium text-muted-foreground'>
+              {q.label}
+            </dt>
+            <dd className='mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed'>
               {Array.isArray(application.answers[q.id])
                 ? (application.answers[q.id] as string[]).join(', ')
                 : typeof application.answers[q.id] === 'boolean'
@@ -352,29 +545,37 @@ function ApplicationRecord({
       )}
       {review && application.status === 'PENDING' && (
         <>
-          <Label htmlFor={`decision-${application._id}`}>
-            Decision reason (optional)
-          </Label>
-          <Textarea
-            id={`decision-${application._id}`}
-            value={reason}
-            maxLength={2000}
-            disabled={busy}
-            onChange={event => setReason(event.target.value)}
-          />
-          <div className='flex gap-3'>
+          <div className='space-y-2 border-t border-border pt-4'>
+            <Label htmlFor={`decision-${application._id}`}>
+              Decision reason (optional)
+            </Label>
+            <Textarea
+              id={`decision-${application._id}`}
+              rows={2}
+              className='field-sizing-content'
+              value={reason}
+              maxLength={2000}
+              disabled={busy}
+              onChange={event => setReason(event.target.value)}
+            />
+          </div>
+          <div className='flex flex-wrap gap-2'>
             <Button
+              aria-label='Approve application'
+              icon={<Check className='size-4' aria-hidden='true' />}
               disabled={busy || !!message}
               onClick={() => void decision('APPROVED')}
             >
-              Approve application
+              Approve
             </Button>
             <Button
               variant='outline'
+              aria-label='Decline application'
+              icon={<X className='size-4' aria-hidden='true' />}
               disabled={busy || !!message}
               onClick={() => void decision('DECLINED')}
             >
-              Decline application
+              Decline
             </Button>
           </div>
         </>

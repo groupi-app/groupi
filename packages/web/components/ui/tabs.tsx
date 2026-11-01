@@ -82,7 +82,7 @@ export function TabsList({
         // Clean tab container with relative positioning for highlight
         'relative inline-flex h-10 items-center justify-center rounded-soft bg-muted p-1 text-muted-foreground border border-border/50 shadow-raised',
         soft &&
-          'h-auto flex-wrap justify-start gap-1 border-border bg-bg-sunken p-1 shadow-none',
+          'h-auto flex-nowrap justify-start gap-1 border-border bg-bg-sunken p-1 shadow-none',
         className
       )}
       {...props}
@@ -117,7 +117,7 @@ export function TabsTrigger({
         // Text color transitions
         'hover:text-foreground data-[state=active]:text-foreground',
         soft &&
-          'border-2 border-transparent whitespace-normal text-center font-semibold data-[state=active]:border-primary data-[state=active]:bg-background motion-reduce:transition-none',
+          'border-2 border-transparent whitespace-nowrap text-center font-semibold data-[state=active]:border-primary data-[state=active]:bg-background motion-reduce:transition-none',
         className
       )}
       suppressHydrationWarning

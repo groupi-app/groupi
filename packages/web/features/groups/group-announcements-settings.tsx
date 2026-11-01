@@ -1,24 +1,27 @@
 'use client';
+
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
-import { useGroup } from '@/hooks/convex/use-groups';
-import { GroupSettingsPanel } from './group-settings-panel';
-import { GroupAnnouncementComposer } from '@/components/organisms/group-announcement-composer';
-import { EventMail } from '@/features/group-announcements/event-mail';
+
+/** Compatibility destination only. The Group feed owns authentication and content access. */
 export function GroupAnnouncementsSettings({
   groupId,
 }: {
   groupId: Id<'groups'>;
 }) {
-  const group = useGroup(groupId);
-  if (!group) return null;
+  const router = useRouter();
+  const destination = `/groups/${groupId}`;
+  useEffect(() => {
+    router.replace(destination);
+  }, [router, destination]);
   return (
-    <GroupSettingsPanel title='Announcements'>
-      {group.viewerRole !== 'MEMBER' && (
-        <>
-          <GroupAnnouncementComposer groupId={groupId} />
-          <EventMail groupId={groupId} />
-        </>
-      )}
-    </GroupSettingsPanel>
+    <p role='status' className='p-4 text-sm text-muted-foreground'>
+      Opening Group…{' '}
+      <Link className='text-primary underline' href={destination}>
+        Open Group
+      </Link>
+    </p>
   );
 }

@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useEffect,
   useCallback,
   useContext,
   useMemo,
@@ -17,6 +18,8 @@ import {
   createEmptyTemplate,
   createEmptySection,
   validateTemplate,
+  templateToYaml,
+  yamlToTemplate,
   resluggifyAllFields,
   type ValidationResult,
 } from '../model/custom-addon-schema';
@@ -40,6 +43,15 @@ interface BuilderContextValue {
   resluggifyFields: () => void;
   validation: ValidationResult;
   isDirty: boolean;
+  markSaved: (template: CustomAddonTemplate, yaml: string) => void;
+  revert: () => void;
+  yamlValue: string;
+  yamlErrors: string[];
+  yamlPending: boolean;
+  yamlInvalid: boolean;
+  editYaml: (value: string) => void;
+  activeSectionId: string | null;
+  setActiveSectionId: (id: string | null) => void;
   /** Tracks which editor last made changes, to avoid circular syncs */
   lastEditor: 'visual' | 'yaml' | null;
   setLastEditor: (editor: 'visual' | 'yaml') => void;
@@ -61,20 +73,35 @@ export function BuilderProvider({
   children: ReactNode;
 }) {
   const [template, setTemplateState] = useState<CustomAddonTemplate>(
-    initialTemplate ?? createEmptyTemplate()
+    () => initialTemplate ?? createEmptyTemplate()
   );
-  const [isDirty, setIsDirty] = useState(false);
+  const [saved, setSaved] = useState(() => {
+    const initial = initialTemplate ?? template;
+    return { template: JSON.stringify(initial), yaml: templateToYaml(initial) };
+  });
+  const [activeSection, setActiveSectionId] = useState<string | null>(
+    template.sections[0]?.id ?? null
+  );
+  const activeSectionId =
+    activeSection === null ||
+    template.sections.some(section => section.id === activeSection)
+      ? activeSection
+      : (template.sections[0]?.id ?? null);
+  const [yamlDraft, setYamlDraft] = useState<{
+    text: string | null;
+    pending: boolean;
+    invalid: boolean;
+    errors: string[];
+  }>({ text: null, pending: false, invalid: false, errors: [] });
   const [lastEditor, setLastEditor] = useState<'visual' | 'yaml' | null>(null);
 
   const setTemplate = useCallback((newTemplate: CustomAddonTemplate) => {
     setTemplateState(newTemplate);
-    setIsDirty(true);
   }, []);
 
   const updateTemplate = useCallback(
     (partial: Partial<CustomAddonTemplate>) => {
       setTemplateState(prev => ({ ...prev, ...partial }));
-      setIsDirty(true);
       setLastEditor('visual');
     },
     []
@@ -88,18 +115,18 @@ export function BuilderProvider({
           s.id === sectionId ? { ...s, ...partial } : s
         ),
       }));
-      setIsDirty(true);
       setLastEditor('visual');
     },
     []
   );
 
   const addSection = useCallback(() => {
+    const section = createEmptySection();
+    setActiveSectionId(section.id);
     setTemplateState(prev => ({
       ...prev,
-      sections: [...prev.sections, createEmptySection()],
+      sections: [...prev.sections, section],
     }));
-    setIsDirty(true);
     setLastEditor('visual');
   }, []);
 
@@ -196,7 +223,6 @@ export function BuilderProvider({
 
       return { ...prev, sections, automations };
     });
-    setIsDirty(true);
     setLastEditor('visual');
   }, []);
 
@@ -207,7 +233,6 @@ export function BuilderProvider({
       sections.splice(toIndex, 0, moved);
       return { ...prev, sections };
     });
-    setIsDirty(true);
     setLastEditor('visual');
   }, []);
 
@@ -226,7 +251,6 @@ export function BuilderProvider({
             : s
         ),
       }));
-      setIsDirty(true);
       setLastEditor('visual');
     },
     []
@@ -239,7 +263,6 @@ export function BuilderProvider({
         s.id === sectionId ? { ...s, fields: [...s.fields, field] } : s
       ),
     }));
-    setIsDirty(true);
     setLastEditor('visual');
   }, []);
 
@@ -335,7 +358,6 @@ export function BuilderProvider({
 
       return { ...prev, sections, automations };
     });
-    setIsDirty(true);
     setLastEditor('visual');
   }, []);
 
@@ -351,7 +373,6 @@ export function BuilderProvider({
           return { ...s, fields };
         }),
       }));
-      setIsDirty(true);
       setLastEditor('visual');
     },
     []
@@ -359,7 +380,86 @@ export function BuilderProvider({
 
   const resluggifyFields = useCallback(() => {
     setTemplateState(prev => resluggifyAllFields(prev));
+    setLastEditor('visual');
   }, []);
+
+  // The raw draft belongs to the provider, so mode changes cannot drop invalid or pending YAML.
+  const yamlValue =
+    lastEditor === 'visual' && !yamlDraft.pending && !yamlDraft.invalid
+      ? templateToYaml(template)
+      : (yamlDraft.text ?? templateToYaml(template));
+  const editYaml = useCallback((text: string) => {
+    setLastEditor('yaml');
+    setYamlDraft({ text, pending: true, invalid: false, errors: [] });
+  }, []);
+  useEffect(() => {
+    if (!yamlDraft.pending || yamlDraft.text === null) return;
+    const text = yamlDraft.text;
+    const timer = setTimeout(() => {
+      try {
+        const parsed = yamlToTemplate(text);
+        if (parsed.error || !parsed.template)
+          throw new Error(parsed.error ?? 'Invalid YAML');
+        const next = parsed.template;
+        // Do not put malformed editor documents into the visual renderer.
+        if (
+          typeof next.name !== 'string' ||
+          typeof next.description !== 'string' ||
+          typeof next.iconName !== 'string' ||
+          !Array.isArray(next.sections) ||
+          next.sections.some(
+            section =>
+              typeof section.id !== 'string' ||
+              typeof section.title !== 'string' ||
+              !Array.isArray(section.fields)
+          )
+        )
+          throw new Error(
+            'Use an add-on with a name, description, iconName and sections containing fields.'
+          );
+        const result = validateTemplate(next);
+        setTemplateState(next);
+        setYamlDraft({
+          text,
+          pending: false,
+          invalid: false,
+          errors: result.errorMessages,
+        });
+      } catch (error) {
+        setYamlDraft({
+          text,
+          pending: false,
+          invalid: true,
+          errors: [
+            error instanceof Error ? error.message : 'Invalid add-on YAML',
+          ],
+        });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [yamlDraft.pending, yamlDraft.text]);
+  const isDirty =
+    JSON.stringify(template) !== saved.template ||
+    yamlValue !== saved.yaml ||
+    yamlDraft.pending ||
+    yamlDraft.invalid;
+  const markSaved = useCallback(
+    (snapshot: CustomAddonTemplate, yaml: string) => {
+      setSaved({ template: JSON.stringify(snapshot), yaml });
+    },
+    []
+  );
+
+  const revert = useCallback(() => {
+    setTemplateState(JSON.parse(saved.template) as CustomAddonTemplate);
+    setYamlDraft({
+      text: saved.yaml,
+      pending: false,
+      invalid: false,
+      errors: [],
+    });
+    setLastEditor('yaml');
+  }, [saved]);
 
   const validation = useMemo(() => validateTemplate(template), [template]);
 
@@ -395,6 +495,15 @@ export function BuilderProvider({
       resluggifyFields,
       validation,
       isDirty,
+      markSaved,
+      revert,
+      yamlValue,
+      yamlErrors: yamlDraft.errors,
+      yamlPending: yamlDraft.pending,
+      yamlInvalid: yamlDraft.invalid,
+      editYaml,
+      activeSectionId,
+      setActiveSectionId,
       lastEditor,
       setLastEditor,
       setActiveVariableTarget,
@@ -415,6 +524,12 @@ export function BuilderProvider({
       resluggifyFields,
       validation,
       isDirty,
+      markSaved,
+      revert,
+      yamlValue,
+      yamlDraft,
+      editYaml,
+      activeSectionId,
       lastEditor,
       setLastEditor,
       setActiveVariableTarget,

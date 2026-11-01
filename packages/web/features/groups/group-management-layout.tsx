@@ -9,7 +9,6 @@ import {
   UserPlus,
   ClipboardList,
   MessageCircle,
-  Mail,
   Shield,
   Pencil,
 } from 'lucide-react';
@@ -17,6 +16,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useGroup } from '@/hooks/convex/use-groups';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { GroupAnnouncementsSettings } from './group-announcements-settings';
 
 export function GroupManagementLayout({
   children,
@@ -28,6 +28,10 @@ export function GroupManagementLayout({
   const { groupId } = useParams<{ groupId: string }>();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const pathname = usePathname();
+  // Retired sending URLs contain no management content. Replace them with the
+  // canonical feed, whose page applies its own authentication and access checks.
+  if (pathname === `/groups/${groupId}/settings/announcements`)
+    return <GroupAnnouncementsSettings groupId={groupId as Id<'groups'>} />;
   if (isLoading) return <p role='status'>Loading Group…</p>;
   if (!isAuthenticated)
     return (
@@ -64,11 +68,14 @@ function AuthenticatedGroupManagementLayout({
   if (group === undefined) return <p role='status'>Loading Group…</p>;
   if (
     !group ||
-    !(editing
-      ? group.canManageIdentity
-      : group.canManageMembers ||
-        group.canManageIdentity ||
-        group.canManageInvitations)
+    !(
+      pathname.endsWith('/settings/membership') ||
+      (editing
+        ? group.canManageIdentity
+        : group.canManageMembers ||
+          group.canManageIdentity ||
+          group.canManageInvitations)
+    )
   )
     return (
       <main className='mx-auto max-w-4xl space-y-4 p-6'>
@@ -84,6 +91,12 @@ function AuthenticatedGroupManagementLayout({
       </main>
     );
   const items = [
+    {
+      path: 'membership',
+      title: 'Your membership',
+      icon: Users,
+      show: true,
+    },
     {
       path: 'admissions',
       title: 'Admissions',
@@ -107,12 +120,6 @@ function AuthenticatedGroupManagementLayout({
       title: 'Discord',
       icon: MessageCircle,
       show: group.canManageMembers,
-    },
-    {
-      path: 'announcements',
-      title: 'Announcements',
-      icon: Mail,
-      show: group.viewerRole !== 'MEMBER',
     },
     {
       path: 'ownership',

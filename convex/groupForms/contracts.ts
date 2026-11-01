@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { contextFields } from '../groupTools/contracts';
 import {
   questionValidator,
   answersValidator,
@@ -16,7 +17,7 @@ export const createInput = {
 };
 export const responseFields = {
   toolId: v.id('groupTools'),
-  groupId: v.id('groups'),
+  ...contextFields,
   personId: v.optional(v.id('persons')),
   revision: v.number(),
   version: v.number(),

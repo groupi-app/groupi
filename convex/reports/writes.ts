@@ -1,3 +1,4 @@
+import { requireDiscussionParent } from '../lib/discussionAccess';
 import { v, ConvexError, type Infer } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
@@ -75,6 +76,7 @@ export async function createReportForPerson(
     if (post.authorId === personId) {
       throw new ConvexError('You cannot report your own post');
     }
+    if (post.groupId) await requireDiscussionParent(ctx, post, personId);
     contextEventId = post.eventId;
     contextPostId = post._id;
   } else if (targetType === 'REPLY') {
@@ -88,6 +90,7 @@ export async function createReportForPerson(
     }
     const post = await ctx.db.get(reply.postId);
     if (post) {
+      if (post.groupId) await requireDiscussionParent(ctx, post, personId);
       contextEventId = post.eventId;
       contextPostId = post._id;
     }

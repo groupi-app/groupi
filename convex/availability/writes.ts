@@ -1,3 +1,4 @@
+import { isDateOptionPassed } from '@groupi/shared/utils';
 import { requireNoEventExclusion } from '../groups/exclusions';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
@@ -108,6 +109,13 @@ export async function submitAvailabilityForPerson(
       );
     }
 
+    if (isDateOptionPassed(potentialDateTime, now)) {
+      attendanceError(
+        'VALIDATION_ERROR',
+        'This date has passed. Choose a future date option.'
+      );
+    }
+
     const existingAvailability = await consolidateAvailabilityResponses(
       ctx,
       membership._id,
@@ -188,6 +196,13 @@ export async function updateSingleAvailabilityForPerson(
     attendanceError('VALIDATION_ERROR', 'Note must be 200 characters or less');
   }
 
+  if (isDateOptionPassed(potentialDateTime, Date.now())) {
+    attendanceError(
+      'VALIDATION_ERROR',
+      'This date has passed. Choose a future date option.'
+    );
+  }
+
   // Collapse any historical duplicates before applying the update.
   const existingAvailability = await consolidateAvailabilityResponses(
     ctx,
@@ -253,13 +268,19 @@ export async function clearAllAvailabilityForPerson(
     .withIndex('by_membership', q => q.eq('membershipId', membership._id))
     .collect();
 
-  // Delete all availabilities
+  // Passed-date responses are historical: bulk reset only clears editable dates.
+  const removable = [];
+  for (const availability of availabilities) {
+    const option = await ctx.db.get(availability.potentialDateTimeId);
+    if (!option || !isDateOptionPassed(option, Date.now()))
+      removable.push(availability);
+  }
   await Promise.all(
-    availabilities.map(availability => ctx.db.delete(availability._id))
+    removable.map(availability => ctx.db.delete(availability._id))
   );
 
   return {
-    deletedCount: availabilities.length,
+    deletedCount: removable.length,
     membershipId: membership._id,
   };
 }

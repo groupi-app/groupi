@@ -13,8 +13,12 @@ export const policyFields = {
   enabled: v.boolean(),
   creation,
 };
+export const contextFields = {
+  groupId: v.optional(v.id('groups')),
+  eventId: v.optional(v.id('events')),
+};
 export const toolFields = {
-  groupId: v.id('groups'),
+  ...contextFields,
   kind,
   title: v.string(),
   description: v.string(),

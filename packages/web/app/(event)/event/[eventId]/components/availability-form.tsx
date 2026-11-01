@@ -1,4 +1,6 @@
 'use client';
+import { useLifecycleClock } from '@groupi/shared/hooks';
+import { isDateOptionPassed } from '@groupi/shared/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -37,6 +39,12 @@ export function AvailabilityForm({
   userId: Id<'persons'>;
 }) {
   const eventId = potentialDateTimes[0].eventId;
+  const now = useLifecycleClock(
+    potentialDateTimes.map(option => option.dateTime)
+  );
+  const canVote = potentialDateTimes.some(
+    option => !isDateOptionPassed(option, now)
+  );
   const router = useRouter();
   const submitAvailability = useSubmitAvailability();
   const [isSaving, setIsSaving] = useState(false);
@@ -134,7 +142,8 @@ export function AvailabilityForm({
       availabilities[index].answer = answer;
     } else {
       for (let i = 0; i < availabilities.length; i++) {
-        availabilities[i].answer = answer;
+        if (!isDateOptionPassed(potentialDateTimes[i], Date.now()))
+          availabilities[i].answer = answer;
       }
     }
     form.setValue(`formAnswers`, availabilities);
@@ -161,13 +170,24 @@ export function AvailabilityForm({
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    const responses = data.formAnswers.map(answer => ({
-      potentialDateTimeId:
-        answer.potentialDateTimeId as Id<'potentialDateTimes'>,
-      status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
-      note: answer.note || undefined,
-    }));
+    const responses = data.formAnswers
+      .filter(answer => {
+        const option = potentialDateTimes.find(
+          option => option._id === answer.potentialDateTimeId
+        );
+        return option && !isDateOptionPassed(option, Date.now());
+      })
+      .map(answer => ({
+        potentialDateTimeId:
+          answer.potentialDateTimeId as Id<'potentialDateTimes'>,
+        status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
+        note: answer.note || undefined,
+      }));
 
+    if (!responses.length) {
+      setIsSaving(false);
+      return;
+    }
     try {
       await submitAvailability({
         eventId,
@@ -191,9 +211,15 @@ export function AvailabilityForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {!canVote && (
+          <p role='status' className='text-sm text-muted-foreground'>
+            Needs new dates
+          </p>
+        )}
         <div className='flex items-center gap-2 my-4'>
           <Button
             type='button'
+            disabled={!canVote || isSaving}
             onClick={() => setFormAnswers('yes')}
             className='text-muted-foreground px-3'
             variant='outline'
@@ -205,6 +231,7 @@ export function AvailabilityForm({
           </Button>
           <Button
             type='button'
+            disabled={!canVote || isSaving}
             onClick={() => setFormAnswers('maybe')}
             className='text-muted-foreground px-3'
             variant='outline'
@@ -216,6 +243,7 @@ export function AvailabilityForm({
           </Button>
           <Button
             type='button'
+            disabled={!canVote || isSaving}
             onClick={() => setFormAnswers('no')}
             className='text-muted-foreground px-3'
             variant='outline'
@@ -237,6 +265,16 @@ export function AvailabilityForm({
                     <AvailabilityCard
                       key={pdt._id}
                       pdt={pdt}
+                      savedStatus={
+                        pdt.availabilities.find(
+                          a => a.member?.personId === userId
+                        )?.status
+                      }
+                      savedNote={
+                        pdt.availabilities.find(
+                          a => a.member?.personId === userId
+                        )?.note
+                      }
                       formAnswers={form.watch('formAnswers')}
                       setFormAnswer={toggleFormValue}
                       setFormNote={setFormNote}
@@ -253,6 +291,7 @@ export function AvailabilityForm({
           type='submit'
           disabled={
             isSaving ||
+            !canVote ||
             !(
               form
                 .watch('formAnswers')
