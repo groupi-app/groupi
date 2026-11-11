@@ -2,7 +2,7 @@
 import { useId, useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,13 +11,16 @@ export function HostedAppearanceEditor({
   appearance,
 }: {
   appId: Id<'delegatedApps'>;
-  appearance?: { brandName: string; senderName: string; accent: string };
+  appearance?: Doc<'delegatedApps'>['appearance'];
 }) {
   const id = useId();
   const configure = useMutation(api.delegatedApps.hosted.configureAppearance);
   const [brandName, setBrandName] = useState(appearance?.brandName ?? '');
   const [senderName, setSenderName] = useState(appearance?.senderName ?? '');
   const [accent, setAccent] = useState(appearance?.accent ?? '#2563eb');
+  const [statusReturnUrl, setStatusReturnUrl] = useState(
+    appearance?.statusReturnUrl ?? ''
+  );
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -32,7 +35,14 @@ export function HostedAppearanceEditor({
         try {
           await configure({
             appId,
-            appearance: { brandName, senderName, accent },
+            appearance: {
+              brandName,
+              senderName,
+              accent,
+              ...(statusReturnUrl.trim()
+                ? { statusReturnUrl: statusReturnUrl.trim() }
+                : {}),
+            },
           });
           setNotice('Hosted appearance saved.');
         } catch (cause) {
@@ -83,6 +93,26 @@ export function HostedAppearanceEditor({
             pattern='#[0-9a-fA-F]{6}'
             required
           />
+        </div>
+        <div>
+          <Label htmlFor={`${id}-status-return`}>
+            Application status return URL (optional)
+          </Label>
+          <Input
+            id={`${id}-status-return`}
+            type='url'
+            value={statusReturnUrl}
+            onChange={event => setStatusReturnUrl(event.target.value)}
+            aria-describedby={`${id}-status-return-help`}
+          />
+          <p
+            id={`${id}-status-return-help`}
+            className='text-sm text-muted-foreground'
+          >
+            Return applicants to this app after a decision. Use HTTPS on an
+            origin registered in the callback URIs, without credentials or a
+            fragment. Leave blank to remove the return link.
+          </p>
         </div>
         <Button type='submit' isLoading={pending}>
           Save hosted appearance
