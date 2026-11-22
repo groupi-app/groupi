@@ -9,7 +9,8 @@
       "codex/content-pages-refinement": false,
       "codex/management-ui-refinement": false,
       "codex/release-lock-resolution": false,
-      "codex/portal-learning-spec": false
+      "codex/portal-learning-spec": false,
+      "codex/red-room-status-return": false
     }
   }
 }

@@ -2,6 +2,25 @@
 
 Current feature evidence and historical integration checkpoints. Source verification does not imply live runtime acceptance.
 
+## Hosted application return editor candidate — 2026-11-11
+
+The candidate starts from `main` source
+`276f8dc7cbe3b628c6eda02627dc80571d5951cf`. The administrator-only hosted appearance
+editor now preserves and exposes optional `statusReturnUrl`; clearing the field
+removes the link. Backend administrator checks, registered HTTPS-origin validation,
+callback URIs, grants and consent remain unchanged.
+
+The reviewed editor and five regression tests were recovered in a clean cloud
+checkout with matching Git blob identities. Earlier local verification passed
+`pnpm check`, all 1,642 web tests and 21 related backend tests. The prior local
+build outcome is unverified because that computer disconnected. Authenticated
+browser acceptance remains open.
+
+The release candidate includes the approved `@groupi/web` patch changeset.
+Automatic Vercel deployment is disabled for `codex/red-room-status-return` so
+preview creation cannot provision a backend or configure credentials. This
+candidate has not been merged, deployed or applied to production configuration.
+
 ## Table of Contents
 
 - [UI regression candidate — 2026-10-25](#ui-regression-candidate--2026-10-25)

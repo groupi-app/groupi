@@ -140,3 +140,135 @@ it('an administrator saves the hosted brand without changing the exact registere
     screen.getByText('com.example.calendar:/callback')
   ).toBeInTheDocument();
 });
+
+const hostedApp = {
+  ...app,
+  redirectUris: ['https://reading.example/callback'],
+  appearance: {
+    brandName: 'Reading Circle',
+    senderName: 'Reading Circle',
+    accent: '#991b1b',
+    statusReturnUrl: 'https://reading.example/community/application',
+  },
+};
+function renderHostedApp(configure = vi.fn().mockResolvedValue(null)) {
+  vi.mocked(useMutation).mockReturnValue(configure as never);
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { role: 'admin' } : [hostedApp]
+  );
+  render(<AppReviewSettings />);
+  return { configure, user: userEvent.setup() };
+}
+it('preserves the saved application status return URL when changing the hosted brand', async () => {
+  const { configure, user } = renderHostedApp();
+  expect(
+    screen.getByLabelText('Application status return URL (optional)')
+  ).toHaveValue(hostedApp.appearance.statusReturnUrl);
+  await user.clear(screen.getByLabelText('Hosted brand name'));
+  await user.type(screen.getByLabelText('Hosted brand name'), 'Book Club');
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(configure).toHaveBeenCalledWith({
+    appId: app._id,
+    appearance: { ...hostedApp.appearance, brandName: 'Book Club' },
+  });
+  expect(screen.getByText(hostedApp.redirectUris[0])).toBeInTheDocument();
+});
+it('saves a changed application status return URL without changing the callback', async () => {
+  const { configure, user } = renderHostedApp();
+  const input = screen.getByLabelText(
+    'Application status return URL (optional)'
+  );
+  await user.clear(input);
+  await user.type(input, 'https://reading.example/status');
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(configure).toHaveBeenCalledWith({
+    appId: app._id,
+    appearance: {
+      ...hostedApp.appearance,
+      statusReturnUrl: 'https://reading.example/status',
+    },
+  });
+  expect(screen.getByText(hostedApp.redirectUris[0])).toBeInTheDocument();
+});
+it('omits the optional return URL when the administrator deliberately clears it', async () => {
+  const { configure, user } = renderHostedApp();
+  await user.clear(
+    screen.getByLabelText('Application status return URL (optional)')
+  );
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(configure).toHaveBeenCalledWith({
+    appId: app._id,
+    appearance: {
+      brandName: hostedApp.appearance.brandName,
+      senderName: hostedApp.appearance.senderName,
+      accent: hostedApp.appearance.accent,
+    },
+  });
+});
+it('keeps the draft and reports provider validation errors without acknowledging a save', async () => {
+  const configure = vi
+    .fn()
+    .mockRejectedValueOnce(
+      new Error('Status return must use an approved HTTPS app origin')
+    )
+    .mockResolvedValue(null);
+  const { user } = renderHostedApp(configure);
+  const input = screen.getByLabelText(
+    'Application status return URL (optional)'
+  );
+  await user.clear(input);
+  await user.type(input, 'https://other.example/status');
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Status return must use an approved HTTPS app origin'
+  );
+  expect(
+    screen.queryByText('Hosted appearance saved.')
+  ).not.toBeInTheDocument();
+  expect(input).toHaveValue('https://other.example/status');
+  expect(screen.getByLabelText('Hosted brand name')).toHaveValue(
+    'Reading Circle'
+  );
+  await user.clear(input);
+  await user.type(input, hostedApp.appearance.statusReturnUrl);
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(
+    await screen.findByText('Hosted appearance saved.')
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+it('disables status return edits and repeated saves while a request is pending', async () => {
+  let complete!: (value: null) => void;
+  const configure = vi.fn().mockImplementation(
+    () =>
+      new Promise<null>(resolve => {
+        complete = resolve;
+      })
+  );
+  const { user } = renderHostedApp(configure);
+  const button = screen.getByRole('button', { name: 'Save hosted appearance' });
+  await user.click(button);
+  expect(
+    screen.getByLabelText('Application status return URL (optional)')
+  ).toBeDisabled();
+  expect(button).toBeDisabled();
+  await user.click(button);
+  expect(configure).toHaveBeenCalledTimes(1);
+  complete(null);
+  expect(
+    await screen.findByText('Hosted appearance saved.')
+  ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText('Application status return URL (optional)')
+  ).toBeEnabled();
+});

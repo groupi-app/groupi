@@ -1,4 +1,10 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react/pure';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { toast as sonnerToast } from 'sonner';
 import userEvent from '@testing-library/user-event';
@@ -25,6 +31,7 @@ function Feedback() {
 }
 
 beforeEach(() => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
     configurable: true,
     value() {},
@@ -38,12 +45,25 @@ beforeEach(() => {
   }));
 });
 
-afterEach(() => {
-  act(() => {
-    sonnerToast.dismiss();
-  });
-  cleanup();
-  vi.unstubAllGlobals();
+afterEach(async () => {
+  // The pure entry point keeps automatic cleanup from unmounting the renderer
+  // before Sonner's dismissal RAF and exit-animation timer have completed.
+  try {
+    expect(screen.getByLabelText('Notifications alt+T')).toBeInTheDocument();
+    await act(async () => {
+      sonnerToast.dismiss();
+      // Dismissal also schedules a frame for historical, already-removed toasts.
+      await new Promise<void>(resolve =>
+        requestAnimationFrame(() => resolve())
+      );
+    });
+    await waitFor(() =>
+      expect(document.querySelectorAll('[data-sonner-toast]')).toHaveLength(0)
+    );
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
 });
 
 it('delivers legacy success and error feedback through the mounted app renderer', async () => {
