@@ -423,3 +423,20 @@ Because GitHub PR heads are immutable, preserving verified test requires a
 separate replacement draft PR rather than changing PR #439's source. The candidate
 has not been runtime-deployed. Main/production merge, registry publication, new
 credentials and backend rollout remain outside authorization.
+
+## Hosted OAuth consent candidate — 2026-11-23
+
+PR #462 (`fix/web-consent-profile`, based on main `c15f6342`) simplifies native
+hosted web consent presentation while preserving exact requested actions,
+account-switch routing, grant boundaries, opt-ins, expiry and continuation-origin
+verification. Its exact branch has automatic Vercel deployment disabled.
+Theia approved the `@groupi/web` patch changeset and merging this PR after required
+checks pass, with normal production CI afterward. No check/protection bypass,
+manual deployment, account mutation or authenticated production QA is authorized.
+Local consent tests (20), authorization tests (78), offline deployment-boundary
+tests (12), lint, all-package types, 840 contracts and formatting passed. The
+original candidate CI passed package, quality and build checks; browser-history
+setup failed while installing Chromium, before running its tests. Playwright 1.58 rejects the Ubuntu 26.04 runner selected by `ubuntu-latest`;
+the candidate pins only browser-history CI to supported Ubuntu 24.04 without
+changing its tests or failure handling. Release-note publication and fresh
+candidate checks are separate from deployed acceptance.

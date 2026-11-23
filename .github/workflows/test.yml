@@ -208,7 +208,8 @@ jobs:
   # Actual browser history/focus regressions without an app server or backend.
   test-history:
     name: Test Browser History
-    runs-on: ubuntu-latest
+    # Playwright 1.58 supports Ubuntu 24.04; ubuntu-latest now selects 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
