@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMutation, useQuery } from 'convex/react';
 import { DelegatedConsent } from './delegated-consent';
@@ -41,7 +41,7 @@ it('shows the exact requested actions checked and disabled without granting befo
   });
 });
 
-it('requires explicit background consent and shows the instance, account, app and bounds', async () => {
+it('requires explicit background consent and shows the account, app and bounds without the technical instance', async () => {
   mockConsent({
     interactionId: 'i-1',
     instance: 'https://groupi.example',
@@ -58,7 +58,8 @@ it('requires explicit background consent and shows the instance, account, app an
   vi.mocked(useMutation).mockReturnValue(approve as never);
   const user = userEvent.setup();
   render(<DelegatedConsent interactionId='i-1' />);
-  expect(screen.getByText('https://groupi.example')).toBeInTheDocument();
+  expect(screen.queryByText('https://groupi.example')).not.toBeInTheDocument();
+  expect(screen.queryByText('Groupi instance')).not.toBeInTheDocument();
   expect(screen.getByText('Alice')).toBeInTheDocument();
   expect(
     screen.getByRole('heading', { name: 'Connect Calendar' })
@@ -197,7 +198,7 @@ it('replaces an expired open consent form with restart guidance when its deadlin
   }
 });
 
-it('branded consent still discloses provider, Developer app and unambiguous account with explicit switching', () => {
+it('shows one app heading and an unambiguous Groupi profile with explicit switching', () => {
   const request = {
     ...consentRequest(),
     appearance: {
@@ -215,11 +216,19 @@ it('branded consent still discloses provider, Developer app and unambiguous acco
     args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
   );
   render(<DelegatedConsent interactionId='i-1' />);
-  expect(screen.getByText('Reading Circle')).toBeInTheDocument();
+  expect(screen.getAllByRole('heading')).toHaveLength(1);
+  expect(
+    screen.getByRole('heading', { name: 'Connect Calendar' })
+  ).toBeInTheDocument();
   expect(screen.getByText('Sign-in provided by Groupi')).toBeInTheDocument();
-  expect(screen.getByText('Developer app: Calendar')).toBeInTheDocument();
-  expect(screen.getByText('alice@example.test')).toBeInTheDocument();
-  expect(screen.getByText('@nightowl')).toBeInTheDocument();
+  expect(screen.getByText('Show events')).toBeInTheDocument();
+  expect(screen.queryByText('Developer app: Calendar')).not.toBeInTheDocument();
+  expect(screen.queryByText('Groupi instance')).not.toBeInTheDocument();
+  expect(screen.queryByText(request.instance)).not.toBeInTheDocument();
+  const profile = screen.getByRole('region', { name: 'Your Groupi account' });
+  expect(within(profile).getByText('Alice')).toBeInTheDocument();
+  expect(within(profile).getByText('alice@example.test')).toBeInTheDocument();
+  expect(screen.queryByText('@nightowl')).not.toBeInTheDocument();
   expect(
     screen.getByRole('link', { name: 'Choose another account' })
   ).toHaveAttribute(
@@ -242,8 +251,20 @@ it('discloses only the selected Group and future audience boundary for applicant
   render(<DelegatedConsent interactionId='i-1' />);
   expect(screen.getByText('Reading Circle')).toBeInTheDocument();
   expect(
-    screen.getByText(/current and future Events shared with this Group/)
-  ).toBeInTheDocument();
+    screen.getByText(/Only your own community context in this Group/)
+  ).toHaveTextContent(
+    'current and future Events shared with this Group bound future participation permissions'
+  );
+  expect(
+    screen.getByText(/Only your own community context in this Group/)
+  ).toHaveTextContent(
+    'Event access and changes require separate supported consent and current eligibility'
+  );
+  expect(
+    screen.getByText(/Only your own community context in this Group/)
+  ).toHaveTextContent(
+    'No reviewer authority or unrelated Group or Event access is granted'
+  );
   expect(screen.queryByText('Event access')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Allow access' }));
   expect(approve).toHaveBeenCalledWith({
@@ -493,3 +514,31 @@ it.each(['account', 'interaction'])(
     }
   }
 );
+
+it('uses the handle as the single account identifier when email is unavailable', () => {
+  const request = {
+    ...consentRequest(),
+    account: { displayName: 'Alice Smith', username: 'nightowl' },
+  };
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
+  );
+  render(<DelegatedConsent interactionId='i-1' />);
+  const profile = screen.getByRole('region', { name: 'Your Groupi account' });
+  expect(within(profile).getByText('Alice Smith')).toBeInTheDocument();
+  expect(within(profile).getByText('@nightowl')).toBeInTheDocument();
+  expect(within(profile).getByText('AS')).toBeInTheDocument();
+});
+
+it('keeps the account-switch return route encoded for the exact interaction', () => {
+  mockConsent(consentRequest());
+  const interactionId = 'request/with ?&=characters';
+  render(<DelegatedConsent interactionId={interactionId} />);
+  const link = screen.getByRole('link', { name: 'Choose another account' });
+  const signIn = new URL(link.getAttribute('href')!, 'https://groupi.example');
+  expect(signIn.pathname).toBe('/sign-in');
+  expect(signIn.searchParams.get('mode')).toBe('add-account');
+  const consent = new URL(signIn.searchParams.get('redirect')!, signIn.origin);
+  expect(consent.pathname).toBe('/oauth/consent');
+  expect(consent.searchParams.get('interactionId')).toBe(interactionId);
+});

@@ -9,6 +9,8 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { authorizationActionLabel } from '@groupi/shared/hooks';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { getInitialsFromName } from '@/lib/utils';
 import {
   Card,
   CardHeader,
@@ -193,20 +195,6 @@ function ConsentChoices({
     return (
       <Card>
         <CardHeader>
-          {request.appearance ? (
-            <p
-              className='text-xl font-heading'
-              style={{ color: request.appearance.accent }}
-            >
-              {request.appearance.brandName}
-            </p>
-          ) : null}
-          <p className='text-sm text-muted-foreground'>
-            Sign-in provided by Groupi
-          </p>
-          <p className='text-sm text-muted-foreground'>
-            Developer app: {request.appName}
-          </p>
           <CardTitle>Connection request expired</CardTitle>
         </CardHeader>
         <CardContent>
@@ -220,63 +208,58 @@ function ConsentChoices({
   return (
     <Card>
       <CardHeader>
-        {request.appearance ? (
-          <p
-            className='text-xl font-heading'
-            style={{ color: request.appearance.accent }}
-          >
-            {request.appearance.brandName}
-          </p>
-        ) : null}
+        <CardTitle>Connect {request.appName}</CardTitle>
         <p className='text-sm text-muted-foreground'>
           Sign-in provided by Groupi
         </p>
-        <p className='text-sm text-muted-foreground'>
-          Developer app: {request.appName}
-        </p>
-        <CardTitle>Connect {request.appName}</CardTitle>
         <CardDescription>{request.purpose}</CardDescription>
       </CardHeader>
       <CardContent className='space-y-5'>
-        <dl className='space-y-2'>
-          <div>
-            <dt className='text-sm text-muted-foreground'>Groupi instance</dt>
-            <dd className='break-all'>{request.instance}</dd>
-          </div>
-          <div>
-            <dt className='text-sm text-muted-foreground'>Your account</dt>
-            <dd>{request.account.displayName}</dd>
-            {request.account.username ? (
-              <dd>@{request.account.username}</dd>
+        <section
+          aria-label='Your Groupi account'
+          className='flex items-start gap-3 rounded-card border border-border bg-muted/50 p-4'
+        >
+          <Avatar aria-hidden='true'>
+            <AvatarFallback>
+              {getInitialsFromName(
+                request.account.displayName,
+                request.account.email ?? request.account.username
+              )}
+            </AvatarFallback>
+          </Avatar>
+          <div className='min-w-0 space-y-1'>
+            <p className='text-xs text-muted-foreground'>Your Groupi account</p>
+            <p className='break-words font-medium'>
+              {request.account.displayName}
+            </p>
+            {request.account.email || request.account.username ? (
+              <p className='break-all text-sm text-muted-foreground'>
+                {request.account.email ?? `@${request.account.username}`}
+              </p>
             ) : null}
-            {request.account.email ? <dd>{request.account.email}</dd> : null}
-            <dd>
-              <Link
-                className='text-primary underline'
-                href={`/sign-in?mode=add-account&redirect=${encodeURIComponent(`/oauth/consent?interactionId=${encodeURIComponent(interactionId)}`)}`}
-              >
-                Choose another account
-              </Link>
-            </dd>
+            <Link
+              className='inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2'
+              href={`/sign-in?mode=add-account&redirect=${encodeURIComponent(`/oauth/consent?interactionId=${encodeURIComponent(interactionId)}`)}`}
+            >
+              Choose another account
+            </Link>
           </div>
-        </dl>
+        </section>
         {request.selectedGroup ? (
           <div className='space-y-2'>
             <p className='font-medium'>{request.selectedGroup.name}</p>
             <p className='text-sm text-muted-foreground'>
-              Access is limited to your own community context in this Group. Its
-              current and future Events shared with this Group are the boundary
-              for future participation permissions; Event access and changes
-              require separate supported consent and current eligibility. This
-              approval grants no reviewer authority or unrelated Group or Event
-              access.
+              Only your own community context in this Group is included. Its
+              current and future Events shared with this Group bound future
+              participation permissions. Event access and changes require
+              separate supported consent and current eligibility. No reviewer
+              authority or unrelated Group or Event access is granted.
             </p>
           </div>
         ) : null}
         <p className='text-sm text-muted-foreground'>
-          This app receives an opaque identifier for this account on this
-          instance. Your display name and email are shared only if you
-          explicitly allow those actions.
+          The app receives an opaque account identifier. Your display name and
+          email are shared only if you explicitly allow those actions.
         </p>
         <fieldset className='space-y-2' disabled={pending}>
           <legend className='font-medium'>Requested actions</legend>
@@ -284,7 +267,10 @@ function ConsentChoices({
             Allow access grants these requested actions. Choose Deny to cancel.
           </p>
           {request.requestedActions.map(action => (
-            <label key={action} className='flex items-center gap-2'>
+            <label
+              key={action}
+              className='flex min-h-11 items-center gap-3 break-words'
+            >
               <Checkbox checked disabled />
               {authorizationActionLabel(action)}
             </label>
@@ -293,7 +279,7 @@ function ConsentChoices({
         {hasEventActions && !request.selectedGroup ? (
           <fieldset className='space-y-2' disabled={pending}>
             <legend className='font-medium'>Event access</legend>
-            <label className='flex items-start gap-2'>
+            <label className='flex min-h-11 items-start gap-3 break-words'>
               <Checkbox
                 checked={allEvents}
                 onCheckedChange={checked => setAllEvents(checked === true)}
@@ -307,7 +293,10 @@ function ConsentChoices({
               </p>
             ) : (
               request.events.map(event => (
-                <label key={event._id} className='flex items-center gap-2'>
+                <label
+                  key={event._id}
+                  className='flex min-h-11 items-center gap-3 break-words'
+                >
                   <Checkbox
                     checked={eventIds.includes(event._id)}
                     onCheckedChange={checked =>
@@ -326,7 +315,7 @@ function ConsentChoices({
         ) : null}
         {request.requestedScopes.includes('offline_access') ? (
           <div className='space-y-2'>
-            <label className='flex items-start gap-2'>
+            <label className='flex min-h-11 items-start gap-3 break-words'>
               <Checkbox
                 checked={background}
                 disabled={pending}
@@ -345,7 +334,7 @@ function ConsentChoices({
             {error}
           </p>
         ) : null}
-        <div className='flex flex-wrap gap-2'>
+        <div className='flex flex-col gap-2 sm:flex-row'>
           <Button
             variant='outline'
             disabled={pending}
