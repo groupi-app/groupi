@@ -33,7 +33,7 @@
     "oidc-provider": "9.12.2",
     "fetch-to-node": "2.1.0",
     "jose": "6.2.12",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
