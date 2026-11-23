@@ -436,5 +436,7 @@ manual deployment, account mutation or authenticated production QA is authorized
 Local consent tests (20), authorization tests (78), offline deployment-boundary
 tests (12), lint, all-package types, 840 contracts and formatting passed. The
 original candidate CI passed package, quality and build checks; browser-history
-setup failed while installing Chromium, before running its tests. Release-note
-publication and fresh candidate checks are separate from deployed acceptance.
+setup failed while installing Chromium, before running its tests. Playwright 1.58 rejects the Ubuntu 26.04 runner selected by `ubuntu-latest`;
+the candidate pins only browser-history CI to supported Ubuntu 24.04 without
+changing its tests or failure handling. Release-note publication and fresh
+candidate checks are separate from deployed acceptance.
