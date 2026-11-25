@@ -660,52 +660,51 @@ it.each([
   'GROUP_APPLICATION_RECEIVED',
   'GROUP_APPLICATION_APPROVED',
   'GROUP_APPLICATION_DECLINED',
-] as const)(
-  'routes %s to the appropriate private Group application flow',
-  async type => {
-    const { client } = fixtureClient();
-    const mounted = render(
-      <AppProvider client={client}>
-        <NotificationSlate
-          notification={{
-            _id: 'notification-one' as Id<'notifications'>,
-            _creationTime: 1,
-            id: 'notification-one',
-            createdAt: 1,
-            personId: 'member-one' as Id<'persons'>,
-            type,
-            read: true,
-            groupId,
-            group: { id: groupId, title: 'Neighbors' },
-            groupApplication: {
-              id: 'application-one',
-              status:
-                type === 'GROUP_APPLICATION_RECEIVED'
-                  ? 'PENDING'
-                  : type === 'GROUP_APPLICATION_APPROVED'
-                    ? 'APPROVED'
-                    : 'DECLINED',
-            },
-          }}
-        />
-      </AppProvider>
-    );
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute(
-      'href',
-      type === 'GROUP_APPLICATION_RECEIVED'
-        ? '/groups/group-one#group-applications'
+] as const)('routes %s to the appropriate Group destination', async type => {
+  const { client } = fixtureClient();
+  const mounted = render(
+    <AppProvider client={client}>
+      <NotificationSlate
+        notification={{
+          _id: 'notification-one' as Id<'notifications'>,
+          _creationTime: 1,
+          id: 'notification-one',
+          createdAt: 1,
+          personId: 'member-one' as Id<'persons'>,
+          type,
+          read: true,
+          groupId,
+          group: { id: groupId, title: 'Neighbors' },
+          groupApplication: {
+            id: 'application-one',
+            status:
+              type === 'GROUP_APPLICATION_RECEIVED'
+                ? 'PENDING'
+                : type === 'GROUP_APPLICATION_APPROVED'
+                  ? 'APPROVED'
+                  : 'DECLINED',
+          },
+        }}
+      />
+    </AppProvider>
+  );
+  const link = screen.getByRole('link');
+  expect(link).toHaveAttribute(
+    'href',
+    type === 'GROUP_APPLICATION_RECEIVED'
+      ? '/groups/group-one#group-applications'
+      : type === 'GROUP_APPLICATION_APPROVED'
+        ? '/groups/group-one'
         : '/g/group-one#group-applications'
-    );
-    expect(link).toHaveTextContent('Neighbors');
-    expect(link).toHaveTextContent(
-      type === 'GROUP_APPLICATION_RECEIVED'
-        ? 'awaits review'
-        : type === 'GROUP_APPLICATION_APPROVED'
-          ? 'approved'
-          : 'declined'
-    );
-    mounted.unmount();
-    await client.close();
-  }
-);
+  );
+  expect(link).toHaveTextContent('Neighbors');
+  expect(link).toHaveTextContent(
+    type === 'GROUP_APPLICATION_RECEIVED'
+      ? 'awaits review'
+      : type === 'GROUP_APPLICATION_APPROVED'
+        ? 'approved'
+        : 'declined'
+  );
+  mounted.unmount();
+  await client.close();
+});

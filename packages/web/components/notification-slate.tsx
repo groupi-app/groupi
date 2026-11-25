@@ -89,10 +89,11 @@ export function NotificationSlate({
       return notification.group
         ? `/groups/${notification.group.id}#group-applications`
         : '/events';
-    if (
-      type === 'GROUP_APPLICATION_APPROVED' ||
-      type === 'GROUP_APPLICATION_DECLINED'
-    )
+    if (type === 'GROUP_APPLICATION_APPROVED') {
+      const groupId = notification.group?.id ?? notification.groupId;
+      return groupId ? `/groups/${groupId}` : '/events';
+    }
+    if (type === 'GROUP_APPLICATION_DECLINED')
       return notification.group
         ? `/g/${notification.group.id}#group-applications`
         : '/events';

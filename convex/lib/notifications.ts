@@ -1414,11 +1414,7 @@ function getPushDestination(
   }
   if (groupId && type === 'GROUP_APPLICATION_RECEIVED')
     return { destination: 'groupApplications', groupId };
-  if (
-    groupId &&
-    (type === 'GROUP_APPLICATION_APPROVED' ||
-      type === 'GROUP_APPLICATION_DECLINED')
-  )
+  if (groupId && type === 'GROUP_APPLICATION_DECLINED')
     return { destination: 'groupApplication', groupId };
   if (groupId && type.startsWith('GROUP_'))
     return { destination: 'group', groupId };

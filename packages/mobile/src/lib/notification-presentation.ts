@@ -128,9 +128,12 @@ export function getNotificationDestination(
     const groupId = notification.group?.id ?? notification.groupId;
     return groupId ? `/groups/${groupId}/questionnaire` : null;
   }
+  if (notification.type === 'GROUP_APPLICATION_APPROVED') {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/groups/${groupId}` : null;
+  }
   if (
     notification.type === 'GROUP_APPLICATION_RECEIVED' ||
-    notification.type === 'GROUP_APPLICATION_APPROVED' ||
     notification.type === 'GROUP_APPLICATION_DECLINED'
   ) {
     const groupId = notification.group?.id ?? notification.groupId;

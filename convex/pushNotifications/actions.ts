@@ -38,6 +38,7 @@ type DeliveryJob = {
     | 'eventApplications'
     | 'eventApplication';
   groupId?: Id<'groups'>;
+  openGroupDetail?: boolean;
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
   notificationId: Id<'notifications'>;
@@ -120,6 +121,7 @@ function makeMessage(job: DeliveryJob): ExpoPushMessage {
     data: {
       destination: job.destination,
       ...(job.groupId ? { groupId: job.groupId } : {}),
+      ...(job.openGroupDetail ? { openGroupDetail: true } : {}),
       ...(job.eventId ? { eventId: job.eventId } : {}),
       ...(job.postId ? { postId: job.postId } : {}),
       notificationId: job.notificationId,

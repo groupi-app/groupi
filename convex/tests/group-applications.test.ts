@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { api } from '../_generated/api';
+import { api, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 const questions = [
@@ -445,11 +445,24 @@ describe('authenticated Group applications', () => {
       );
       expect(deliveries).toHaveLength(1);
       expect(deliveries[0]).toMatchObject({
-        destination: 'groupApplication',
+        destination: 'group',
         groupId,
         status: 'PENDING',
       });
       expect(deliveries[0].title).toContain('Application delivery');
+      await t.run(ctx =>
+        ctx.db.patch(deliveries[0]._id, { status: 'SENDING' })
+      );
+      const jobs = await t.query(
+        internal.pushNotifications.queries.resolveDeliveryJobs,
+        { deliveryIds: [deliveries[0]._id], purpose: 'send' }
+      );
+      expect(jobs.ready).toHaveLength(1);
+      expect(jobs.ready[0]).toMatchObject({
+        destination: 'group',
+        groupId,
+        openGroupDetail: true,
+      });
       await owner.auth.mutation(api.groups.mutations.deleteGroup, { groupId });
       expect(
         await t.run(ctx => ctx.db.query('pushDeliveries').collect())

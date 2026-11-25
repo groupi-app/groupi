@@ -11,7 +11,8 @@
       "codex/release-lock-resolution": false,
       "codex/portal-learning-spec": false,
       "codex/red-room-status-return": false,
-      "fix/web-consent-profile": false
+      "fix/web-consent-profile": false,
+      "codex/group-approval-notification-route": false
     }
   }
 }

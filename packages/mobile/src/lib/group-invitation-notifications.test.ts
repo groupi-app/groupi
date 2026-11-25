@@ -16,7 +16,6 @@ describe('native Group invitation notifications', () => {
   };
   it.each([
     'GROUP_APPLICATION_RECEIVED',
-    'GROUP_APPLICATION_APPROVED',
     'GROUP_APPLICATION_DECLINED',
   ] as const)('routes %s to private status or authorized review', type => {
     const path =
@@ -43,6 +42,39 @@ describe('native Group invitation notifications', () => {
       })
     ).toBeNull();
   });
+  it('opens the Group directly from approval inbox and push notifications', () => {
+    const notification = {
+      ...invite,
+      type: 'GROUP_APPLICATION_APPROVED' as const,
+    };
+    expect(getNotificationMessage(notification)).toContain('approved');
+    expect(getNotificationDestination(notification)).toBe('/groups/group-123');
+    expect(
+      getNotificationDestination({ ...notification, group: undefined })
+    ).toBe('/groups/group-123');
+    expect(
+      getNotificationDestination({
+        ...notification,
+        group: undefined,
+        groupId: undefined,
+      })
+    ).toBeNull();
+    expect(
+      getPushNotificationDestination({
+        destination: 'group',
+        groupId: 'group-123',
+        openGroupDetail: true,
+      })
+    ).toBe('/groups/group-123');
+    expect(
+      getPushNotificationDestination({
+        destination: 'group',
+        groupId: '../secret',
+        openGroupDetail: true,
+      })
+    ).toBeNull();
+  });
+
   it('describes a Group invitation and opens its identity landing', () => {
     expect(getNotificationMessage(invite)).toBe(
       'Someone invited you to Book club'

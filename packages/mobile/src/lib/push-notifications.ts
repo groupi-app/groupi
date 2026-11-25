@@ -174,7 +174,10 @@ export function getPushNotificationDestination(data: unknown): string | null {
   }
   if (destination === 'group') {
     const groupId = Reflect.get(data, 'groupId');
-    return isSafeId(groupId) ? `/g/${groupId}` : null;
+    if (!isSafeId(groupId)) return null;
+    return Reflect.get(data, 'openGroupDetail') === true
+      ? `/groups/${groupId}`
+      : `/g/${groupId}`;
   }
   if (
     destination === 'eventApplication' ||
