@@ -2,6 +2,20 @@
 
 Current feature evidence and historical integration checkpoints. Source verification does not imply live runtime acceptance.
 
+## Group approval notification candidate — 2026-11-25
+
+Based on `main` at `4db9524a6e1fab7ef8fe40f9a2f48498f08f0bae`. Web and native
+inbox links open the Group detail directly on approval. New push deliveries and
+previously queued approvals carry a Group-detail hint parsed by updated native
+clients; older builds can still open the Group landing. Already delivered
+pushes cannot change. Decline, reviewer, Event application and hosted status
+routes are unchanged.
+
+The approved patch changeset covers Convex, web and mobile. Automatic Vercel
+deployment is disabled for this branch because a normal preview would provision
+and configure a Convex backend. Signed-in browser and physical-phone tap
+verification remain open; no production changes were made.
+
 ## Hosted application return editor candidate — 2026-11-11
 
 The candidate starts from `main` source

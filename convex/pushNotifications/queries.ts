@@ -77,6 +77,7 @@ const deliveryJobValidator = v.object({
     v.literal('groupPost')
   ),
   groupId: v.optional(v.id('groups')),
+  openGroupDetail: v.optional(v.boolean()),
   eventId: v.optional(v.id('events')),
   postId: v.optional(v.id('posts')),
   notificationId: v.id('notifications'),
@@ -160,13 +161,20 @@ export const resolveDeliveryJobs = internalQuery({
         cancelled.push({ deliveryId, attempts: delivery.attempts });
         continue;
       }
+      // Keep the existing group destination for older native builds.
+      const openGroupDetail =
+        notification.type === 'GROUP_APPLICATION_APPROVED' &&
+        !!delivery.groupId;
       ready.push({
         deliveryId,
         token: token.token,
         title: delivery.title,
         body: delivery.body,
-        destination: delivery.destination,
+        destination: openGroupDetail
+          ? ('group' as const)
+          : delivery.destination,
         groupId: delivery.groupId,
+        ...(openGroupDetail ? { openGroupDetail } : {}),
         eventId: delivery.eventId,
         postId: delivery.postId,
         notificationId: delivery.notificationId,
