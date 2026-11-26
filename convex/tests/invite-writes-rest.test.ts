@@ -57,6 +57,36 @@ describe('Authenticated invitation writes', () => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+  it('includes the saved event timezone in the public invite preview', async () => {
+    vi.setSystemTime(new Date('2029-01-01T00:00:00Z'));
+    const organizer = await setup();
+    const chosenDateTime = '2029-01-20T03:00:00Z';
+    const chosenEndDateTime = '2029-01-20T05:00:00Z';
+    const timezone = 'America/New_York';
+    const { eventId } = await body(
+      await organizer.request('/events', 'POST', {
+        title: 'Evening event',
+        chosenDateTime,
+        chosenEndDateTime,
+        timezone,
+      }),
+      201
+    );
+    const invite = await body(
+      await organizer.request(`/events/${eventId}/invites`, 'POST', {}),
+      201
+    );
+    const meta = await body(
+      await organizer.t.fetch(`/api/invite-meta/${invite.token}`),
+      200
+    );
+    expect(meta).toMatchObject({
+      title: 'Evening event',
+      chosenDateTime: Date.parse(chosenDateTime),
+      chosenEndDateTime: Date.parse(chosenEndDateTime),
+      timezone,
+    });
+  });
   it('replays link creation and uses app RSVP and permission rules', async () => {
     const organizer = await setup();
     const attendee = await actor(organizer.t, 'invited-attendee');

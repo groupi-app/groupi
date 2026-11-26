@@ -2,6 +2,21 @@
 
 Current feature evidence and historical integration checkpoints. Source verification does not imply live runtime acceptance.
 
+## Event description and invite metadata candidate — 2026-11-25
+
+Based on `main` at `9ebfe89fe438a7aefa0b2f9a188b9b70605f200d`. Full Event descriptions on the web
+Event and invite pages preserve authored newlines and blank lines, including
+when long words wrap on narrow screens. Invite OpenGraph metadata formats the
+saved Event timezone and handles dates spanning midnight and DST transitions.
+The timezone field is additive; metadata without a timezone uses explicit UTC.
+
+An isolated Chromium fixture exercised both production components at phone and
+desktop widths. Six web metadata tests and the 25-test Convex invite REST
+suite passed. An authenticated Playwright regression was added but still needs
+a matched test backend and isolated account to run end to end. No production
+page or native app was changed. Vercel preview auto-provisioning is disabled for
+this branch.
+
 ## Group approval notification candidate — 2026-11-25
 
 Based on `main` at `4db9524a6e1fab7ef8fe40f9a2f48498f08f0bae`. Web and native

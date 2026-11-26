@@ -111,7 +111,9 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
               {event.title}
             </h3>
             {event.description && (
-              <p className='text-muted-foreground mt-1'>{event.description}</p>
+              <p className='mt-1 whitespace-pre-wrap break-words text-muted-foreground'>
+                {event.description}
+              </p>
             )}
           </div>
 

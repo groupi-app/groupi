@@ -541,7 +541,7 @@ export const getInviteByToken = internalQuery({
 });
 /**
  * Get minimal invite metadata for OpenGraph previews.
- * Returns only non-sensitive event info (title, location, date, creator name).
+ * Returns only non-sensitive event info (title, location, date, timezone, creator name).
  * No authentication required since invite links are meant to be shared.
  */
 export const getInviteOgMeta = internalQuery({
@@ -555,6 +555,7 @@ export const getInviteOgMeta = internalQuery({
       location: v.union(v.string(), v.null()),
       chosenDateTime: v.union(v.number(), v.null()),
       chosenEndDateTime: v.union(v.number(), v.null()),
+      timezone: v.string(),
       creatorName: v.union(v.string(), v.null()),
     })
   ),
@@ -586,6 +587,7 @@ export const getInviteOgMeta = internalQuery({
       location: event.location ?? null,
       chosenDateTime: event.chosenDateTime ?? null,
       chosenEndDateTime: event.chosenEndDateTime ?? null,
+      timezone: event.timezone,
       creatorName,
     };
   },

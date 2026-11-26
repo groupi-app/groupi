@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { InviteDetails } from './components/invite-details';
 import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
+import { formatInviteOgDate } from '@/lib/invite-og-date';
 
 type Props = {
   params: Promise<{ inviteId: string }>;
@@ -12,6 +13,7 @@ type InviteOgMeta = {
   location: string | null;
   chosenDateTime: number | null;
   chosenEndDateTime: number | null;
+  timezone?: string;
   creatorName: string | null;
 };
 
@@ -31,31 +33,6 @@ async function fetchInviteMeta(token: string): Promise<InviteOgMeta | null> {
   } catch {
     return null;
   }
-}
-
-function formatOgDate(timestamp: number, endTimestamp?: number | null): string {
-  const start = new Date(timestamp);
-  const dateStr = start.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  const timeStr = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  if (endTimestamp) {
-    const end = new Date(endTimestamp);
-    const endTimeStr = end.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-    return `${dateStr}, ${timeStr} - ${endTimeStr}`;
-  }
-
-  return `${dateStr}, ${timeStr}`;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -81,9 +58,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (meta.location) {
     descriptionParts.push(meta.location);
   }
-  if (meta.chosenDateTime) {
+  if (meta.chosenDateTime != null) {
     descriptionParts.push(
-      formatOgDate(meta.chosenDateTime, meta.chosenEndDateTime)
+      formatInviteOgDate(
+        meta.chosenDateTime,
+        meta.chosenEndDateTime,
+        meta.timezone
+      )
     );
   }
   if (meta.creatorName) {
