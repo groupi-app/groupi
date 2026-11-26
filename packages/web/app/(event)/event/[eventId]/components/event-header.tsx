@@ -527,7 +527,14 @@ export function EventHeader({ data }: EventHeaderProps) {
           </>
         }
         description={
-          description && <p data-test='event-description'>{description}</p>
+          description && (
+            <p
+              className='whitespace-pre-wrap break-words'
+              data-test='event-description'
+            >
+              {description}
+            </p>
+          )
         }
         rsvp={<EventRSVP eventId={eventIdTyped} />}
       />

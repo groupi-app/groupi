@@ -12,7 +12,8 @@
       "codex/portal-learning-spec": false,
       "codex/red-room-status-return": false,
       "fix/web-consent-profile": false,
-      "codex/group-approval-notification-route": false
+      "codex/group-approval-notification-route": false,
+      "codex/event-description-invite-timezone": false
     }
   }
 }
